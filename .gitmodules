@@ -1,0 +1,6 @@
+[submodule "third_party/custody"]
+	path = third_party/custody
+	url = https://github.com/maurathat/custody
+[submodule "web"]
+	path = web
+	url = https://github.com/maurathat/creds-for-ai.git

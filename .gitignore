@@ -1,0 +1,43 @@
+# Secrets and keys: never committed (see CLAUDE.md)
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.keystore
+*seed*.txt
+keys/
+secrets/
+wallets/
+
+# Local ledger data
+infra/rippled/data/
+infra/speculos/data/
+*.db
+*.sqlite
+*.sqlite3
+
+# Evidence dumps. Large raw dumps stay out of git; small recorded evidence (tx hashes,
+# ledger entries) may be committed. CI also fails on any tracked file over 5 MiB
+# (scripts/check_large_files.py), since .gitignore cannot express a size limit.
+**/evidence/raw/
+*.evidence.tar*
+*.dump
+
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.hypothesis/
+dist/
+build/
+
+# OS / editors
+.DS_Store
+.idea/
+.vscode/

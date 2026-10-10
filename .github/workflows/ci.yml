@@ -1,0 +1,35 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # Only the public custody submodule; web/ is a private Lovable repo and is not needed here.
+      - run: git submodule update --init third_party/custody
+      - uses: astral-sh/setup-uv@v5
+      - run: uv sync --locked
+      - name: lint
+        run: make lint
+      - name: type check
+        run: make typecheck
+      - name: unit + conformance tests
+        run: make test
+
+  secrets-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: gitleaks (full history)
+        run: >
+          docker run --rm -v "$PWD:/repo" ghcr.io/gitleaks/gitleaks:v8.21.2
+          git /repo --config /repo/.gitleaks.toml --redact --no-banner

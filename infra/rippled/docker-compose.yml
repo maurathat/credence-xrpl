@@ -1,0 +1,12 @@
+# Placeholder (Checkpoint 0). Owner: XRPL Integration.
+# TODO(XRPL spike): pin the release image by tag and digest, and fill in rippled.cfg.
+services:
+  rippled:
+    image: ${RIPPLED_IMAGE:?set RIPPLED_IMAGE to the pinned rippled release image (TODO, XRPL spike)}
+    command: ["--standalone", "--conf", "/etc/opt/ripple/rippled.cfg"]
+    ports:
+      - "127.0.0.1:5005:5005"
+      - "127.0.0.1:6006:6006"
+    volumes:
+      - ./rippled.cfg:/etc/opt/ripple/rippled.cfg:ro
+      - ./data:/var/lib/rippled

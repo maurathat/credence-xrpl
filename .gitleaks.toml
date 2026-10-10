@@ -1,0 +1,27 @@
+# Secrets scan: gitleaks defaults plus key shapes specific to Credence. CI fails on any finding.
+title = "credence"
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "xrpl-seed"
+description = "XRPL family seed or Ed25519 seed (base58, starts with s)"
+regex = '''\bs[rpshnaf39wBUDNEGHJKLM4PQRST7VWXYZ2bcdeCg65jkm8oFqi1tuvAxyz]{28,30}\b'''
+keywords = ["s"]
+
+[[rules]]
+id = "hex-private-key"
+description = "32- or 64-byte hex key next to a key/seed/secret word"
+regex = '''(?i)(?:priv|private|secret|seed|signing)[\w-]{0,20}["'\s:=]{1,5}(?:0x)?([0-9a-f]{128}|[0-9a-f]{64})\b'''
+keywords = ["priv", "secret", "seed", "signing"]
+
+[[rules]]
+id = "pem-private-key"
+description = "PEM private key block"
+regex = '''-----BEGIN [A-Z ]*PRIVATE KEY-----'''
+keywords = ["private key"]
+
+[allowlist]
+description = "Local virtualenv and git internals are not part of the tree (submodules are scanned)"
+paths = ['''(^|/)\.venv/''', '''(^|/)\.git/''']
