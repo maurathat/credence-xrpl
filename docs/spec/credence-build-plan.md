@@ -104,7 +104,7 @@ Money enters from lenders and customers, leaves only to providers and back to th
 
 Six typed objects carry the whole product. Each is serialized with the Kessai serializer and identified by its digest, so any party can recompute and check it.
 
-**Money rule:** every amount is an integer in the smallest unit (micro-units: 1 RLUSD = 1,000,000). On the local ledger the currency is a test token issued by a Credence-controlled issuer account, labeled **tRLUSD** everywhere in the UI. Never call it RLUSD in the demo.
+**Money rule:** every amount is an integer in the smallest unit (micro-units: 1 tRLUSD = 1,000,000 micro-units). On the local ledger the currency is a test token issued by a Credence-controlled issuer account, labeled **tRLUSD** everywhere in the UI. Never call it RLUSD in the demo.
 
 ### Execution profile
 

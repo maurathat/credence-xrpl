@@ -1,1 +1,1 @@
-"""ResearchBot. Owner: unassigned (see docs/OWNERSHIP.md)."""
+"""ResearchBot. Owner: Inference."""

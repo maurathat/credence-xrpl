@@ -5,7 +5,7 @@ Tech: Python agent
 Responsibility (System architecture table, build plan):
 Takes jobs, buys inference, delivers reports, invoices customers, earmarks repayment
 
-Owner: ResearchBot (workstream unassigned; see docs/OWNERSHIP.md). Checkpoint 0 stub: no product logic.
+Owner: Inference. Checkpoint 0 stub: no product logic.
 """
 
 from typing import NoReturn

@@ -9,7 +9,7 @@ Merge authority for every area is Maura; no agent merges to main.
 | `credence/signers/` | Credence Core (separate from the engine to isolate keys) | Claude Code |
 | `credence/xrpl_adapter/` | XRPL Integration | Codex |
 | `credence/inference/` | Inference | Claude Code |
-| `credence/agent/` | **Unassigned** (ResearchBot; open question) | — |
+| `credence/agent/` (ResearchBot) | Inference | Claude Code |
 | `credence/api/` | API/UI | Claude Code |
 | `web/` (submodule: Lovable frontend) | API/UI | Claude Code |
 | `ledger-bridge/` | API/UI | Claude Code |
@@ -25,7 +25,7 @@ Merge authority for every area is Maura; no agent merges to main.
 | `tests/unit/`, `tests/conformance/`, `tests/integration/`, `tests/e2e/` | Each workstream for tests of its own area | — |
 | `tests/attack/` | Red Team (read-only on all other code) | Codex |
 | `infra/rippled/` | XRPL Integration | Codex |
-| `infra/speculos/` | **Unassigned** (proposed: API/UI, beside `ledger-bridge/`) | — |
+| `infra/speculos/` | Ledger Integration | **TBD** |
 | `third_party/custody/` (submodule, pinned) | Kessai (external; not edited here) | — |
 | `docs/`, root tooling (`Makefile`, `pyproject.toml`, CI, agent rules) | Maura | — |
 
@@ -35,7 +35,8 @@ Merge authority for every area is Maura; no agent merges to main.
 | --- | --- |
 | Credence Core | Claude Code |
 | XRPL Integration | Codex |
-| Inference | Claude Code |
+| Inference (incl. ResearchBot) | Claude Code |
+| Ledger Integration | **TBD** |
 | API/UI | Claude Code |
 | Red Team | Codex, read-only |
 | XRPL spike | Codex |
