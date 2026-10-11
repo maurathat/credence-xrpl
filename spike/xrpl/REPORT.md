@@ -308,3 +308,131 @@ continuation from this commit. Checkpoint 1A did not begin E2.
 - `spike/xrpl/scripts/run_experiments.py`
 - `spike/xrpl/scripts/validate_environment.py`
 - `spike/xrpl/tests/test_amendment_validation.py`
+
+---
+
+# Checkpoint 1B fail-closed report
+
+## Outcome
+
+**BLOCKED — E1 regressed in the hardened validation harness.**
+
+The fresh pinned server started successfully, and the existing strict `feature`
+validator again accepted all eight required amendments. The newly added
+on-ledger check then sent `ledger_entry` with `amendments: {}`. rippled returned:
+
+```text
+malformedRequest — Invalid field 'amendments', not hex string.
+```
+
+This matched the checkpoint's explicit `E1 no longer passes` STOP condition.
+No retry, selector correction, ledger close, or E2-E9 transaction followed.
+
+## OBSERVED
+
+- Start-state `HEAD` was exactly
+  `d4eb8743cdba87f8cdc13df454d0f1a5df1e4dd1`, descended from
+  `checkpoint-0^{}` / `810c7870d2ebb23e0b07b6017c4c88344f742aed`.
+- The worktree was clean. Custody remained at `5dc15ff6...`; web remained at
+  `dd47344...`.
+- Review commit `89fa0a63de502fc03402afb70af273b923415ea4` was inspected read-only;
+  `review/xrpl/` was not merged, cherry-picked, or modified.
+- The checked-in pinned build produced `xrpld version 3.4.0`, source commit
+  `4a4fded2eba11427c48ce3f24d9c1aea5e7a9d17`.
+- The dedicated volume was recreated and mounted at `/var/lib/xrpld`, matching
+  the checked-in database path. The invocation retained `--standalone --start`,
+  network ID `21337`, and the unchanged configuration hash
+  `37ffc6f93f7d8838aef681e4a3c7e39d7427e101cb6c62113dca208dc1e8e820`.
+- At STOP the fresh ledger was index 2, close time `845019610`, and no protocol
+  transaction had been submitted.
+- The pre-failure raw `feature` response has SHA-256
+  `3f9caa62f7b9c340207c49ed6f16fadbd605bb8b068332a4f358957f5ece3cd8`.
+
+## DERIVED
+
+The failure is **A. local configuration error**, specifically a request-shape
+defect in the new E1 harness. Pinned 3.4.0 source shows the fixed-location
+Amendments selector accepts boolean `true` (or a valid object index), not an
+empty object. This source observation explains the response; it was not used to
+retry the call or upgrade E1 to PASS.
+
+The failure is not evidence that any required amendment is absent, and it is
+not a protocol-transaction failure. The previous Checkpoint 1A E1 PASS remains
+historical evidence, but the 1B regression gate is BLOCKED.
+
+## UNRESOLVED
+
+- The new comparison between `feature` and the Amendments ledger object was not
+  completed.
+- The post-hardening two-close E1 regression proof was not run.
+- E2-E5 were not attempted, so no tRLUSD, vault, broker, cover, signer-list, or
+  ordinary Payment claim was observed.
+- E6-E9 remain NOT_ATTEMPTED by scope.
+
+## Independent-review findings addressed
+
+| Finding | Disposition at STOP | Evidence |
+| --- | --- | --- |
+| H1 state assertions required | BLOCKING | Harness unit tests passed, but E1 stopped before transaction execution. The uncommitted implementation was not treated as experiment evidence. |
+| H2 misleading master-signed LoanPay | DEFERRED TO E6+ | E8 was not executed; no LoanPay evidence was produced. |
+| H3 structured client exceptions | BLOCKING | The harness unit test passed, but the E1 runner itself still surfaced this RPC error as an exception and triggered STOP. |
+| H4 signer evidence | NOT_APPLICABLE TO 1B RUN | No signer transaction was submitted. |
+| H5 database/mount mismatch | FIXED FOR OBSERVED RUN | Docker inspection showed the named volume at `/var/lib/xrpld`. |
+| H6 checked-in run command | BLOCKING | A candidate script started the exact environment, but the checkpoint stopped before it could be accepted and committed as completed hardening. |
+| H7 self-contained `--start` environment | FIXED FOR OBSERVED RUN | The fresh dedicated spike container used `--standalone --start`; no infra path changed. |
+| H8 explicit result states | FIXED | `RESULTS.json` uses BLOCKED and NOT_ATTEMPTED distinctly; no NOT_APPLICABLE substitution. |
+
+## Experiment status
+
+| Experiment | Status | Reason |
+| --- | --- | --- |
+| E1 | BLOCKED | New on-ledger amendment RPC used an invalid selector shape. |
+| E2 | NOT_ATTEMPTED | STOP occurred before the first protocol transaction. |
+| E3 | NOT_ATTEMPTED | STOP occurred before the first protocol transaction. |
+| E4 | NOT_ATTEMPTED | STOP occurred before the first protocol transaction. |
+| E5 | NOT_ATTEMPTED | STOP occurred before the first protocol transaction. |
+| E6 | NOT_ATTEMPTED | Outside scope and prohibited. |
+| E7 | NOT_ATTEMPTED | Outside scope and prohibited. |
+| E8 | NOT_ATTEMPTED | Outside scope and prohibited. |
+| E9 | NOT_ATTEMPTED | Outside scope and prohibited. |
+
+## Minimum next experiment — not performed
+
+Change only the fixed-location Amendments `ledger_entry` selector from an
+object to the pinned release's accepted boolean form. Then run only E1 from a
+newly recreated dedicated volume and compare the `feature` response with the
+returned Amendments ledger object. This would distinguish the local request
+defect from any remaining ledger-state discrepancy.
+
+That experiment was **not performed**.
+
+## Recommendation
+
+**BLOCKED. E6 must not begin.** Adjudicate a narrowly authorized E1 harness
+correction and rerun before E2-E5, and require E2-E5 to pass before E6.
+
+## Checkpoint 1B gates
+
+- Existing spike-specific amendment tests: PASS — 6 tests.
+- Repository unit tests: PASS — 17 tests.
+- Conformance tests: PASS — 4 tests.
+- Lint, format check, and large-file check: PASS.
+- Strict typecheck: PASS — 25 source files.
+- Secrets scan: PASS — no findings.
+- JSON syntax, evidence-manifest verification, and `git diff --check`: PASS.
+- Authorized-path check: PASS — every change is under `spike/xrpl/`.
+- Review path and both submodule gitlinks: unchanged.
+
+The hardened-harness unit tests had passed before the E1 run, but the candidate
+implementation was removed after STOP and is not part of this commit. It is
+therefore not reported as a completed gate or fix.
+
+## Checkpoint 1B modified paths
+
+- `spike/xrpl/ENVIRONMENT.md`
+- `spike/xrpl/README.md`
+- `spike/xrpl/REPORT.md`
+- `spike/xrpl/RESULTS.json`
+- `spike/xrpl/evidence/checkpoint-1b/MANIFEST.json`
+- `spike/xrpl/evidence/checkpoint-1b/feature-raw-e1-before.json`
+- `spike/xrpl/evidence/checkpoint-1b/unexpected-result.json`

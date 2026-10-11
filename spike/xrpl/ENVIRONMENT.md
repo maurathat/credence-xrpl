@@ -91,3 +91,20 @@ Raw `feature` responses captured immediately before and after the closes are:
 Their identical digests provide byte-for-byte evidence that the complete
 amendment response persisted across the closes. The machine-readable E1 result
 and the independently checkable digests are in `evidence/e1-validation.json`.
+
+## Checkpoint 1B fresh-start observation
+
+Checkpoint 1B rebuilt the same pinned package and recreated both the dedicated
+container and named volume. Docker inspection showed the volume mounted at
+`/var/lib/xrpld`, correcting the earlier documented mismatch with the configured
+NuDB/database paths. The command remained
+`--conf=/etc/opt/xrpl/xrpld.cfg --standalone --start`; the container began at
+`2026-10-11T07:40:06.290957026Z` with network ID `21337` and fresh validated
+ledger index 2.
+
+The existing strict `feature` validation succeeded, but a newly added
+`ledger_entry` cross-check used `amendments: {}` and received
+`malformedRequest`. The checkpoint stopped before a ledger close or protocol
+transaction. This observation does not replace the Checkpoint 1A E1 PASS; it
+records that the new 1B regression gate is BLOCKED by a local request-shape
+defect.

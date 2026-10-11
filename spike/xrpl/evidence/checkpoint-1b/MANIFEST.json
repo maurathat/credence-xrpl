@@ -1,0 +1,16 @@
+{
+  "algorithm": "SHA-256",
+  "file_count": 2,
+  "files": [
+    {
+      "bytes": 15192,
+      "path": "feature-raw-e1-before.json",
+      "sha256": "3f9caa62f7b9c340207c49ed6f16fadbd605bb8b068332a4f358957f5ece3cd8"
+    },
+    {
+      "bytes": 2208,
+      "path": "unexpected-result.json",
+      "sha256": "a621d0ee46b28cfb2c534e4f5b924623139a5e70c908648d6e6e8ad23725e6fa"
+    }
+  ]
+}

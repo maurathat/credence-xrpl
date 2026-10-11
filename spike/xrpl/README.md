@@ -24,3 +24,9 @@ Checkpoint 1A subsequently corrected only the validation harness and reran E1.
 E1 now passes; the original false-negative BLOCKED conclusion is retired.
 E2-E9 remain unattempted. See the recovery section appended to `REPORT.md` and
 `evidence/e1-validation.json` for the machine-readable result.
+
+Checkpoint 1B then stopped at its required E1 regression gate: the new
+on-ledger amendment cross-check sent an invalid fixed-object selector and
+received `malformedRequest`. No protocol transaction was submitted. E2-E9 are
+`NOT_ATTEMPTED`; see the Checkpoint 1B section of `REPORT.md` and
+`evidence/checkpoint-1b/unexpected-result.json`.

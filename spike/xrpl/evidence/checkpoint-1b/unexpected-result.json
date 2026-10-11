@@ -1,0 +1,58 @@
+{
+  "classification": {
+    "code": "A",
+    "label": "local configuration error",
+    "reason": "The new E1 on-ledger amendment check supplied an object for a fixed-location ledger_entry selector that rippled 3.4.0 requires to be true or a valid object index."
+  },
+  "checkpoint": "1B",
+  "client_exception": {
+    "message": "ledger_entry failed: {'error': 'malformedRequest', 'error_code': 31, 'error_message': \"Invalid field 'amendments', not hex string.\", 'request': {'amendments': {}, 'command': 'ledger_entry', 'ledger_index': 'validated'}, 'status': 'error'}",
+    "type": "EnvironmentValidationError"
+  },
+  "e1_prior_result": "PASS",
+  "e1_regression_result": "BLOCKED",
+  "exact_request": {
+    "method": "ledger_entry",
+    "params": [
+      {
+        "amendments": {},
+        "ledger_index": "validated"
+      }
+    ]
+  },
+  "exact_response_result": {
+    "error": "malformedRequest",
+    "error_code": 31,
+    "error_message": "Invalid field 'amendments', not hex string.",
+    "request": {
+      "amendments": {},
+      "command": "ledger_entry",
+      "ledger_index": "validated"
+    },
+    "status": "error"
+  },
+  "fresh_ledger_at_stop": {
+    "close_time": 845019610,
+    "closed": true,
+    "complete_ledgers": "2",
+    "ledger_hash": "74D16297BB97FCAD32E70279453053E7147EF4E6C245FBE3B65E2BDCA083586A",
+    "ledger_index": 2,
+    "network_id": 21337,
+    "server_state": "full"
+  },
+  "later_experiments": {
+    "E2": "NOT_ATTEMPTED",
+    "E3": "NOT_ATTEMPTED",
+    "E4": "NOT_ATTEMPTED",
+    "E5": "NOT_ATTEMPTED",
+    "E6": "NOT_ATTEMPTED",
+    "E7": "NOT_ATTEMPTED",
+    "E8": "NOT_ATTEMPTED",
+    "E9": "NOT_ATTEMPTED"
+  },
+  "minimum_next_experiment": "Change only the fixed-location Amendments ledger_entry selector from an object to the pinned release's accepted boolean form, then run only E1 from a newly recreated dedicated volume and compare the feature RPC result with the returned Amendments ledger object.",
+  "minimum_next_experiment_performed": false,
+  "protocol_transactions_submitted": 0,
+  "stop": "E1 no longer passes",
+  "stop_output": "STOP: E1 regressed during the on-ledger amendment check: malformedRequest — Invalid field 'amendments', not hex string."
+}
