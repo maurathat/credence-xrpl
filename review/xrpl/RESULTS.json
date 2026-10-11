@@ -1,0 +1,312 @@
+{
+  "schema_version": 1,
+  "review": "Checkpoint 1R independent XRPL network review",
+  "start": {
+    "ref": "checkpoint-0",
+    "commit": "810c7870d2ebb23e0b07b6017c4c88344f742aed",
+    "web_submodule": "dd47344df9966b5906c0ee13426955e39c0db9cd",
+    "custody_submodule": "5dc15ff6fb097dc5f4a47e72969fae4a296620a5"
+  },
+  "implementer": {
+    "branch": "maurathat/xrpl-credence-codex",
+    "commit": "d4eb8743cdba87f8cdc13df454d0f1a5df1e4dd1",
+    "scope_executed": "E1 only",
+    "reported_overall": "PASS"
+  },
+  "sources": {
+    "rippled_3_4_1": "00e640751460c137636fdb6dae6b4280de355d81",
+    "rippled_3_4_0": "4a4fded2eba11427c48ce3f24d9c1aea5e7a9d17",
+    "xrpl_dev_portal": "b591e31668c5c9cb20e98bb83a79f65a9c126131"
+  },
+  "expectations_record": {
+    "path": "review/xrpl/EXPECTATIONS.md",
+    "sha256": "4ee2eb94b161232474942c02f764f5b7f4d29485fedfd0f2de9c4a681dfd81ee",
+    "sealed_utc": "2026-10-11T07:18:46Z",
+    "sealed_before_spike_read": true
+  },
+  "questions": {
+    "Q1": {
+      "protocol_expectation": {
+        "label": "CONFIRMED",
+        "summary": "LendingProtocolV1_1 first appears in 3.3.0 (Supported::No); first Supported::Yes release is 3.4.0 (2026-09-17). 3.4.1 (2026-10-09) leaves lending/vault transactors unchanged."
+      },
+      "implementer_evidence": {
+        "status": "CONSISTENT",
+        "detail": "Pinned xrpld 3.4.0, commit 4a4fded2eba11427c48ce3f24d9c1aea5e7a9d17; package and binary sha256 independently reproduced."
+      },
+      "reviewer_conclusion": "3.4.0 is a valid pinned release and the first that supports every required feature."
+    },
+    "Q2": {
+      "protocol_expectation": {
+        "label": "CONFIRMED",
+        "summary": "Gating: SingleAssetVault, MPTokensV1, LendingProtocol, LendingProtocolV1_1. Behaviour: fixCleanup3_4_0 (role-separated counterparty prefix), fixCleanup3_1_3/3_2_0/3_3_0. All DefaultNo; need --start plus [amendments] up-votes, or [features] presets (not written to ledger)."
+      },
+      "implementer_evidence": {
+        "status": "PASS",
+        "detail": "E1: the same eight enabled before and after two closes; 9 enabled = DefaultYes {fixCleanup3_1_3, fixRemoveNFTokenAutoTrustLine} + config up-votes, matching the predicted genesis rule."
+      },
+      "reviewer_conclusion": "Supported by evidence. On-ledger Amendments object not captured (feature RPC only)."
+    },
+    "Q3": {
+      "protocol_expectation": {
+        "label": "CONFIRMED",
+        "summary": "VaultKind=1 + SubscriptionDate/RedemptionDate; gap >= 180 s; Subscription: deposit/withdraw ok, LoanSet tecTOO_SOON; Investment: deposit tecEXPIRED, withdraw tecTOO_SOON, LoanSet ok; Redemption: withdraw ok, deposit/LoanSet tecEXPIRED; LoanPay/LoanManage unrestricted."
+      },
+      "implementer_evidence": {
+        "status": "NOT_TESTED",
+        "detail": "Spike stopped after E1; no protocol transaction submitted."
+      },
+      "reviewer_conclusion": "Not demonstrated by run evidence."
+    },
+    "Q4": {
+      "protocol_expectation": {
+        "label": "CONFIRMED",
+        "summary": "Phase clock = parent ledger close time. Standalone close time = max(round(wall clock, resolution), parent + 1 s). LoanSet StartDate = containing ledger close time (later than provisional)."
+      },
+      "implementer_evidence": {
+        "status": "PARTIAL",
+        "detail": "E1 close times 845017070 -> 845017071 show parent + 1 s on back-to-back ledger_accept. Phase transitions not exercised."
+      },
+      "reviewer_conclusion": "Time rule corroborated; phase behaviour on script-closed ledger not demonstrated."
+    },
+    "Q5": {
+      "protocol_expectation": {
+        "label": "CONFIRMED",
+        "summary": "LoanBrokerSet by vault owner creates LoanBroker + pseudo-account; LoanBrokerCoverDeposit raises CoverAvailable; LoanSet needs CoverAvailable >= DebtTotal x CoverRateMinimum; default draws min(DebtTotal x CRM x CRL, DefaultAmount, CoverAvailable)."
+      },
+      "implementer_evidence": {
+        "status": "NOT_TESTED",
+        "detail": "Spike stopped after E1; no protocol transaction submitted."
+      },
+      "reviewer_conclusion": "Not demonstrated by run evidence."
+    },
+    "Q6": {
+      "protocol_expectation": {
+        "label": "CONFIRMED",
+        "summary": "Account signature via normal checkSign (single or multisig) plus required CounterpartySignature checked against the counterparty account; Account or Counterparty must be broker owner; fee = base x (1 + Account signers) + base x counterparty signers (single = 1); both signatures cover every non-signature field."
+      },
+      "implementer_evidence": {
+        "status": "NOT_TESTED",
+        "detail": "Spike stopped after E1; no protocol transaction submitted."
+      },
+      "reviewer_conclusion": "Not demonstrated by run evidence."
+    },
+    "Q7": {
+      "protocol_expectation": {
+        "label": "CONFIRMED",
+        "summary": "Separate authority (counterparty account's keys/list). Separate signed bytes only with fixCleanup3_4_0 (CPT/CPM prefixes); without it role signatures are transplantable."
+      },
+      "implementer_evidence": {
+        "status": "PARTIAL",
+        "detail": "fixCleanup3_4_0 enabled (E1). xrpl-py 5.2.0 uses the CPT prefix (reviewer check). No transaction run."
+      },
+      "reviewer_conclusion": "Precondition met; composition not demonstrated."
+    },
+    "Q8": {
+      "protocol_expectation": {
+        "label": "LIKELY",
+        "summary": "2-of-2 borrower can authorize LoanSet as Account (top-level Signers) or as Counterparty (Signers inside CounterpartySignature). Upstream positive test exists only for the Counterparty role."
+      },
+      "implementer_evidence": {
+        "status": "NOT_TESTED",
+        "detail": "Spike stopped after E1; no protocol transaction submitted."
+      },
+      "reviewer_conclusion": "Central question remains untested."
+    },
+    "Q9": {
+      "protocol_expectation": {
+        "label": "LIKELY",
+        "summary": "Top-level Signers and CounterpartySignature are independent non-signing fields verified separately; shape appears in upstream negative tests only."
+      },
+      "implementer_evidence": {
+        "status": "NOT_TESTED",
+        "detail": "Spike stopped after E1; no protocol transaction submitted."
+      },
+      "reviewer_conclusion": "Central question remains untested."
+    },
+    "Q10": {
+      "protocol_expectation": {
+        "label": "CONFIRMED",
+        "summary": "Counterparty signature over different bytes fails STTx::checkSign; submit returns invalidTransaction / fails local checks; never reaches a ledger."
+      },
+      "implementer_evidence": {
+        "status": "NOT_TESTED",
+        "detail": "Unexecuted script expects tefBAD_SIGNATURE, which the server does not return for this case (AUDIT L1)."
+      },
+      "reviewer_conclusion": "Latent script defect would turn a correct rejection into a crash."
+    },
+    "Q11": {
+      "protocol_expectation": {
+        "label": "LIKELY",
+        "summary": "LoanPay requires Account == Loan.Borrower and normal checkSign, so a quorum multisig qualifies."
+      },
+      "implementer_evidence": {
+        "status": "NOT_TESTED",
+        "detail": "Unexecuted script signs every LoanPay with the borrower master key (AUDIT section 3)."
+      },
+      "reviewer_conclusion": "Would not have been tested even if the script ran."
+    },
+    "Q12": {
+      "protocol_expectation": {
+        "label": "CONFIRMED",
+        "summary": "Regular: whole installments only (early allowed); sub-installment -> tecINSUFFICIENT_PAYMENT; excess ignored. Overpayment needs tx flag + lsfLoanOverpayment from LoanSet. Full early: tfLoanFullPayment, no loan flag, not on last payment. Late: tfLoanLatePayment required after due date."
+      },
+      "implementer_evidence": {
+        "status": "NOT_TESTED",
+        "detail": "Spike stopped after E1; no protocol transaction submitted."
+      },
+      "reviewer_conclusion": "Not demonstrated by run evidence."
+    },
+    "Q13": {
+      "protocol_expectation": {
+        "label": "CONFIRMED",
+        "summary": "PrincipalOutstanding, TotalValueOutstanding, ManagementFeeOutstanding, fee/rate fields, StartDate/PaymentInterval/GracePeriod/Previous/NextPaymentDueDate/PaymentRemaining/PeriodicPayment/LoanScale, lsfLoanImpaired/lsfLoanDefault. No accrued-interest or next-amount-due field. IOU LoanScale about 1e-13."
+      },
+      "implementer_evidence": {
+        "status": "NOT_TESTED",
+        "detail": "Spike stopped after E1; no protocol transaction submitted."
+      },
+      "reviewer_conclusion": "Not demonstrated by run evidence."
+    },
+    "Q14": {
+      "protocol_expectation": {
+        "label": "CONFIRMED",
+        "summary": "Enabled master key signs alone regardless of signer list; only the master key can set lsfDisableMaster (tecNEED_MASTER_KEY); quorum can SetRegularKey/SignerListSet; master can delete the list."
+      },
+      "implementer_evidence": {
+        "status": "NOT_TESTED",
+        "detail": "Spike stopped after E1; no protocol transaction submitted."
+      },
+      "reviewer_conclusion": "Not demonstrated by run evidence."
+    },
+    "Q15": {
+      "protocol_expectation": {
+        "label": "CONFIRMED",
+        "summary": "Contradicted before the spike: sub-installment 'early partial payment'; 'early or full payment only if flags allow'; unconditional first-loss absorption. Ambiguity: device-signed borrower side vs 2-of-2 LoanSet. Conditions: regular key, revocation list, micro-unit mapping, broker must own vault."
+      },
+      "implementer_evidence": {
+        "status": "NOT_APPLICABLE",
+        "detail": "Plan analysis, not a run."
+      },
+      "reviewer_conclusion": "See PLAN-DIFF.md."
+    }
+  },
+  "falsification_targets": {
+    "A_vault_phase": {
+      "implementer_claim": "none",
+      "implementer_evidence": "NOT_TESTED",
+      "reviewer_conclusion": "NOT_TESTED: nothing to falsify"
+    },
+    "B_loan_creation": {
+      "implementer_claim": "none",
+      "implementer_evidence": "NOT_TESTED",
+      "reviewer_conclusion": "NOT_TESTED: nothing to falsify"
+    },
+    "C_borrower_2_of_2": {
+      "implementer_claim": "none",
+      "implementer_evidence": "NOT_TESTED",
+      "reviewer_conclusion": "NOT_TESTED: nothing to falsify"
+    },
+    "D_borrower_broker_separation": {
+      "implementer_claim": "none",
+      "implementer_evidence": "NOT_TESTED",
+      "reviewer_conclusion": "NOT_TESTED: nothing to falsify"
+    },
+    "E_principal_disbursement": {
+      "implementer_claim": "none",
+      "implementer_evidence": "NOT_TESTED",
+      "reviewer_conclusion": "NOT_TESTED: nothing to falsify"
+    },
+    "F_loanpay_effect": {
+      "implementer_claim": "none",
+      "implementer_evidence": "NOT_TESTED",
+      "reviewer_conclusion": "NOT_TESTED: nothing to falsify"
+    },
+    "G_early_payment": {
+      "implementer_claim": "none",
+      "implementer_evidence": "NOT_TESTED",
+      "reviewer_conclusion": "NOT_TESTED: nothing to falsify"
+    },
+    "H_redemption": {
+      "implementer_claim": "none",
+      "implementer_evidence": "NOT_TESTED",
+      "reviewer_conclusion": "NOT_TESTED: nothing to falsify"
+    }
+  },
+  "implementer_experiments": {
+    "E1": {
+      "implementer_result": "PASS",
+      "reviewer_assessment": "VERIFIED_WITH_CAVEATS",
+      "caveats": [
+        "A1 not a fresh start",
+        "A2 reproducibility flag hardcoded",
+        "A3 volume path differs from data path",
+        "A4 on-ledger Amendments object not captured"
+      ]
+    },
+    "E2": {
+      "implementer_result": "NOT_APPLICABLE",
+      "reviewer_assessment": "NOT_RUN",
+      "note": "Label should be not run, not not-applicable."
+    },
+    "E3": {
+      "implementer_result": "NOT_APPLICABLE",
+      "reviewer_assessment": "NOT_RUN",
+      "note": "Label should be not run, not not-applicable."
+    },
+    "E4": {
+      "implementer_result": "NOT_APPLICABLE",
+      "reviewer_assessment": "NOT_RUN",
+      "note": "Label should be not run, not not-applicable."
+    },
+    "E5": {
+      "implementer_result": "NOT_APPLICABLE",
+      "reviewer_assessment": "NOT_RUN",
+      "note": "Label should be not run, not not-applicable."
+    },
+    "E6": {
+      "implementer_result": "NOT_APPLICABLE",
+      "reviewer_assessment": "NOT_RUN",
+      "note": "Label should be not run, not not-applicable."
+    },
+    "E7": {
+      "implementer_result": "NOT_APPLICABLE",
+      "reviewer_assessment": "NOT_RUN",
+      "note": "Label should be not run, not not-applicable."
+    },
+    "E8": {
+      "implementer_result": "NOT_APPLICABLE",
+      "reviewer_assessment": "NOT_RUN",
+      "note": "Label should be not run, not not-applicable."
+    },
+    "E9": {
+      "implementer_result": "NOT_APPLICABLE",
+      "reviewer_assessment": "NOT_RUN",
+      "note": "Label should be not run, not not-applicable."
+    }
+  },
+  "findings": {
+    "overstatement": [
+      "RESULTS.json overall PASS with 8 of 9 experiments unexecuted",
+      "unexecuted experiments labelled NOT_APPLICABLE"
+    ],
+    "latent_false_negative": [
+      "L1 altered-terms test expects tefBAD_SIGNATURE; server returns invalidTransaction and xrpl-py raises",
+      "L2 sub-installment test also sets tfLoanOverpayment"
+    ],
+    "latent_false_positive": [
+      "every LoanPay master-signed, so 2-of-2 LoanPay untested",
+      "experiment PASS written on tesSUCCESS without asserting ledger state",
+      "unrounded PeriodicPayment used as payment amount"
+    ],
+    "security": [
+      "S1 no secrets found (gitleaks, tree and history)",
+      "S2 evidence sanitization removes signer data needed to prove multisign",
+      "S3 inline gitleaks:allow",
+      "S4 no checked-in container invocation",
+      "S5 infra/rippled compose lacks --start"
+    ]
+  },
+  "verdict": "BLOCKED",
+  "verdict_reason": "Implementer evidence covers only the environment gate (E1). None of the architectural claims Credence needs has run evidence, so the evidence cannot answer whether the architecture works. Nothing was falsified. Source review finds the architecture LIKELY viable, with bounded plan corrections (PLAN-DIFF.md)."
+}
