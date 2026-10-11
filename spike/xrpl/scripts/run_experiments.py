@@ -17,6 +17,7 @@ from pathlib import Path
 from typing import Any
 
 import httpx
+from amendment_validation import validate_feature_response
 from xrpl.clients import JsonRpcClient
 from xrpl.models.amounts import IssuedCurrencyAmount
 from xrpl.models.currencies import IssuedCurrency
@@ -51,18 +52,6 @@ FAILURE_PATH = EVIDENCE_DIR / "unexpected-result.json"
 
 # XRPL issued-currency wire code for the six-character label tRLUSD.
 TR_USD = b"tRLUSD".hex().upper().ljust(40, "0")
-
-AMENDMENTS = {
-    # These non-matching IDs are retained as evidence of the fail-closed gate.
-    "MPTokensV1": "950AE2EA72CE4C967DEB64B3492BF98B1075D6F9540A6AF2FC63A5F365DB6326",  # gitleaks:allow
-    "SingleAssetVault": "81BD1A4416F5B0C5E4C4A79E3B5A8C1739558C6F34C1B24412EC6B98A76C53A7",
-    "LendingProtocol": "565B7D380202CE28816F28DE00BFA6F5CDA5B5F2AAC1FB57A62DD6B3EAA3F6A9",
-    "LendingProtocolV1_1": "A3600D5E65DB05A4DBA339DE9F8E0B60C231ED73753B0D3B3ED9007067F2CC55",
-    "fixCleanup3_1_3": "303A3142B599971FB89E8D021F2C66B1DEB781AB63205B9B7A8B1AB8E85A5E7A",
-    "fixCleanup3_2_0": "21B8A1C08D6640A0C8F175A3E0A435F8F34FD24E25B3FB0A0B779C67DCDF8B1C",
-    "fixCleanup3_3_0": "3298A9DA0A2F2D7A541F25A518DB3680152E6397B43E8B363C28CC5CFF5F2D76",
-    "fixCleanup3_4_0": "9843AB4A5D9A5D01C6A7C73D89AEE6E6B8C9434AC51D8C7612E226CF853D6F63",
-}
 
 TF_LOAN_OVERPAYMENT = 0x0001_0000
 TF_LOAN_LATE_PAYMENT = 0x0004_0000
@@ -346,13 +335,7 @@ def main() -> int:
 
     server_info = rpc("server_info")["info"]
     feature = rpc("feature")
-    amendment_state = {
-        name: {
-            "id": amendment_id,
-            "enabled": bool(feature.get(amendment_id, {}).get("enabled")),
-        }
-        for name, amendment_id in AMENDMENTS.items()
-    }
+    amendment_state = validate_feature_response({"result": feature})["amendments"]
     if server_info.get("network_id") != NETWORK_ID or not all(
         item["enabled"] for item in amendment_state.values()
     ):

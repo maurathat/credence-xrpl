@@ -20,5 +20,7 @@ See:
 - `evidence/amendments.json` for the complete 106-amendment inventory.
 - `evidence/server-info.json` for the stopped server state.
 
-The minimum distinguishing follow-up experiment is specified in `REPORT.md`
-but was intentionally not performed.
+Checkpoint 1A subsequently corrected only the validation harness and reran E1.
+E1 now passes; the original false-negative BLOCKED conclusion is retired.
+E2-E9 remain unattempted. See the recovery section appended to `REPORT.md` and
+`evidence/e1-validation.json` for the machine-readable result.

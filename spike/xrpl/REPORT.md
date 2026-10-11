@@ -179,3 +179,132 @@ protocol PASS or FAIL.
 - `spike/xrpl/evidence/server-info.json`
 - `spike/xrpl/evidence/unexpected-result.json`
 - `spike/xrpl/scripts/run_experiments.py`
+
+---
+
+# Checkpoint 1A recovery
+
+## Original failure
+
+Checkpoint 1 stopped at E1 with:
+
+```text
+STOP: Required network/amendment state is absent
+```
+
+Checkpoint 1A reproduced that false result without submitting a transaction:
+the old shallow lookup interpreted all eight required amendments as disabled
+when run against the actual `xrpld` 3.4.0 `feature` response.
+
+## Root cause
+
+The validator made two exact local assumptions that were false:
+
+1. It treated amendment IDs as direct children of the `result` object. The RPC
+   shape is `result.features.<amendment-id>`.
+2. Its eight configured amendment IDs did not match the IDs reported by the
+   pinned 3.4.0 build and already present in `config/xrpld.cfg`.
+
+The missing lookups defaulted to empty objects, so every `enabled` check became
+false even though all eight amendments existed, were supported, and were
+enabled.
+
+## Exact fix
+
+`scripts/amendment_validation.py` now owns the exact eight IDs and validates a
+complete JSON-RPC response through `result.features`. For each required entry,
+it fails closed unless:
+
+- the exact ID exists;
+- the reported name matches;
+- `supported` is exactly `true`; and
+- `enabled` is exactly `true`.
+
+`scripts/run_experiments.py` now delegates its amendment gate to that strict
+validator. `scripts/validate_environment.py` is a separate E1-only runner; it
+cannot enter E2.
+
+## Regression test
+
+`tests/test_amendment_validation.py` contains six passing tests against the
+captured real 3.4.0 response. They prove that:
+
+- the real response passes;
+- the original shallow-result lookup reproduces the false BLOCKED result;
+- a genuinely missing required amendment fails;
+- a disabled required amendment fails;
+- an unsupported required amendment fails; and
+- a missing nested `result.features` map fails.
+
+Spike-specific result: **6 passed**.
+
+## Raw evidence
+
+The E1 runner preserved the complete raw `feature` responses independently of
+the parser output:
+
+| Capture | SHA-256 | Bytes |
+| --- | --- | ---: |
+| Regression fixture | `73e1a3250c4c37c4be085273f9d477654d8344d083ec3bab9eaff72b3209f1e7` | 15190 |
+| Before closes | `3f9caa62f7b9c340207c49ed6f16fadbd605bb8b068332a4f358957f5ece3cd8` | 15192 |
+| After closes | `3f9caa62f7b9c340207c49ed6f16fadbd605bb8b068332a4f358957f5ece3cd8` | 15192 |
+
+The identical raw digests agree with the validator's before/after output. A
+reviewer can independently parse `evidence/feature-raw-e1-before.json` and
+`evidence/feature-raw-e1-after.json`. The complete machine-readable result is
+`evidence/e1-validation.json`.
+
+## Corrected E1 result
+
+**PASS.** Observed evidence establishes:
+
+- `xrpld` 3.4.0 from source commit
+  `4a4fded2eba11427c48ce3f24d9c1aea5e7a9d17`;
+- Debian package `xrpld 3.4.0-1 amd64` and the previously pinned binary/image
+  digests;
+- standalone mode with network ID `21337`;
+- two successful, reproducible closes from validated ledger 2 to 3 to 4;
+- all eight required amendments exist, are supported, and are enabled;
+- the same required state survived both closes; and
+- the strict validator agrees with both raw responses.
+
+No transaction was submitted. E2-E9 were not executed.
+
+## Previous BLOCKED conclusion
+
+The previous E1 **BLOCKED** conclusion is **retired** because its sole cause was
+the corrected local validation defect. The historical STOP and classification
+remain preserved above and in `evidence/unexpected-result.json`; they are not
+rewritten as a protocol result.
+
+## Checkpoint 1A recommendation
+
+**PASS.** E1 no longer blocks the spike. E2 may begin in a separately authorized
+continuation from this commit. Checkpoint 1A did not begin E2.
+
+## Checkpoint 1A gates
+
+- Spike-specific regression tests: PASS — 6 tests.
+- Repository tests: PASS — 17 unit and 4 conformance tests.
+- Lint and formatting: PASS.
+- Typecheck: PASS — strict mypy over 25 source files.
+- Secrets scan: PASS — no findings.
+- JSON validation and `git diff --check`: PASS.
+- Authorized-path check: PASS — every Checkpoint 1A change is under
+  `spike/xrpl/`.
+
+## Checkpoint 1A files changed
+
+- `spike/xrpl/.gitattributes`
+- `spike/xrpl/ENVIRONMENT.md`
+- `spike/xrpl/README.md`
+- `spike/xrpl/REPORT.md`
+- `spike/xrpl/RESULTS.json`
+- `spike/xrpl/evidence/e1-validation.json`
+- `spike/xrpl/evidence/feature-raw-e1-after.json`
+- `spike/xrpl/evidence/feature-raw-e1-before.json`
+- `spike/xrpl/evidence/feature-raw-original.json`
+- `spike/xrpl/scripts/amendment_validation.py`
+- `spike/xrpl/scripts/run_experiments.py`
+- `spike/xrpl/scripts/validate_environment.py`
+- `spike/xrpl/tests/test_amendment_validation.py`

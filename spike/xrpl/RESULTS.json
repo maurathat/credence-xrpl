@@ -1,8 +1,13 @@
 {
   "schema_version": 1,
-  "overall": "BLOCKED",
-  "stop_output": "STOP: Required network/amendment state is absent",
-  "classification": {
+  "overall": "PASS",
+  "scope": "Checkpoint 1A E1-only recovery",
+  "previous_stop": {
+    "output": "STOP: Required network/amendment state is absent",
+    "retired": true,
+    "retirement_reason": "The corrected validator passed against independently captured raw responses before and after two reproducible standalone ledger closes."
+  },
+  "previous_failure_classification": {
     "code": "A",
     "label": "local configuration error",
     "detail": "The E1 validation harness used eight non-matching amendment IDs and looked at the result object instead of its nested features map."
@@ -10,16 +15,17 @@
   "experiments": {
     "E1": {
       "claim_tested": "Pinned standalone rippled starts, closes, persists for the run, and enables the required amendments.",
-      "result": "BLOCKED",
+      "result": "PASS",
       "evidence_paths": [
         "ENVIRONMENT.md",
-        "evidence/amendments.json",
-        "evidence/server-info.json",
-        "evidence/unexpected-result.json"
+        "evidence/e1-validation.json",
+        "evidence/feature-raw-e1-before.json",
+        "evidence/feature-raw-e1-after.json",
+        "evidence/feature-raw-original.json"
       ],
       "transaction_hashes": [],
-      "ledger_indices": [2],
-      "notes": "Server startup and raw amendment status were observed. The harness stopped on a false negative before explicit ledger-close and persistence checks."
+      "ledger_indices": [2, 3, 4],
+      "notes": "The exact 3.4.0 build and standalone network ID 21337 were verified. Two ledger_accept calls advanced the validated ledger from 2 to 3 to 4. All eight required amendments existed, were supported, and were enabled before and after the closes."
     },
     "E2": {
       "claim_tested": "Runtime-generated actors can hold and transfer locally issued tRLUSD.",
@@ -27,7 +33,7 @@
       "evidence_paths": ["REPORT.md"],
       "transaction_hashes": [],
       "ledger_indices": [],
-      "notes": "Not attempted after STOP."
+      "notes": "Not attempted; Checkpoint 1A was limited to E1."
     },
     "E3": {
       "claim_tested": "Closed-ended vault operations are gated by subscription, investment, and redemption phase.",
@@ -35,7 +41,7 @@
       "evidence_paths": ["REPORT.md"],
       "transaction_hashes": [],
       "ledger_indices": [],
-      "notes": "Not attempted after STOP."
+      "notes": "Not attempted; Checkpoint 1A was limited to E1."
     },
     "E4": {
       "claim_tested": "A Loan Broker with first-loss cover attaches to the closed-ended vault.",
@@ -43,7 +49,7 @@
       "evidence_paths": ["REPORT.md"],
       "transaction_hashes": [],
       "ledger_indices": [],
-      "notes": "Not attempted after STOP."
+      "notes": "Not attempted; Checkpoint 1A was limited to E1."
     },
     "E5": {
       "claim_tested": "The borrower account enforces ResearchBot plus Credence policy signer 2-of-2 while retaining its master key.",
@@ -51,7 +57,7 @@
       "evidence_paths": ["REPORT.md"],
       "transaction_hashes": [],
       "ledger_indices": [],
-      "notes": "Not attempted after STOP."
+      "notes": "Not attempted; Checkpoint 1A was limited to E1."
     },
     "E6": {
       "claim_tested": "Borrower 2-of-2 account authorization composes with distinct Loan Broker counterparty authorization over exact LoanSet terms.",
@@ -59,7 +65,7 @@
       "evidence_paths": ["REPORT.md"],
       "transaction_hashes": [],
       "ledger_indices": [],
-      "notes": "Not attempted after STOP."
+      "notes": "Not attempted; Checkpoint 1A was limited to E1."
     },
     "E7": {
       "claim_tested": "Valid LoanSet creates loan state and disburses principal with corresponding vault and broker state changes.",
@@ -67,7 +73,7 @@
       "evidence_paths": ["REPORT.md"],
       "transaction_hashes": [],
       "ledger_indices": [],
-      "notes": "Not attempted after STOP."
+      "notes": "Not attempted; Checkpoint 1A was limited to E1."
     },
     "E8": {
       "claim_tested": "Scheduled, early partial, and overpayment behavior is observable with exact results and loan state.",
@@ -75,7 +81,7 @@
       "evidence_paths": ["REPORT.md"],
       "transaction_hashes": [],
       "ledger_indices": [],
-      "notes": "Not attempted after STOP."
+      "notes": "Not attempted; Checkpoint 1A was limited to E1."
     },
     "E9": {
       "claim_tested": "Redemption rejects new loans while allowing repayment and lender withdrawal.",
@@ -83,8 +89,9 @@
       "evidence_paths": ["REPORT.md"],
       "transaction_hashes": [],
       "ledger_indices": [],
-      "notes": "Not attempted after STOP."
+      "notes": "Not attempted; Checkpoint 1A was limited to E1."
     }
   },
-  "minimum_next_experiment_performed": false
+  "minimum_next_experiment_performed": true,
+  "later_experiments_executed": false
 }

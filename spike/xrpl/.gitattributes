@@ -1,0 +1,3 @@
+# Preserve byte-exact HTTP response bodies, including their transport line endings.
+evidence/feature-raw-e1-before.json binary
+evidence/feature-raw-e1-after.json binary

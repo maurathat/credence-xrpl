@@ -72,3 +72,22 @@ disabled. The nine enabled amendments were the eight required entries plus
 
 The pinned source's `include/xrpl/protocol/detail/features.macro` declares all
 eight. The current `feature` RPC independently reports all eight as supported.
+
+## Checkpoint 1A recovery observation
+
+Checkpoint 1A retained the identical container, image, configuration, network
+ID, and pinned build. The corrected E1-only validator called `ledger_accept`
+twice. The validated ledger advanced exactly from index 2 to 3 and then 4; both
+calls returned `success`. The required amendment state and server identity were
+unchanged across both closes.
+
+Raw `feature` responses captured immediately before and after the closes are:
+
+- `evidence/feature-raw-e1-before.json`, SHA-256
+  `3f9caa62f7b9c340207c49ed6f16fadbd605bb8b068332a4f358957f5ece3cd8`;
+- `evidence/feature-raw-e1-after.json`, SHA-256
+  `3f9caa62f7b9c340207c49ed6f16fadbd605bb8b068332a4f358957f5ece3cd8`.
+
+Their identical digests provide byte-for-byte evidence that the complete
+amendment response persisted across the closes. The machine-readable E1 result
+and the independently checkable digests are in `evidence/e1-validation.json`.
