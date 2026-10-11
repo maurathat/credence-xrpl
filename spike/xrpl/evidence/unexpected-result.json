@@ -1,0 +1,38 @@
+{
+  "amendments": {
+    "LendingProtocol": {
+      "enabled": false,
+      "id": "565B7D380202CE28816F28DE00BFA6F5CDA5B5F2AAC1FB57A62DD6B3EAA3F6A9"
+    },
+    "LendingProtocolV1_1": {
+      "enabled": false,
+      "id": "A3600D5E65DB05A4DBA339DE9F8E0B60C231ED73753B0D3B3ED9007067F2CC55"
+    },
+    "MPTokensV1": {
+      "enabled": false,
+      "id": "950AE2EA72CE4C967DEB64B3492BF98B1075D6F9540A6AF2FC63A5F365DB6326"
+    },
+    "SingleAssetVault": {
+      "enabled": false,
+      "id": "81BD1A4416F5B0C5E4C4A79E3B5A8C1739558C6F34C1B24412EC6B98A76C53A7"
+    },
+    "fixCleanup3_1_3": {
+      "enabled": false,
+      "id": "303A3142B599971FB89E8D021F2C66B1DEB781AB63205B9B7A8B1AB8E85A5E7A"
+    },
+    "fixCleanup3_2_0": {
+      "enabled": false,
+      "id": "21B8A1C08D6640A0C8F175A3E0A435F8F34FD24E25B3FB0A0B779C67DCDF8B1C"
+    },
+    "fixCleanup3_3_0": {
+      "enabled": false,
+      "id": "3298A9DA0A2F2D7A541F25A518DB3680152E6397B43E8B363C28CC5CFF5F2D76"
+    },
+    "fixCleanup3_4_0": {
+      "enabled": false,
+      "id": "9843AB4A5D9A5D01C6A7C73D89AEE6E6B8C9434AC51D8C7612E226CF853D6F63"
+    }
+  },
+  "classification": "B. amendment unavailable/not enabled",
+  "network_id": 21337
+}

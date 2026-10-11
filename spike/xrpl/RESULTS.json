@@ -1,0 +1,90 @@
+{
+  "schema_version": 1,
+  "overall": "BLOCKED",
+  "stop_output": "STOP: Required network/amendment state is absent",
+  "classification": {
+    "code": "A",
+    "label": "local configuration error",
+    "detail": "The E1 validation harness used eight non-matching amendment IDs and looked at the result object instead of its nested features map."
+  },
+  "experiments": {
+    "E1": {
+      "claim_tested": "Pinned standalone rippled starts, closes, persists for the run, and enables the required amendments.",
+      "result": "BLOCKED",
+      "evidence_paths": [
+        "ENVIRONMENT.md",
+        "evidence/amendments.json",
+        "evidence/server-info.json",
+        "evidence/unexpected-result.json"
+      ],
+      "transaction_hashes": [],
+      "ledger_indices": [2],
+      "notes": "Server startup and raw amendment status were observed. The harness stopped on a false negative before explicit ledger-close and persistence checks."
+    },
+    "E2": {
+      "claim_tested": "Runtime-generated actors can hold and transfer locally issued tRLUSD.",
+      "result": "NOT_APPLICABLE",
+      "evidence_paths": ["REPORT.md"],
+      "transaction_hashes": [],
+      "ledger_indices": [],
+      "notes": "Not attempted after STOP."
+    },
+    "E3": {
+      "claim_tested": "Closed-ended vault operations are gated by subscription, investment, and redemption phase.",
+      "result": "NOT_APPLICABLE",
+      "evidence_paths": ["REPORT.md"],
+      "transaction_hashes": [],
+      "ledger_indices": [],
+      "notes": "Not attempted after STOP."
+    },
+    "E4": {
+      "claim_tested": "A Loan Broker with first-loss cover attaches to the closed-ended vault.",
+      "result": "NOT_APPLICABLE",
+      "evidence_paths": ["REPORT.md"],
+      "transaction_hashes": [],
+      "ledger_indices": [],
+      "notes": "Not attempted after STOP."
+    },
+    "E5": {
+      "claim_tested": "The borrower account enforces ResearchBot plus Credence policy signer 2-of-2 while retaining its master key.",
+      "result": "NOT_APPLICABLE",
+      "evidence_paths": ["REPORT.md"],
+      "transaction_hashes": [],
+      "ledger_indices": [],
+      "notes": "Not attempted after STOP."
+    },
+    "E6": {
+      "claim_tested": "Borrower 2-of-2 account authorization composes with distinct Loan Broker counterparty authorization over exact LoanSet terms.",
+      "result": "NOT_APPLICABLE",
+      "evidence_paths": ["REPORT.md"],
+      "transaction_hashes": [],
+      "ledger_indices": [],
+      "notes": "Not attempted after STOP."
+    },
+    "E7": {
+      "claim_tested": "Valid LoanSet creates loan state and disburses principal with corresponding vault and broker state changes.",
+      "result": "NOT_APPLICABLE",
+      "evidence_paths": ["REPORT.md"],
+      "transaction_hashes": [],
+      "ledger_indices": [],
+      "notes": "Not attempted after STOP."
+    },
+    "E8": {
+      "claim_tested": "Scheduled, early partial, and overpayment behavior is observable with exact results and loan state.",
+      "result": "NOT_APPLICABLE",
+      "evidence_paths": ["REPORT.md"],
+      "transaction_hashes": [],
+      "ledger_indices": [],
+      "notes": "Not attempted after STOP."
+    },
+    "E9": {
+      "claim_tested": "Redemption rejects new loans while allowing repayment and lender withdrawal.",
+      "result": "NOT_APPLICABLE",
+      "evidence_paths": ["REPORT.md"],
+      "transaction_hashes": [],
+      "ledger_indices": [],
+      "notes": "Not attempted after STOP."
+    }
+  },
+  "minimum_next_experiment_performed": false
+}

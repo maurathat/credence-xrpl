@@ -1,0 +1,17 @@
+{
+  "captured_from": "server_info RPC on the stopped, unchanged standalone ledger",
+  "info": {
+    "build_version": "3.4.0",
+    "complete_ledgers": "2",
+    "network_id": 21337,
+    "server_state": "full",
+    "validated_ledger": {
+      "age": 190,
+      "base_fee_xrp": 0.00001,
+      "hash": "E27EDC09FC53807836E5381CA31887E35A03D21CF70C7EB0A5022C0161AC4979",
+      "reserve_base_xrp": 10,
+      "reserve_inc_xrp": 2,
+      "seq": 2
+    }
+  }
+}
