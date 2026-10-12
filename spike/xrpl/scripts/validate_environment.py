@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run Checkpoint 1A's E1-only standalone environment validation."""
+"""Run Checkpoint 1B-R's E1-only standalone environment validation."""
 
 from __future__ import annotations
 
@@ -12,7 +12,12 @@ from pathlib import Path
 from typing import Any
 
 import httpx
-from amendment_validation import validate_feature_response
+from amendment_validation import (
+    amendments_ledger_entry_params,
+    cross_check_amendment_representations,
+    validate_amendments_ledger_entry,
+    validate_feature_response,
+)
 
 RPC_URL = os.environ.get("XRPL_RPC_URL", "http://127.0.0.1:5005")
 CONTAINER = os.environ.get("XRPL_CONTAINER_NAME", "credence-xrpl-spike-ledger")
@@ -20,8 +25,10 @@ EXPECTED_VERSION = "3.4.0"
 EXPECTED_COMMIT = "4a4fded2eba11427c48ce3f24d9c1aea5e7a9d17"
 EXPECTED_NETWORK_ID = 21_337
 SPIKE_ROOT = Path(__file__).resolve().parents[1]
-EVIDENCE_DIR = SPIKE_ROOT / "evidence"
+EVIDENCE_DIR = SPIKE_ROOT / "evidence" / "checkpoint-1b-r"
 OUTPUT_PATH = EVIDENCE_DIR / "e1-validation.json"
+MANIFEST_PATH = EVIDENCE_DIR / "MANIFEST.json"
+EXPECTED_DATA_PATH = "/var/lib/xrpld"
 
 
 class EnvironmentValidationError(RuntimeError):
@@ -29,6 +36,7 @@ class EnvironmentValidationError(RuntimeError):
 
 
 def write_json(path: Path, value: Any) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(value, indent=2, sort_keys=True) + "\n")
 
 
@@ -75,14 +83,37 @@ def validated_ledger() -> dict[str, Any]:
     }
 
 
-def capture_feature(name: str) -> tuple[dict[str, Any], dict[str, Any]]:
-    response, raw = rpc_raw("feature")
+def capture_rpc(name: str, method: str, **params: Any) -> tuple[dict[str, Any], dict[str, Any]]:
+    response, raw = rpc_raw(method, **params)
     path = EVIDENCE_DIR / name
     path.write_bytes(raw)
     return response, {
-        "path": f"evidence/{name}",
+        "path": f"evidence/checkpoint-1b-r/{name}",
         "sha256": hashlib.sha256(raw).hexdigest(),
         "bytes": len(raw),
+    }
+
+
+def capture_server_info(name: str) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Capture relevant raw server state without committing key-shaped values."""
+    response, _ = rpc_raw("server_info")
+    captured = json.loads(json.dumps(response))
+    info = captured["result"]["info"]
+    omitted = [field for field in ("pubkey_node", "pubkey_validator") if field in info]
+    for field in omitted:
+        del info[field]
+    captured["evidence_redaction"] = {
+        "omitted_fields": omitted,
+        "reason": "Repository policy prohibits key-shaped strings; these fields are not required for E1.",
+    }
+    raw = (json.dumps(captured, sort_keys=True, separators=(",", ":")) + "\n").encode()
+    path = EVIDENCE_DIR / name
+    path.write_bytes(raw)
+    return response, {
+        "path": f"evidence/checkpoint-1b-r/{name}",
+        "sha256": hashlib.sha256(raw).hexdigest(),
+        "bytes": len(raw),
+        "omitted_fields": omitted,
     }
 
 
@@ -108,6 +139,17 @@ def build_provenance() -> dict[str, Any]:
     inspect = json.loads(run(["docker", "inspect", CONTAINER]))[0]
     command = inspect["Config"]["Cmd"]
     entrypoint = inspect["Config"]["Entrypoint"]
+    mounts = [
+        {
+            "type": item["Type"],
+            "name": item.get("Name"),
+            "destination": item["Destination"],
+        }
+        for item in inspect["Mounts"]
+    ]
+    data_mount_matches_config = any(
+        item["type"] == "volume" and item["destination"] == EXPECTED_DATA_PATH for item in mounts
+    )
 
     observed = {
         "xrpld_version": version_match.group(1),
@@ -119,6 +161,10 @@ def build_provenance() -> dict[str, Any]:
         "command": command,
         "network_mode": "standalone" if "--standalone" in command else "other",
         "fresh_start_flag": "--start" in command,
+        "started_at": inspect["State"]["StartedAt"],
+        "mounts": mounts,
+        "configured_data_path": EXPECTED_DATA_PATH,
+        "data_mount_matches_config": data_mount_matches_config,
     }
     if observed["xrpld_version"] != EXPECTED_VERSION:
         raise EnvironmentValidationError("xrpld version differs from the pin")
@@ -126,19 +172,49 @@ def build_provenance() -> dict[str, Any]:
         raise EnvironmentValidationError("xrpld source commit differs from the pin")
     if observed["network_mode"] != "standalone":
         raise EnvironmentValidationError("xrpld is not running in standalone mode")
+    if not observed["fresh_start_flag"]:
+        raise EnvironmentValidationError("xrpld did not start with --start")
+    if not data_mount_matches_config:
+        raise EnvironmentValidationError("data volume is not mounted at the configured path")
     return observed
+
+
+def create_manifest() -> dict[str, Any]:
+    files = []
+    for path in sorted(EVIDENCE_DIR.iterdir()):
+        if path.is_file() and path != MANIFEST_PATH:
+            raw = path.read_bytes()
+            files.append(
+                {
+                    "path": path.name,
+                    "bytes": len(raw),
+                    "sha256": hashlib.sha256(raw).hexdigest(),
+                }
+            )
+    manifest = {"algorithm": "SHA-256", "file_count": len(files), "files": files}
+    write_json(MANIFEST_PATH, manifest)
+    return manifest
 
 
 def main() -> int:
     EVIDENCE_DIR.mkdir(parents=True, exist_ok=True)
     provenance = build_provenance()
-    server_before_raw, _ = rpc_raw("server_info")
+    server_before_raw, server_before_evidence = capture_server_info("server-info-before.json")
     server_before = server_summary(server_before_raw)
     if server_before["network_id"] != EXPECTED_NETWORK_ID:
         raise EnvironmentValidationError("network ID differs from the spike configuration")
 
-    feature_before_raw, feature_before_evidence = capture_feature("feature-raw-e1-before.json")
+    feature_before_raw, feature_before_evidence = capture_rpc("feature-before.json", "feature")
     amendment_before = validate_feature_response(feature_before_raw)
+    ledger_amendments_before_raw, ledger_amendments_before_evidence = capture_rpc(
+        "amendments-ledger-entry-before.json",
+        "ledger_entry",
+        **amendments_ledger_entry_params(),
+    )
+    ledger_amendments_before = validate_amendments_ledger_entry(ledger_amendments_before_raw)
+    cross_check_before = cross_check_amendment_representations(
+        amendment_before, ledger_amendments_before
+    )
     ledger_before = validated_ledger()
 
     closures: list[dict[str, Any]] = []
@@ -159,12 +235,23 @@ def main() -> int:
         )
         previous_index = ledger["ledger_index"]
 
-    feature_after_raw, feature_after_evidence = capture_feature("feature-raw-e1-after.json")
+    feature_after_raw, feature_after_evidence = capture_rpc("feature-after.json", "feature")
     amendment_after = validate_feature_response(feature_after_raw)
-    server_after_raw, _ = rpc_raw("server_info")
+    ledger_amendments_after_raw, ledger_amendments_after_evidence = capture_rpc(
+        "amendments-ledger-entry-after.json",
+        "ledger_entry",
+        **amendments_ledger_entry_params(),
+    )
+    ledger_amendments_after = validate_amendments_ledger_entry(ledger_amendments_after_raw)
+    cross_check_after = cross_check_amendment_representations(
+        amendment_after, ledger_amendments_after
+    )
+    server_after_raw, server_after_evidence = capture_server_info("server-info-after.json")
     server_after = server_summary(server_after_raw)
     state_survived = (
         amendment_before == amendment_after
+        and ledger_amendments_before == ledger_amendments_after
+        and cross_check_before == cross_check_after
         and server_before["build_version"] == server_after["build_version"]
         and server_before["network_id"] == server_after["network_id"]
     )
@@ -187,14 +274,38 @@ def main() -> int:
         "state_survived_closures": state_survived,
         "amendment_validation_before": amendment_before,
         "amendment_validation_after": amendment_after,
+        "amendments_ledger_validation_before": ledger_amendments_before,
+        "amendments_ledger_validation_after": ledger_amendments_after,
+        "feature_vs_ledger_cross_check_before": cross_check_before,
+        "feature_vs_ledger_cross_check_after": cross_check_after,
+        "authoritative_request": {
+            "method": "ledger_entry",
+            "params": amendments_ledger_entry_params(),
+            "source": [
+                "rippled 3.4.0 src/xrpld/rpc/handlers/ledger/LedgerEntry.cpp: fixed()/parseFixed()",
+                "rippled 3.4.0 src/test/rpc/LedgerEntry_test.cpp: field:true fixed-entry test",
+            ],
+            "previous_request_invalid_because": "An empty object is not boolean true; parseFixed therefore attempted to parse it as a ledger object index and returned malformedRequest.",
+        },
         "raw_feature_evidence": {
             "before": feature_before_evidence,
             "after": feature_after_evidence,
             "validator_agrees_with_both": amendment_before["valid"] and amendment_after["valid"],
         },
+        "raw_amendments_ledger_evidence": {
+            "before": ledger_amendments_before_evidence,
+            "after": ledger_amendments_after_evidence,
+            "validator_agrees_with_both": ledger_amendments_before["valid"]
+            and ledger_amendments_after["valid"],
+        },
+        "raw_server_evidence": {
+            "before": server_before_evidence,
+            "after": server_after_evidence,
+        },
         "later_experiments_executed": False,
     }
     write_json(OUTPUT_PATH, output)
+    create_manifest()
     print(json.dumps({"E1": "PASS", "evidence": str(OUTPUT_PATH)}, sort_keys=True))
     return 0
 

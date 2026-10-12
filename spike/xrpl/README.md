@@ -30,3 +30,10 @@ on-ledger amendment cross-check sent an invalid fixed-object selector and
 received `malformedRequest`. No protocol transaction was submitted. E2-E9 are
 `NOT_ATTEMPTED`; see the Checkpoint 1B section of `REPORT.md` and
 `evidence/checkpoint-1b/unexpected-result.json`.
+
+Checkpoint 1B-R repaired that request using the pinned source's fixed-location
+selector, `amendments: true`. A fresh E1 run passed: `feature` and the
+Amendments ledger object agreed on all eight required amendments before and
+after two reproducible closes. E1 is now frozen; E2-E9 remain
+`NOT_ATTEMPTED`. Reproduce the environment with `scripts/start_ledger.sh` and
+see `evidence/checkpoint-1b-r/` for raw evidence.

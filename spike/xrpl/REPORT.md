@@ -436,3 +436,114 @@ therefore not reported as a completed gate or fix.
 - `spike/xrpl/evidence/checkpoint-1b/MANIFEST.json`
 - `spike/xrpl/evidence/checkpoint-1b/feature-raw-e1-before.json`
 - `spike/xrpl/evidence/checkpoint-1b/unexpected-result.json`
+
+---
+
+# Checkpoint 1B-R Amendments request repair
+
+## Outcome
+
+**PASS — E1 restored and independently cross-checked.**
+
+No E2-E9 transaction was submitted.
+
+## OBSERVED
+
+Pinned rippled 3.4.0 source implements Amendments as a fixed-location ledger
+entry. `src/xrpld/rpc/handlers/ledger/LedgerEntry.cpp` routes it through
+`fixed()` and `parseFixed()`. That parser accepts boolean `true`; otherwise it
+tries to parse the supplied value as a ledger-object index.
+
+The pinned source's `src/test/rpc/LedgerEntry_test.cpp` explicitly tests:
+
+```json
+{"ledger_index":"validated","amendments":true}
+```
+
+The prior `{}` selector was therefore invalid: it was neither boolean `true`
+nor a valid object-index string, producing the recorded `malformedRequest`.
+
+The repaired E1 run recreated the dedicated container and volume, mounted the
+volume at `/var/lib/xrpld`, and started the unchanged pinned build with
+`--standalone --start`. Observed build identity was xrpld `3.4.0`, package
+`xrpld 3.4.0-1 amd64`, source commit
+`4a4fded2eba11427c48ce3f24d9c1aea5e7a9d17`, and binary SHA-256
+`9b4d3dd28b31a22419fd905682e238298eefb8941e2efcde5241a4b19fa0c417`.
+
+The validated ledger advanced exactly from index 2 to 3 to 4. Close times were
+`845080860`, `845080861`, and `845080862`.
+
+Before and after those closes:
+
+- `feature` contained 106 amendments and reported all eight required entries
+  with the exact name and ID, `supported: true`, and `enabled: true`;
+- the Amendments ledger object contained nine enabled IDs, including all eight
+  required IDs; and
+- the cross-check reported no disagreement for any required amendment.
+
+Raw responses and their SHA-256 manifest are under
+`evidence/checkpoint-1b-r/`.
+
+## DERIVED
+
+The Checkpoint 1B stop remains correctly classified as **A. local
+configuration error** in the validation harness. The corrected request and two
+independent representations retire that stop without changing the pinned
+server, amendments, or configuration.
+
+## UNRESOLVED
+
+E2-E9 remain NOT_ATTEMPTED. This checkpoint establishes only E1 environment
+invariants; it makes no tRLUSD, vault, broker, cover, signer, LoanSet, LoanPay,
+or lifecycle claim.
+
+## Regression tests
+
+Ten spike tests pass. They cover the real 3.4.0 feature fixture, reject the
+previous `{}` selector locally, accept `amendments: true`, validate a returned
+Amendments object, cross-check both representations, and fail for missing,
+disabled, or unsupported required amendments.
+
+## E1 freeze
+
+E1 environment validation is frozen after Checkpoint 1B-R. Later checkpoints
+may verify its recorded invariants but must not add new E1 requirements without
+a separately approved checkpoint.
+
+## Recommendation
+
+**PASS. Checkpoint 1B may resume at E2.** E6-E9 remain prohibited until their
+separately authorized checkpoints.
+
+## Checkpoint 1B-R gates
+
+- Spike-specific tests: PASS — 10 tests.
+- Repository unit tests: PASS — 17 tests.
+- Conformance tests: PASS — 4 tests.
+- Lint, format check, and large-file check: PASS.
+- Strict typecheck: PASS — 25 source files.
+- Secrets scan: PASS — no findings. Public node-key fields irrelevant to E1
+  were deliberately omitted from captured server responses under the repository
+  no-key-shaped-strings rule; each evidence file records the omission.
+- JSON syntax, evidence-manifest verification, and `git diff --check`: PASS.
+- Authorized-path check: PASS — every change is under `spike/xrpl/`.
+- Review path and both submodule gitlinks: unchanged.
+
+## Checkpoint 1B-R modified paths
+
+- `spike/xrpl/ENVIRONMENT.md`
+- `spike/xrpl/README.md`
+- `spike/xrpl/REPORT.md`
+- `spike/xrpl/RESULTS.json`
+- `spike/xrpl/evidence/checkpoint-1b-r/MANIFEST.json`
+- `spike/xrpl/evidence/checkpoint-1b-r/amendments-ledger-entry-after.json`
+- `spike/xrpl/evidence/checkpoint-1b-r/amendments-ledger-entry-before.json`
+- `spike/xrpl/evidence/checkpoint-1b-r/e1-validation.json`
+- `spike/xrpl/evidence/checkpoint-1b-r/feature-after.json`
+- `spike/xrpl/evidence/checkpoint-1b-r/feature-before.json`
+- `spike/xrpl/evidence/checkpoint-1b-r/server-info-after.json`
+- `spike/xrpl/evidence/checkpoint-1b-r/server-info-before.json`
+- `spike/xrpl/scripts/amendment_validation.py`
+- `spike/xrpl/scripts/start_ledger.sh`
+- `spike/xrpl/scripts/validate_environment.py`
+- `spike/xrpl/tests/test_amendment_validation.py`

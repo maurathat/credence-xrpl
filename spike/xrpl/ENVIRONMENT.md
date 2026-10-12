@@ -108,3 +108,18 @@ The existing strict `feature` validation succeeded, but a newly added
 transaction. This observation does not replace the Checkpoint 1A E1 PASS; it
 records that the new 1B regression gate is BLOCKED by a local request-shape
 defect.
+
+## Checkpoint 1B-R repaired E1
+
+Pinned 3.4.0 source establishes the fixed-location request shape as
+`{"ledger_index":"validated","amendments":true}`. The repaired runner used
+that exact shape against a newly recreated volume mounted at `/var/lib/xrpld`.
+
+The environment again reported xrpld `3.4.0`, package `3.4.0-1 amd64`, source
+commit `4a4fded2eba11427c48ce3f24d9c1aea5e7a9d17`, standalone network ID
+`21337`, and `--start`. Two explicit closes advanced ledger indices 2 → 3 → 4.
+
+The `feature` response and Amendments ledger object independently confirmed
+all eight required amendments before and after the closes. Their normalized
+cross-check had no disagreements. Raw responses, complete build provenance,
+and the evidence digest manifest are in `evidence/checkpoint-1b-r/`.

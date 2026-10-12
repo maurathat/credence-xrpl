@@ -1,0 +1,41 @@
+{
+  "algorithm": "SHA-256",
+  "file_count": 7,
+  "files": [
+    {
+      "bytes": 967,
+      "path": "amendments-ledger-entry-after.json",
+      "sha256": "4685acb4e3692d855268d882b4fd6ece04315354ab244b8a93a68d06392bd211"
+    },
+    {
+      "bytes": 967,
+      "path": "amendments-ledger-entry-before.json",
+      "sha256": "488264fae7a3abb893018803043522f273aa30379c2db1aafd549a026f5cb391"
+    },
+    {
+      "bytes": 16049,
+      "path": "e1-validation.json",
+      "sha256": "e7bd42b3e8cc1a00e94c21bf2d427dfd424b491c5cdae175577982e978fc4bdb"
+    },
+    {
+      "bytes": 15192,
+      "path": "feature-after.json",
+      "sha256": "3f9caa62f7b9c340207c49ed6f16fadbd605bb8b068332a4f358957f5ece3cd8"
+    },
+    {
+      "bytes": 15192,
+      "path": "feature-before.json",
+      "sha256": "3f9caa62f7b9c340207c49ed6f16fadbd605bb8b068332a4f358957f5ece3cd8"
+    },
+    {
+      "bytes": 1455,
+      "path": "server-info-after.json",
+      "sha256": "991a2ee3ecd2a986643fb0ca6a2875befb4c7412f06d379b99833acff09a148a"
+    },
+    {
+      "bytes": 1382,
+      "path": "server-info-before.json",
+      "sha256": "599cde9f64021afc0d0c1b4e6d15ecfdd44c93d503f84dc30923539f412461e5"
+    }
+  ]
+}

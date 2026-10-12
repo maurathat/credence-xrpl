@@ -20,6 +20,76 @@ class AmendmentValidationError(ValueError):
     """The raw feature response does not satisfy the required amendment set."""
 
 
+def amendments_ledger_entry_params(selector: object = True) -> dict[str, Any]:
+    """Build the pinned 3.4.0 request for the fixed Amendments ledger entry.
+
+    `LedgerEntry.cpp::parseFixed` accepts boolean true for fixed-location
+    entries. The pinned `LedgerEntry_test.cpp` covers the exact
+    `{"ledger_index":"validated", "amendments":true}` form.
+    """
+    if selector is not True:
+        raise AmendmentValidationError(
+            "the pinned fixed-location Amendments selector must be boolean true"
+        )
+    return {"ledger_index": "validated", "amendments": True}
+
+
+def validate_amendments_ledger_entry(response: dict[str, Any]) -> dict[str, Any]:
+    """Validate the Amendments ledger object and required enabled IDs."""
+    result = response.get("result")
+    if not isinstance(result, dict) or result.get("status") != "success":
+        raise AmendmentValidationError("ledger_entry response status is not success")
+    node = result.get("node")
+    if not isinstance(node, dict) or node.get("LedgerEntryType") != "Amendments":
+        raise AmendmentValidationError("ledger_entry did not return an Amendments object")
+    enabled_ids = node.get("Amendments")
+    if not isinstance(enabled_ids, list) or not all(isinstance(item, str) for item in enabled_ids):
+        raise AmendmentValidationError("Amendments object has no valid Amendments ID list")
+
+    enabled_set = set(enabled_ids)
+    required = {
+        name: {"id": amendment_id, "enabled_on_ledger": amendment_id in enabled_set}
+        for name, amendment_id in REQUIRED_AMENDMENTS.items()
+    }
+    missing = [name for name, state in required.items() if not state["enabled_on_ledger"]]
+    if missing:
+        raise AmendmentValidationError(
+            "required amendments absent from Amendments ledger object: " + ", ".join(missing)
+        )
+    return {
+        "valid": True,
+        "ledger_entry_type": "Amendments",
+        "enabled_count": len(enabled_ids),
+        "required": required,
+    }
+
+
+def cross_check_amendment_representations(
+    feature_validation: dict[str, Any], ledger_validation: dict[str, Any]
+) -> dict[str, Any]:
+    """Require feature support/enabled state to agree with the ledger IDs."""
+    checks: dict[str, dict[str, Any]] = {}
+    disagreements: list[str] = []
+    for name in REQUIRED_AMENDMENTS:
+        feature = feature_validation["amendments"][name]
+        ledger = ledger_validation["required"][name]
+        agrees = bool(feature["supported"] and feature["enabled"] and ledger["enabled_on_ledger"])
+        checks[name] = {
+            "id": feature["id"],
+            "feature_supported": feature["supported"],
+            "feature_enabled": feature["enabled"],
+            "ledger_enabled": ledger["enabled_on_ledger"],
+            "agrees": agrees,
+        }
+        if not agrees:
+            disagreements.append(name)
+    if disagreements:
+        raise AmendmentValidationError(
+            "feature and Amendments ledger object disagree: " + ", ".join(disagreements)
+        )
+    return {"valid": True, "required": checks, "disagreements": []}
+
+
 def validate_feature_response(response: dict[str, Any]) -> dict[str, Any]:
     """Validate a complete JSON-RPC response and return machine-readable state.
 

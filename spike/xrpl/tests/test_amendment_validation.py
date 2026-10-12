@@ -84,3 +84,53 @@ def test_missing_nested_features_map_fails(raw_feature_response: dict[str, Any])
 
     with pytest.raises(MODULE.AmendmentValidationError, match=r"result\.features"):
         MODULE.validate_feature_response(response)
+
+
+def test_previous_empty_object_amendments_selector_is_rejected_locally() -> None:
+    with pytest.raises(MODULE.AmendmentValidationError, match="boolean true"):
+        MODULE.amendments_ledger_entry_params({})
+
+
+def test_correct_fixed_amendments_selector_is_accepted() -> None:
+    assert MODULE.amendments_ledger_entry_params() == {
+        "ledger_index": "validated",
+        "amendments": True,
+    }
+
+
+def amendments_response(raw_feature_response: dict[str, Any]) -> dict[str, Any]:
+    enabled = [
+        amendment_id
+        for amendment_id, entry in raw_feature_response["result"]["features"].items()
+        if entry["enabled"]
+    ]
+    return {
+        "result": {
+            "status": "success",
+            "node": {"LedgerEntryType": "Amendments", "Amendments": enabled},
+        }
+    }
+
+
+def test_parser_validates_returned_amendments_object(
+    raw_feature_response: dict[str, Any],
+) -> None:
+    feature = MODULE.validate_feature_response(raw_feature_response)
+    ledger = MODULE.validate_amendments_ledger_entry(amendments_response(raw_feature_response))
+    cross_check = MODULE.cross_check_amendment_representations(feature, ledger)
+
+    assert ledger["valid"] is True
+    assert cross_check["valid"] is True
+    assert not cross_check["disagreements"]
+
+
+def test_missing_required_id_in_amendments_object_fails(
+    raw_feature_response: dict[str, Any],
+) -> None:
+    response = amendments_response(raw_feature_response)
+    response["result"]["node"]["Amendments"].remove(
+        MODULE.REQUIRED_AMENDMENTS["LendingProtocolV1_1"]
+    )
+
+    with pytest.raises(MODULE.AmendmentValidationError, match="LendingProtocolV1_1"):
+        MODULE.validate_amendments_ledger_entry(response)

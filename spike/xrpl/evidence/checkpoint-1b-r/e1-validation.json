@@ -1,0 +1,498 @@
+{
+  "amendment_validation_after": {
+    "amendments": {
+      "LendingProtocol": {
+        "enabled": true,
+        "exists": true,
+        "id": "565B90CA1AB2B9D42208ED10884188C64F9E19083DECB9634AAF06EB03299509",
+        "name_matches": true,
+        "reported_name": "LendingProtocol",
+        "supported": true
+      },
+      "LendingProtocolV1_1": {
+        "enabled": true,
+        "exists": true,
+        "id": "A360E2BFD775A5B0DCE1C36C16DF31B72735A57584FD163655D2F9564F8E7AC8",
+        "name_matches": true,
+        "reported_name": "LendingProtocolV1_1",
+        "supported": true
+      },
+      "MPTokensV1": {
+        "enabled": true,
+        "exists": true,
+        "id": "950AE2EA4654E47F04AA8739C0B214E242097E802FD372D24047A89AB1F5EC38",
+        "name_matches": true,
+        "reported_name": "MPTokensV1",
+        "supported": true
+      },
+      "SingleAssetVault": {
+        "enabled": true,
+        "exists": true,
+        "id": "81BD2619B6B3C8625AC5D0BC01DE17F06C3F0AB95C7C87C93715B87A4FD240D8",
+        "name_matches": true,
+        "reported_name": "SingleAssetVault",
+        "supported": true
+      },
+      "fixCleanup3_1_3": {
+        "enabled": true,
+        "exists": true,
+        "id": "303ACB16CF8DBD3B5C34F131A9D19A7DE01AE05F480A8A682B869D1B4AAC8CFC",
+        "name_matches": true,
+        "reported_name": "fixCleanup3_1_3",
+        "supported": true
+      },
+      "fixCleanup3_2_0": {
+        "enabled": true,
+        "exists": true,
+        "id": "21B8D2F76F68E11E9C077A43BBBC394136E9987E99DDB73966DD68419467E431",
+        "name_matches": true,
+        "reported_name": "fixCleanup3_2_0",
+        "supported": true
+      },
+      "fixCleanup3_3_0": {
+        "enabled": true,
+        "exists": true,
+        "id": "3298D47E1F3A8A24FECAA30F699B8FE1DD234E072834BA099AD8180FFCE0FEC4",
+        "name_matches": true,
+        "reported_name": "fixCleanup3_3_0",
+        "supported": true
+      },
+      "fixCleanup3_4_0": {
+        "enabled": true,
+        "exists": true,
+        "id": "98433DD001A5737F773D74F8CA2A25A065089C73B2E611C760BAF369E4FECA76",
+        "name_matches": true,
+        "reported_name": "fixCleanup3_4_0",
+        "supported": true
+      }
+    },
+    "errors": [],
+    "required_count": 8,
+    "response_amendment_count": 106,
+    "valid": true
+  },
+  "amendment_validation_before": {
+    "amendments": {
+      "LendingProtocol": {
+        "enabled": true,
+        "exists": true,
+        "id": "565B90CA1AB2B9D42208ED10884188C64F9E19083DECB9634AAF06EB03299509",
+        "name_matches": true,
+        "reported_name": "LendingProtocol",
+        "supported": true
+      },
+      "LendingProtocolV1_1": {
+        "enabled": true,
+        "exists": true,
+        "id": "A360E2BFD775A5B0DCE1C36C16DF31B72735A57584FD163655D2F9564F8E7AC8",
+        "name_matches": true,
+        "reported_name": "LendingProtocolV1_1",
+        "supported": true
+      },
+      "MPTokensV1": {
+        "enabled": true,
+        "exists": true,
+        "id": "950AE2EA4654E47F04AA8739C0B214E242097E802FD372D24047A89AB1F5EC38",
+        "name_matches": true,
+        "reported_name": "MPTokensV1",
+        "supported": true
+      },
+      "SingleAssetVault": {
+        "enabled": true,
+        "exists": true,
+        "id": "81BD2619B6B3C8625AC5D0BC01DE17F06C3F0AB95C7C87C93715B87A4FD240D8",
+        "name_matches": true,
+        "reported_name": "SingleAssetVault",
+        "supported": true
+      },
+      "fixCleanup3_1_3": {
+        "enabled": true,
+        "exists": true,
+        "id": "303ACB16CF8DBD3B5C34F131A9D19A7DE01AE05F480A8A682B869D1B4AAC8CFC",
+        "name_matches": true,
+        "reported_name": "fixCleanup3_1_3",
+        "supported": true
+      },
+      "fixCleanup3_2_0": {
+        "enabled": true,
+        "exists": true,
+        "id": "21B8D2F76F68E11E9C077A43BBBC394136E9987E99DDB73966DD68419467E431",
+        "name_matches": true,
+        "reported_name": "fixCleanup3_2_0",
+        "supported": true
+      },
+      "fixCleanup3_3_0": {
+        "enabled": true,
+        "exists": true,
+        "id": "3298D47E1F3A8A24FECAA30F699B8FE1DD234E072834BA099AD8180FFCE0FEC4",
+        "name_matches": true,
+        "reported_name": "fixCleanup3_3_0",
+        "supported": true
+      },
+      "fixCleanup3_4_0": {
+        "enabled": true,
+        "exists": true,
+        "id": "98433DD001A5737F773D74F8CA2A25A065089C73B2E611C760BAF369E4FECA76",
+        "name_matches": true,
+        "reported_name": "fixCleanup3_4_0",
+        "supported": true
+      }
+    },
+    "errors": [],
+    "required_count": 8,
+    "response_amendment_count": 106,
+    "valid": true
+  },
+  "amendments_ledger_validation_after": {
+    "enabled_count": 9,
+    "ledger_entry_type": "Amendments",
+    "required": {
+      "LendingProtocol": {
+        "enabled_on_ledger": true,
+        "id": "565B90CA1AB2B9D42208ED10884188C64F9E19083DECB9634AAF06EB03299509"
+      },
+      "LendingProtocolV1_1": {
+        "enabled_on_ledger": true,
+        "id": "A360E2BFD775A5B0DCE1C36C16DF31B72735A57584FD163655D2F9564F8E7AC8"
+      },
+      "MPTokensV1": {
+        "enabled_on_ledger": true,
+        "id": "950AE2EA4654E47F04AA8739C0B214E242097E802FD372D24047A89AB1F5EC38"
+      },
+      "SingleAssetVault": {
+        "enabled_on_ledger": true,
+        "id": "81BD2619B6B3C8625AC5D0BC01DE17F06C3F0AB95C7C87C93715B87A4FD240D8"
+      },
+      "fixCleanup3_1_3": {
+        "enabled_on_ledger": true,
+        "id": "303ACB16CF8DBD3B5C34F131A9D19A7DE01AE05F480A8A682B869D1B4AAC8CFC"
+      },
+      "fixCleanup3_2_0": {
+        "enabled_on_ledger": true,
+        "id": "21B8D2F76F68E11E9C077A43BBBC394136E9987E99DDB73966DD68419467E431"
+      },
+      "fixCleanup3_3_0": {
+        "enabled_on_ledger": true,
+        "id": "3298D47E1F3A8A24FECAA30F699B8FE1DD234E072834BA099AD8180FFCE0FEC4"
+      },
+      "fixCleanup3_4_0": {
+        "enabled_on_ledger": true,
+        "id": "98433DD001A5737F773D74F8CA2A25A065089C73B2E611C760BAF369E4FECA76"
+      }
+    },
+    "valid": true
+  },
+  "amendments_ledger_validation_before": {
+    "enabled_count": 9,
+    "ledger_entry_type": "Amendments",
+    "required": {
+      "LendingProtocol": {
+        "enabled_on_ledger": true,
+        "id": "565B90CA1AB2B9D42208ED10884188C64F9E19083DECB9634AAF06EB03299509"
+      },
+      "LendingProtocolV1_1": {
+        "enabled_on_ledger": true,
+        "id": "A360E2BFD775A5B0DCE1C36C16DF31B72735A57584FD163655D2F9564F8E7AC8"
+      },
+      "MPTokensV1": {
+        "enabled_on_ledger": true,
+        "id": "950AE2EA4654E47F04AA8739C0B214E242097E802FD372D24047A89AB1F5EC38"
+      },
+      "SingleAssetVault": {
+        "enabled_on_ledger": true,
+        "id": "81BD2619B6B3C8625AC5D0BC01DE17F06C3F0AB95C7C87C93715B87A4FD240D8"
+      },
+      "fixCleanup3_1_3": {
+        "enabled_on_ledger": true,
+        "id": "303ACB16CF8DBD3B5C34F131A9D19A7DE01AE05F480A8A682B869D1B4AAC8CFC"
+      },
+      "fixCleanup3_2_0": {
+        "enabled_on_ledger": true,
+        "id": "21B8D2F76F68E11E9C077A43BBBC394136E9987E99DDB73966DD68419467E431"
+      },
+      "fixCleanup3_3_0": {
+        "enabled_on_ledger": true,
+        "id": "3298D47E1F3A8A24FECAA30F699B8FE1DD234E072834BA099AD8180FFCE0FEC4"
+      },
+      "fixCleanup3_4_0": {
+        "enabled_on_ledger": true,
+        "id": "98433DD001A5737F773D74F8CA2A25A065089C73B2E611C760BAF369E4FECA76"
+      }
+    },
+    "valid": true
+  },
+  "authoritative_request": {
+    "method": "ledger_entry",
+    "params": {
+      "amendments": true,
+      "ledger_index": "validated"
+    },
+    "previous_request_invalid_because": "An empty object is not boolean true; parseFixed therefore attempted to parse it as a ledger object index and returned malformedRequest.",
+    "source": [
+      "rippled 3.4.0 src/xrpld/rpc/handlers/ledger/LedgerEntry.cpp: fixed()/parseFixed()",
+      "rippled 3.4.0 src/test/rpc/LedgerEntry_test.cpp: field:true fixed-entry test"
+    ]
+  },
+  "build_provenance": {
+    "binary_sha256": "9b4d3dd28b31a22419fd905682e238298eefb8941e2efcde5241a4b19fa0c417",
+    "command": [
+      "--conf=/etc/opt/xrpl/xrpld.cfg",
+      "--standalone",
+      "--start"
+    ],
+    "configured_data_path": "/var/lib/xrpld",
+    "container_image_id": "sha256:a06ca274ae00ac69acd30a257fd91e8dc78142b7ca56fb87b7355525e120659f",
+    "data_mount_matches_config": true,
+    "entrypoint": [
+      "/usr/bin/xrpld"
+    ],
+    "fresh_start_flag": true,
+    "mounts": [
+      {
+        "destination": "/var/lib/xrpld",
+        "name": "credence-xrpl-spike-data",
+        "type": "volume"
+      }
+    ],
+    "network_mode": "standalone",
+    "package": "xrpld 3.4.0-1 amd64",
+    "source_commit": "4a4fded2eba11427c48ce3f24d9c1aea5e7a9d17",
+    "started_at": "2026-10-12T00:40:58.314005496Z",
+    "xrpld_version": "3.4.0"
+  },
+  "experiment": "E1",
+  "feature_vs_ledger_cross_check_after": {
+    "disagreements": [],
+    "required": {
+      "LendingProtocol": {
+        "agrees": true,
+        "feature_enabled": true,
+        "feature_supported": true,
+        "id": "565B90CA1AB2B9D42208ED10884188C64F9E19083DECB9634AAF06EB03299509",
+        "ledger_enabled": true
+      },
+      "LendingProtocolV1_1": {
+        "agrees": true,
+        "feature_enabled": true,
+        "feature_supported": true,
+        "id": "A360E2BFD775A5B0DCE1C36C16DF31B72735A57584FD163655D2F9564F8E7AC8",
+        "ledger_enabled": true
+      },
+      "MPTokensV1": {
+        "agrees": true,
+        "feature_enabled": true,
+        "feature_supported": true,
+        "id": "950AE2EA4654E47F04AA8739C0B214E242097E802FD372D24047A89AB1F5EC38",
+        "ledger_enabled": true
+      },
+      "SingleAssetVault": {
+        "agrees": true,
+        "feature_enabled": true,
+        "feature_supported": true,
+        "id": "81BD2619B6B3C8625AC5D0BC01DE17F06C3F0AB95C7C87C93715B87A4FD240D8",
+        "ledger_enabled": true
+      },
+      "fixCleanup3_1_3": {
+        "agrees": true,
+        "feature_enabled": true,
+        "feature_supported": true,
+        "id": "303ACB16CF8DBD3B5C34F131A9D19A7DE01AE05F480A8A682B869D1B4AAC8CFC",
+        "ledger_enabled": true
+      },
+      "fixCleanup3_2_0": {
+        "agrees": true,
+        "feature_enabled": true,
+        "feature_supported": true,
+        "id": "21B8D2F76F68E11E9C077A43BBBC394136E9987E99DDB73966DD68419467E431",
+        "ledger_enabled": true
+      },
+      "fixCleanup3_3_0": {
+        "agrees": true,
+        "feature_enabled": true,
+        "feature_supported": true,
+        "id": "3298D47E1F3A8A24FECAA30F699B8FE1DD234E072834BA099AD8180FFCE0FEC4",
+        "ledger_enabled": true
+      },
+      "fixCleanup3_4_0": {
+        "agrees": true,
+        "feature_enabled": true,
+        "feature_supported": true,
+        "id": "98433DD001A5737F773D74F8CA2A25A065089C73B2E611C760BAF369E4FECA76",
+        "ledger_enabled": true
+      }
+    },
+    "valid": true
+  },
+  "feature_vs_ledger_cross_check_before": {
+    "disagreements": [],
+    "required": {
+      "LendingProtocol": {
+        "agrees": true,
+        "feature_enabled": true,
+        "feature_supported": true,
+        "id": "565B90CA1AB2B9D42208ED10884188C64F9E19083DECB9634AAF06EB03299509",
+        "ledger_enabled": true
+      },
+      "LendingProtocolV1_1": {
+        "agrees": true,
+        "feature_enabled": true,
+        "feature_supported": true,
+        "id": "A360E2BFD775A5B0DCE1C36C16DF31B72735A57584FD163655D2F9564F8E7AC8",
+        "ledger_enabled": true
+      },
+      "MPTokensV1": {
+        "agrees": true,
+        "feature_enabled": true,
+        "feature_supported": true,
+        "id": "950AE2EA4654E47F04AA8739C0B214E242097E802FD372D24047A89AB1F5EC38",
+        "ledger_enabled": true
+      },
+      "SingleAssetVault": {
+        "agrees": true,
+        "feature_enabled": true,
+        "feature_supported": true,
+        "id": "81BD2619B6B3C8625AC5D0BC01DE17F06C3F0AB95C7C87C93715B87A4FD240D8",
+        "ledger_enabled": true
+      },
+      "fixCleanup3_1_3": {
+        "agrees": true,
+        "feature_enabled": true,
+        "feature_supported": true,
+        "id": "303ACB16CF8DBD3B5C34F131A9D19A7DE01AE05F480A8A682B869D1B4AAC8CFC",
+        "ledger_enabled": true
+      },
+      "fixCleanup3_2_0": {
+        "agrees": true,
+        "feature_enabled": true,
+        "feature_supported": true,
+        "id": "21B8D2F76F68E11E9C077A43BBBC394136E9987E99DDB73966DD68419467E431",
+        "ledger_enabled": true
+      },
+      "fixCleanup3_3_0": {
+        "agrees": true,
+        "feature_enabled": true,
+        "feature_supported": true,
+        "id": "3298D47E1F3A8A24FECAA30F699B8FE1DD234E072834BA099AD8180FFCE0FEC4",
+        "ledger_enabled": true
+      },
+      "fixCleanup3_4_0": {
+        "agrees": true,
+        "feature_enabled": true,
+        "feature_supported": true,
+        "id": "98433DD001A5737F773D74F8CA2A25A065089C73B2E611C760BAF369E4FECA76",
+        "ledger_enabled": true
+      }
+    },
+    "valid": true
+  },
+  "later_experiments_executed": false,
+  "ledger_before": {
+    "close_time": 845080860,
+    "closed": true,
+    "ledger_hash": "9661C172CE5A6C23F3557795BD4FFB9EB33B8361E710C501F89E4786B2FC0106",
+    "ledger_index": 2
+  },
+  "ledger_close_reproducible": true,
+  "ledger_closures": [
+    {
+      "attempt": 1,
+      "ledger": {
+        "close_time": 845080861,
+        "closed": true,
+        "ledger_hash": "BC1C020233A518611569B807868FC164C9D6AAF704E30AE5FD6178E8A974DD1C",
+        "ledger_index": 3
+      },
+      "ledger_accept_status": "success"
+    },
+    {
+      "attempt": 2,
+      "ledger": {
+        "close_time": 845080862,
+        "closed": true,
+        "ledger_hash": "B8DFF75AA8C0B7F9BC80F6AD8E27BBAD9FAD1FDCDC7FC160538EF95DAC92D0C5",
+        "ledger_index": 4
+      },
+      "ledger_accept_status": "success"
+    }
+  ],
+  "network": {
+    "mode": "standalone",
+    "network_id": 21337
+  },
+  "raw_amendments_ledger_evidence": {
+    "after": {
+      "bytes": 967,
+      "path": "evidence/checkpoint-1b-r/amendments-ledger-entry-after.json",
+      "sha256": "4685acb4e3692d855268d882b4fd6ece04315354ab244b8a93a68d06392bd211"
+    },
+    "before": {
+      "bytes": 967,
+      "path": "evidence/checkpoint-1b-r/amendments-ledger-entry-before.json",
+      "sha256": "488264fae7a3abb893018803043522f273aa30379c2db1aafd549a026f5cb391"
+    },
+    "validator_agrees_with_both": true
+  },
+  "raw_feature_evidence": {
+    "after": {
+      "bytes": 15192,
+      "path": "evidence/checkpoint-1b-r/feature-after.json",
+      "sha256": "3f9caa62f7b9c340207c49ed6f16fadbd605bb8b068332a4f358957f5ece3cd8"
+    },
+    "before": {
+      "bytes": 15192,
+      "path": "evidence/checkpoint-1b-r/feature-before.json",
+      "sha256": "3f9caa62f7b9c340207c49ed6f16fadbd605bb8b068332a4f358957f5ece3cd8"
+    },
+    "validator_agrees_with_both": true
+  },
+  "raw_server_evidence": {
+    "after": {
+      "bytes": 1455,
+      "omitted_fields": [
+        "pubkey_node",
+        "pubkey_validator"
+      ],
+      "path": "evidence/checkpoint-1b-r/server-info-after.json",
+      "sha256": "991a2ee3ecd2a986643fb0ca6a2875befb4c7412f06d379b99833acff09a148a"
+    },
+    "before": {
+      "bytes": 1382,
+      "omitted_fields": [
+        "pubkey_node",
+        "pubkey_validator"
+      ],
+      "path": "evidence/checkpoint-1b-r/server-info-before.json",
+      "sha256": "599cde9f64021afc0d0c1b4e6d15ecfdd44c93d503f84dc30923539f412461e5"
+    }
+  },
+  "result": "PASS",
+  "server_after": {
+    "build_version": "3.4.0",
+    "complete_ledgers": "2-4",
+    "network_id": 21337,
+    "server_state": "full",
+    "validated_ledger": {
+      "age": 0,
+      "base_fee_xrp": 1e-05,
+      "hash": "B8DFF75AA8C0B7F9BC80F6AD8E27BBAD9FAD1FDCDC7FC160538EF95DAC92D0C5",
+      "reserve_base_xrp": 10,
+      "reserve_inc_xrp": 2,
+      "seq": 4
+    }
+  },
+  "server_before": {
+    "build_version": "3.4.0",
+    "complete_ledgers": "2",
+    "network_id": 21337,
+    "server_state": "full",
+    "validated_ledger": {
+      "age": 0,
+      "base_fee_xrp": 1e-05,
+      "hash": "9661C172CE5A6C23F3557795BD4FFB9EB33B8361E710C501F89E4786B2FC0106",
+      "reserve_base_xrp": 10,
+      "reserve_inc_xrp": 2,
+      "seq": 2
+    }
+  },
+  "state_survived_closures": true
+}

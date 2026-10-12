@@ -1,47 +1,54 @@
 {
-  "schema_version": 2,
-  "overall": "BLOCKED",
-  "scope": "Checkpoint 1B harness hardening and E2-E5",
-  "stop": {
-    "condition": "E1 no longer passes",
+  "schema_version": 3,
+  "overall": "PASS",
+  "scope": "Checkpoint 1B-R E1-only Amendments ledger_entry request repair",
+  "previous_stop": {
+    "checkpoint": "1B",
     "classification": "A. local configuration error",
     "output": "STOP: E1 regressed during the on-ledger amendment check: malformedRequest — Invalid field 'amendments', not hex string.",
-    "evidence_paths": [
-      "evidence/checkpoint-1b/feature-raw-e1-before.json",
-      "evidence/checkpoint-1b/unexpected-result.json"
-    ]
+    "retired": true,
+    "retirement_reason": "Pinned 3.4.0 source and tests establish amendments:true for the fixed-location selector. The repaired request returned the Amendments object and agreed with feature before and after two closes."
   },
   "experiments": {
     "E1": {
-      "claim": "The hardened harness preserves the previously proven pinned standalone environment and independently verifies required amendments from ledger state.",
-      "outcome": "BLOCKED",
-      "prior_checkpoint_result": "PASS",
+      "claim": "The fresh pinned standalone environment is reproducible and all required amendments are independently confirmed by feature and the Amendments ledger object.",
+      "outcome": "PASS",
       "evidence_paths": [
-        "evidence/e1-validation.json",
-        "evidence/checkpoint-1b/feature-raw-e1-before.json",
-        "evidence/checkpoint-1b/unexpected-result.json"
+        "ENVIRONMENT.md",
+        "evidence/checkpoint-1b-r/e1-validation.json",
+        "evidence/checkpoint-1b-r/feature-before.json",
+        "evidence/checkpoint-1b-r/feature-after.json",
+        "evidence/checkpoint-1b-r/amendments-ledger-entry-before.json",
+        "evidence/checkpoint-1b-r/amendments-ledger-entry-after.json",
+        "evidence/checkpoint-1b-r/server-info-before.json",
+        "evidence/checkpoint-1b-r/server-info-after.json",
+        "evidence/checkpoint-1b-r/MANIFEST.json"
       ],
       "transaction_hashes": [],
-      "ledger_indices": [2],
+      "ledger_indices": [2, 3, 4],
       "state_assertions": [
         {
           "name": "fresh pinned container started with corrected data mount",
           "passed": true
         },
         {
-          "name": "feature response passes required amendment validator",
+          "name": "two ledger_accept calls advanced exactly one ledger each",
           "passed": true
         },
         {
-          "name": "on-ledger Amendments object can be read by the hardened check",
-          "passed": false,
-          "actual": "malformedRequest"
+          "name": "feature reports every required amendment present, named correctly, supported, and enabled",
+          "passed": true
+        },
+        {
+          "name": "Amendments ledger object contains every required amendment ID",
+          "passed": true
+        },
+        {
+          "name": "feature and ledger representations agree before and after closes",
+          "passed": true
         }
       ],
-      "unresolved_subclaims": [
-        "The new on-ledger comparison was not completed.",
-        "No regression ledger closes were performed after the failed request."
-      ]
+      "unresolved_subclaims": []
     },
     "E2": {
       "claim": "Runtime-generated actors can hold and transfer locally issued tRLUSD.",
@@ -50,7 +57,7 @@
       "transaction_hashes": [],
       "ledger_indices": [],
       "state_assertions": [],
-      "unresolved_subclaims": ["All E2 claims remain untested because E1 triggered STOP."]
+      "unresolved_subclaims": ["Outside Checkpoint 1B-R scope."]
     },
     "E3": {
       "claim": "Closed-ended vault operations are gated by subscription, investment, and redemption phase.",
@@ -59,7 +66,7 @@
       "transaction_hashes": [],
       "ledger_indices": [],
       "state_assertions": [],
-      "unresolved_subclaims": ["All E3 claims remain untested because E1 triggered STOP."]
+      "unresolved_subclaims": ["Outside Checkpoint 1B-R scope."]
     },
     "E4": {
       "claim": "A Loan Broker with bounded cover attaches to a closed-ended vault under current ownership semantics.",
@@ -68,7 +75,7 @@
       "transaction_hashes": [],
       "ledger_indices": [],
       "state_assertions": [],
-      "unresolved_subclaims": ["All E4 claims remain untested because E1 triggered STOP."]
+      "unresolved_subclaims": ["Outside Checkpoint 1B-R scope."]
     },
     "E5": {
       "claim": "The borrower account enforces ResearchBot plus Credence policy signer 2-of-2 for ordinary Payment while retaining its master key.",
@@ -77,7 +84,7 @@
       "transaction_hashes": [],
       "ledger_indices": [],
       "state_assertions": [],
-      "unresolved_subclaims": ["All E5 claims remain untested because E1 triggered STOP."]
+      "unresolved_subclaims": ["Outside Checkpoint 1B-R scope."]
     },
     "E6": {
       "claim": "Borrower 2-of-2 composes with Loan Broker counterparty authorization for LoanSet.",
@@ -86,7 +93,7 @@
       "transaction_hashes": [],
       "ledger_indices": [],
       "state_assertions": [],
-      "unresolved_subclaims": ["Outside Checkpoint 1B scope."]
+      "unresolved_subclaims": ["Outside Checkpoint 1B-R scope."]
     },
     "E7": {
       "claim": "Valid LoanSet creates loan state and disburses principal.",
@@ -95,7 +102,7 @@
       "transaction_hashes": [],
       "ledger_indices": [],
       "state_assertions": [],
-      "unresolved_subclaims": ["Outside Checkpoint 1B scope."]
+      "unresolved_subclaims": ["Outside Checkpoint 1B-R scope."]
     },
     "E8": {
       "claim": "LoanPay behavior and authorization are observable with exact state transitions.",
@@ -104,7 +111,7 @@
       "transaction_hashes": [],
       "ledger_indices": [],
       "state_assertions": [],
-      "unresolved_subclaims": ["Outside Checkpoint 1B scope."]
+      "unresolved_subclaims": ["Outside Checkpoint 1B-R scope."]
     },
     "E9": {
       "claim": "The full loan lifecycle composes through redemption.",
@@ -113,10 +120,11 @@
       "transaction_hashes": [],
       "ledger_indices": [],
       "state_assertions": [],
-      "unresolved_subclaims": ["Outside Checkpoint 1B scope."]
+      "unresolved_subclaims": ["Outside Checkpoint 1B-R scope."]
     }
   },
   "protocol_transactions_submitted": 0,
-  "minimum_next_experiment_performed": false,
-  "e6_may_begin": false
+  "minimum_next_experiment_performed": true,
+  "e1_frozen": true,
+  "checkpoint_1b_may_resume_at_e2": true
 }
