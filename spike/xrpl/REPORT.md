@@ -1,3 +1,199 @@
+# Checkpoint 1C-R fail-closed report
+
+## Outcome
+
+**BLOCKED — local post-state assertion error.**
+
+The single authorized fresh run stopped with the exact output:
+
+```text
+STOP: e3_create_closed_ended_vault: expected tesSUCCESS, observed tesSUCCESS; result or state assertion failed
+```
+
+No retry, assertion correction, environment change, alternate build, additional
+amendment, E3 phase operation, E4 operation, or E5-E9 operation was attempted.
+
+## Start state and scope
+
+- Repository `HEAD` began at
+  `b366efed4163b729adc4c1fb5d94d7947fdd0385` with a clean worktree.
+- That commit descends from peeled `checkpoint-0^{}` commit
+  `810c7870d2ebb23e0b07b6017c4c88344f742aed`.
+- The custody gitlink remained
+  `5dc15ff6fb097dc5f4a47e72969fae4a296620a5`; the web gitlink remained
+  `dd47344df9966b5906c0ee13426955e39c0db9cd`.
+- Only `spike/xrpl/` changed.
+- E1 and E2 remained frozen. Fresh-ledger actor and tRLUSD setup was performed
+  only as an E3/E4 prerequisite fixture, not as an E2 rerun or new E2 result.
+
+## Negative-result root cause and repair
+
+The committed Checkpoint 1C harness copied the submission result into a
+preliminary variable, closed a ledger for every `tes` or `tec` prefix, then
+unconditionally replaced that variable with `meta.TransactionResult` from a
+transaction lookup. The E3 Investment deposit submission returned the expected
+`tecEXPIRED`, but `fail_hard` left the transaction outside the validated ledger;
+the lookup therefore returned `validated: false` with no metadata. The harness
+replaced `tecEXPIRED` with an empty value and emitted a false STOP.
+
+`scripts/harness.py` now keeps these observations separate:
+
+- `submission_result`;
+- `submission_hash_if_any`;
+- `validated_lookup_status`;
+- `validated_result_if_any`;
+- `before_state` and `after_state`;
+- `expected_result`; and
+- `state_assertion` plus the individual state assertions.
+
+An unvalidated or absent lookup cannot overwrite a submission result. A positive
+case requires matching validated metadata and asserted post-state. A deterministic
+negative requires the expected result and unchanged relevant ledger state.
+Client exceptions, malformed requests, and transport/server failures have
+separate categories.
+
+## Regression tests
+
+All eight required result-handling regressions passed before the ledger run:
+
+| Test | Result |
+| --- | --- |
+| R1 `tecEXPIRED` survives an unvalidated lookup | PASS |
+| R2 expected deterministic negative plus unchanged-state assertions | PASS |
+| R3 `tesSUCCESS` cannot pass without validated post-state | PASS |
+| R4 client-side exception remains distinct | PASS |
+| R5 absent lookup does not overwrite submission | PASS |
+| R6 unexpected engine result fails | PASS |
+| R7 `NOT_ATTEMPTED` differs from `NOT_APPLICABLE` | PASS |
+| R8 committed Checkpoint 1C evidence reclassifies correctly | PASS |
+
+Together with ten amendment tests, the spike test command reported **18 passed**.
+
+## Frozen results
+
+- **E1: PASS/FROZEN.** The fresh prerequisite environment reported xrpld 3.4.0,
+  network ID 21337, fresh validated ledger 2, and all eight frozen required
+  amendments present, supported, and enabled. This was an invariant cross-check,
+  not a new E1 experiment.
+- **E2: PASS/FROZEN.** The Checkpoint 1C E2 result was not reinterpreted or
+  replaced. The fresh fixture reached validated ledger 12 with lender balance
+  200000 tRLUSD, borrower balance 0, and Loan Broker owner balance 20000 tRLUSD.
+
+## E3 result and exact stop
+
+**E3: BLOCKED.** The first E3 transaction created a closed-ended tRLUSD Vault.
+Both submission and validated metadata reported `tesSUCCESS` at ledger 13,
+transaction
+`7F2F22090B6A120B5E404A6D985D337DA00E791D6D9E95007938FFE844069D79`.
+The validated object contained VaultKind 1, SubscriptionDate 845082260, and
+RedemptionDate 845082440.
+
+The post-state assertion incorrectly expected the Vault owner's `account_objects`
+count to increase by one. It increased by two: the validated post-state added a
+`Vault` and the owner's `MPToken`; the existing `RippleState` remained present.
+The transaction metadata also recorded creation of the Vault, share
+`MPTokenIssuance`, owner `MPToken`, Vault pseudo-account, and related directory
+state. This is **A — local configuration/harness assertion error**, not a
+protocol failure. The result resolver correctly retained the validated
+`tesSUCCESS`; the new negative-result repair did not regress.
+
+The fail-closed assertion still required STOP. Therefore:
+
+- E3 Subscription deposit: **NOT ATTEMPTED**;
+- E3 Subscription withdrawal: **NOT ATTEMPTED**;
+- E3 Investment entry, deposit, and withdrawal: **NOT ATTEMPTED**;
+- E3 Redemption entry, deposit, and withdrawal: **NOT ATTEMPTED**;
+- no phase timing was observed beyond creation at close time 845082231;
+- loan origination was not exercised.
+
+## E4 result and cover classification
+
+**E4: NOT ATTEMPTED.** STOP occurred during the first E3 transaction. No fresh E4
+Vault, LoanBrokerSet, negative ownership test, Loan Broker object, or cover
+deposit was submitted. Consequently:
+
+- ownership relationship: source-derived only, not observed in this run;
+- cover amount, rates, and limits: not observed;
+- **OBSERVED:** no E4 ledger finding;
+- **DERIVED:** pinned source requires LoanBrokerSet `Account` to equal the Vault
+  `Owner`, and bounds default cover using debt/rate/default/available-cover state;
+- **UNRESOLVED:** cover establishment, default/loss behavior, clawback,
+  liquidation, and realized-loss accounting.
+
+The proposed E4 configuration values (10000 cover deposit, 10000 minimum cover
+rate, 25000 liquidation cover rate, and 50000 debt maximum) were not submitted
+and are not observations.
+
+## Proposed plan corrections
+
+No normative build-plan file was edited. Before a separately authorized rerun,
+the spike plan should require VaultCreate post-state to assert ledger-entry types
+and identities rather than a total owner-object delta of one. The expected
+creation set must account for the owner `MPToken` in addition to the `Vault`,
+while independently validating the share issuance and pseudo-account from
+metadata or direct lookup. This is a spike-harness correction, not a Credence
+architecture correction.
+
+The minimum next experiment is an E3/E4-only fresh run after changing only that
+VaultCreate post-state assertion and adding a regression fixture for the observed
+two-object owner-list delta. That experiment was **not performed**.
+
+## Evidence manifest
+
+`evidence/checkpoint-1c-r/MANIFEST.json` covers 18 files totaling 191588 bytes
+with SHA-256. It includes the fresh environment, public actor addresses, setup
+state, 11 transaction records, 11 ledger closes, pinned-source findings, and the
+exact unexpected result. Signing material, transaction blobs, seeds, and private
+keys are absent.
+
+## Experiment status
+
+| Experiment | Status | Reason |
+| --- | --- | --- |
+| E1 | PASS/FROZEN | Frozen environment invariants cross-checked only. |
+| E2 | PASS/FROZEN | Prior result retained; fresh setup was prerequisite-only. |
+| E3 | BLOCKED | Valid VaultCreate contradicted a local owner-object-count assertion. |
+| E4 | NOT_ATTEMPTED | STOP occurred before E4. |
+| E5 | NOT_ATTEMPTED | Outside scope; STOP remained in force. |
+| E6 | NOT_ATTEMPTED | Outside scope; STOP remained in force. |
+| E7 | NOT_ATTEMPTED | Outside scope; STOP remained in force. |
+| E8 | NOT_ATTEMPTED | Outside scope; STOP remained in force. |
+| E9 | NOT_ATTEMPTED | Outside scope; STOP remained in force. |
+
+## Recommendation
+
+**BLOCKED. E5 must not begin.** Adjudicate a narrowly authorized E3/E4 recovery
+that corrects only the demonstrated VaultCreate post-state assertion. Do not
+interpret the successful VaultCreate as an E3 phase-lifecycle PASS or an E4 PASS.
+
+## Gates
+
+- Spike tests: PASS — 18 tests, including R1-R8 and ten amendment tests.
+- Repository unit tests: PASS — 17 tests.
+- Conformance tests: PASS — 4 tests.
+- Lint and formatting: PASS.
+- Large-file check: PASS.
+- Strict typecheck: PASS over 25 source files.
+- Secrets scan: PASS after public evidence omitted the server node public key
+  and the redundant name-to-amendment-ID cross-check map; no signing material or
+  secret was removed because neither field was signing material or a secret.
+- JSON validation: PASS — 61 files.
+- Evidence-manifest verification: PASS — 18 files, no digest or size mismatch.
+- Authorized-path check: PASS — only `spike/xrpl/` changed.
+- `git diff --check`: PASS.
+
+## Modified paths
+
+- `spike/xrpl/ENVIRONMENT.md`
+- `spike/xrpl/REPORT.md`
+- `spike/xrpl/RESULTS.json`
+- `spike/xrpl/scripts/harness.py`
+- `spike/xrpl/scripts/run_checkpoint_1c_r.py`
+- `spike/xrpl/tests/test_harness.py`
+- `spike/xrpl/evidence/checkpoint-1c-r/`
+
+---
+
 # Checkpoint 1 fail-closed report
 
 ## Outcome

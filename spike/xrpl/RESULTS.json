@@ -1,28 +1,48 @@
 {
-  "schema_version": 4,
+  "schema_version": 5,
   "overall": "BLOCKED",
-  "scope": "Checkpoint 1C E2-E4",
+  "scope": "Checkpoint 1C-R result-harness repair and E3-E4 recovery",
+  "start_commit": "b366efed4163b729adc4c1fb5d94d7947fdd0385",
   "stop": {
-    "classification": "A. local configuration error",
-    "output": "STOP: investment_deposit_rejected: expected tecEXPIRED, observed None; result or state assertion failed",
-    "detail": "The submit response contained tecEXPIRED and every state-unchanged assertion passed, but fail_hard left the transaction unvalidated. The harness overwrote the preliminary result with an empty tx lookup result.",
+    "classification": "A. local configuration/harness assertion error",
+    "output": "STOP: e3_create_closed_ended_vault: expected tesSUCCESS, observed tesSUCCESS; result or state assertion failed",
+    "detail": "VaultCreate validated as tesSUCCESS. The local post-state assertion expected one additional owner object, but the owner account_objects response correctly added both the Vault and the owner's MPToken.",
     "evidence_paths": [
-      "evidence/checkpoint-1c/unexpected-result.json",
-      "evidence/checkpoint-1c/transactions/15-investment_deposit_rejected.json",
-      "evidence/checkpoint-1c/experiment-summary.json"
+      "evidence/checkpoint-1c-r/unexpected-result.json",
+      "evidence/checkpoint-1c-r/transactions/11-e3_create_closed_ended_vault.json",
+      "evidence/checkpoint-1c-r/experiment-summary.json"
     ]
+  },
+  "negative_result_repair": {
+    "outcome": "PASS",
+    "regression_tests": {
+      "R1": "PASS",
+      "R2": "PASS",
+      "R3": "PASS",
+      "R4": "PASS",
+      "R5": "PASS",
+      "R6": "PASS",
+      "R7": "PASS",
+      "R8": "PASS"
+    },
+    "committed_1c_evidence_reclassified": "PASS",
+    "submission_result_preserved": "tecEXPIRED",
+    "validated_lookup_status": "NOT_IN_VALIDATED_LEDGER"
   },
   "experiments": {
     "E1": {
       "claim": "Frozen environment invariants remain valid.",
       "outcome": "PASS",
       "frozen": true,
-      "evidence_paths": ["evidence/checkpoint-1b-r/e1-validation.json"],
+      "evidence_paths": [
+        "evidence/checkpoint-1b-r/e1-validation.json",
+        "evidence/checkpoint-1c-r/environment-start.json"
+      ],
       "transaction_hashes": [],
-      "ledger_indices": [2, 3, 4],
+      "ledger_indices": [2],
       "state_assertions": [
         {
-          "name": "network ID and both amendment representations retain the frozen required state",
+          "name": "network ID 21337 and the eight frozen amendment invariants are present",
           "passed": true
         }
       ],
@@ -31,100 +51,72 @@
     "E2": {
       "claim": "Disposable local actors and the tRLUSD issuer, trust lines, and initial balances exist in validated ledger state.",
       "outcome": "PASS",
+      "frozen": true,
       "evidence_paths": [
-        "evidence/checkpoint-1c/actors-public.json",
         "evidence/checkpoint-1c/e2-final-state.json",
-        "evidence/checkpoint-1c/transactions/"
+        "evidence/checkpoint-1c-r/fixture-final-state.json"
       ],
-      "transaction_hashes": [
-        "FBEF139A200484918A6C289CE5431DD5EFDDBE104AA12C7F8A520529C17B2F7B",
-        "F599D58167AB690B63B3404EFE7E8C4649825CF19925135524A3E97687966FCD",
-        "3B615E7780735D1F84F4ED560C2B4226895BE7583AED8A84B1A1C46722EA6F1F",
-        "44E6373467E14CF9A25BF4516D71F10373138FF9F2D97DF6AF7EE703028566E7",
-        "5C3809AD0558CD200E3558DD167884121CCBD2BDC0DDB7A0B5D790F06C153FC3",
-        "9ED3F0B9891D72B33F8A540A3B5CD171E650D82AC62B729729903423AFEBB830",
-        "7158E913233A15C3A76C67645C103765D9B0520A2F9D27B03EDF18B4EBB17DB6",
-        "292716BDFE2ADADE00FD0187C8978B81EAA1B9C3FA6E346B700364571E1BA0B1",
-        "74C55B0A74D34220A61601F8A0CF4B88F7180552877D8C0077BFE91021F56917",
-        "D10CE3B6AA51E2D239B5A677B205EF48EFE35C03FFD9ADE3782F39E6860B8661"
-      ],
-      "ledger_indices": [3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+      "transaction_hashes": [],
+      "ledger_indices": [12],
       "state_assertions": [
         {
-          "name": "all four required AccountRoot objects exist",
-          "passed": true
-        },
-        {
-          "name": "issuer DefaultRipple is enabled",
-          "passed": true
-        },
-        {
-          "name": "lender, borrower, and Loan Broker trust lines exist",
-          "passed": true
-        },
-        {
-          "name": "wire balances equal lender 200000, borrower 0, Loan Broker 20000",
+          "name": "fresh-ledger prerequisite fixture matches frozen E2 public state",
           "passed": true
         }
       ],
-      "unresolved_subclaims": ["Production micro-tRLUSD conversion remains outside this spike."]
+      "unresolved_subclaims": [
+        "Fresh setup transactions are classified as prerequisite SETUP, not a new E2 experiment.",
+        "Production micro-tRLUSD conversion remains outside this spike."
+      ]
     },
     "E3": {
       "claim": "A closed-ended tRLUSD vault follows subscription, investment, and redemption deposit/withdraw rules.",
       "outcome": "BLOCKED",
       "evidence_paths": [
-        "evidence/checkpoint-1c/e3-vault-creation-state.json",
-        "evidence/checkpoint-1c/e3-investment-entry.json",
-        "evidence/checkpoint-1c/ledger-closes.json",
-        "evidence/checkpoint-1c/unexpected-result.json",
-        "evidence/checkpoint-1c/transactions/12-create_closed_ended_vault.json",
-        "evidence/checkpoint-1c/transactions/13-subscription_deposit.json",
-        "evidence/checkpoint-1c/transactions/14-subscription_withdraw.json",
-        "evidence/checkpoint-1c/transactions/15-investment_deposit_rejected.json"
+        "evidence/checkpoint-1c-r/transactions/11-e3_create_closed_ended_vault.json",
+        "evidence/checkpoint-1c-r/unexpected-result.json"
       ],
       "transaction_hashes": [
-        "250727B7F45E57E7511CE0F71536AEDEDCFFAB5B7F079E660FE3F8CC9D5BB6BD",
-        "3926AE4D5DA4CE8642136B9019F241EDAD56B10213A2A3DC6CE18AC50A8EAAD3",
-        "216C726DDC9F24B7DEF606D829D3F6D64235441D5FA182DD6A68C80D21384F9D",
-        "1E6121DB29A29B8A96C7D1FA62ED7B08D09C46CF44FC2886B497234B76852583"
+        "7F2F22090B6A120B5E404A6D985D337DA00E791D6D9E95007938FFE844069D79"
       ],
-      "ledger_indices": [13, 14, 15, 58, 59],
+      "ledger_indices": [13],
       "state_assertions": [
         {
-          "name": "closed-ended vault configuration matches submitted owner, asset, kind, and dates",
+          "name": "submission and validated result equal tesSUCCESS",
           "passed": true
         },
         {
-          "name": "subscription deposit and withdrawal produce asserted asset, balance, and share changes",
-          "passed": true
-        },
-        {
-          "name": "43 scripted closes cross into investment at close time 845081396",
-          "passed": true
-        },
-        {
-          "name": "investment deposit server response equals tecEXPIRED and relevant state remains unchanged",
-          "passed": true
-        },
-        {
-          "name": "harness classifies the negative result without discarding the engine result",
-          "passed": false
+          "name": "owner object count increases by one",
+          "passed": false,
+          "expected": 1,
+          "actual": 2
         }
       ],
+      "phase_results": {
+        "Subscription": "NOT_ATTEMPTED",
+        "Investment": "NOT_ATTEMPTED",
+        "Redemption": "NOT_ATTEMPTED"
+      },
       "unresolved_subclaims": [
-        "Investment withdrawal was not attempted after STOP.",
-        "Redemption was not attempted after STOP.",
-        "Loan-origination phase restrictions remain source-derived because LoanSet is out of scope."
+        "No deposit or withdrawal phase behavior was attempted after STOP.",
+        "No phase transition timing was observed after STOP.",
+        "Loan origination remains outside E3 and was not exercised."
       ]
     },
     "E4": {
       "claim": "A fresh vault supports the required Loan Broker relationship and bounded cover configuration.",
       "outcome": "NOT_ATTEMPTED",
-      "evidence_paths": ["REPORT.md"],
+      "evidence_paths": [
+        "REPORT.md",
+        "evidence/checkpoint-1c-r/source-findings.json"
+      ],
       "transaction_hashes": [],
       "ledger_indices": [],
       "state_assertions": [],
-      "unresolved_subclaims": ["STOP occurred during E3 before E4 began."]
+      "unresolved_subclaims": [
+        "STOP occurred during the first E3 transaction before E4 began.",
+        "Ownership and cover findings remain source-derived or unresolved, not observed."
+      ]
     },
     "E5": {
       "claim": "Borrower 2-of-2 ordinary Payment authorization.",
@@ -133,14 +125,47 @@
       "transaction_hashes": [],
       "ledger_indices": [],
       "state_assertions": [],
-      "unresolved_subclaims": ["Outside Checkpoint 1C scope."]
+      "unresolved_subclaims": ["Outside Checkpoint 1C-R scope."]
     },
-    "E6": {"claim": "LoanSet composition.", "outcome": "NOT_ATTEMPTED", "evidence_paths": ["REPORT.md"], "transaction_hashes": [], "ledger_indices": [], "state_assertions": [], "unresolved_subclaims": ["Outside Checkpoint 1C scope."]},
-    "E7": {"claim": "Loan disbursement.", "outcome": "NOT_ATTEMPTED", "evidence_paths": ["REPORT.md"], "transaction_hashes": [], "ledger_indices": [], "state_assertions": [], "unresolved_subclaims": ["Outside Checkpoint 1C scope."]},
-    "E8": {"claim": "LoanPay.", "outcome": "NOT_ATTEMPTED", "evidence_paths": ["REPORT.md"], "transaction_hashes": [], "ledger_indices": [], "state_assertions": [], "unresolved_subclaims": ["Outside Checkpoint 1C scope."]},
-    "E9": {"claim": "Full loan lifecycle.", "outcome": "NOT_ATTEMPTED", "evidence_paths": ["REPORT.md"], "transaction_hashes": [], "ledger_indices": [], "state_assertions": [], "unresolved_subclaims": ["Outside Checkpoint 1C scope."]}
+    "E6": {
+      "claim": "LoanSet composition.",
+      "outcome": "NOT_ATTEMPTED",
+      "evidence_paths": ["REPORT.md"],
+      "transaction_hashes": [],
+      "ledger_indices": [],
+      "state_assertions": [],
+      "unresolved_subclaims": ["Outside Checkpoint 1C-R scope."]
+    },
+    "E7": {
+      "claim": "Loan disbursement.",
+      "outcome": "NOT_ATTEMPTED",
+      "evidence_paths": ["REPORT.md"],
+      "transaction_hashes": [],
+      "ledger_indices": [],
+      "state_assertions": [],
+      "unresolved_subclaims": ["Outside Checkpoint 1C-R scope."]
+    },
+    "E8": {
+      "claim": "LoanPay.",
+      "outcome": "NOT_ATTEMPTED",
+      "evidence_paths": ["REPORT.md"],
+      "transaction_hashes": [],
+      "ledger_indices": [],
+      "state_assertions": [],
+      "unresolved_subclaims": ["Outside Checkpoint 1C-R scope."]
+    },
+    "E9": {
+      "claim": "Full loan lifecycle.",
+      "outcome": "NOT_ATTEMPTED",
+      "evidence_paths": ["REPORT.md"],
+      "transaction_hashes": [],
+      "ledger_indices": [],
+      "state_assertions": [],
+      "unresolved_subclaims": ["Outside Checkpoint 1C-R scope."]
+    }
   },
-  "minimum_next_experiment_performed": false,
   "e1_frozen": true,
-  "e5_may_begin": false
+  "e2_frozen": true,
+  "e5_may_begin": false,
+  "minimum_next_experiment_performed": false
 }

@@ -1,0 +1,25 @@
+{
+  "balances": {
+    "borrower": "0",
+    "lender": "200000",
+    "loan_broker": "20000"
+  },
+  "classification": "SETUP, not E2",
+  "issuer": {
+    "Account": "rGMmkTG4FqGqSxcgfsSrznKpkDTKymjaGM",
+    "Balance": "999999970",
+    "Flags": 8388608,
+    "LedgerEntryType": "AccountRoot",
+    "OwnerCount": 0,
+    "PreviousTxnID": "64DC2C15FB922BCE6CCEF2C741F822307B4206DE142314A8CDF549D1226BA044",
+    "PreviousTxnLgrSeq": 12,
+    "Sequence": 6,
+    "index": "29782CA100FEB833B0BD8E256B28BE63EAC16F030C94F5A4EC6EA83DAA7056FD"
+  },
+  "ledger": {
+    "close_time": 845082230,
+    "closed": true,
+    "ledger_hash": "A0DEBF18D502917CE8A4780F2FA077657CAC98105A38AE3BCD86B13EBE7C960A",
+    "ledger_index": 12
+  }
+}

@@ -136,3 +136,18 @@ close time `845081396`. The server returned the expected `tecEXPIRED` for an
 Investment deposit, but a local result-handling defect triggered STOP before
 Investment withdrawal, Redemption, or E4. Evidence is under
 `evidence/checkpoint-1c/`.
+
+## Checkpoint 1C-R stopped run
+
+Checkpoint 1C-R recreated the same dedicated container and volume and started a
+fresh pinned 3.4.0 standalone ledger at validated index 2. The network ID was
+21337 and the eight frozen required amendments remained present, supported, and
+enabled. The rebuilt local image ID was
+`sha256:db2e38f94bca22a6ed58579a725058cacca772104a65f50cc0145b6e534d517c`.
+
+The prerequisite fixture reached ledger 12. The first E3 VaultCreate was
+submitted at ledger 12 and validated as `tesSUCCESS` in ledger 13. The run then
+stopped because a local assertion expected one new owner object while the
+validated `account_objects` state added both the Vault and the owner's MPToken.
+No retry, phase transaction, E4 transaction, or E5-E9 transaction followed.
+Evidence is under `evidence/checkpoint-1c-r/`.

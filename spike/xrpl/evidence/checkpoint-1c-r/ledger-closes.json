@@ -1,0 +1,211 @@
+[
+  {
+    "after": {
+      "close_time": 845082221,
+      "closed": true,
+      "ledger_hash": "2214E07416ED897F6F3C423C863EBF92887AB098DC963F981A9CCD925402BC53",
+      "ledger_index": 3
+    },
+    "before": {
+      "close_time": 845082220,
+      "closed": true,
+      "ledger_hash": "C5C148CEA8133197D4338C7C3F457C7FA25220C400E46F34AE653D7841AC0A92",
+      "ledger_index": 2
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 4,
+      "status": "success"
+    },
+    "reason": "validate fund_issuer or establish absence from validated ledger"
+  },
+  {
+    "after": {
+      "close_time": 845082222,
+      "closed": true,
+      "ledger_hash": "913C8B66EC182B0F42369FFCA7D9C39BA353157E6770C5E6EA74CD14435F5EFA",
+      "ledger_index": 4
+    },
+    "before": {
+      "close_time": 845082221,
+      "closed": true,
+      "ledger_hash": "2214E07416ED897F6F3C423C863EBF92887AB098DC963F981A9CCD925402BC53",
+      "ledger_index": 3
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 5,
+      "status": "success"
+    },
+    "reason": "validate fund_lender or establish absence from validated ledger"
+  },
+  {
+    "after": {
+      "close_time": 845082223,
+      "closed": true,
+      "ledger_hash": "4216A83AA1D2CEE7F9678110E8BCADA95A2525DAB94E7D11E707217C1CBAD878",
+      "ledger_index": 5
+    },
+    "before": {
+      "close_time": 845082222,
+      "closed": true,
+      "ledger_hash": "913C8B66EC182B0F42369FFCA7D9C39BA353157E6770C5E6EA74CD14435F5EFA",
+      "ledger_index": 4
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 6,
+      "status": "success"
+    },
+    "reason": "validate fund_borrower or establish absence from validated ledger"
+  },
+  {
+    "after": {
+      "close_time": 845082224,
+      "closed": true,
+      "ledger_hash": "2539AC165448AD31E126FE92A0E6AD9328C05555BB5364D30BEB861B4F8301D9",
+      "ledger_index": 6
+    },
+    "before": {
+      "close_time": 845082223,
+      "closed": true,
+      "ledger_hash": "4216A83AA1D2CEE7F9678110E8BCADA95A2525DAB94E7D11E707217C1CBAD878",
+      "ledger_index": 5
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 7,
+      "status": "success"
+    },
+    "reason": "validate fund_loan_broker or establish absence from validated ledger"
+  },
+  {
+    "after": {
+      "close_time": 845082225,
+      "closed": true,
+      "ledger_hash": "6A5919F57375B351B5CE947BB1166C05034C1A361AE4C195BE271518CB0604B2",
+      "ledger_index": 7
+    },
+    "before": {
+      "close_time": 845082224,
+      "closed": true,
+      "ledger_hash": "2539AC165448AD31E126FE92A0E6AD9328C05555BB5364D30BEB861B4F8301D9",
+      "ledger_index": 6
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 8,
+      "status": "success"
+    },
+    "reason": "validate issuer_enable_default_ripple or establish absence from validated ledger"
+  },
+  {
+    "after": {
+      "close_time": 845082226,
+      "closed": true,
+      "ledger_hash": "5D6713D15A01831760A4D6AE171C020B7425A8E17F3C1CD2C5119110410767AA",
+      "ledger_index": 8
+    },
+    "before": {
+      "close_time": 845082225,
+      "closed": true,
+      "ledger_hash": "6A5919F57375B351B5CE947BB1166C05034C1A361AE4C195BE271518CB0604B2",
+      "ledger_index": 7
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 9,
+      "status": "success"
+    },
+    "reason": "validate lender_trust_tRLUSD or establish absence from validated ledger"
+  },
+  {
+    "after": {
+      "close_time": 845082227,
+      "closed": true,
+      "ledger_hash": "F903DC623FC95313C28B28FE5B66BCC32D1DF4E3A301CFC2C7AEDACF8D6714A7",
+      "ledger_index": 9
+    },
+    "before": {
+      "close_time": 845082226,
+      "closed": true,
+      "ledger_hash": "5D6713D15A01831760A4D6AE171C020B7425A8E17F3C1CD2C5119110410767AA",
+      "ledger_index": 8
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 10,
+      "status": "success"
+    },
+    "reason": "validate borrower_trust_tRLUSD or establish absence from validated ledger"
+  },
+  {
+    "after": {
+      "close_time": 845082228,
+      "closed": true,
+      "ledger_hash": "3898C89FAE92A5F49DEA1A88245BE68D00FD75370DE9A979AEDF7632B1D24B0A",
+      "ledger_index": 10
+    },
+    "before": {
+      "close_time": 845082227,
+      "closed": true,
+      "ledger_hash": "F903DC623FC95313C28B28FE5B66BCC32D1DF4E3A301CFC2C7AEDACF8D6714A7",
+      "ledger_index": 9
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 11,
+      "status": "success"
+    },
+    "reason": "validate loan_broker_trust_tRLUSD or establish absence from validated ledger"
+  },
+  {
+    "after": {
+      "close_time": 845082229,
+      "closed": true,
+      "ledger_hash": "EA49140335D9008270639438CA9344AA003FFED3E503FAD6BB040C89C1DA81B3",
+      "ledger_index": 11
+    },
+    "before": {
+      "close_time": 845082228,
+      "closed": true,
+      "ledger_hash": "3898C89FAE92A5F49DEA1A88245BE68D00FD75370DE9A979AEDF7632B1D24B0A",
+      "ledger_index": 10
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 12,
+      "status": "success"
+    },
+    "reason": "validate issue_tRLUSD_to_lender or establish absence from validated ledger"
+  },
+  {
+    "after": {
+      "close_time": 845082230,
+      "closed": true,
+      "ledger_hash": "A0DEBF18D502917CE8A4780F2FA077657CAC98105A38AE3BCD86B13EBE7C960A",
+      "ledger_index": 12
+    },
+    "before": {
+      "close_time": 845082229,
+      "closed": true,
+      "ledger_hash": "EA49140335D9008270639438CA9344AA003FFED3E503FAD6BB040C89C1DA81B3",
+      "ledger_index": 11
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 13,
+      "status": "success"
+    },
+    "reason": "validate issue_tRLUSD_to_loan_broker or establish absence from validated ledger"
+  },
+  {
+    "after": {
+      "close_time": 845082231,
+      "closed": true,
+      "ledger_hash": "420999EAA52306DADCCC86F46BF5B011826B04DF306B54C04C8A53028CE8A0E2",
+      "ledger_index": 13
+    },
+    "before": {
+      "close_time": 845082230,
+      "closed": true,
+      "ledger_hash": "A0DEBF18D502917CE8A4780F2FA077657CAC98105A38AE3BCD86B13EBE7C960A",
+      "ledger_index": 12
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 14,
+      "status": "success"
+    },
+    "reason": "validate e3_create_closed_ended_vault or establish absence from validated ledger"
+  }
+]

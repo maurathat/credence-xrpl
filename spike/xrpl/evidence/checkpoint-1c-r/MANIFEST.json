@@ -1,0 +1,96 @@
+{
+  "algorithm": "SHA-256",
+  "file_count": 18,
+  "files": [
+    {
+      "bytes": 277,
+      "path": "actors-public.json",
+      "sha256": "1b9dba5d3b8d52031c174d80d3a66392d177b582d2da79ddbc56a360c9c3571c"
+    },
+    {
+      "bytes": 23331,
+      "path": "environment-start.json",
+      "sha256": "f5410f1da916c39916ee8906428511970ca131671f7cffd37fdaaa74793190f4"
+    },
+    {
+      "bytes": 75918,
+      "path": "experiment-summary.json",
+      "sha256": "10dad6c28555e8fa518869408ecf8ed95e02c9a3e024361f05ccc2ed3ad6e701"
+    },
+    {
+      "bytes": 709,
+      "path": "fixture-final-state.json",
+      "sha256": "89b6131295e93c75eb48dbb6ec068bdb911bea27fc0c62afa55c9cb7eed70c8d"
+    },
+    {
+      "bytes": 6318,
+      "path": "ledger-closes.json",
+      "sha256": "f286737a92db96c0453d41a8a40a69e1ffed8e4eefc61e6cedc4fa236d93d074"
+    },
+    {
+      "bytes": 866,
+      "path": "source-findings.json",
+      "sha256": "e3633ba04821f4668f2092cc69418007bc74311db50066cdfd6693dbdd2687f3"
+    },
+    {
+      "bytes": 5040,
+      "path": "transactions/01-fund_issuer.json",
+      "sha256": "e9e95523f71a51b1282662b4c17f1935fcccda19c83b1e2fe01b990bf6ec05e8"
+    },
+    {
+      "bytes": 5172,
+      "path": "transactions/02-fund_lender.json",
+      "sha256": "b5860217cc420ccd7f3190cf5f7cde06a83cf1fa4b78ff4ff7fff5ca06e52737"
+    },
+    {
+      "bytes": 5176,
+      "path": "transactions/03-fund_borrower.json",
+      "sha256": "058974a2d19140dcac15c8bf9cad8f08b1d78044e6e16ccabb2d5aaf4a029ebe"
+    },
+    {
+      "bytes": 5182,
+      "path": "transactions/04-fund_loan_broker.json",
+      "sha256": "5510e1cc5656b0a1f4508fbbe531eb6c4c64d7c09ce0efaaeea88abbdacf901e"
+    },
+    {
+      "bytes": 4905,
+      "path": "transactions/05-issuer_enable_default_ripple.json",
+      "sha256": "bff083dba982cafffb01cffdba2874e5cfffaf790cc9dd2f7b15cc99cc77ca7c"
+    },
+    {
+      "bytes": 6845,
+      "path": "transactions/06-lender_trust_tRLUSD.json",
+      "sha256": "377c1739a6b4ded22f86d18d32c92d7dbb6c4ff558223ea51816c4d32afe0511"
+    },
+    {
+      "bytes": 6878,
+      "path": "transactions/07-borrower_trust_tRLUSD.json",
+      "sha256": "9bb7ddce08a3b469f39f28a9ea2108a87279889a4c47bd3e228858ce7afa0a77"
+    },
+    {
+      "bytes": 6887,
+      "path": "transactions/08-loan_broker_trust_tRLUSD.json",
+      "sha256": "2c2cd47a7650d865df0bce7a335eaa116219c7ecdccf11596b0e8f12a0f5ed07"
+    },
+    {
+      "bytes": 6402,
+      "path": "transactions/09-issue_tRLUSD_to_lender.json",
+      "sha256": "17c587e61524a359f05a38e78ec837a38bb81dd6cb23699a1b0a8a049b9efcb0"
+    },
+    {
+      "bytes": 6404,
+      "path": "transactions/10-issue_tRLUSD_to_loan_broker.json",
+      "sha256": "06aecd4f04fabbbcda336d2a23337e93a8d9eb9369ac8157138f3a0ef973eacf"
+    },
+    {
+      "bytes": 12639,
+      "path": "transactions/11-e3_create_closed_ended_vault.json",
+      "sha256": "4f8539f6eaad6c5301a9a4f153079ecee0b4dd978e27cf9cf646cbc1346b3699"
+    },
+    {
+      "bytes": 12639,
+      "path": "unexpected-result.json",
+      "sha256": "4f8539f6eaad6c5301a9a4f153079ecee0b4dd978e27cf9cf646cbc1346b3699"
+    }
+  ]
+}

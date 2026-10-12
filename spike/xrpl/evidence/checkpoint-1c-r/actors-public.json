@@ -1,0 +1,7 @@
+{
+  "borrower": "rB6VC2gqTjzjxJgHHfpa2HZnJPVmA2yGog",
+  "issuer": "rGMmkTG4FqGqSxcgfsSrznKpkDTKymjaGM",
+  "lender": "rGK353aWmRbyznAq2KRHAXuakuFGgrPStZ",
+  "loan_broker": "rhzNKqBuRHcBDTYn9U5jzRgFsfjTfkNmgk",
+  "purpose": "fresh-ledger prerequisite fixture; not an E2 rerun"
+}
