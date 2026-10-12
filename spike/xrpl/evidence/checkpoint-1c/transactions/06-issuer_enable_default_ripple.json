@@ -1,0 +1,145 @@
+{
+  "after_state": {
+    "account_data": {
+      "Account": "rsiv37aCnB3ygmY4qvDQtYyzX8evYUM3rF",
+      "Balance": "999999990",
+      "Flags": 8388608,
+      "LedgerEntryType": "AccountRoot",
+      "OwnerCount": 0,
+      "PreviousTxnID": "F599D58167AB690B63B3404EFE7E8C4649825CF19925135524A3E97687966FCD",
+      "PreviousTxnLgrSeq": 7,
+      "Sequence": 4,
+      "index": "C3DAE12707A856792273EAC71D0C76E8DE22FF6EF3B7D011362E4DF4F1CECCC3"
+    },
+    "ledger_index": 7
+  },
+  "before_state": {
+    "account_data": {
+      "Account": "rsiv37aCnB3ygmY4qvDQtYyzX8evYUM3rF",
+      "Balance": "1000000000",
+      "Flags": 0,
+      "LedgerEntryType": "AccountRoot",
+      "OwnerCount": 0,
+      "PreviousTxnID": "FBEF139A200484918A6C289CE5431DD5EFDDBE104AA12C7F8A520529C17B2F7B",
+      "PreviousTxnLgrSeq": 3,
+      "Sequence": 3,
+      "index": "C3DAE12707A856792273EAC71D0C76E8DE22FF6EF3B7D011362E4DF4F1CECCC3"
+    },
+    "ledger_index": 6
+  },
+  "canonical_public_transaction": {
+    "Account": "rsiv37aCnB3ygmY4qvDQtYyzX8evYUM3rF",
+    "Fee": "10",
+    "LastLedgerSequence": 26,
+    "NetworkID": 21337,
+    "Sequence": 3,
+    "SetFlag": 8,
+    "TransactionType": "AccountSet",
+    "authorization": {
+      "mode": "single_sign",
+      "signers": [],
+      "top_level_signing_public_key_present": true,
+      "top_level_transaction_signature_present": true
+    }
+  },
+  "client_exception": null,
+  "expected_result": "tesSUCCESS",
+  "experiment": "E2",
+  "label": "issuer_enable_default_ripple",
+  "ledger_after": {
+    "close_time": 845081345,
+    "closed": true,
+    "ledger_hash": "1497242F5384B1CB119BBCA88259D9E8CE3019C239FCAEEE3063CE76A1DC4ECD",
+    "ledger_index": 7
+  },
+  "observed_result": "tesSUCCESS",
+  "state_assertions": [
+    {
+      "actual": true,
+      "expected": true,
+      "name": "issuer DefaultRipple enabled",
+      "passed": true
+    }
+  ],
+  "status": "PASS",
+  "submission_response": {
+    "accepted": true,
+    "account_sequence_available": 4,
+    "account_sequence_next": 4,
+    "applied": true,
+    "broadcast": true,
+    "engine_result": "tesSUCCESS",
+    "engine_result_code": 0,
+    "engine_result_message": "The transaction was applied. Only final in a validated ledger.",
+    "kept": true,
+    "open_ledger_cost": "10",
+    "queued": false,
+    "tx_json": {
+      "Account": "rsiv37aCnB3ygmY4qvDQtYyzX8evYUM3rF",
+      "Fee": "10",
+      "LastLedgerSequence": 26,
+      "NetworkID": 21337,
+      "Sequence": 3,
+      "SetFlag": 8,
+      "TransactionType": "AccountSet",
+      "authorization": {
+        "mode": "single_sign",
+        "signers": [],
+        "top_level_signing_public_key_present": true,
+        "top_level_transaction_signature_present": true
+      },
+      "hash": "F599D58167AB690B63B3404EFE7E8C4649825CF19925135524A3E97687966FCD"
+    },
+    "validated_ledger_index": 6
+  },
+  "transaction_hash": "F599D58167AB690B63B3404EFE7E8C4649825CF19925135524A3E97687966FCD",
+  "validated_ledger_index": 7,
+  "validated_transaction_response": {
+    "Account": "rsiv37aCnB3ygmY4qvDQtYyzX8evYUM3rF",
+    "Fee": "10",
+    "LastLedgerSequence": 26,
+    "NetworkID": 21337,
+    "Sequence": 3,
+    "SetFlag": 8,
+    "TransactionType": "AccountSet",
+    "authorization": {
+      "mode": "single_sign",
+      "signers": [],
+      "top_level_signing_public_key_present": true,
+      "top_level_transaction_signature_present": true
+    },
+    "ctid": "C000000700005359",
+    "date": 845081345,
+    "hash": "F599D58167AB690B63B3404EFE7E8C4649825CF19925135524A3E97687966FCD",
+    "inLedger": 7,
+    "ledger_index": 7,
+    "meta": {
+      "AffectedNodes": [
+        {
+          "ModifiedNode": {
+            "FinalFields": {
+              "Account": "rsiv37aCnB3ygmY4qvDQtYyzX8evYUM3rF",
+              "Balance": "999999990",
+              "Flags": 8388608,
+              "OwnerCount": 0,
+              "Sequence": 4
+            },
+            "LedgerEntryType": "AccountRoot",
+            "LedgerIndex": "C3DAE12707A856792273EAC71D0C76E8DE22FF6EF3B7D011362E4DF4F1CECCC3",
+            "PreviousFields": {
+              "Balance": "1000000000",
+              "Flags": 0,
+              "Sequence": 3
+            },
+            "PreviousTxnID": "FBEF139A200484918A6C289CE5431DD5EFDDBE104AA12C7F8A520529C17B2F7B",
+            "PreviousTxnLgrSeq": 3
+          }
+        }
+      ],
+      "TransactionIndex": 0,
+      "TransactionResult": "tesSUCCESS"
+    },
+    "status": "success",
+    "validated": true
+  }
+}

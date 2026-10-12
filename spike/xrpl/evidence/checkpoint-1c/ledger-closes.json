@@ -1,0 +1,2257 @@
+[
+  {
+    "advanced_exactly_one": true,
+    "after": {
+      "close_time": 845081341,
+      "closed": true,
+      "ledger_hash": "2DC3E2BCBB7F66220BC0F0D07C3CAA363C55FBAF425FC385D92D7546A9464795",
+      "ledger_index": 3
+    },
+    "before": {
+      "close_time": 845081340,
+      "closed": true,
+      "ledger_hash": "63AF32B9F07D07DCF903895FEA957803AC005AA3FD7CEBE551938B2F3148C46F",
+      "ledger_index": 2
+    },
+    "close_time_monotonic": true,
+    "host_time_utc": "2026-10-12T00:49:03.673272+00:00",
+    "ledger_accept_status": "success",
+    "ordinal": 1,
+    "reason": "validate fund_issuer",
+    "vault": null
+  },
+  {
+    "advanced_exactly_one": true,
+    "after": {
+      "close_time": 845081342,
+      "closed": true,
+      "ledger_hash": "35D71C1E2B227FF08562AB8615E57385C84A576E570BE0473ADCA7C0B384CEAD",
+      "ledger_index": 4
+    },
+    "before": {
+      "close_time": 845081341,
+      "closed": true,
+      "ledger_hash": "2DC3E2BCBB7F66220BC0F0D07C3CAA363C55FBAF425FC385D92D7546A9464795",
+      "ledger_index": 3
+    },
+    "close_time_monotonic": true,
+    "host_time_utc": "2026-10-12T00:49:03.735763+00:00",
+    "ledger_accept_status": "success",
+    "ordinal": 2,
+    "reason": "validate fund_lender",
+    "vault": null
+  },
+  {
+    "advanced_exactly_one": true,
+    "after": {
+      "close_time": 845081343,
+      "closed": true,
+      "ledger_hash": "88DC4BC1868F4FD13B21AD889FF0A89E5B4BB50CFE3ED09A1E31444A70EC7E5C",
+      "ledger_index": 5
+    },
+    "before": {
+      "close_time": 845081342,
+      "closed": true,
+      "ledger_hash": "35D71C1E2B227FF08562AB8615E57385C84A576E570BE0473ADCA7C0B384CEAD",
+      "ledger_index": 4
+    },
+    "close_time_monotonic": true,
+    "host_time_utc": "2026-10-12T00:49:03.783807+00:00",
+    "ledger_accept_status": "success",
+    "ordinal": 3,
+    "reason": "validate fund_borrower",
+    "vault": null
+  },
+  {
+    "advanced_exactly_one": true,
+    "after": {
+      "close_time": 845081344,
+      "closed": true,
+      "ledger_hash": "9A04687F44C0E8BFC185EA34596DFB9B515957DA9BD824D75209B8FA6216BD38",
+      "ledger_index": 6
+    },
+    "before": {
+      "close_time": 845081343,
+      "closed": true,
+      "ledger_hash": "88DC4BC1868F4FD13B21AD889FF0A89E5B4BB50CFE3ED09A1E31444A70EC7E5C",
+      "ledger_index": 5
+    },
+    "close_time_monotonic": true,
+    "host_time_utc": "2026-10-12T00:49:03.831084+00:00",
+    "ledger_accept_status": "success",
+    "ordinal": 4,
+    "reason": "validate fund_loan_broker",
+    "vault": null
+  },
+  {
+    "advanced_exactly_one": true,
+    "after": {
+      "close_time": 845081345,
+      "closed": true,
+      "ledger_hash": "1497242F5384B1CB119BBCA88259D9E8CE3019C239FCAEEE3063CE76A1DC4ECD",
+      "ledger_index": 7
+    },
+    "before": {
+      "close_time": 845081344,
+      "closed": true,
+      "ledger_hash": "9A04687F44C0E8BFC185EA34596DFB9B515957DA9BD824D75209B8FA6216BD38",
+      "ledger_index": 6
+    },
+    "close_time_monotonic": true,
+    "host_time_utc": "2026-10-12T00:49:03.904697+00:00",
+    "ledger_accept_status": "success",
+    "ordinal": 5,
+    "reason": "validate issuer_enable_default_ripple",
+    "vault": null
+  },
+  {
+    "advanced_exactly_one": true,
+    "after": {
+      "close_time": 845081346,
+      "closed": true,
+      "ledger_hash": "E9156C4278FBDAB0828CFB4A21CA7ADBAD709BBCB11D3FB3313C627439657222",
+      "ledger_index": 8
+    },
+    "before": {
+      "close_time": 845081345,
+      "closed": true,
+      "ledger_hash": "1497242F5384B1CB119BBCA88259D9E8CE3019C239FCAEEE3063CE76A1DC4ECD",
+      "ledger_index": 7
+    },
+    "close_time_monotonic": true,
+    "host_time_utc": "2026-10-12T00:49:03.968265+00:00",
+    "ledger_accept_status": "success",
+    "ordinal": 6,
+    "reason": "validate lender_trust_tRLUSD",
+    "vault": null
+  },
+  {
+    "advanced_exactly_one": true,
+    "after": {
+      "close_time": 845081347,
+      "closed": true,
+      "ledger_hash": "216BBF8C17616ED35D3D79A21636342A16A3C3F63C52F5FDB26908F7CEACB4F0",
+      "ledger_index": 9
+    },
+    "before": {
+      "close_time": 845081346,
+      "closed": true,
+      "ledger_hash": "E9156C4278FBDAB0828CFB4A21CA7ADBAD709BBCB11D3FB3313C627439657222",
+      "ledger_index": 8
+    },
+    "close_time_monotonic": true,
+    "host_time_utc": "2026-10-12T00:49:04.027164+00:00",
+    "ledger_accept_status": "success",
+    "ordinal": 7,
+    "reason": "validate borrower_trust_tRLUSD",
+    "vault": null
+  },
+  {
+    "advanced_exactly_one": true,
+    "after": {
+      "close_time": 845081348,
+      "closed": true,
+      "ledger_hash": "91B7974B9BB32111CEC9B07668A0CF9EA26A7A55CDB0AEAA6AB7F7E1F06542AB",
+      "ledger_index": 10
+    },
+    "before": {
+      "close_time": 845081347,
+      "closed": true,
+      "ledger_hash": "216BBF8C17616ED35D3D79A21636342A16A3C3F63C52F5FDB26908F7CEACB4F0",
+      "ledger_index": 9
+    },
+    "close_time_monotonic": true,
+    "host_time_utc": "2026-10-12T00:49:04.087257+00:00",
+    "ledger_accept_status": "success",
+    "ordinal": 8,
+    "reason": "validate loan_broker_trust_tRLUSD",
+    "vault": null
+  },
+  {
+    "advanced_exactly_one": true,
+    "after": {
+      "close_time": 845081349,
+      "closed": true,
+      "ledger_hash": "C14BE8DA60A3445EF94FA989FAF8155A80F01DD712ED4339AD5F498455F2E194",
+      "ledger_index": 11
+    },
+    "before": {
+      "close_time": 845081348,
+      "closed": true,
+      "ledger_hash": "91B7974B9BB32111CEC9B07668A0CF9EA26A7A55CDB0AEAA6AB7F7E1F06542AB",
+      "ledger_index": 10
+    },
+    "close_time_monotonic": true,
+    "host_time_utc": "2026-10-12T00:49:04.183485+00:00",
+    "ledger_accept_status": "success",
+    "ordinal": 9,
+    "reason": "validate issue_tRLUSD_to_lender",
+    "vault": null
+  },
+  {
+    "advanced_exactly_one": true,
+    "after": {
+      "close_time": 845081350,
+      "closed": true,
+      "ledger_hash": "E2AF70B5016E0C3E57D13C20BF06A43B3392FA58FC6372264F223E555B05F9D1",
+      "ledger_index": 12
+    },
+    "before": {
+      "close_time": 845081349,
+      "closed": true,
+      "ledger_hash": "C14BE8DA60A3445EF94FA989FAF8155A80F01DD712ED4339AD5F498455F2E194",
+      "ledger_index": 11
+    },
+    "close_time_monotonic": true,
+    "host_time_utc": "2026-10-12T00:49:04.244118+00:00",
+    "ledger_accept_status": "success",
+    "ordinal": 10,
+    "reason": "validate issue_tRLUSD_to_loan_broker",
+    "vault": null
+  },
+  {
+    "advanced_exactly_one": true,
+    "after": {
+      "close_time": 845081351,
+      "closed": true,
+      "ledger_hash": "9AE63EBF2C5C899DE7F7A77ABA3499EB91E61AD6CEE65F93C2EED537A2160089",
+      "ledger_index": 13
+    },
+    "before": {
+      "close_time": 845081350,
+      "closed": true,
+      "ledger_hash": "E2AF70B5016E0C3E57D13C20BF06A43B3392FA58FC6372264F223E555B05F9D1",
+      "ledger_index": 12
+    },
+    "close_time_monotonic": true,
+    "host_time_utc": "2026-10-12T00:49:04.379782+00:00",
+    "ledger_accept_status": "success",
+    "ordinal": 11,
+    "reason": "validate create_closed_ended_vault",
+    "vault": null
+  },
+  {
+    "advanced_exactly_one": true,
+    "after": {
+      "close_time": 845081352,
+      "closed": true,
+      "ledger_hash": "BFADAD522D05B96B2A226059FA4FB2B991EDBC370452FC27C90BAD090BA1E070",
+      "ledger_index": 14
+    },
+    "before": {
+      "close_time": 845081351,
+      "closed": true,
+      "ledger_hash": "9AE63EBF2C5C899DE7F7A77ABA3499EB91E61AD6CEE65F93C2EED537A2160089",
+      "ledger_index": 13
+    },
+    "close_time_monotonic": true,
+    "host_time_utc": "2026-10-12T00:49:04.502780+00:00",
+    "ledger_accept_status": "success",
+    "ordinal": 12,
+    "reason": "validate subscription_deposit",
+    "vault": {
+      "Account": "rKKktJREjEqSCiWopx4xx3QkNLPwnyRFzn",
+      "Asset": {
+        "currency": "74524C5553440000000000000000000000000000",
+        "issuer": "rsiv37aCnB3ygmY4qvDQtYyzX8evYUM3rF"
+      },
+      "AssetsAvailable": "100000",
+      "AssetsTotal": "100000",
+      "Flags": 0,
+      "LEVersion": 1,
+      "LedgerEntryType": "Vault",
+      "Owner": "rpoLVaiYEit3xuQ2WoMBBUMskraTE2nnp4",
+      "OwnerNode": "0",
+      "PreviousTxnID": "3926AE4D5DA4CE8642136B9019F241EDAD56B10213A2A3DC6CE18AC50A8EAAD3",
+      "PreviousTxnLgrSeq": 14,
+      "RedemptionDate": 845081575,
+      "Scale": 6,
+      "Sequence": 7,
+      "ShareMPTID": "00000001C8FE62648185B3537A5332141DBE1BA203FD2E0C",
+      "SubscriptionDate": 845081395,
+      "VaultKind": 1,
+      "WithdrawalPolicy": 1,
+      "index": "66150AE82ECEF1A7F421DC7252BF7566EC504FDAE464EA9B577AD6AE0994148B"
+    }
+  },
+  {
+    "advanced_exactly_one": true,
+    "after": {
+      "close_time": 845081353,
+      "closed": true,
+      "ledger_hash": "02477536BB32F08DBD488DEC3E40EC6F13B5A917B281D32F66D9A4C695F1A135",
+      "ledger_index": 15
+    },
+    "before": {
+      "close_time": 845081352,
+      "closed": true,
+      "ledger_hash": "BFADAD522D05B96B2A226059FA4FB2B991EDBC370452FC27C90BAD090BA1E070",
+      "ledger_index": 14
+    },
+    "close_time_monotonic": true,
+    "host_time_utc": "2026-10-12T00:49:04.624195+00:00",
+    "ledger_accept_status": "success",
+    "ordinal": 13,
+    "reason": "validate subscription_withdraw",
+    "vault": {
+      "Account": "rKKktJREjEqSCiWopx4xx3QkNLPwnyRFzn",
+      "Asset": {
+        "currency": "74524C5553440000000000000000000000000000",
+        "issuer": "rsiv37aCnB3ygmY4qvDQtYyzX8evYUM3rF"
+      },
+      "AssetsAvailable": "99000",
+      "AssetsTotal": "99000",
+      "Flags": 0,
+      "LEVersion": 1,
+      "LedgerEntryType": "Vault",
+      "Owner": "rpoLVaiYEit3xuQ2WoMBBUMskraTE2nnp4",
+      "OwnerNode": "0",
+      "PreviousTxnID": "216C726DDC9F24B7DEF606D829D3F6D64235441D5FA182DD6A68C80D21384F9D",
+      "PreviousTxnLgrSeq": 15,
+      "RedemptionDate": 845081575,
+      "Scale": 6,
+      "Sequence": 7,
+      "ShareMPTID": "00000001C8FE62648185B3537A5332141DBE1BA203FD2E0C",
+      "SubscriptionDate": 845081395,
+      "VaultKind": 1,
+      "WithdrawalPolicy": 1,
+      "index": "66150AE82ECEF1A7F421DC7252BF7566EC504FDAE464EA9B577AD6AE0994148B"
+    }
+  },
+  {
+    "advanced_exactly_one": true,
+    "after": {
+      "close_time": 845081354,
+      "closed": true,
+      "ledger_hash": "116D58D4364E66888C2EF19FCDDC78D92D3400A332F0EC7D2BC0508CDA880C93",
+      "ledger_index": 16
+    },
+    "before": {
+      "close_time": 845081353,
+      "closed": true,
+      "ledger_hash": "02477536BB32F08DBD488DEC3E40EC6F13B5A917B281D32F66D9A4C695F1A135",
+      "ledger_index": 15
+    },
+    "close_time_monotonic": true,
+    "host_time_utc": "2026-10-12T00:49:04.683873+00:00",
+    "ledger_accept_status": "success",
+    "ordinal": 14,
+    "reason": "advance to investment",
+    "vault": {
+      "Account": "rKKktJREjEqSCiWopx4xx3QkNLPwnyRFzn",
+      "Asset": {
+        "currency": "74524C5553440000000000000000000000000000",
+        "issuer": "rsiv37aCnB3ygmY4qvDQtYyzX8evYUM3rF"
+      },
+      "AssetsAvailable": "99000",
+      "AssetsTotal": "99000",
+      "Flags": 0,
+      "LEVersion": 1,
+      "LedgerEntryType": "Vault",
+      "Owner": "rpoLVaiYEit3xuQ2WoMBBUMskraTE2nnp4",
+      "OwnerNode": "0",
+      "PreviousTxnID": "216C726DDC9F24B7DEF606D829D3F6D64235441D5FA182DD6A68C80D21384F9D",
+      "PreviousTxnLgrSeq": 15,
+      "RedemptionDate": 845081575,
+      "Scale": 6,
+      "Sequence": 7,
+      "ShareMPTID": "00000001C8FE62648185B3537A5332141DBE1BA203FD2E0C",
+      "SubscriptionDate": 845081395,
+      "VaultKind": 1,
+      "WithdrawalPolicy": 1,
+      "index": "66150AE82ECEF1A7F421DC7252BF7566EC504FDAE464EA9B577AD6AE0994148B"
+    }
+  },
+  {
+    "advanced_exactly_one": true,
+    "after": {
+      "close_time": 845081355,
+      "closed": true,
+      "ledger_hash": "6FB04B65D23864AB0A757E339A1AF949AAC9DBEDA8702B451845CDD83B68969D",
+      "ledger_index": 17
+    },
+    "before": {
+      "close_time": 845081354,
+      "closed": true,
+      "ledger_hash": "116D58D4364E66888C2EF19FCDDC78D92D3400A332F0EC7D2BC0508CDA880C93",
+      "ledger_index": 16
+    },
+    "close_time_monotonic": true,
+    "host_time_utc": "2026-10-12T00:49:04.705337+00:00",
+    "ledger_accept_status": "success",
+    "ordinal": 15,
+    "reason": "advance to investment",
+    "vault": {
+      "Account": "rKKktJREjEqSCiWopx4xx3QkNLPwnyRFzn",
+      "Asset": {
+        "currency": "74524C5553440000000000000000000000000000",
+        "issuer": "rsiv37aCnB3ygmY4qvDQtYyzX8evYUM3rF"
+      },
+      "AssetsAvailable": "99000",
+      "AssetsTotal": "99000",
+      "Flags": 0,
+      "LEVersion": 1,
+      "LedgerEntryType": "Vault",
+      "Owner": "rpoLVaiYEit3xuQ2WoMBBUMskraTE2nnp4",
+      "OwnerNode": "0",
+      "PreviousTxnID": "216C726DDC9F24B7DEF606D829D3F6D64235441D5FA182DD6A68C80D21384F9D",
+      "PreviousTxnLgrSeq": 15,
+      "RedemptionDate": 845081575,
+      "Scale": 6,
+      "Sequence": 7,
+      "ShareMPTID": "00000001C8FE62648185B3537A5332141DBE1BA203FD2E0C",
+      "SubscriptionDate": 845081395,
+      "VaultKind": 1,
+      "WithdrawalPolicy": 1,
+      "index": "66150AE82ECEF1A7F421DC7252BF7566EC504FDAE464EA9B577AD6AE0994148B"
+    }
+  },
+  {
+    "advanced_exactly_one": true,
+    "after": {
+      "close_time": 845081356,
+      "closed": true,
+      "ledger_hash": "FB29862F03884CEF8DAB0E25720384AF457B875EBA836636CDC56EAC7B779A75",
+      "ledger_index": 18
+    },
+    "before": {
+      "close_time": 845081355,
+      "closed": true,
+      "ledger_hash": "6FB04B65D23864AB0A757E339A1AF949AAC9DBEDA8702B451845CDD83B68969D",
+      "ledger_index": 17
+    },
+    "close_time_monotonic": true,
+    "host_time_utc": "2026-10-12T00:49:04.732055+00:00",
+    "ledger_accept_status": "success",
+    "ordinal": 16,
+    "reason": "advance to investment",
+    "vault": {
+      "Account": "rKKktJREjEqSCiWopx4xx3QkNLPwnyRFzn",
+      "Asset": {
+        "currency": "74524C5553440000000000000000000000000000",
+        "issuer": "rsiv37aCnB3ygmY4qvDQtYyzX8evYUM3rF"
+      },
+      "AssetsAvailable": "99000",
+      "AssetsTotal": "99000",
+      "Flags": 0,
+      "LEVersion": 1,
+      "LedgerEntryType": "Vault",
+      "Owner": "rpoLVaiYEit3xuQ2WoMBBUMskraTE2nnp4",
+      "OwnerNode": "0",
+      "PreviousTxnID": "216C726DDC9F24B7DEF606D829D3F6D64235441D5FA182DD6A68C80D21384F9D",
+      "PreviousTxnLgrSeq": 15,
+      "RedemptionDate": 845081575,
+      "Scale": 6,
+      "Sequence": 7,
+      "ShareMPTID": "00000001C8FE62648185B3537A5332141DBE1BA203FD2E0C",
+      "SubscriptionDate": 845081395,
+      "VaultKind": 1,
+      "WithdrawalPolicy": 1,
+      "index": "66150AE82ECEF1A7F421DC7252BF7566EC504FDAE464EA9B577AD6AE0994148B"
+    }
+  },
+  {
+    "advanced_exactly_one": true,
+    "after": {
+      "close_time": 845081357,
+      "closed": true,
+      "ledger_hash": "F7D68760AC55CA407A057BA596D66F77C343CBC9D50958689F81864F11349536",
+      "ledger_index": 19
+    },
+    "before": {
+      "close_time": 845081356,
+      "closed": true,
+      "ledger_hash": "FB29862F03884CEF8DAB0E25720384AF457B875EBA836636CDC56EAC7B779A75",
+      "ledger_index": 18
+    },
+    "close_time_monotonic": true,
+    "host_time_utc": "2026-10-12T00:49:04.751994+00:00",
+    "ledger_accept_status": "success",
+    "ordinal": 17,
+    "reason": "advance to investment",
+    "vault": {
+      "Account": "rKKktJREjEqSCiWopx4xx3QkNLPwnyRFzn",
+      "Asset": {
+        "currency": "74524C5553440000000000000000000000000000",
+        "issuer": "rsiv37aCnB3ygmY4qvDQtYyzX8evYUM3rF"
+      },
+      "AssetsAvailable": "99000",
+      "AssetsTotal": "99000",
+      "Flags": 0,
+      "LEVersion": 1,
+      "LedgerEntryType": "Vault",
+      "Owner": "rpoLVaiYEit3xuQ2WoMBBUMskraTE2nnp4",
+      "OwnerNode": "0",
+      "PreviousTxnID": "216C726DDC9F24B7DEF606D829D3F6D64235441D5FA182DD6A68C80D21384F9D",
+      "PreviousTxnLgrSeq": 15,
+      "RedemptionDate": 845081575,
+      "Scale": 6,
+      "Sequence": 7,
+      "ShareMPTID": "00000001C8FE62648185B3537A5332141DBE1BA203FD2E0C",
+      "SubscriptionDate": 845081395,
+      "VaultKind": 1,
+      "WithdrawalPolicy": 1,
+      "index": "66150AE82ECEF1A7F421DC7252BF7566EC504FDAE464EA9B577AD6AE0994148B"
+    }
+  },
+  {
+    "advanced_exactly_one": true,
+    "after": {
+      "close_time": 845081358,
+      "closed": true,
+      "ledger_hash": "B2BE7EC1300A25F357D7151787105BB87F2092FB3A13C9E721EEF86CF815F982",
+      "ledger_index": 20
+    },
+    "before": {
+      "close_time": 845081357,
+      "closed": true,
+      "ledger_hash": "F7D68760AC55CA407A057BA596D66F77C343CBC9D50958689F81864F11349536",
+      "ledger_index": 19
+    },
+    "close_time_monotonic": true,
+    "host_time_utc": "2026-10-12T00:49:04.775174+00:00",
+    "ledger_accept_status": "success",
+    "ordinal": 18,
+    "reason": "advance to investment",
+    "vault": {
+      "Account": "rKKktJREjEqSCiWopx4xx3QkNLPwnyRFzn",
+      "Asset": {
+        "currency": "74524C5553440000000000000000000000000000",
+        "issuer": "rsiv37aCnB3ygmY4qvDQtYyzX8evYUM3rF"
+      },
+      "AssetsAvailable": "99000",
+      "AssetsTotal": "99000",
+      "Flags": 0,
+      "LEVersion": 1,
+      "LedgerEntryType": "Vault",
+      "Owner": "rpoLVaiYEit3xuQ2WoMBBUMskraTE2nnp4",
+      "OwnerNode": "0",
+      "PreviousTxnID": "216C726DDC9F24B7DEF606D829D3F6D64235441D5FA182DD6A68C80D21384F9D",
+      "PreviousTxnLgrSeq": 15,
+      "RedemptionDate": 845081575,
+      "Scale": 6,
+      "Sequence": 7,
+      "ShareMPTID": "00000001C8FE62648185B3537A5332141DBE1BA203FD2E0C",
+      "SubscriptionDate": 845081395,
+      "VaultKind": 1,
+      "WithdrawalPolicy": 1,
+      "index": "66150AE82ECEF1A7F421DC7252BF7566EC504FDAE464EA9B577AD6AE0994148B"
+    }
+  },
+  {
+    "advanced_exactly_one": true,
+    "after": {
+      "close_time": 845081359,
+      "closed": true,
+      "ledger_hash": "AF159CA5A9FCB6F6E13A9C7A2785D126557DC97B69FF94133E6B99FC31595668",
+      "ledger_index": 21
+    },
+    "before": {
+      "close_time": 845081358,
+      "closed": true,
+      "ledger_hash": "B2BE7EC1300A25F357D7151787105BB87F2092FB3A13C9E721EEF86CF815F982",
+      "ledger_index": 20
+    },
+    "close_time_monotonic": true,
+    "host_time_utc": "2026-10-12T00:49:04.795689+00:00",
+    "ledger_accept_status": "success",
+    "ordinal": 19,
+    "reason": "advance to investment",
+    "vault": {
+      "Account": "rKKktJREjEqSCiWopx4xx3QkNLPwnyRFzn",
+      "Asset": {
+        "currency": "74524C5553440000000000000000000000000000",
+        "issuer": "rsiv37aCnB3ygmY4qvDQtYyzX8evYUM3rF"
+      },
+      "AssetsAvailable": "99000",
+      "AssetsTotal": "99000",
+      "Flags": 0,
+      "LEVersion": 1,
+      "LedgerEntryType": "Vault",
+      "Owner": "rpoLVaiYEit3xuQ2WoMBBUMskraTE2nnp4",
+      "OwnerNode": "0",
+      "PreviousTxnID": "216C726DDC9F24B7DEF606D829D3F6D64235441D5FA182DD6A68C80D21384F9D",
+      "PreviousTxnLgrSeq": 15,
+      "RedemptionDate": 845081575,
+      "Scale": 6,
+      "Sequence": 7,
+      "ShareMPTID": "00000001C8FE62648185B3537A5332141DBE1BA203FD2E0C",
+      "SubscriptionDate": 845081395,
+      "VaultKind": 1,
+      "WithdrawalPolicy": 1,
+      "index": "66150AE82ECEF1A7F421DC7252BF7566EC504FDAE464EA9B577AD6AE0994148B"
+    }
+  },
+  {
+    "advanced_exactly_one": true,
+    "after": {
+      "close_time": 845081360,
+      "closed": true,
+      "ledger_hash": "2C69DA60BE0FBFD5346F8FE9ED14954B131D484999D8C930AACF06694C831AFA",
+      "ledger_index": 22
+    },
+    "before": {
+      "close_time": 845081359,
+      "closed": true,
+      "ledger_hash": "AF159CA5A9FCB6F6E13A9C7A2785D126557DC97B69FF94133E6B99FC31595668",
+      "ledger_index": 21
+    },
+    "close_time_monotonic": true,
+    "host_time_utc": "2026-10-12T00:49:04.815406+00:00",
+    "ledger_accept_status": "success",
+    "ordinal": 20,
+    "reason": "advance to investment",
+    "vault": {
+      "Account": "rKKktJREjEqSCiWopx4xx3QkNLPwnyRFzn",
+      "Asset": {
+        "currency": "74524C5553440000000000000000000000000000",
+        "issuer": "rsiv37aCnB3ygmY4qvDQtYyzX8evYUM3rF"
+      },
+      "AssetsAvailable": "99000",
+      "AssetsTotal": "99000",
+      "Flags": 0,
+      "LEVersion": 1,
+      "LedgerEntryType": "Vault",
+      "Owner": "rpoLVaiYEit3xuQ2WoMBBUMskraTE2nnp4",
+      "OwnerNode": "0",
+      "PreviousTxnID": "216C726DDC9F24B7DEF606D829D3F6D64235441D5FA182DD6A68C80D21384F9D",
+      "PreviousTxnLgrSeq": 15,
+      "RedemptionDate": 845081575,
+      "Scale": 6,
+      "Sequence": 7,
+      "ShareMPTID": "00000001C8FE62648185B3537A5332141DBE1BA203FD2E0C",
+      "SubscriptionDate": 845081395,
+      "VaultKind": 1,
+      "WithdrawalPolicy": 1,
+      "index": "66150AE82ECEF1A7F421DC7252BF7566EC504FDAE464EA9B577AD6AE0994148B"
+    }
+  },
+  {
+    "advanced_exactly_one": true,
+    "after": {
+      "close_time": 845081361,
+      "closed": true,
+      "ledger_hash": "F8D352C118D3C6F0153A5E5A46FB58C47161891B7E3AD14FCEC4FDD8777F6D60",
+      "ledger_index": 23
+    },
+    "before": {
+      "close_time": 845081360,
+      "closed": true,
+      "ledger_hash": "2C69DA60BE0FBFD5346F8FE9ED14954B131D484999D8C930AACF06694C831AFA",
+      "ledger_index": 22
+    },
+    "close_time_monotonic": true,
+    "host_time_utc": "2026-10-12T00:49:04.836381+00:00",
+    "ledger_accept_status": "success",
+    "ordinal": 21,
+    "reason": "advance to investment",
+    "vault": {
+      "Account": "rKKktJREjEqSCiWopx4xx3QkNLPwnyRFzn",
+      "Asset": {
+        "currency": "74524C5553440000000000000000000000000000",
+        "issuer": "rsiv37aCnB3ygmY4qvDQtYyzX8evYUM3rF"
+      },
+      "AssetsAvailable": "99000",
+      "AssetsTotal": "99000",
+      "Flags": 0,
+      "LEVersion": 1,
+      "LedgerEntryType": "Vault",
+      "Owner": "rpoLVaiYEit3xuQ2WoMBBUMskraTE2nnp4",
+      "OwnerNode": "0",
+      "PreviousTxnID": "216C726DDC9F24B7DEF606D829D3F6D64235441D5FA182DD6A68C80D21384F9D",
+      "PreviousTxnLgrSeq": 15,
+      "RedemptionDate": 845081575,
+      "Scale": 6,
+      "Sequence": 7,
+      "ShareMPTID": "00000001C8FE62648185B3537A5332141DBE1BA203FD2E0C",
+      "SubscriptionDate": 845081395,
+      "VaultKind": 1,
+      "WithdrawalPolicy": 1,
+      "index": "66150AE82ECEF1A7F421DC7252BF7566EC504FDAE464EA9B577AD6AE0994148B"
+    }
+  },
+  {
+    "advanced_exactly_one": true,
+    "after": {
+      "close_time": 845081362,
+      "closed": true,
+      "ledger_hash": "0D0BDAF302A4D45B6E005658C604275E4773432003B9235090B8F9ECFA1115D4",
+      "ledger_index": 24
+    },
+    "before": {
+      "close_time": 845081361,
+      "closed": true,
+      "ledger_hash": "F8D352C118D3C6F0153A5E5A46FB58C47161891B7E3AD14FCEC4FDD8777F6D60",
+      "ledger_index": 23
+    },
+    "close_time_monotonic": true,
+    "host_time_utc": "2026-10-12T00:49:04.859193+00:00",
+    "ledger_accept_status": "success",
+    "ordinal": 22,
+    "reason": "advance to investment",
+    "vault": {
+      "Account": "rKKktJREjEqSCiWopx4xx3QkNLPwnyRFzn",
+      "Asset": {
+        "currency": "74524C5553440000000000000000000000000000",
+        "issuer": "rsiv37aCnB3ygmY4qvDQtYyzX8evYUM3rF"
+      },
+      "AssetsAvailable": "99000",
+      "AssetsTotal": "99000",
+      "Flags": 0,
+      "LEVersion": 1,
+      "LedgerEntryType": "Vault",
+      "Owner": "rpoLVaiYEit3xuQ2WoMBBUMskraTE2nnp4",
+      "OwnerNode": "0",
+      "PreviousTxnID": "216C726DDC9F24B7DEF606D829D3F6D64235441D5FA182DD6A68C80D21384F9D",
+      "PreviousTxnLgrSeq": 15,
+      "RedemptionDate": 845081575,
+      "Scale": 6,
+      "Sequence": 7,
+      "ShareMPTID": "00000001C8FE62648185B3537A5332141DBE1BA203FD2E0C",
+      "SubscriptionDate": 845081395,
+      "VaultKind": 1,
+      "WithdrawalPolicy": 1,
+      "index": "66150AE82ECEF1A7F421DC7252BF7566EC504FDAE464EA9B577AD6AE0994148B"
+    }
+  },
+  {
+    "advanced_exactly_one": true,
+    "after": {
+      "close_time": 845081363,
+      "closed": true,
+      "ledger_hash": "94591405873578C05131D90D5F4E9C81F196E0A8A0B3B0B75628DAE7643FCDD3",
+      "ledger_index": 25
+    },
+    "before": {
+      "close_time": 845081362,
+      "closed": true,
+      "ledger_hash": "0D0BDAF302A4D45B6E005658C604275E4773432003B9235090B8F9ECFA1115D4",
+      "ledger_index": 24
+    },
+    "close_time_monotonic": true,
+    "host_time_utc": "2026-10-12T00:49:04.880624+00:00",
+    "ledger_accept_status": "success",
+    "ordinal": 23,
+    "reason": "advance to investment",
+    "vault": {
+      "Account": "rKKktJREjEqSCiWopx4xx3QkNLPwnyRFzn",
+      "Asset": {
+        "currency": "74524C5553440000000000000000000000000000",
+        "issuer": "rsiv37aCnB3ygmY4qvDQtYyzX8evYUM3rF"
+      },
+      "AssetsAvailable": "99000",
+      "AssetsTotal": "99000",
+      "Flags": 0,
+      "LEVersion": 1,
+      "LedgerEntryType": "Vault",
+      "Owner": "rpoLVaiYEit3xuQ2WoMBBUMskraTE2nnp4",
+      "OwnerNode": "0",
+      "PreviousTxnID": "216C726DDC9F24B7DEF606D829D3F6D64235441D5FA182DD6A68C80D21384F9D",
+      "PreviousTxnLgrSeq": 15,
+      "RedemptionDate": 845081575,
+      "Scale": 6,
+      "Sequence": 7,
+      "ShareMPTID": "00000001C8FE62648185B3537A5332141DBE1BA203FD2E0C",
+      "SubscriptionDate": 845081395,
+      "VaultKind": 1,
+      "WithdrawalPolicy": 1,
+      "index": "66150AE82ECEF1A7F421DC7252BF7566EC504FDAE464EA9B577AD6AE0994148B"
+    }
+  },
+  {
+    "advanced_exactly_one": true,
+    "after": {
+      "close_time": 845081364,
+      "closed": true,
+      "ledger_hash": "5137D80EBB4D159E141AD3CC70FF913F629C77085C9086AF35AAA24EB7ED8A36",
+      "ledger_index": 26
+    },
+    "before": {
+      "close_time": 845081363,
+      "closed": true,
+      "ledger_hash": "94591405873578C05131D90D5F4E9C81F196E0A8A0B3B0B75628DAE7643FCDD3",
+      "ledger_index": 25
+    },
+    "close_time_monotonic": true,
+    "host_time_utc": "2026-10-12T00:49:04.900982+00:00",
+    "ledger_accept_status": "success",
+    "ordinal": 24,
+    "reason": "advance to investment",
+    "vault": {
+      "Account": "rKKktJREjEqSCiWopx4xx3QkNLPwnyRFzn",
+      "Asset": {
+        "currency": "74524C5553440000000000000000000000000000",
+        "issuer": "rsiv37aCnB3ygmY4qvDQtYyzX8evYUM3rF"
+      },
+      "AssetsAvailable": "99000",
+      "AssetsTotal": "99000",
+      "Flags": 0,
+      "LEVersion": 1,
+      "LedgerEntryType": "Vault",
+      "Owner": "rpoLVaiYEit3xuQ2WoMBBUMskraTE2nnp4",
+      "OwnerNode": "0",
+      "PreviousTxnID": "216C726DDC9F24B7DEF606D829D3F6D64235441D5FA182DD6A68C80D21384F9D",
+      "PreviousTxnLgrSeq": 15,
+      "RedemptionDate": 845081575,
+      "Scale": 6,
+      "Sequence": 7,
+      "ShareMPTID": "00000001C8FE62648185B3537A5332141DBE1BA203FD2E0C",
+      "SubscriptionDate": 845081395,
+      "VaultKind": 1,
+      "WithdrawalPolicy": 1,
+      "index": "66150AE82ECEF1A7F421DC7252BF7566EC504FDAE464EA9B577AD6AE0994148B"
+    }
+  },
+  {
+    "advanced_exactly_one": true,
+    "after": {
+      "close_time": 845081365,
+      "closed": true,
+      "ledger_hash": "8AA03D7C4AC2B29F358A68414A3621E155FC2A8373AF900BB43C17AD563ED9ED",
+      "ledger_index": 27
+    },
+    "before": {
+      "close_time": 845081364,
+      "closed": true,
+      "ledger_hash": "5137D80EBB4D159E141AD3CC70FF913F629C77085C9086AF35AAA24EB7ED8A36",
+      "ledger_index": 26
+    },
+    "close_time_monotonic": true,
+    "host_time_utc": "2026-10-12T00:49:04.923279+00:00",
+    "ledger_accept_status": "success",
+    "ordinal": 25,
+    "reason": "advance to investment",
+    "vault": {
+      "Account": "rKKktJREjEqSCiWopx4xx3QkNLPwnyRFzn",
+      "Asset": {
+        "currency": "74524C5553440000000000000000000000000000",
+        "issuer": "rsiv37aCnB3ygmY4qvDQtYyzX8evYUM3rF"
+      },
+      "AssetsAvailable": "99000",
+      "AssetsTotal": "99000",
+      "Flags": 0,
+      "LEVersion": 1,
+      "LedgerEntryType": "Vault",
+      "Owner": "rpoLVaiYEit3xuQ2WoMBBUMskraTE2nnp4",
+      "OwnerNode": "0",
+      "PreviousTxnID": "216C726DDC9F24B7DEF606D829D3F6D64235441D5FA182DD6A68C80D21384F9D",
+      "PreviousTxnLgrSeq": 15,
+      "RedemptionDate": 845081575,
+      "Scale": 6,
+      "Sequence": 7,
+      "ShareMPTID": "00000001C8FE62648185B3537A5332141DBE1BA203FD2E0C",
+      "SubscriptionDate": 845081395,
+      "VaultKind": 1,
+      "WithdrawalPolicy": 1,
+      "index": "66150AE82ECEF1A7F421DC7252BF7566EC504FDAE464EA9B577AD6AE0994148B"
+    }
+  },
+  {
+    "advanced_exactly_one": true,
+    "after": {
+      "close_time": 845081366,
+      "closed": true,
+      "ledger_hash": "61D0526BBB1B551F727C0A5B240E5C9FEB9440A52CA876F750754A7905CC441F",
+      "ledger_index": 28
+    },
+    "before": {
+      "close_time": 845081365,
+      "closed": true,
+      "ledger_hash": "8AA03D7C4AC2B29F358A68414A3621E155FC2A8373AF900BB43C17AD563ED9ED",
+      "ledger_index": 27
+    },
+    "close_time_monotonic": true,
+    "host_time_utc": "2026-10-12T00:49:04.944365+00:00",
+    "ledger_accept_status": "success",
+    "ordinal": 26,
+    "reason": "advance to investment",
+    "vault": {
+      "Account": "rKKktJREjEqSCiWopx4xx3QkNLPwnyRFzn",
+      "Asset": {
+        "currency": "74524C5553440000000000000000000000000000",
+        "issuer": "rsiv37aCnB3ygmY4qvDQtYyzX8evYUM3rF"
+      },
+      "AssetsAvailable": "99000",
+      "AssetsTotal": "99000",
+      "Flags": 0,
+      "LEVersion": 1,
+      "LedgerEntryType": "Vault",
+      "Owner": "rpoLVaiYEit3xuQ2WoMBBUMskraTE2nnp4",
+      "OwnerNode": "0",
+      "PreviousTxnID": "216C726DDC9F24B7DEF606D829D3F6D64235441D5FA182DD6A68C80D21384F9D",
+      "PreviousTxnLgrSeq": 15,
+      "RedemptionDate": 845081575,
+      "Scale": 6,
+      "Sequence": 7,
+      "ShareMPTID": "00000001C8FE62648185B3537A5332141DBE1BA203FD2E0C",
+      "SubscriptionDate": 845081395,
+      "VaultKind": 1,
+      "WithdrawalPolicy": 1,
+      "index": "66150AE82ECEF1A7F421DC7252BF7566EC504FDAE464EA9B577AD6AE0994148B"
+    }
+  },
+  {
+    "advanced_exactly_one": true,
+    "after": {
+      "close_time": 845081367,
+      "closed": true,
+      "ledger_hash": "067D2BD153044F791F9C5592CFAD800063F24DB872D6B78A5F0B2826AC19D5A0",
+      "ledger_index": 29
+    },
+    "before": {
+      "close_time": 845081366,
+      "closed": true,
+      "ledger_hash": "61D0526BBB1B551F727C0A5B240E5C9FEB9440A52CA876F750754A7905CC441F",
+      "ledger_index": 28
+    },
+    "close_time_monotonic": true,
+    "host_time_utc": "2026-10-12T00:49:04.962690+00:00",
+    "ledger_accept_status": "success",
+    "ordinal": 27,
+    "reason": "advance to investment",
+    "vault": {
+      "Account": "rKKktJREjEqSCiWopx4xx3QkNLPwnyRFzn",
+      "Asset": {
+        "currency": "74524C5553440000000000000000000000000000",
+        "issuer": "rsiv37aCnB3ygmY4qvDQtYyzX8evYUM3rF"
+      },
+      "AssetsAvailable": "99000",
+      "AssetsTotal": "99000",
+      "Flags": 0,
+      "LEVersion": 1,
+      "LedgerEntryType": "Vault",
+      "Owner": "rpoLVaiYEit3xuQ2WoMBBUMskraTE2nnp4",
+      "OwnerNode": "0",
+      "PreviousTxnID": "216C726DDC9F24B7DEF606D829D3F6D64235441D5FA182DD6A68C80D21384F9D",
+      "PreviousTxnLgrSeq": 15,
+      "RedemptionDate": 845081575,
+      "Scale": 6,
+      "Sequence": 7,
+      "ShareMPTID": "00000001C8FE62648185B3537A5332141DBE1BA203FD2E0C",
+      "SubscriptionDate": 845081395,
+      "VaultKind": 1,
+      "WithdrawalPolicy": 1,
+      "index": "66150AE82ECEF1A7F421DC7252BF7566EC504FDAE464EA9B577AD6AE0994148B"
+    }
+  },
+  {
+    "advanced_exactly_one": true,
+    "after": {
+      "close_time": 845081368,
+      "closed": true,
+      "ledger_hash": "C24E21160335F2BCFFAE657B05D8FD365EF009D722A95FBBB51755410B2FB694",
+      "ledger_index": 30
+    },
+    "before": {
+      "close_time": 845081367,
+      "closed": true,
+      "ledger_hash": "067D2BD153044F791F9C5592CFAD800063F24DB872D6B78A5F0B2826AC19D5A0",
+      "ledger_index": 29
+    },
+    "close_time_monotonic": true,
+    "host_time_utc": "2026-10-12T00:49:04.984232+00:00",
+    "ledger_accept_status": "success",
+    "ordinal": 28,
+    "reason": "advance to investment",
+    "vault": {
+      "Account": "rKKktJREjEqSCiWopx4xx3QkNLPwnyRFzn",
+      "Asset": {
+        "currency": "74524C5553440000000000000000000000000000",
+        "issuer": "rsiv37aCnB3ygmY4qvDQtYyzX8evYUM3rF"
+      },
+      "AssetsAvailable": "99000",
+      "AssetsTotal": "99000",
+      "Flags": 0,
+      "LEVersion": 1,
+      "LedgerEntryType": "Vault",
+      "Owner": "rpoLVaiYEit3xuQ2WoMBBUMskraTE2nnp4",
+      "OwnerNode": "0",
+      "PreviousTxnID": "216C726DDC9F24B7DEF606D829D3F6D64235441D5FA182DD6A68C80D21384F9D",
+      "PreviousTxnLgrSeq": 15,
+      "RedemptionDate": 845081575,
+      "Scale": 6,
+      "Sequence": 7,
+      "ShareMPTID": "00000001C8FE62648185B3537A5332141DBE1BA203FD2E0C",
+      "SubscriptionDate": 845081395,
+      "VaultKind": 1,
+      "WithdrawalPolicy": 1,
+      "index": "66150AE82ECEF1A7F421DC7252BF7566EC504FDAE464EA9B577AD6AE0994148B"
+    }
+  },
+  {
+    "advanced_exactly_one": true,
+    "after": {
+      "close_time": 845081369,
+      "closed": true,
+      "ledger_hash": "E6D5B4768C75EDA134FED42B9C1C2CA756DD3B7127548BE4F379F329F5C2CABF",
+      "ledger_index": 31
+    },
+    "before": {
+      "close_time": 845081368,
+      "closed": true,
+      "ledger_hash": "C24E21160335F2BCFFAE657B05D8FD365EF009D722A95FBBB51755410B2FB694",
+      "ledger_index": 30
+    },
+    "close_time_monotonic": true,
+    "host_time_utc": "2026-10-12T00:49:05.004283+00:00",
+    "ledger_accept_status": "success",
+    "ordinal": 29,
+    "reason": "advance to investment",
+    "vault": {
+      "Account": "rKKktJREjEqSCiWopx4xx3QkNLPwnyRFzn",
+      "Asset": {
+        "currency": "74524C5553440000000000000000000000000000",
+        "issuer": "rsiv37aCnB3ygmY4qvDQtYyzX8evYUM3rF"
+      },
+      "AssetsAvailable": "99000",
+      "AssetsTotal": "99000",
+      "Flags": 0,
+      "LEVersion": 1,
+      "LedgerEntryType": "Vault",
+      "Owner": "rpoLVaiYEit3xuQ2WoMBBUMskraTE2nnp4",
+      "OwnerNode": "0",
+      "PreviousTxnID": "216C726DDC9F24B7DEF606D829D3F6D64235441D5FA182DD6A68C80D21384F9D",
+      "PreviousTxnLgrSeq": 15,
+      "RedemptionDate": 845081575,
+      "Scale": 6,
+      "Sequence": 7,
+      "ShareMPTID": "00000001C8FE62648185B3537A5332141DBE1BA203FD2E0C",
+      "SubscriptionDate": 845081395,
+      "VaultKind": 1,
+      "WithdrawalPolicy": 1,
+      "index": "66150AE82ECEF1A7F421DC7252BF7566EC504FDAE464EA9B577AD6AE0994148B"
+    }
+  },
+  {
+    "advanced_exactly_one": true,
+    "after": {
+      "close_time": 845081370,
+      "closed": true,
+      "ledger_hash": "AD9836C6A4B2581F12C028D9BA215578BCB1615838A3CC89CC1AFADFA083D135",
+      "ledger_index": 32
+    },
+    "before": {
+      "close_time": 845081369,
+      "closed": true,
+      "ledger_hash": "E6D5B4768C75EDA134FED42B9C1C2CA756DD3B7127548BE4F379F329F5C2CABF",
+      "ledger_index": 31
+    },
+    "close_time_monotonic": true,
+    "host_time_utc": "2026-10-12T00:49:05.021662+00:00",
+    "ledger_accept_status": "success",
+    "ordinal": 30,
+    "reason": "advance to investment",
+    "vault": {
+      "Account": "rKKktJREjEqSCiWopx4xx3QkNLPwnyRFzn",
+      "Asset": {
+        "currency": "74524C5553440000000000000000000000000000",
+        "issuer": "rsiv37aCnB3ygmY4qvDQtYyzX8evYUM3rF"
+      },
+      "AssetsAvailable": "99000",
+      "AssetsTotal": "99000",
+      "Flags": 0,
+      "LEVersion": 1,
+      "LedgerEntryType": "Vault",
+      "Owner": "rpoLVaiYEit3xuQ2WoMBBUMskraTE2nnp4",
+      "OwnerNode": "0",
+      "PreviousTxnID": "216C726DDC9F24B7DEF606D829D3F6D64235441D5FA182DD6A68C80D21384F9D",
+      "PreviousTxnLgrSeq": 15,
+      "RedemptionDate": 845081575,
+      "Scale": 6,
+      "Sequence": 7,
+      "ShareMPTID": "00000001C8FE62648185B3537A5332141DBE1BA203FD2E0C",
+      "SubscriptionDate": 845081395,
+      "VaultKind": 1,
+      "WithdrawalPolicy": 1,
+      "index": "66150AE82ECEF1A7F421DC7252BF7566EC504FDAE464EA9B577AD6AE0994148B"
+    }
+  },
+  {
+    "advanced_exactly_one": true,
+    "after": {
+      "close_time": 845081371,
+      "closed": true,
+      "ledger_hash": "01C75BF510D7F546D62EAA2619804084AC016090D48D5A92ED6219C80D9DCBA3",
+      "ledger_index": 33
+    },
+    "before": {
+      "close_time": 845081370,
+      "closed": true,
+      "ledger_hash": "AD9836C6A4B2581F12C028D9BA215578BCB1615838A3CC89CC1AFADFA083D135",
+      "ledger_index": 32
+    },
+    "close_time_monotonic": true,
+    "host_time_utc": "2026-10-12T00:49:05.038928+00:00",
+    "ledger_accept_status": "success",
+    "ordinal": 31,
+    "reason": "advance to investment",
+    "vault": {
+      "Account": "rKKktJREjEqSCiWopx4xx3QkNLPwnyRFzn",
+      "Asset": {
+        "currency": "74524C5553440000000000000000000000000000",
+        "issuer": "rsiv37aCnB3ygmY4qvDQtYyzX8evYUM3rF"
+      },
+      "AssetsAvailable": "99000",
+      "AssetsTotal": "99000",
+      "Flags": 0,
+      "LEVersion": 1,
+      "LedgerEntryType": "Vault",
+      "Owner": "rpoLVaiYEit3xuQ2WoMBBUMskraTE2nnp4",
+      "OwnerNode": "0",
+      "PreviousTxnID": "216C726DDC9F24B7DEF606D829D3F6D64235441D5FA182DD6A68C80D21384F9D",
+      "PreviousTxnLgrSeq": 15,
+      "RedemptionDate": 845081575,
+      "Scale": 6,
+      "Sequence": 7,
+      "ShareMPTID": "00000001C8FE62648185B3537A5332141DBE1BA203FD2E0C",
+      "SubscriptionDate": 845081395,
+      "VaultKind": 1,
+      "WithdrawalPolicy": 1,
+      "index": "66150AE82ECEF1A7F421DC7252BF7566EC504FDAE464EA9B577AD6AE0994148B"
+    }
+  },
+  {
+    "advanced_exactly_one": true,
+    "after": {
+      "close_time": 845081372,
+      "closed": true,
+      "ledger_hash": "D3480EE7AE9E14EDE037E661237B580B5490F87015E3F99A96D42165DD745836",
+      "ledger_index": 34
+    },
+    "before": {
+      "close_time": 845081371,
+      "closed": true,
+      "ledger_hash": "01C75BF510D7F546D62EAA2619804084AC016090D48D5A92ED6219C80D9DCBA3",
+      "ledger_index": 33
+    },
+    "close_time_monotonic": true,
+    "host_time_utc": "2026-10-12T00:49:05.056493+00:00",
+    "ledger_accept_status": "success",
+    "ordinal": 32,
+    "reason": "advance to investment",
+    "vault": {
+      "Account": "rKKktJREjEqSCiWopx4xx3QkNLPwnyRFzn",
+      "Asset": {
+        "currency": "74524C5553440000000000000000000000000000",
+        "issuer": "rsiv37aCnB3ygmY4qvDQtYyzX8evYUM3rF"
+      },
+      "AssetsAvailable": "99000",
+      "AssetsTotal": "99000",
+      "Flags": 0,
+      "LEVersion": 1,
+      "LedgerEntryType": "Vault",
+      "Owner": "rpoLVaiYEit3xuQ2WoMBBUMskraTE2nnp4",
+      "OwnerNode": "0",
+      "PreviousTxnID": "216C726DDC9F24B7DEF606D829D3F6D64235441D5FA182DD6A68C80D21384F9D",
+      "PreviousTxnLgrSeq": 15,
+      "RedemptionDate": 845081575,
+      "Scale": 6,
+      "Sequence": 7,
+      "ShareMPTID": "00000001C8FE62648185B3537A5332141DBE1BA203FD2E0C",
+      "SubscriptionDate": 845081395,
+      "VaultKind": 1,
+      "WithdrawalPolicy": 1,
+      "index": "66150AE82ECEF1A7F421DC7252BF7566EC504FDAE464EA9B577AD6AE0994148B"
+    }
+  },
+  {
+    "advanced_exactly_one": true,
+    "after": {
+      "close_time": 845081373,
+      "closed": true,
+      "ledger_hash": "0A7929E558FF43BB303649383E37165EEEDC1B51ADD0F2E51B5A53C88B14D53A",
+      "ledger_index": 35
+    },
+    "before": {
+      "close_time": 845081372,
+      "closed": true,
+      "ledger_hash": "D3480EE7AE9E14EDE037E661237B580B5490F87015E3F99A96D42165DD745836",
+      "ledger_index": 34
+    },
+    "close_time_monotonic": true,
+    "host_time_utc": "2026-10-12T00:49:05.070157+00:00",
+    "ledger_accept_status": "success",
+    "ordinal": 33,
+    "reason": "advance to investment",
+    "vault": {
+      "Account": "rKKktJREjEqSCiWopx4xx3QkNLPwnyRFzn",
+      "Asset": {
+        "currency": "74524C5553440000000000000000000000000000",
+        "issuer": "rsiv37aCnB3ygmY4qvDQtYyzX8evYUM3rF"
+      },
+      "AssetsAvailable": "99000",
+      "AssetsTotal": "99000",
+      "Flags": 0,
+      "LEVersion": 1,
+      "LedgerEntryType": "Vault",
+      "Owner": "rpoLVaiYEit3xuQ2WoMBBUMskraTE2nnp4",
+      "OwnerNode": "0",
+      "PreviousTxnID": "216C726DDC9F24B7DEF606D829D3F6D64235441D5FA182DD6A68C80D21384F9D",
+      "PreviousTxnLgrSeq": 15,
+      "RedemptionDate": 845081575,
+      "Scale": 6,
+      "Sequence": 7,
+      "ShareMPTID": "00000001C8FE62648185B3537A5332141DBE1BA203FD2E0C",
+      "SubscriptionDate": 845081395,
+      "VaultKind": 1,
+      "WithdrawalPolicy": 1,
+      "index": "66150AE82ECEF1A7F421DC7252BF7566EC504FDAE464EA9B577AD6AE0994148B"
+    }
+  },
+  {
+    "advanced_exactly_one": true,
+    "after": {
+      "close_time": 845081374,
+      "closed": true,
+      "ledger_hash": "D09394EA5D3F4D5D8D8FCB42CED780A0026D21151999F2C85834904952E756C0",
+      "ledger_index": 36
+    },
+    "before": {
+      "close_time": 845081373,
+      "closed": true,
+      "ledger_hash": "0A7929E558FF43BB303649383E37165EEEDC1B51ADD0F2E51B5A53C88B14D53A",
+      "ledger_index": 35
+    },
+    "close_time_monotonic": true,
+    "host_time_utc": "2026-10-12T00:49:05.083796+00:00",
+    "ledger_accept_status": "success",
+    "ordinal": 34,
+    "reason": "advance to investment",
+    "vault": {
+      "Account": "rKKktJREjEqSCiWopx4xx3QkNLPwnyRFzn",
+      "Asset": {
+        "currency": "74524C5553440000000000000000000000000000",
+        "issuer": "rsiv37aCnB3ygmY4qvDQtYyzX8evYUM3rF"
+      },
+      "AssetsAvailable": "99000",
+      "AssetsTotal": "99000",
+      "Flags": 0,
+      "LEVersion": 1,
+      "LedgerEntryType": "Vault",
+      "Owner": "rpoLVaiYEit3xuQ2WoMBBUMskraTE2nnp4",
+      "OwnerNode": "0",
+      "PreviousTxnID": "216C726DDC9F24B7DEF606D829D3F6D64235441D5FA182DD6A68C80D21384F9D",
+      "PreviousTxnLgrSeq": 15,
+      "RedemptionDate": 845081575,
+      "Scale": 6,
+      "Sequence": 7,
+      "ShareMPTID": "00000001C8FE62648185B3537A5332141DBE1BA203FD2E0C",
+      "SubscriptionDate": 845081395,
+      "VaultKind": 1,
+      "WithdrawalPolicy": 1,
+      "index": "66150AE82ECEF1A7F421DC7252BF7566EC504FDAE464EA9B577AD6AE0994148B"
+    }
+  },
+  {
+    "advanced_exactly_one": true,
+    "after": {
+      "close_time": 845081375,
+      "closed": true,
+      "ledger_hash": "4E1A289FC3840C2DA00301635A9C03FF519D083A32283B48A8C94C399FD59D63",
+      "ledger_index": 37
+    },
+    "before": {
+      "close_time": 845081374,
+      "closed": true,
+      "ledger_hash": "D09394EA5D3F4D5D8D8FCB42CED780A0026D21151999F2C85834904952E756C0",
+      "ledger_index": 36
+    },
+    "close_time_monotonic": true,
+    "host_time_utc": "2026-10-12T00:49:05.099799+00:00",
+    "ledger_accept_status": "success",
+    "ordinal": 35,
+    "reason": "advance to investment",
+    "vault": {
+      "Account": "rKKktJREjEqSCiWopx4xx3QkNLPwnyRFzn",
+      "Asset": {
+        "currency": "74524C5553440000000000000000000000000000",
+        "issuer": "rsiv37aCnB3ygmY4qvDQtYyzX8evYUM3rF"
+      },
+      "AssetsAvailable": "99000",
+      "AssetsTotal": "99000",
+      "Flags": 0,
+      "LEVersion": 1,
+      "LedgerEntryType": "Vault",
+      "Owner": "rpoLVaiYEit3xuQ2WoMBBUMskraTE2nnp4",
+      "OwnerNode": "0",
+      "PreviousTxnID": "216C726DDC9F24B7DEF606D829D3F6D64235441D5FA182DD6A68C80D21384F9D",
+      "PreviousTxnLgrSeq": 15,
+      "RedemptionDate": 845081575,
+      "Scale": 6,
+      "Sequence": 7,
+      "ShareMPTID": "00000001C8FE62648185B3537A5332141DBE1BA203FD2E0C",
+      "SubscriptionDate": 845081395,
+      "VaultKind": 1,
+      "WithdrawalPolicy": 1,
+      "index": "66150AE82ECEF1A7F421DC7252BF7566EC504FDAE464EA9B577AD6AE0994148B"
+    }
+  },
+  {
+    "advanced_exactly_one": true,
+    "after": {
+      "close_time": 845081376,
+      "closed": true,
+      "ledger_hash": "FE8AFE5036D531DDFC9003B389DF1D0E540277BB91EF36DAF0614E8112E350BE",
+      "ledger_index": 38
+    },
+    "before": {
+      "close_time": 845081375,
+      "closed": true,
+      "ledger_hash": "4E1A289FC3840C2DA00301635A9C03FF519D083A32283B48A8C94C399FD59D63",
+      "ledger_index": 37
+    },
+    "close_time_monotonic": true,
+    "host_time_utc": "2026-10-12T00:49:05.113694+00:00",
+    "ledger_accept_status": "success",
+    "ordinal": 36,
+    "reason": "advance to investment",
+    "vault": {
+      "Account": "rKKktJREjEqSCiWopx4xx3QkNLPwnyRFzn",
+      "Asset": {
+        "currency": "74524C5553440000000000000000000000000000",
+        "issuer": "rsiv37aCnB3ygmY4qvDQtYyzX8evYUM3rF"
+      },
+      "AssetsAvailable": "99000",
+      "AssetsTotal": "99000",
+      "Flags": 0,
+      "LEVersion": 1,
+      "LedgerEntryType": "Vault",
+      "Owner": "rpoLVaiYEit3xuQ2WoMBBUMskraTE2nnp4",
+      "OwnerNode": "0",
+      "PreviousTxnID": "216C726DDC9F24B7DEF606D829D3F6D64235441D5FA182DD6A68C80D21384F9D",
+      "PreviousTxnLgrSeq": 15,
+      "RedemptionDate": 845081575,
+      "Scale": 6,
+      "Sequence": 7,
+      "ShareMPTID": "00000001C8FE62648185B3537A5332141DBE1BA203FD2E0C",
+      "SubscriptionDate": 845081395,
+      "VaultKind": 1,
+      "WithdrawalPolicy": 1,
+      "index": "66150AE82ECEF1A7F421DC7252BF7566EC504FDAE464EA9B577AD6AE0994148B"
+    }
+  },
+  {
+    "advanced_exactly_one": true,
+    "after": {
+      "close_time": 845081377,
+      "closed": true,
+      "ledger_hash": "24B3BF72B0D961853F369B7121F3D6973205766A7F7C50E7BA24AEFE975C64A8",
+      "ledger_index": 39
+    },
+    "before": {
+      "close_time": 845081376,
+      "closed": true,
+      "ledger_hash": "FE8AFE5036D531DDFC9003B389DF1D0E540277BB91EF36DAF0614E8112E350BE",
+      "ledger_index": 38
+    },
+    "close_time_monotonic": true,
+    "host_time_utc": "2026-10-12T00:49:05.129275+00:00",
+    "ledger_accept_status": "success",
+    "ordinal": 37,
+    "reason": "advance to investment",
+    "vault": {
+      "Account": "rKKktJREjEqSCiWopx4xx3QkNLPwnyRFzn",
+      "Asset": {
+        "currency": "74524C5553440000000000000000000000000000",
+        "issuer": "rsiv37aCnB3ygmY4qvDQtYyzX8evYUM3rF"
+      },
+      "AssetsAvailable": "99000",
+      "AssetsTotal": "99000",
+      "Flags": 0,
+      "LEVersion": 1,
+      "LedgerEntryType": "Vault",
+      "Owner": "rpoLVaiYEit3xuQ2WoMBBUMskraTE2nnp4",
+      "OwnerNode": "0",
+      "PreviousTxnID": "216C726DDC9F24B7DEF606D829D3F6D64235441D5FA182DD6A68C80D21384F9D",
+      "PreviousTxnLgrSeq": 15,
+      "RedemptionDate": 845081575,
+      "Scale": 6,
+      "Sequence": 7,
+      "ShareMPTID": "00000001C8FE62648185B3537A5332141DBE1BA203FD2E0C",
+      "SubscriptionDate": 845081395,
+      "VaultKind": 1,
+      "WithdrawalPolicy": 1,
+      "index": "66150AE82ECEF1A7F421DC7252BF7566EC504FDAE464EA9B577AD6AE0994148B"
+    }
+  },
+  {
+    "advanced_exactly_one": true,
+    "after": {
+      "close_time": 845081378,
+      "closed": true,
+      "ledger_hash": "3C893224D13849FE8DB81DE97BCEF68071775D138A8923377031058F04039492",
+      "ledger_index": 40
+    },
+    "before": {
+      "close_time": 845081377,
+      "closed": true,
+      "ledger_hash": "24B3BF72B0D961853F369B7121F3D6973205766A7F7C50E7BA24AEFE975C64A8",
+      "ledger_index": 39
+    },
+    "close_time_monotonic": true,
+    "host_time_utc": "2026-10-12T00:49:05.143006+00:00",
+    "ledger_accept_status": "success",
+    "ordinal": 38,
+    "reason": "advance to investment",
+    "vault": {
+      "Account": "rKKktJREjEqSCiWopx4xx3QkNLPwnyRFzn",
+      "Asset": {
+        "currency": "74524C5553440000000000000000000000000000",
+        "issuer": "rsiv37aCnB3ygmY4qvDQtYyzX8evYUM3rF"
+      },
+      "AssetsAvailable": "99000",
+      "AssetsTotal": "99000",
+      "Flags": 0,
+      "LEVersion": 1,
+      "LedgerEntryType": "Vault",
+      "Owner": "rpoLVaiYEit3xuQ2WoMBBUMskraTE2nnp4",
+      "OwnerNode": "0",
+      "PreviousTxnID": "216C726DDC9F24B7DEF606D829D3F6D64235441D5FA182DD6A68C80D21384F9D",
+      "PreviousTxnLgrSeq": 15,
+      "RedemptionDate": 845081575,
+      "Scale": 6,
+      "Sequence": 7,
+      "ShareMPTID": "00000001C8FE62648185B3537A5332141DBE1BA203FD2E0C",
+      "SubscriptionDate": 845081395,
+      "VaultKind": 1,
+      "WithdrawalPolicy": 1,
+      "index": "66150AE82ECEF1A7F421DC7252BF7566EC504FDAE464EA9B577AD6AE0994148B"
+    }
+  },
+  {
+    "advanced_exactly_one": true,
+    "after": {
+      "close_time": 845081379,
+      "closed": true,
+      "ledger_hash": "C8C3F1EF9B0E6B570C200836A04F5BB3F16FA62AB97C5E21C87F63A2FC5CDD23",
+      "ledger_index": 41
+    },
+    "before": {
+      "close_time": 845081378,
+      "closed": true,
+      "ledger_hash": "3C893224D13849FE8DB81DE97BCEF68071775D138A8923377031058F04039492",
+      "ledger_index": 40
+    },
+    "close_time_monotonic": true,
+    "host_time_utc": "2026-10-12T00:49:05.162867+00:00",
+    "ledger_accept_status": "success",
+    "ordinal": 39,
+    "reason": "advance to investment",
+    "vault": {
+      "Account": "rKKktJREjEqSCiWopx4xx3QkNLPwnyRFzn",
+      "Asset": {
+        "currency": "74524C5553440000000000000000000000000000",
+        "issuer": "rsiv37aCnB3ygmY4qvDQtYyzX8evYUM3rF"
+      },
+      "AssetsAvailable": "99000",
+      "AssetsTotal": "99000",
+      "Flags": 0,
+      "LEVersion": 1,
+      "LedgerEntryType": "Vault",
+      "Owner": "rpoLVaiYEit3xuQ2WoMBBUMskraTE2nnp4",
+      "OwnerNode": "0",
+      "PreviousTxnID": "216C726DDC9F24B7DEF606D829D3F6D64235441D5FA182DD6A68C80D21384F9D",
+      "PreviousTxnLgrSeq": 15,
+      "RedemptionDate": 845081575,
+      "Scale": 6,
+      "Sequence": 7,
+      "ShareMPTID": "00000001C8FE62648185B3537A5332141DBE1BA203FD2E0C",
+      "SubscriptionDate": 845081395,
+      "VaultKind": 1,
+      "WithdrawalPolicy": 1,
+      "index": "66150AE82ECEF1A7F421DC7252BF7566EC504FDAE464EA9B577AD6AE0994148B"
+    }
+  },
+  {
+    "advanced_exactly_one": true,
+    "after": {
+      "close_time": 845081380,
+      "closed": true,
+      "ledger_hash": "8A0057DC675962C09660F7E6F11944C86E6DCF030DF6B8E5956CBD453DD5130F",
+      "ledger_index": 42
+    },
+    "before": {
+      "close_time": 845081379,
+      "closed": true,
+      "ledger_hash": "C8C3F1EF9B0E6B570C200836A04F5BB3F16FA62AB97C5E21C87F63A2FC5CDD23",
+      "ledger_index": 41
+    },
+    "close_time_monotonic": true,
+    "host_time_utc": "2026-10-12T00:49:05.181846+00:00",
+    "ledger_accept_status": "success",
+    "ordinal": 40,
+    "reason": "advance to investment",
+    "vault": {
+      "Account": "rKKktJREjEqSCiWopx4xx3QkNLPwnyRFzn",
+      "Asset": {
+        "currency": "74524C5553440000000000000000000000000000",
+        "issuer": "rsiv37aCnB3ygmY4qvDQtYyzX8evYUM3rF"
+      },
+      "AssetsAvailable": "99000",
+      "AssetsTotal": "99000",
+      "Flags": 0,
+      "LEVersion": 1,
+      "LedgerEntryType": "Vault",
+      "Owner": "rpoLVaiYEit3xuQ2WoMBBUMskraTE2nnp4",
+      "OwnerNode": "0",
+      "PreviousTxnID": "216C726DDC9F24B7DEF606D829D3F6D64235441D5FA182DD6A68C80D21384F9D",
+      "PreviousTxnLgrSeq": 15,
+      "RedemptionDate": 845081575,
+      "Scale": 6,
+      "Sequence": 7,
+      "ShareMPTID": "00000001C8FE62648185B3537A5332141DBE1BA203FD2E0C",
+      "SubscriptionDate": 845081395,
+      "VaultKind": 1,
+      "WithdrawalPolicy": 1,
+      "index": "66150AE82ECEF1A7F421DC7252BF7566EC504FDAE464EA9B577AD6AE0994148B"
+    }
+  },
+  {
+    "advanced_exactly_one": true,
+    "after": {
+      "close_time": 845081381,
+      "closed": true,
+      "ledger_hash": "C6EB8986047AD3CDC29EBA68017C289421D00125DA45FDC882B4BA00AE5E1043",
+      "ledger_index": 43
+    },
+    "before": {
+      "close_time": 845081380,
+      "closed": true,
+      "ledger_hash": "8A0057DC675962C09660F7E6F11944C86E6DCF030DF6B8E5956CBD453DD5130F",
+      "ledger_index": 42
+    },
+    "close_time_monotonic": true,
+    "host_time_utc": "2026-10-12T00:49:05.201210+00:00",
+    "ledger_accept_status": "success",
+    "ordinal": 41,
+    "reason": "advance to investment",
+    "vault": {
+      "Account": "rKKktJREjEqSCiWopx4xx3QkNLPwnyRFzn",
+      "Asset": {
+        "currency": "74524C5553440000000000000000000000000000",
+        "issuer": "rsiv37aCnB3ygmY4qvDQtYyzX8evYUM3rF"
+      },
+      "AssetsAvailable": "99000",
+      "AssetsTotal": "99000",
+      "Flags": 0,
+      "LEVersion": 1,
+      "LedgerEntryType": "Vault",
+      "Owner": "rpoLVaiYEit3xuQ2WoMBBUMskraTE2nnp4",
+      "OwnerNode": "0",
+      "PreviousTxnID": "216C726DDC9F24B7DEF606D829D3F6D64235441D5FA182DD6A68C80D21384F9D",
+      "PreviousTxnLgrSeq": 15,
+      "RedemptionDate": 845081575,
+      "Scale": 6,
+      "Sequence": 7,
+      "ShareMPTID": "00000001C8FE62648185B3537A5332141DBE1BA203FD2E0C",
+      "SubscriptionDate": 845081395,
+      "VaultKind": 1,
+      "WithdrawalPolicy": 1,
+      "index": "66150AE82ECEF1A7F421DC7252BF7566EC504FDAE464EA9B577AD6AE0994148B"
+    }
+  },
+  {
+    "advanced_exactly_one": true,
+    "after": {
+      "close_time": 845081382,
+      "closed": true,
+      "ledger_hash": "197F8ABA712C1DD4A56746051382EFD403C1AB8F8F1C656AFD9EBE072548408A",
+      "ledger_index": 44
+    },
+    "before": {
+      "close_time": 845081381,
+      "closed": true,
+      "ledger_hash": "C6EB8986047AD3CDC29EBA68017C289421D00125DA45FDC882B4BA00AE5E1043",
+      "ledger_index": 43
+    },
+    "close_time_monotonic": true,
+    "host_time_utc": "2026-10-12T00:49:05.226737+00:00",
+    "ledger_accept_status": "success",
+    "ordinal": 42,
+    "reason": "advance to investment",
+    "vault": {
+      "Account": "rKKktJREjEqSCiWopx4xx3QkNLPwnyRFzn",
+      "Asset": {
+        "currency": "74524C5553440000000000000000000000000000",
+        "issuer": "rsiv37aCnB3ygmY4qvDQtYyzX8evYUM3rF"
+      },
+      "AssetsAvailable": "99000",
+      "AssetsTotal": "99000",
+      "Flags": 0,
+      "LEVersion": 1,
+      "LedgerEntryType": "Vault",
+      "Owner": "rpoLVaiYEit3xuQ2WoMBBUMskraTE2nnp4",
+      "OwnerNode": "0",
+      "PreviousTxnID": "216C726DDC9F24B7DEF606D829D3F6D64235441D5FA182DD6A68C80D21384F9D",
+      "PreviousTxnLgrSeq": 15,
+      "RedemptionDate": 845081575,
+      "Scale": 6,
+      "Sequence": 7,
+      "ShareMPTID": "00000001C8FE62648185B3537A5332141DBE1BA203FD2E0C",
+      "SubscriptionDate": 845081395,
+      "VaultKind": 1,
+      "WithdrawalPolicy": 1,
+      "index": "66150AE82ECEF1A7F421DC7252BF7566EC504FDAE464EA9B577AD6AE0994148B"
+    }
+  },
+  {
+    "advanced_exactly_one": true,
+    "after": {
+      "close_time": 845081383,
+      "closed": true,
+      "ledger_hash": "204340502E727429B05EE7406858DA718847C5809D5B563B57A08B4C13D6C25D",
+      "ledger_index": 45
+    },
+    "before": {
+      "close_time": 845081382,
+      "closed": true,
+      "ledger_hash": "197F8ABA712C1DD4A56746051382EFD403C1AB8F8F1C656AFD9EBE072548408A",
+      "ledger_index": 44
+    },
+    "close_time_monotonic": true,
+    "host_time_utc": "2026-10-12T00:49:05.249587+00:00",
+    "ledger_accept_status": "success",
+    "ordinal": 43,
+    "reason": "advance to investment",
+    "vault": {
+      "Account": "rKKktJREjEqSCiWopx4xx3QkNLPwnyRFzn",
+      "Asset": {
+        "currency": "74524C5553440000000000000000000000000000",
+        "issuer": "rsiv37aCnB3ygmY4qvDQtYyzX8evYUM3rF"
+      },
+      "AssetsAvailable": "99000",
+      "AssetsTotal": "99000",
+      "Flags": 0,
+      "LEVersion": 1,
+      "LedgerEntryType": "Vault",
+      "Owner": "rpoLVaiYEit3xuQ2WoMBBUMskraTE2nnp4",
+      "OwnerNode": "0",
+      "PreviousTxnID": "216C726DDC9F24B7DEF606D829D3F6D64235441D5FA182DD6A68C80D21384F9D",
+      "PreviousTxnLgrSeq": 15,
+      "RedemptionDate": 845081575,
+      "Scale": 6,
+      "Sequence": 7,
+      "ShareMPTID": "00000001C8FE62648185B3537A5332141DBE1BA203FD2E0C",
+      "SubscriptionDate": 845081395,
+      "VaultKind": 1,
+      "WithdrawalPolicy": 1,
+      "index": "66150AE82ECEF1A7F421DC7252BF7566EC504FDAE464EA9B577AD6AE0994148B"
+    }
+  },
+  {
+    "advanced_exactly_one": true,
+    "after": {
+      "close_time": 845081384,
+      "closed": true,
+      "ledger_hash": "3307A39AE3785C10B754DC908DFB4F082611948C658966A3C0FAFFE0E7B550DE",
+      "ledger_index": 46
+    },
+    "before": {
+      "close_time": 845081383,
+      "closed": true,
+      "ledger_hash": "204340502E727429B05EE7406858DA718847C5809D5B563B57A08B4C13D6C25D",
+      "ledger_index": 45
+    },
+    "close_time_monotonic": true,
+    "host_time_utc": "2026-10-12T00:49:05.271263+00:00",
+    "ledger_accept_status": "success",
+    "ordinal": 44,
+    "reason": "advance to investment",
+    "vault": {
+      "Account": "rKKktJREjEqSCiWopx4xx3QkNLPwnyRFzn",
+      "Asset": {
+        "currency": "74524C5553440000000000000000000000000000",
+        "issuer": "rsiv37aCnB3ygmY4qvDQtYyzX8evYUM3rF"
+      },
+      "AssetsAvailable": "99000",
+      "AssetsTotal": "99000",
+      "Flags": 0,
+      "LEVersion": 1,
+      "LedgerEntryType": "Vault",
+      "Owner": "rpoLVaiYEit3xuQ2WoMBBUMskraTE2nnp4",
+      "OwnerNode": "0",
+      "PreviousTxnID": "216C726DDC9F24B7DEF606D829D3F6D64235441D5FA182DD6A68C80D21384F9D",
+      "PreviousTxnLgrSeq": 15,
+      "RedemptionDate": 845081575,
+      "Scale": 6,
+      "Sequence": 7,
+      "ShareMPTID": "00000001C8FE62648185B3537A5332141DBE1BA203FD2E0C",
+      "SubscriptionDate": 845081395,
+      "VaultKind": 1,
+      "WithdrawalPolicy": 1,
+      "index": "66150AE82ECEF1A7F421DC7252BF7566EC504FDAE464EA9B577AD6AE0994148B"
+    }
+  },
+  {
+    "advanced_exactly_one": true,
+    "after": {
+      "close_time": 845081385,
+      "closed": true,
+      "ledger_hash": "B3A8DBE9E90510DDA046EB7EA0C0AE4F8E134728EE9622FEB8CE0B7F67F99328",
+      "ledger_index": 47
+    },
+    "before": {
+      "close_time": 845081384,
+      "closed": true,
+      "ledger_hash": "3307A39AE3785C10B754DC908DFB4F082611948C658966A3C0FAFFE0E7B550DE",
+      "ledger_index": 46
+    },
+    "close_time_monotonic": true,
+    "host_time_utc": "2026-10-12T00:49:05.291372+00:00",
+    "ledger_accept_status": "success",
+    "ordinal": 45,
+    "reason": "advance to investment",
+    "vault": {
+      "Account": "rKKktJREjEqSCiWopx4xx3QkNLPwnyRFzn",
+      "Asset": {
+        "currency": "74524C5553440000000000000000000000000000",
+        "issuer": "rsiv37aCnB3ygmY4qvDQtYyzX8evYUM3rF"
+      },
+      "AssetsAvailable": "99000",
+      "AssetsTotal": "99000",
+      "Flags": 0,
+      "LEVersion": 1,
+      "LedgerEntryType": "Vault",
+      "Owner": "rpoLVaiYEit3xuQ2WoMBBUMskraTE2nnp4",
+      "OwnerNode": "0",
+      "PreviousTxnID": "216C726DDC9F24B7DEF606D829D3F6D64235441D5FA182DD6A68C80D21384F9D",
+      "PreviousTxnLgrSeq": 15,
+      "RedemptionDate": 845081575,
+      "Scale": 6,
+      "Sequence": 7,
+      "ShareMPTID": "00000001C8FE62648185B3537A5332141DBE1BA203FD2E0C",
+      "SubscriptionDate": 845081395,
+      "VaultKind": 1,
+      "WithdrawalPolicy": 1,
+      "index": "66150AE82ECEF1A7F421DC7252BF7566EC504FDAE464EA9B577AD6AE0994148B"
+    }
+  },
+  {
+    "advanced_exactly_one": true,
+    "after": {
+      "close_time": 845081386,
+      "closed": true,
+      "ledger_hash": "1CEB05CE177990D1B78654A0057FEC6D50F4160DBB682D0C6D72352D41000ED2",
+      "ledger_index": 48
+    },
+    "before": {
+      "close_time": 845081385,
+      "closed": true,
+      "ledger_hash": "B3A8DBE9E90510DDA046EB7EA0C0AE4F8E134728EE9622FEB8CE0B7F67F99328",
+      "ledger_index": 47
+    },
+    "close_time_monotonic": true,
+    "host_time_utc": "2026-10-12T00:49:05.315251+00:00",
+    "ledger_accept_status": "success",
+    "ordinal": 46,
+    "reason": "advance to investment",
+    "vault": {
+      "Account": "rKKktJREjEqSCiWopx4xx3QkNLPwnyRFzn",
+      "Asset": {
+        "currency": "74524C5553440000000000000000000000000000",
+        "issuer": "rsiv37aCnB3ygmY4qvDQtYyzX8evYUM3rF"
+      },
+      "AssetsAvailable": "99000",
+      "AssetsTotal": "99000",
+      "Flags": 0,
+      "LEVersion": 1,
+      "LedgerEntryType": "Vault",
+      "Owner": "rpoLVaiYEit3xuQ2WoMBBUMskraTE2nnp4",
+      "OwnerNode": "0",
+      "PreviousTxnID": "216C726DDC9F24B7DEF606D829D3F6D64235441D5FA182DD6A68C80D21384F9D",
+      "PreviousTxnLgrSeq": 15,
+      "RedemptionDate": 845081575,
+      "Scale": 6,
+      "Sequence": 7,
+      "ShareMPTID": "00000001C8FE62648185B3537A5332141DBE1BA203FD2E0C",
+      "SubscriptionDate": 845081395,
+      "VaultKind": 1,
+      "WithdrawalPolicy": 1,
+      "index": "66150AE82ECEF1A7F421DC7252BF7566EC504FDAE464EA9B577AD6AE0994148B"
+    }
+  },
+  {
+    "advanced_exactly_one": true,
+    "after": {
+      "close_time": 845081387,
+      "closed": true,
+      "ledger_hash": "96E262B5A03B4FB11C129DF16C02A3F18440382B9F45C7D4364F259A84549FB8",
+      "ledger_index": 49
+    },
+    "before": {
+      "close_time": 845081386,
+      "closed": true,
+      "ledger_hash": "1CEB05CE177990D1B78654A0057FEC6D50F4160DBB682D0C6D72352D41000ED2",
+      "ledger_index": 48
+    },
+    "close_time_monotonic": true,
+    "host_time_utc": "2026-10-12T00:49:05.337220+00:00",
+    "ledger_accept_status": "success",
+    "ordinal": 47,
+    "reason": "advance to investment",
+    "vault": {
+      "Account": "rKKktJREjEqSCiWopx4xx3QkNLPwnyRFzn",
+      "Asset": {
+        "currency": "74524C5553440000000000000000000000000000",
+        "issuer": "rsiv37aCnB3ygmY4qvDQtYyzX8evYUM3rF"
+      },
+      "AssetsAvailable": "99000",
+      "AssetsTotal": "99000",
+      "Flags": 0,
+      "LEVersion": 1,
+      "LedgerEntryType": "Vault",
+      "Owner": "rpoLVaiYEit3xuQ2WoMBBUMskraTE2nnp4",
+      "OwnerNode": "0",
+      "PreviousTxnID": "216C726DDC9F24B7DEF606D829D3F6D64235441D5FA182DD6A68C80D21384F9D",
+      "PreviousTxnLgrSeq": 15,
+      "RedemptionDate": 845081575,
+      "Scale": 6,
+      "Sequence": 7,
+      "ShareMPTID": "00000001C8FE62648185B3537A5332141DBE1BA203FD2E0C",
+      "SubscriptionDate": 845081395,
+      "VaultKind": 1,
+      "WithdrawalPolicy": 1,
+      "index": "66150AE82ECEF1A7F421DC7252BF7566EC504FDAE464EA9B577AD6AE0994148B"
+    }
+  },
+  {
+    "advanced_exactly_one": true,
+    "after": {
+      "close_time": 845081388,
+      "closed": true,
+      "ledger_hash": "52CB45A2C32F19B2D45D315CC52D8921A4BD94BADC2A90A0AE335753DC562210",
+      "ledger_index": 50
+    },
+    "before": {
+      "close_time": 845081387,
+      "closed": true,
+      "ledger_hash": "96E262B5A03B4FB11C129DF16C02A3F18440382B9F45C7D4364F259A84549FB8",
+      "ledger_index": 49
+    },
+    "close_time_monotonic": true,
+    "host_time_utc": "2026-10-12T00:49:05.363505+00:00",
+    "ledger_accept_status": "success",
+    "ordinal": 48,
+    "reason": "advance to investment",
+    "vault": {
+      "Account": "rKKktJREjEqSCiWopx4xx3QkNLPwnyRFzn",
+      "Asset": {
+        "currency": "74524C5553440000000000000000000000000000",
+        "issuer": "rsiv37aCnB3ygmY4qvDQtYyzX8evYUM3rF"
+      },
+      "AssetsAvailable": "99000",
+      "AssetsTotal": "99000",
+      "Flags": 0,
+      "LEVersion": 1,
+      "LedgerEntryType": "Vault",
+      "Owner": "rpoLVaiYEit3xuQ2WoMBBUMskraTE2nnp4",
+      "OwnerNode": "0",
+      "PreviousTxnID": "216C726DDC9F24B7DEF606D829D3F6D64235441D5FA182DD6A68C80D21384F9D",
+      "PreviousTxnLgrSeq": 15,
+      "RedemptionDate": 845081575,
+      "Scale": 6,
+      "Sequence": 7,
+      "ShareMPTID": "00000001C8FE62648185B3537A5332141DBE1BA203FD2E0C",
+      "SubscriptionDate": 845081395,
+      "VaultKind": 1,
+      "WithdrawalPolicy": 1,
+      "index": "66150AE82ECEF1A7F421DC7252BF7566EC504FDAE464EA9B577AD6AE0994148B"
+    }
+  },
+  {
+    "advanced_exactly_one": true,
+    "after": {
+      "close_time": 845081389,
+      "closed": true,
+      "ledger_hash": "C9B2D567B8BE77AD8724CB91F198F85F80F611A94E2103E6611829B3F131EA22",
+      "ledger_index": 51
+    },
+    "before": {
+      "close_time": 845081388,
+      "closed": true,
+      "ledger_hash": "52CB45A2C32F19B2D45D315CC52D8921A4BD94BADC2A90A0AE335753DC562210",
+      "ledger_index": 50
+    },
+    "close_time_monotonic": true,
+    "host_time_utc": "2026-10-12T00:49:05.387737+00:00",
+    "ledger_accept_status": "success",
+    "ordinal": 49,
+    "reason": "advance to investment",
+    "vault": {
+      "Account": "rKKktJREjEqSCiWopx4xx3QkNLPwnyRFzn",
+      "Asset": {
+        "currency": "74524C5553440000000000000000000000000000",
+        "issuer": "rsiv37aCnB3ygmY4qvDQtYyzX8evYUM3rF"
+      },
+      "AssetsAvailable": "99000",
+      "AssetsTotal": "99000",
+      "Flags": 0,
+      "LEVersion": 1,
+      "LedgerEntryType": "Vault",
+      "Owner": "rpoLVaiYEit3xuQ2WoMBBUMskraTE2nnp4",
+      "OwnerNode": "0",
+      "PreviousTxnID": "216C726DDC9F24B7DEF606D829D3F6D64235441D5FA182DD6A68C80D21384F9D",
+      "PreviousTxnLgrSeq": 15,
+      "RedemptionDate": 845081575,
+      "Scale": 6,
+      "Sequence": 7,
+      "ShareMPTID": "00000001C8FE62648185B3537A5332141DBE1BA203FD2E0C",
+      "SubscriptionDate": 845081395,
+      "VaultKind": 1,
+      "WithdrawalPolicy": 1,
+      "index": "66150AE82ECEF1A7F421DC7252BF7566EC504FDAE464EA9B577AD6AE0994148B"
+    }
+  },
+  {
+    "advanced_exactly_one": true,
+    "after": {
+      "close_time": 845081390,
+      "closed": true,
+      "ledger_hash": "4F51D0605027468574C2A6E4F4A1900000EBA2D8B3C6EBF89B9FBBCDF356F72D",
+      "ledger_index": 52
+    },
+    "before": {
+      "close_time": 845081389,
+      "closed": true,
+      "ledger_hash": "C9B2D567B8BE77AD8724CB91F198F85F80F611A94E2103E6611829B3F131EA22",
+      "ledger_index": 51
+    },
+    "close_time_monotonic": true,
+    "host_time_utc": "2026-10-12T00:49:05.411091+00:00",
+    "ledger_accept_status": "success",
+    "ordinal": 50,
+    "reason": "advance to investment",
+    "vault": {
+      "Account": "rKKktJREjEqSCiWopx4xx3QkNLPwnyRFzn",
+      "Asset": {
+        "currency": "74524C5553440000000000000000000000000000",
+        "issuer": "rsiv37aCnB3ygmY4qvDQtYyzX8evYUM3rF"
+      },
+      "AssetsAvailable": "99000",
+      "AssetsTotal": "99000",
+      "Flags": 0,
+      "LEVersion": 1,
+      "LedgerEntryType": "Vault",
+      "Owner": "rpoLVaiYEit3xuQ2WoMBBUMskraTE2nnp4",
+      "OwnerNode": "0",
+      "PreviousTxnID": "216C726DDC9F24B7DEF606D829D3F6D64235441D5FA182DD6A68C80D21384F9D",
+      "PreviousTxnLgrSeq": 15,
+      "RedemptionDate": 845081575,
+      "Scale": 6,
+      "Sequence": 7,
+      "ShareMPTID": "00000001C8FE62648185B3537A5332141DBE1BA203FD2E0C",
+      "SubscriptionDate": 845081395,
+      "VaultKind": 1,
+      "WithdrawalPolicy": 1,
+      "index": "66150AE82ECEF1A7F421DC7252BF7566EC504FDAE464EA9B577AD6AE0994148B"
+    }
+  },
+  {
+    "advanced_exactly_one": true,
+    "after": {
+      "close_time": 845081391,
+      "closed": true,
+      "ledger_hash": "1FD959232B4A901ABF97D834B41F4B8DF41785A14E68A3D3E4EBA2F2788A62E3",
+      "ledger_index": 53
+    },
+    "before": {
+      "close_time": 845081390,
+      "closed": true,
+      "ledger_hash": "4F51D0605027468574C2A6E4F4A1900000EBA2D8B3C6EBF89B9FBBCDF356F72D",
+      "ledger_index": 52
+    },
+    "close_time_monotonic": true,
+    "host_time_utc": "2026-10-12T00:49:05.434535+00:00",
+    "ledger_accept_status": "success",
+    "ordinal": 51,
+    "reason": "advance to investment",
+    "vault": {
+      "Account": "rKKktJREjEqSCiWopx4xx3QkNLPwnyRFzn",
+      "Asset": {
+        "currency": "74524C5553440000000000000000000000000000",
+        "issuer": "rsiv37aCnB3ygmY4qvDQtYyzX8evYUM3rF"
+      },
+      "AssetsAvailable": "99000",
+      "AssetsTotal": "99000",
+      "Flags": 0,
+      "LEVersion": 1,
+      "LedgerEntryType": "Vault",
+      "Owner": "rpoLVaiYEit3xuQ2WoMBBUMskraTE2nnp4",
+      "OwnerNode": "0",
+      "PreviousTxnID": "216C726DDC9F24B7DEF606D829D3F6D64235441D5FA182DD6A68C80D21384F9D",
+      "PreviousTxnLgrSeq": 15,
+      "RedemptionDate": 845081575,
+      "Scale": 6,
+      "Sequence": 7,
+      "ShareMPTID": "00000001C8FE62648185B3537A5332141DBE1BA203FD2E0C",
+      "SubscriptionDate": 845081395,
+      "VaultKind": 1,
+      "WithdrawalPolicy": 1,
+      "index": "66150AE82ECEF1A7F421DC7252BF7566EC504FDAE464EA9B577AD6AE0994148B"
+    }
+  },
+  {
+    "advanced_exactly_one": true,
+    "after": {
+      "close_time": 845081392,
+      "closed": true,
+      "ledger_hash": "DD19ACA5D9188C16F68600D0F56CC14B89BFE3F25C5C439BD2F42C48CB144C5C",
+      "ledger_index": 54
+    },
+    "before": {
+      "close_time": 845081391,
+      "closed": true,
+      "ledger_hash": "1FD959232B4A901ABF97D834B41F4B8DF41785A14E68A3D3E4EBA2F2788A62E3",
+      "ledger_index": 53
+    },
+    "close_time_monotonic": true,
+    "host_time_utc": "2026-10-12T00:49:05.453979+00:00",
+    "ledger_accept_status": "success",
+    "ordinal": 52,
+    "reason": "advance to investment",
+    "vault": {
+      "Account": "rKKktJREjEqSCiWopx4xx3QkNLPwnyRFzn",
+      "Asset": {
+        "currency": "74524C5553440000000000000000000000000000",
+        "issuer": "rsiv37aCnB3ygmY4qvDQtYyzX8evYUM3rF"
+      },
+      "AssetsAvailable": "99000",
+      "AssetsTotal": "99000",
+      "Flags": 0,
+      "LEVersion": 1,
+      "LedgerEntryType": "Vault",
+      "Owner": "rpoLVaiYEit3xuQ2WoMBBUMskraTE2nnp4",
+      "OwnerNode": "0",
+      "PreviousTxnID": "216C726DDC9F24B7DEF606D829D3F6D64235441D5FA182DD6A68C80D21384F9D",
+      "PreviousTxnLgrSeq": 15,
+      "RedemptionDate": 845081575,
+      "Scale": 6,
+      "Sequence": 7,
+      "ShareMPTID": "00000001C8FE62648185B3537A5332141DBE1BA203FD2E0C",
+      "SubscriptionDate": 845081395,
+      "VaultKind": 1,
+      "WithdrawalPolicy": 1,
+      "index": "66150AE82ECEF1A7F421DC7252BF7566EC504FDAE464EA9B577AD6AE0994148B"
+    }
+  },
+  {
+    "advanced_exactly_one": true,
+    "after": {
+      "close_time": 845081393,
+      "closed": true,
+      "ledger_hash": "8411B6FBECF17312FA5693F7AB1B3E20BBD05D2E1C000A2683A5E4C32D30C60B",
+      "ledger_index": 55
+    },
+    "before": {
+      "close_time": 845081392,
+      "closed": true,
+      "ledger_hash": "DD19ACA5D9188C16F68600D0F56CC14B89BFE3F25C5C439BD2F42C48CB144C5C",
+      "ledger_index": 54
+    },
+    "close_time_monotonic": true,
+    "host_time_utc": "2026-10-12T00:49:05.476997+00:00",
+    "ledger_accept_status": "success",
+    "ordinal": 53,
+    "reason": "advance to investment",
+    "vault": {
+      "Account": "rKKktJREjEqSCiWopx4xx3QkNLPwnyRFzn",
+      "Asset": {
+        "currency": "74524C5553440000000000000000000000000000",
+        "issuer": "rsiv37aCnB3ygmY4qvDQtYyzX8evYUM3rF"
+      },
+      "AssetsAvailable": "99000",
+      "AssetsTotal": "99000",
+      "Flags": 0,
+      "LEVersion": 1,
+      "LedgerEntryType": "Vault",
+      "Owner": "rpoLVaiYEit3xuQ2WoMBBUMskraTE2nnp4",
+      "OwnerNode": "0",
+      "PreviousTxnID": "216C726DDC9F24B7DEF606D829D3F6D64235441D5FA182DD6A68C80D21384F9D",
+      "PreviousTxnLgrSeq": 15,
+      "RedemptionDate": 845081575,
+      "Scale": 6,
+      "Sequence": 7,
+      "ShareMPTID": "00000001C8FE62648185B3537A5332141DBE1BA203FD2E0C",
+      "SubscriptionDate": 845081395,
+      "VaultKind": 1,
+      "WithdrawalPolicy": 1,
+      "index": "66150AE82ECEF1A7F421DC7252BF7566EC504FDAE464EA9B577AD6AE0994148B"
+    }
+  },
+  {
+    "advanced_exactly_one": true,
+    "after": {
+      "close_time": 845081394,
+      "closed": true,
+      "ledger_hash": "FFFB6CCC6D3C6DC2CAEEF9B315AA30B5153572B6BAF5F3D32744CD4EFAE57C0F",
+      "ledger_index": 56
+    },
+    "before": {
+      "close_time": 845081393,
+      "closed": true,
+      "ledger_hash": "8411B6FBECF17312FA5693F7AB1B3E20BBD05D2E1C000A2683A5E4C32D30C60B",
+      "ledger_index": 55
+    },
+    "close_time_monotonic": true,
+    "host_time_utc": "2026-10-12T00:49:05.498724+00:00",
+    "ledger_accept_status": "success",
+    "ordinal": 54,
+    "reason": "advance to investment",
+    "vault": {
+      "Account": "rKKktJREjEqSCiWopx4xx3QkNLPwnyRFzn",
+      "Asset": {
+        "currency": "74524C5553440000000000000000000000000000",
+        "issuer": "rsiv37aCnB3ygmY4qvDQtYyzX8evYUM3rF"
+      },
+      "AssetsAvailable": "99000",
+      "AssetsTotal": "99000",
+      "Flags": 0,
+      "LEVersion": 1,
+      "LedgerEntryType": "Vault",
+      "Owner": "rpoLVaiYEit3xuQ2WoMBBUMskraTE2nnp4",
+      "OwnerNode": "0",
+      "PreviousTxnID": "216C726DDC9F24B7DEF606D829D3F6D64235441D5FA182DD6A68C80D21384F9D",
+      "PreviousTxnLgrSeq": 15,
+      "RedemptionDate": 845081575,
+      "Scale": 6,
+      "Sequence": 7,
+      "ShareMPTID": "00000001C8FE62648185B3537A5332141DBE1BA203FD2E0C",
+      "SubscriptionDate": 845081395,
+      "VaultKind": 1,
+      "WithdrawalPolicy": 1,
+      "index": "66150AE82ECEF1A7F421DC7252BF7566EC504FDAE464EA9B577AD6AE0994148B"
+    }
+  },
+  {
+    "advanced_exactly_one": true,
+    "after": {
+      "close_time": 845081395,
+      "closed": true,
+      "ledger_hash": "CC66A35EF52F270AD05CFA3923FD107FEFBC604DA95B919B91C4AD03DDBD2638",
+      "ledger_index": 57
+    },
+    "before": {
+      "close_time": 845081394,
+      "closed": true,
+      "ledger_hash": "FFFB6CCC6D3C6DC2CAEEF9B315AA30B5153572B6BAF5F3D32744CD4EFAE57C0F",
+      "ledger_index": 56
+    },
+    "close_time_monotonic": true,
+    "host_time_utc": "2026-10-12T00:49:05.519123+00:00",
+    "ledger_accept_status": "success",
+    "ordinal": 55,
+    "reason": "advance to investment",
+    "vault": {
+      "Account": "rKKktJREjEqSCiWopx4xx3QkNLPwnyRFzn",
+      "Asset": {
+        "currency": "74524C5553440000000000000000000000000000",
+        "issuer": "rsiv37aCnB3ygmY4qvDQtYyzX8evYUM3rF"
+      },
+      "AssetsAvailable": "99000",
+      "AssetsTotal": "99000",
+      "Flags": 0,
+      "LEVersion": 1,
+      "LedgerEntryType": "Vault",
+      "Owner": "rpoLVaiYEit3xuQ2WoMBBUMskraTE2nnp4",
+      "OwnerNode": "0",
+      "PreviousTxnID": "216C726DDC9F24B7DEF606D829D3F6D64235441D5FA182DD6A68C80D21384F9D",
+      "PreviousTxnLgrSeq": 15,
+      "RedemptionDate": 845081575,
+      "Scale": 6,
+      "Sequence": 7,
+      "ShareMPTID": "00000001C8FE62648185B3537A5332141DBE1BA203FD2E0C",
+      "SubscriptionDate": 845081395,
+      "VaultKind": 1,
+      "WithdrawalPolicy": 1,
+      "index": "66150AE82ECEF1A7F421DC7252BF7566EC504FDAE464EA9B577AD6AE0994148B"
+    }
+  },
+  {
+    "advanced_exactly_one": true,
+    "after": {
+      "close_time": 845081396,
+      "closed": true,
+      "ledger_hash": "77D20CA3584D149E4F325AE90ECD273A3EA56EE6ADDF42F55F3F6CB351DD83A6",
+      "ledger_index": 58
+    },
+    "before": {
+      "close_time": 845081395,
+      "closed": true,
+      "ledger_hash": "CC66A35EF52F270AD05CFA3923FD107FEFBC604DA95B919B91C4AD03DDBD2638",
+      "ledger_index": 57
+    },
+    "close_time_monotonic": true,
+    "host_time_utc": "2026-10-12T00:49:05.543993+00:00",
+    "ledger_accept_status": "success",
+    "ordinal": 56,
+    "reason": "advance to investment",
+    "vault": {
+      "Account": "rKKktJREjEqSCiWopx4xx3QkNLPwnyRFzn",
+      "Asset": {
+        "currency": "74524C5553440000000000000000000000000000",
+        "issuer": "rsiv37aCnB3ygmY4qvDQtYyzX8evYUM3rF"
+      },
+      "AssetsAvailable": "99000",
+      "AssetsTotal": "99000",
+      "Flags": 0,
+      "LEVersion": 1,
+      "LedgerEntryType": "Vault",
+      "Owner": "rpoLVaiYEit3xuQ2WoMBBUMskraTE2nnp4",
+      "OwnerNode": "0",
+      "PreviousTxnID": "216C726DDC9F24B7DEF606D829D3F6D64235441D5FA182DD6A68C80D21384F9D",
+      "PreviousTxnLgrSeq": 15,
+      "RedemptionDate": 845081575,
+      "Scale": 6,
+      "Sequence": 7,
+      "ShareMPTID": "00000001C8FE62648185B3537A5332141DBE1BA203FD2E0C",
+      "SubscriptionDate": 845081395,
+      "VaultKind": 1,
+      "WithdrawalPolicy": 1,
+      "index": "66150AE82ECEF1A7F421DC7252BF7566EC504FDAE464EA9B577AD6AE0994148B"
+    }
+  },
+  {
+    "advanced_exactly_one": true,
+    "after": {
+      "close_time": 845081397,
+      "closed": true,
+      "ledger_hash": "D5119955ADB6C3A5DD06B289CF6F49C7C6635E10FAC539C6A738CA135A9477BA",
+      "ledger_index": 59
+    },
+    "before": {
+      "close_time": 845081396,
+      "closed": true,
+      "ledger_hash": "77D20CA3584D149E4F325AE90ECD273A3EA56EE6ADDF42F55F3F6CB351DD83A6",
+      "ledger_index": 58
+    },
+    "close_time_monotonic": true,
+    "host_time_utc": "2026-10-12T00:49:05.641747+00:00",
+    "ledger_accept_status": "success",
+    "ordinal": 57,
+    "reason": "validate investment_deposit_rejected",
+    "vault": {
+      "Account": "rKKktJREjEqSCiWopx4xx3QkNLPwnyRFzn",
+      "Asset": {
+        "currency": "74524C5553440000000000000000000000000000",
+        "issuer": "rsiv37aCnB3ygmY4qvDQtYyzX8evYUM3rF"
+      },
+      "AssetsAvailable": "99000",
+      "AssetsTotal": "99000",
+      "Flags": 0,
+      "LEVersion": 1,
+      "LedgerEntryType": "Vault",
+      "Owner": "rpoLVaiYEit3xuQ2WoMBBUMskraTE2nnp4",
+      "OwnerNode": "0",
+      "PreviousTxnID": "216C726DDC9F24B7DEF606D829D3F6D64235441D5FA182DD6A68C80D21384F9D",
+      "PreviousTxnLgrSeq": 15,
+      "RedemptionDate": 845081575,
+      "Scale": 6,
+      "Sequence": 7,
+      "ShareMPTID": "00000001C8FE62648185B3537A5332141DBE1BA203FD2E0C",
+      "SubscriptionDate": 845081395,
+      "VaultKind": 1,
+      "WithdrawalPolicy": 1,
+      "index": "66150AE82ECEF1A7F421DC7252BF7566EC504FDAE464EA9B577AD6AE0994148B"
+    }
+  }
+]

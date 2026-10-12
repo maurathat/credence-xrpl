@@ -311,6 +311,146 @@ continuation from this commit. Checkpoint 1A did not begin E2.
 
 ---
 
+# Checkpoint 1C fail-closed report
+
+## Outcome
+
+**BLOCKED — local negative-result handling defect during E3 Investment.**
+
+The server's submission response for the Investment-phase deposit contained
+`engine_result: tecEXPIRED`, exactly matching the source-derived expectation,
+and every relevant state-unchanged assertion passed. Because `fail_hard` left
+the rejected transaction unvalidated, the subsequent `tx` lookup returned
+`validated: false` without metadata. The harness incorrectly replaced the
+preliminary `tecEXPIRED` with an empty result and stopped with:
+
+```text
+STOP: investment_deposit_rejected: expected tecEXPIRED, observed None; result or state assertion failed
+```
+
+This is **A. local configuration error** in result handling, not evidence of a
+vault-phase contradiction. No timing adjustment, retry, Investment withdrawal,
+Redemption operation, or E4 transaction followed.
+
+## E2 — OBSERVED
+
+- Four disposable AccountRoot objects exist: tRLUSD issuer, lender, borrower,
+  and Credence Loan Broker account. Only public classic addresses are recorded.
+- The issuer has DefaultRipple enabled.
+- Lender, borrower, and Loan Broker trust lines use XRPL wire currency
+  `74524C5553440000000000000000000000000000`, the six-byte label `tRLUSD`.
+- Validated wire balances are lender `200000`, borrower `0`, and Loan Broker
+  `20000`.
+- An absent, unfunded actor could not autofill the required TrustSet; the client
+  returned `actNotFound`, and the actor remained absent.
+- Every successful state-changing transaction has validated before/after state
+  and passing assertions; E2 is **PASS**.
+
+## E2 — DERIVED
+
+At the Credence application-accounting convention of 1,000,000 integer
+micro-tRLUSD per tRLUSD, the lender's `200000` XRPL amount would correspond to
+`200000000000` application micro-units. This is arithmetic interpretation only;
+Checkpoint 1C does not define a production conversion or repayment algorithm.
+
+## E2 — UNRESOLVED
+
+- Production precision, rounding, and repayment conversion remain deferred.
+- Borrower signer configuration remains entirely deferred to E5.
+
+## E3 — OBSERVED
+
+- A closed-ended tRLUSD Vault was created with the Credence Loan Broker account
+  as owner, `VaultKind: 1`, SubscriptionDate `845081395`, RedemptionDate
+  `845081575`, Scale `6`, and WithdrawalPolicy `1`.
+- In Subscription, a `100000` deposit succeeded: vault total/available assets
+  increased, lender tRLUSD decreased, and lender MPT shares equaled issuance
+  outstanding shares.
+- In Subscription, a `1000` withdrawal succeeded with the inverse asset,
+  balance, and share transitions.
+- Forty-three scripted closes moved the parent close time across the
+  Subscription boundary. Investment was observed at ledger 58, close time
+  `845081396`, one second after SubscriptionDate. No wall-clock sleep was used.
+- An Investment deposit of `1` produced server engine result `tecEXPIRED`.
+  AssetsTotal, AssetsAvailable, lender balance, share issuance, and lender share
+  balance were unchanged.
+
+E3 remains **BLOCKED**, rather than PASS, because the harness failed to retain
+that correct preliminary engine result when the transaction was not validated.
+
+## E3 — DERIVED
+
+The observed Subscription behavior and Investment deposit rejection agree with
+pinned source semantics. Loan-origination phase restrictions remain
+source-derived because LoanSet was prohibited.
+
+## E3 — UNRESOLVED
+
+- Investment withdrawal was not attempted after STOP.
+- Redemption deposit and withdrawal were not attempted after STOP.
+- The full three-phase matrix and fresh-run reproducibility therefore remain
+  incomplete.
+
+## E4 — OBSERVED
+
+None. E4 was **NOT_ATTEMPTED** because STOP occurred during E3.
+
+## E4 — DERIVED
+
+Pinned source continues to indicate bounded protection controlled by
+CoverAvailable, CoverRateMinimum, CoverRateLiquidation, debt/default amounts,
+and the Loan Broker/vault relationship. No E4 state was created, so none of
+those semantics are upgraded to observed evidence.
+
+## E4 — UNRESOLVED
+
+Loan Broker ownership, vault relationship, cover amount/rates/limits, the
+unauthorized-operation negative case, and all before/after cover state remain
+untested.
+
+## PLAN CORRECTIONS INDICATED BY EVIDENCE
+
+- Preserve the existing proposed correction that first-loss wording must be
+  qualified by configured cover bounds. Checkpoint 1C produced no E4 evidence
+  that would justify stronger language.
+- Keep XRPL decimal wire amounts distinct from integer application
+  micro-tRLUSD. A production conversion and rounding rule is still required.
+- Do not describe all three vault phases as experimentally validated; only
+  Subscription and the Investment deposit rejection have run evidence here.
+
+The normative plan was not modified.
+
+## Minimum next experiment — not performed
+
+Change only negative-result handling so an `accepted: false` `tec` result is
+retained when the subsequent `tx` lookup is unvalidated, then restart from a
+fresh volume and rerun E2-E4. That distinguishes the local evidence-harness
+defect from any remaining phase or broker question.
+
+That experiment was **not performed**.
+
+## Recommendation
+
+**BLOCKED. E5 must not begin.** Complete E3 and E4 from a fresh run after a
+narrowly authorized harness repair.
+
+## Checkpoint 1C STOP gates
+
+- Existing spike tests: PASS — 10 tests.
+- Repository unit tests: PASS — 17 tests.
+- Conformance tests: PASS — 4 tests.
+- Lint, formatting, large-file check, and strict typecheck: PASS.
+- Secrets scan: PASS — no findings.
+- JSON validation, SHA-256 evidence-manifest verification, authorized-path
+  check, and `git diff --check`: PASS.
+- Review path, web gitlink, and custody gitlink: unchanged.
+
+The candidate E2-E4 runner was removed after STOP and is not committed as a
+completed harness. The commit contains only the bounded report and evidence
+artifacts under `spike/xrpl/`.
+
+---
+
 # Checkpoint 1B fail-closed report
 
 ## Outcome

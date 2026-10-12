@@ -1,0 +1,101 @@
+{
+  "accounts": {
+    "borrower": {
+      "account_data": {
+        "Account": "rGsehhRmHECKDGVfjFTjKfyqcNJnuJ9Je6",
+        "Balance": "999999990",
+        "Flags": 0,
+        "LedgerEntryType": "AccountRoot",
+        "OwnerCount": 1,
+        "PreviousTxnID": "7158E913233A15C3A76C67645C103765D9B0520A2F9D27B03EDF18B4EBB17DB6",
+        "PreviousTxnLgrSeq": 9,
+        "Sequence": 6,
+        "index": "ECC3208ACCC25A978BFEBB7CCB3A70E70C8B5BAB020FC8B7B0D1745658BD8929"
+      },
+      "ledger_index": 12
+    },
+    "issuer": {
+      "account_data": {
+        "Account": "rsiv37aCnB3ygmY4qvDQtYyzX8evYUM3rF",
+        "Balance": "999999970",
+        "Flags": 8388608,
+        "LedgerEntryType": "AccountRoot",
+        "OwnerCount": 0,
+        "PreviousTxnID": "44E6373467E14CF9A25BF4516D71F10373138FF9F2D97DF6AF7EE703028566E7",
+        "PreviousTxnLgrSeq": 12,
+        "Sequence": 6,
+        "index": "C3DAE12707A856792273EAC71D0C76E8DE22FF6EF3B7D011362E4DF4F1CECCC3"
+      },
+      "ledger_index": 12
+    },
+    "lender": {
+      "account_data": {
+        "Account": "rw7uJPUQ3fo12AuhxfQ6nhkAfZFevajkPs",
+        "Balance": "999999990",
+        "Flags": 0,
+        "LedgerEntryType": "AccountRoot",
+        "OwnerCount": 1,
+        "PreviousTxnID": "3B615E7780735D1F84F4ED560C2B4226895BE7583AED8A84B1A1C46722EA6F1F",
+        "PreviousTxnLgrSeq": 8,
+        "Sequence": 5,
+        "index": "BB2F1DC18D10BC7C36411B4AAD68F6E8559325F9F502B7E5BF0FC5730972BF38"
+      },
+      "ledger_index": 12
+    },
+    "loan_broker": {
+      "account_data": {
+        "Account": "rpoLVaiYEit3xuQ2WoMBBUMskraTE2nnp4",
+        "Balance": "999999990",
+        "Flags": 0,
+        "LedgerEntryType": "AccountRoot",
+        "OwnerCount": 1,
+        "PreviousTxnID": "5C3809AD0558CD200E3558DD167884121CCBD2BDC0DDB7A0B5D790F06C153FC3",
+        "PreviousTxnLgrSeq": 10,
+        "Sequence": 7,
+        "index": "DC870C789F54D363EDF388536A1EF382F8A95843D88F1591A34CB695C7D75397"
+      },
+      "ledger_index": 12
+    }
+  },
+  "balances": {
+    "borrower": "0",
+    "lender": "200000",
+    "loan_broker": "20000"
+  },
+  "borrower_signer_configuration_deferred_to_E5": true,
+  "ledger": {
+    "close_time": 845081350,
+    "closed": true,
+    "ledger_hash": "E2AF70B5016E0C3E57D13C20BF06A43B3392FA58FC6372264F223E555B05F9D1",
+    "ledger_index": 12
+  },
+  "trust_lines": {
+    "borrower": {
+      "account": "rsiv37aCnB3ygmY4qvDQtYyzX8evYUM3rF",
+      "balance": "0",
+      "currency": "74524C5553440000000000000000000000000000",
+      "limit": "1000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0
+    },
+    "lender": {
+      "account": "rsiv37aCnB3ygmY4qvDQtYyzX8evYUM3rF",
+      "balance": "200000",
+      "currency": "74524C5553440000000000000000000000000000",
+      "limit": "1000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0
+    },
+    "loan_broker": {
+      "account": "rsiv37aCnB3ygmY4qvDQtYyzX8evYUM3rF",
+      "balance": "20000",
+      "currency": "74524C5553440000000000000000000000000000",
+      "limit": "1000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0
+    }
+  }
+}

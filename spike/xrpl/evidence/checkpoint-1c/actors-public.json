@@ -1,0 +1,15 @@
+{
+  "accounts": {
+    "borrower": "rGsehhRmHECKDGVfjFTjKfyqcNJnuJ9Je6",
+    "issuer": "rsiv37aCnB3ygmY4qvDQtYyzX8evYUM3rF",
+    "lender": "rw7uJPUQ3fo12AuhxfQ6nhkAfZFevajkPs",
+    "loan_broker": "rpoLVaiYEit3xuQ2WoMBBUMskraTE2nnp4"
+  },
+  "asset": {
+    "application_accounting": "1 tRLUSD = 1,000,000 integer micro-tRLUSD",
+    "conversion_algorithm": "not defined in this spike",
+    "human_label": "tRLUSD",
+    "xrpl_wire_currency": "74524C5553440000000000000000000000000000"
+  },
+  "recorded_identity_material": "public classic addresses only"
+}

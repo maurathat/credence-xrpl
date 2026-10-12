@@ -1,0 +1,52 @@
+{
+  "after_state": {
+    "account": "rMPRvVtZuXCbyU359AN7ZBSxSQAMsAveBk",
+    "exists": false
+  },
+  "before_state": {
+    "account": "rMPRvVtZuXCbyU359AN7ZBSxSQAMsAveBk",
+    "exists": false
+  },
+  "canonical_public_transaction": {
+    "Account": "rMPRvVtZuXCbyU359AN7ZBSxSQAMsAveBk",
+    "LimitAmount": {
+      "currency": "74524C5553440000000000000000000000000000",
+      "issuer": "rsiv37aCnB3ygmY4qvDQtYyzX8evYUM3rF",
+      "value": "1000000"
+    },
+    "TransactionType": "TrustSet",
+    "authorization": {
+      "mode": "single_sign",
+      "signers": [],
+      "top_level_signing_public_key_present": false,
+      "top_level_transaction_signature_present": false
+    }
+  },
+  "client_exception": {
+    "message": "Request failed, actNotFound: Account not found.",
+    "type": "XRPLRequestFailureException"
+  },
+  "expected_result": "CLIENT_EXCEPTION",
+  "experiment": "E2",
+  "label": "unfunded_actor_cannot_create_trust_line",
+  "observed_result": null,
+  "state_assertions": [
+    {
+      "actual": false,
+      "expected": false,
+      "name": "unfunded account remains absent",
+      "passed": true
+    },
+    {
+      "actual": false,
+      "expected": false,
+      "name": "account existence unchanged",
+      "passed": true
+    }
+  ],
+  "status": "PASS",
+  "submission_response": null,
+  "transaction_hash": null,
+  "validated_ledger_index": null,
+  "validated_transaction_response": null
+}

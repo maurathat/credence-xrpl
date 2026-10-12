@@ -1,0 +1,58 @@
+{
+  "checkpoint": "1C",
+  "overall": "BLOCKED",
+  "classification": {
+    "code": "A",
+    "label": "local configuration error",
+    "detail": "The transaction harness overwrote the correct preliminary tecEXPIRED result with an empty result from a non-validated tx lookup."
+  },
+  "frozen_e1_invariants_verified": true,
+  "experiments": {
+    "E2": "PASS",
+    "E3": "BLOCKED",
+    "E4": "NOT_ATTEMPTED",
+    "E5": "NOT_ATTEMPTED",
+    "E6": "NOT_ATTEMPTED",
+    "E7": "NOT_ATTEMPTED",
+    "E8": "NOT_ATTEMPTED",
+    "E9": "NOT_ATTEMPTED"
+  },
+  "transactions": {
+    "recorded": 15,
+    "passed": 14,
+    "failed_closed": 1
+  },
+  "e2": {
+    "issuer_default_ripple": true,
+    "trust_lines": ["lender", "borrower", "loan_broker"],
+    "wire_balances": {
+      "lender": "200000",
+      "borrower": "0",
+      "loan_broker": "20000"
+    },
+    "negative_test": "An unfunded absent actor was rejected client-side and remained absent."
+  },
+  "e3": {
+    "vault_created": true,
+    "subscription_date": 845081395,
+    "redemption_date": 845081575,
+    "subscription_deposit": "PASS",
+    "subscription_withdraw": "PASS",
+    "investment_entry": {
+      "ledger_index": 58,
+      "close_time": 845081396,
+      "scripted_transition_closes": 43
+    },
+    "investment_deposit_submission_engine_result": "tecEXPIRED",
+    "investment_deposit_relevant_state_unchanged": true,
+    "checkpoint_result": "BLOCKED because the harness discarded that preliminary result when the tx lookup returned validated:false without metadata",
+    "investment_withdraw": "NOT_ATTEMPTED",
+    "redemption": "NOT_ATTEMPTED"
+  },
+  "stop": {
+    "output": "STOP: investment_deposit_rejected: expected tecEXPIRED, observed None; result or state assertion failed",
+    "protocol_contradiction": false,
+    "minimum_next_experiment": "Change only negative-result handling so an accepted:false tec engine result is retained when tx lookup is unvalidated, then restart from a fresh volume and rerun E2-E4.",
+    "minimum_next_experiment_performed": false
+  }
+}

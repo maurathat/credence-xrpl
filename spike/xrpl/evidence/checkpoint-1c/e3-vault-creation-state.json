@@ -1,0 +1,46 @@
+{
+  "ledger": {
+    "close_time": 845081351,
+    "closed": true,
+    "ledger_hash": "9AE63EBF2C5C899DE7F7A77ABA3499EB91E61AD6CEE65F93C2EED537A2160089",
+    "ledger_index": 13
+  },
+  "lender_share": null,
+  "lender_tRLUSD_balance": "200000",
+  "share_issuance": {
+    "AssetScale": 6,
+    "Flags": 56,
+    "Issuer": "rKKktJREjEqSCiWopx4xx3QkNLPwnyRFzn",
+    "LedgerEntryType": "MPTokenIssuance",
+    "OutstandingAmount": "0",
+    "OwnerNode": "0",
+    "PreviousTxnID": "250727B7F45E57E7511CE0F71536AEDEDCFFAB5B7F079E660FE3F8CC9D5BB6BD",
+    "PreviousTxnLgrSeq": 13,
+    "ReferenceHolding": "31209E19995475895D34304000E04C1D35FA7F40DE46D7C075AB24BC08998BE1",
+    "Sequence": 1,
+    "index": "2643E7F5FF9ECFD83DBCB69C6CA15CFB4837084B710FCB0D4CD788016B7BD587",
+    "mpt_issuance_id": "00000001C8FE62648185B3537A5332141DBE1BA203FD2E0C"
+  },
+  "vault": {
+    "Account": "rKKktJREjEqSCiWopx4xx3QkNLPwnyRFzn",
+    "Asset": {
+      "currency": "74524C5553440000000000000000000000000000",
+      "issuer": "rsiv37aCnB3ygmY4qvDQtYyzX8evYUM3rF"
+    },
+    "Flags": 0,
+    "LEVersion": 1,
+    "LedgerEntryType": "Vault",
+    "Owner": "rpoLVaiYEit3xuQ2WoMBBUMskraTE2nnp4",
+    "OwnerNode": "0",
+    "PreviousTxnID": "250727B7F45E57E7511CE0F71536AEDEDCFFAB5B7F079E660FE3F8CC9D5BB6BD",
+    "PreviousTxnLgrSeq": 13,
+    "RedemptionDate": 845081575,
+    "Scale": 6,
+    "Sequence": 7,
+    "ShareMPTID": "00000001C8FE62648185B3537A5332141DBE1BA203FD2E0C",
+    "SubscriptionDate": 845081395,
+    "VaultKind": 1,
+    "WithdrawalPolicy": 1,
+    "index": "66150AE82ECEF1A7F421DC7252BF7566EC504FDAE464EA9B577AD6AE0994148B"
+  }
+}

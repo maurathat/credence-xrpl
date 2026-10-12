@@ -123,3 +123,16 @@ The `feature` response and Amendments ledger object independently confirmed
 all eight required amendments before and after the closes. Their normalized
 cross-check had no disagreements. Raw responses, complete build provenance,
 and the evidence digest manifest are in `evidence/checkpoint-1b-r/`.
+
+## Checkpoint 1C stopped run
+
+Checkpoint 1C recreated the same dedicated container and volume, verified the
+frozen network/amendment invariants, and submitted only E2 and partial E3
+transactions. Fifty-seven scripted closes were recorded through the stop.
+
+The E3 Vault used SubscriptionDate `845081395` and RedemptionDate `845081575`.
+Forty-three transition closes reached Investment at validated ledger 58 and
+close time `845081396`. The server returned the expected `tecEXPIRED` for an
+Investment deposit, but a local result-handling defect triggered STOP before
+Investment withdrawal, Redemption, or E4. Evidence is under
+`evidence/checkpoint-1c/`.
