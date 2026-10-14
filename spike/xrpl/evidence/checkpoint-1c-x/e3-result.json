@@ -1,0 +1,202 @@
+{
+  "creation": {
+    "assertions": [
+      {
+        "actual": "rHTUQ57nLKi34FDtay7CCkVzkSdfoh5m3u",
+        "expected": "rHTUQ57nLKi34FDtay7CCkVzkSdfoh5m3u",
+        "name": "vault Owner",
+        "passed": true
+      },
+      {
+        "actual": 1,
+        "expected": 1,
+        "name": "vault kind",
+        "passed": true
+      },
+      {
+        "actual": 845331900,
+        "expected": 845331900,
+        "name": "subscription date",
+        "passed": true
+      },
+      {
+        "actual": 845332080,
+        "expected": 845332080,
+        "name": "redemption date",
+        "passed": true
+      },
+      {
+        "actual": {
+          "currency": "74524C5553440000000000000000000000000000",
+          "issuer": "rUQwCP6PANmARuJEmyK9q2wBd5XXkxT73h"
+        },
+        "expected": {
+          "currency": "74524C5553440000000000000000000000000000",
+          "issuer": "rUQwCP6PANmARuJEmyK9q2wBd5XXkxT73h"
+        },
+        "name": "vault asset",
+        "passed": true
+      }
+    ],
+    "vault": {
+      "Account": "rECkRrRX4qkr9NqJEdzNyG2XitJrTJNzq3",
+      "Asset": {
+        "currency": "74524C5553440000000000000000000000000000",
+        "issuer": "rUQwCP6PANmARuJEmyK9q2wBd5XXkxT73h"
+      },
+      "Flags": 0,
+      "LEVersion": 1,
+      "LedgerEntryType": "Vault",
+      "Owner": "rHTUQ57nLKi34FDtay7CCkVzkSdfoh5m3u",
+      "OwnerNode": "0",
+      "PreviousTxnID": "2604E1A3D9901B3C3BEC9B47D48274C8B7FC71855A5F2503701E9B83A0FABEDB",
+      "PreviousTxnLgrSeq": 13,
+      "RedemptionDate": 845332080,
+      "Scale": 6,
+      "Sequence": 7,
+      "ShareMPTID": "00000001A0E5CEC12F048E52D88E026106BE5B3D7417DC56",
+      "SubscriptionDate": 845331900,
+      "VaultKind": 1,
+      "WithdrawalPolicy": 1,
+      "index": "B87C0BAC5B3E2E11A63CF26576F777553FCBE36376493F0D407AC485FCE65C1B"
+    }
+  },
+  "final_state": {
+    "lender_balance": "102000",
+    "lender_share": {
+      "Account": "rsazfN6RPoBiYnumgGgktY2CtVWFnZtDwp",
+      "Flags": 0,
+      "LedgerEntryType": "MPToken",
+      "MPTAmount": "98000000000",
+      "MPTokenIssuanceID": "00000001A0E5CEC12F048E52D88E026106BE5B3D7417DC56",
+      "OwnerNode": "0",
+      "PreviousTxnID": "E506509E4934BFE38C4916AAEBAA3B654376FF6D645AF79A7E77C1D5BE357392",
+      "PreviousTxnLgrSeq": 223,
+      "index": "DD3A81A7817F59400A20DC60EFAFDD8B2BC37D3CBAD1DE89A8D7A7792E3A8F20"
+    },
+    "protected": {
+      "lender_account_sequence": 8,
+      "lender_balance": "102000",
+      "lender_share": {
+        "Account": "rsazfN6RPoBiYnumgGgktY2CtVWFnZtDwp",
+        "Flags": 0,
+        "LedgerEntryType": "MPToken",
+        "MPTAmount": "98000000000",
+        "MPTokenIssuanceID": "00000001A0E5CEC12F048E52D88E026106BE5B3D7417DC56",
+        "OwnerNode": "0",
+        "PreviousTxnID": "E506509E4934BFE38C4916AAEBAA3B654376FF6D645AF79A7E77C1D5BE357392",
+        "PreviousTxnLgrSeq": 223,
+        "index": "DD3A81A7817F59400A20DC60EFAFDD8B2BC37D3CBAD1DE89A8D7A7792E3A8F20"
+      },
+      "share_issuance": {
+        "AssetScale": 6,
+        "Flags": 56,
+        "Issuer": "rECkRrRX4qkr9NqJEdzNyG2XitJrTJNzq3",
+        "LedgerEntryType": "MPTokenIssuance",
+        "OutstandingAmount": "98000000000",
+        "OwnerNode": "0",
+        "PreviousTxnID": "E506509E4934BFE38C4916AAEBAA3B654376FF6D645AF79A7E77C1D5BE357392",
+        "PreviousTxnLgrSeq": 223,
+        "ReferenceHolding": "AA256ED524EFEF0CC2155821030230808240401C8B123D076B0255C398AA3050",
+        "Sequence": 1,
+        "index": "ED375255A29DC4E72D1315B50528942086542E5F95A8F6B5C21153F04AC23E03",
+        "mpt_issuance_id": "00000001A0E5CEC12F048E52D88E026106BE5B3D7417DC56"
+      },
+      "vault": {
+        "Account": "rECkRrRX4qkr9NqJEdzNyG2XitJrTJNzq3",
+        "Asset": {
+          "currency": "74524C5553440000000000000000000000000000",
+          "issuer": "rUQwCP6PANmARuJEmyK9q2wBd5XXkxT73h"
+        },
+        "AssetsAvailable": "98000",
+        "AssetsTotal": "98000",
+        "Flags": 0,
+        "LEVersion": 1,
+        "LedgerEntryType": "Vault",
+        "Owner": "rHTUQ57nLKi34FDtay7CCkVzkSdfoh5m3u",
+        "OwnerNode": "0",
+        "PreviousTxnID": "E506509E4934BFE38C4916AAEBAA3B654376FF6D645AF79A7E77C1D5BE357392",
+        "PreviousTxnLgrSeq": 223,
+        "RedemptionDate": 845332080,
+        "Scale": 6,
+        "Sequence": 7,
+        "ShareMPTID": "00000001A0E5CEC12F048E52D88E026106BE5B3D7417DC56",
+        "SubscriptionDate": 845331900,
+        "VaultKind": 1,
+        "WithdrawalPolicy": 1,
+        "index": "B87C0BAC5B3E2E11A63CF26576F777553FCBE36376493F0D407AC485FCE65C1B"
+      }
+    },
+    "share_issuance": {
+      "AssetScale": 6,
+      "Flags": 56,
+      "Issuer": "rECkRrRX4qkr9NqJEdzNyG2XitJrTJNzq3",
+      "LedgerEntryType": "MPTokenIssuance",
+      "OutstandingAmount": "98000000000",
+      "OwnerNode": "0",
+      "PreviousTxnID": "E506509E4934BFE38C4916AAEBAA3B654376FF6D645AF79A7E77C1D5BE357392",
+      "PreviousTxnLgrSeq": 223,
+      "ReferenceHolding": "AA256ED524EFEF0CC2155821030230808240401C8B123D076B0255C398AA3050",
+      "Sequence": 1,
+      "index": "ED375255A29DC4E72D1315B50528942086542E5F95A8F6B5C21153F04AC23E03",
+      "mpt_issuance_id": "00000001A0E5CEC12F048E52D88E026106BE5B3D7417DC56"
+    },
+    "unrelated_state": {
+      "borrower_balance": "0",
+      "issuer_account": {
+        "Account": "rUQwCP6PANmARuJEmyK9q2wBd5XXkxT73h",
+        "Balance": "999999970",
+        "Flags": 8388608,
+        "LedgerEntryType": "AccountRoot",
+        "OwnerCount": 0,
+        "PreviousTxnID": "2604E1A3D9901B3C3BEC9B47D48274C8B7FC71855A5F2503701E9B83A0FABEDB",
+        "PreviousTxnLgrSeq": 13,
+        "Sequence": 6,
+        "index": "60A778C163AE35F9B3A3599F0BB16C68B07EA890F662566609815E73A6692471"
+      },
+      "owner_balance": "20000"
+    },
+    "vault": {
+      "Account": "rECkRrRX4qkr9NqJEdzNyG2XitJrTJNzq3",
+      "Asset": {
+        "currency": "74524C5553440000000000000000000000000000",
+        "issuer": "rUQwCP6PANmARuJEmyK9q2wBd5XXkxT73h"
+      },
+      "AssetsAvailable": "98000",
+      "AssetsTotal": "98000",
+      "Flags": 0,
+      "LEVersion": 1,
+      "LedgerEntryType": "Vault",
+      "Owner": "rHTUQ57nLKi34FDtay7CCkVzkSdfoh5m3u",
+      "OwnerNode": "0",
+      "PreviousTxnID": "E506509E4934BFE38C4916AAEBAA3B654376FF6D645AF79A7E77C1D5BE357392",
+      "PreviousTxnLgrSeq": 223,
+      "RedemptionDate": 845332080,
+      "Scale": 6,
+      "Sequence": 7,
+      "ShareMPTID": "00000001A0E5CEC12F048E52D88E026106BE5B3D7417DC56",
+      "SubscriptionDate": 845331900,
+      "VaultKind": 1,
+      "WithdrawalPolicy": 1,
+      "index": "B87C0BAC5B3E2E11A63CF26576F777553FCBE36376493F0D407AC485FCE65C1B"
+    }
+  },
+  "investment_entry": {
+    "close_time": 845331901,
+    "closed": true,
+    "ledger_hash": "4F258B163E2CAD5FFACAE5FC1724B910E6D51D8FF87FD22B936A849C0F8969F8",
+    "ledger_index": 43,
+    "phase": "Investment"
+  },
+  "loan_origination_not_exercised": true,
+  "redemption_date": 845332080,
+  "redemption_entry": {
+    "close_time": 845332080,
+    "closed": true,
+    "ledger_hash": "41E8250E9188F8F6F85AFAC05512C05485DFC238AB5595622B83FC5ACFB8F7F5",
+    "ledger_index": 222,
+    "phase": "Redemption"
+  },
+  "subscription_date": 845331900,
+  "vault_id": "B87C0BAC5B3E2E11A63CF26576F777553FCBE36376493F0D407AC485FCE65C1B"
+}

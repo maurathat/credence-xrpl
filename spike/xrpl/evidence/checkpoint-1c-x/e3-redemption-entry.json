@@ -1,0 +1,1284 @@
+{
+  "entry": {
+    "close_time": 845332080,
+    "closed": true,
+    "ledger_hash": "41E8250E9188F8F6F85AFAC05512C05485DFC238AB5595622B83FC5ACFB8F7F5",
+    "ledger_index": 222,
+    "phase": "Redemption"
+  },
+  "observations": [
+    {
+      "close_time": 845331903,
+      "closed": true,
+      "ledger_hash": "700D39936B82BA507DF30E1F9331FE8FB5779D4DA73943487A2DEA07136AB0D4",
+      "ledger_index": 45,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845331904,
+      "closed": true,
+      "ledger_hash": "0CF02E1413C060CD244580EA6DE9FD0321370DB191624EC496E84D59E62EA11D",
+      "ledger_index": 46,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845331905,
+      "closed": true,
+      "ledger_hash": "7F82BAB6D9BB1BC24824C1CFCCE93DCCB4CDD082C28CA22256D01B90ABB0A527",
+      "ledger_index": 47,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845331906,
+      "closed": true,
+      "ledger_hash": "967DF985953FFEE11091F5FD5D70E5E68B15E50F24EAA3AA729833344F0D1FB1",
+      "ledger_index": 48,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845331907,
+      "closed": true,
+      "ledger_hash": "81215479A6CE6C5ECA2C8F70C71849B2D6DE6CF663CBA7DACC5673B9A12FF051",
+      "ledger_index": 49,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845331908,
+      "closed": true,
+      "ledger_hash": "9668AAD9519D9408A60C2CD4E54796335ADD276EA2747726907A05DE7059B214",
+      "ledger_index": 50,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845331909,
+      "closed": true,
+      "ledger_hash": "DA03F8DCC92ACAB1BAF3B94AF9588031117DB8EDC4D35F33CF8E10E450C87E73",
+      "ledger_index": 51,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845331910,
+      "closed": true,
+      "ledger_hash": "58D5D54BEBE1F2556FCFE2B5ACC033D07518DD317DB2D5FEFF94A7BEC601940A",
+      "ledger_index": 52,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845331911,
+      "closed": true,
+      "ledger_hash": "9B97BD6BC9B066DF4EF642F17B60608DF21870781ED39A9B7D6F7D4FB4CD81FF",
+      "ledger_index": 53,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845331912,
+      "closed": true,
+      "ledger_hash": "44F15D4771FB0B5A59237B7CBCE35033805264BDCFC36EB9D63B2E0FDC6C6F1F",
+      "ledger_index": 54,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845331913,
+      "closed": true,
+      "ledger_hash": "5C6BE1BB87963EF8B21D0CC9B35ADFECA8082DFEA1475B2D326360B46BFBC995",
+      "ledger_index": 55,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845331914,
+      "closed": true,
+      "ledger_hash": "7952D46E7A3C9603BDD393CAD7026B3B5967DD0D31B0F534CD7BFBFF41C55602",
+      "ledger_index": 56,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845331915,
+      "closed": true,
+      "ledger_hash": "B7846A9722C332829FECD2FF9297E723B7665642ADB8E4F6D0BBD8B5B564295D",
+      "ledger_index": 57,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845331916,
+      "closed": true,
+      "ledger_hash": "5A27F6B0ED0085ED481F856A64945696383FFFCBF3A983618937C7646144A5D0",
+      "ledger_index": 58,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845331917,
+      "closed": true,
+      "ledger_hash": "AAAD868CC53233E534F86630CC52D6A1D8A3C43C3BB0993025F09496A074A3EE",
+      "ledger_index": 59,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845331918,
+      "closed": true,
+      "ledger_hash": "FA2D4EAB95787D7CB8A127899DA76F549277E712049EFFB5EAA056CA0A5C24A2",
+      "ledger_index": 60,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845331919,
+      "closed": true,
+      "ledger_hash": "2C4B46FA2373ED394A24A5D34611781CC3350351EF57452DB7476F81244B1C61",
+      "ledger_index": 61,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845331920,
+      "closed": true,
+      "ledger_hash": "F1826519EB8DDC0565335A235E57FE5DD1DD5186D4944C0D9C3912E26343BC6B",
+      "ledger_index": 62,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845331921,
+      "closed": true,
+      "ledger_hash": "CA9A212E188509438FD5BCAB4ACE5776D8DDD71F502C4A5959B7F2D3D29E4EA9",
+      "ledger_index": 63,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845331922,
+      "closed": true,
+      "ledger_hash": "3BC37FBE39F913801C420E34B78E4C7C5AB00C3365DBC4BC4F65DE6D9B9C0D33",
+      "ledger_index": 64,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845331923,
+      "closed": true,
+      "ledger_hash": "C1DBF0EFEA5EC6B9530A037279A2E35B0F32084069DCCF4630FEAE5F203EE18B",
+      "ledger_index": 65,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845331924,
+      "closed": true,
+      "ledger_hash": "37115B227B0F0F0C83734BC6914377403B5EF4AAF2BE4604A3DD13F36DA0924E",
+      "ledger_index": 66,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845331925,
+      "closed": true,
+      "ledger_hash": "3778EEE7C0EC7D0113AEEF197C7974A1C8E7FB8A7D425CF49401762316723867",
+      "ledger_index": 67,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845331926,
+      "closed": true,
+      "ledger_hash": "A66B042B5A0D88C65FE2F48CF29E4306AE3D9B9B78D4DE05EF325982CD243E77",
+      "ledger_index": 68,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845331927,
+      "closed": true,
+      "ledger_hash": "DF89D946D1AFAA060AC3561E7C5F114DC9E96BF72B8158C448DA9E2705668282",
+      "ledger_index": 69,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845331928,
+      "closed": true,
+      "ledger_hash": "1B396B7604938A8F832236C7B2427791E494F8D8A252C3B5C53B7D2A37760DD2",
+      "ledger_index": 70,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845331929,
+      "closed": true,
+      "ledger_hash": "30A53E57B4DD77633CE8537F2CE23AFEAE1AD7ADDE057C9045C95A0CE4758DBA",
+      "ledger_index": 71,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845331930,
+      "closed": true,
+      "ledger_hash": "D2EFB928CE16DE2D4F3D18850E0D9FFF52E335ADE99302BDC9D6216800E0C65F",
+      "ledger_index": 72,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845331931,
+      "closed": true,
+      "ledger_hash": "845944CA13222ED351C7FEF15E42126973A4D664141C60E26E4976C55ACDB836",
+      "ledger_index": 73,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845331932,
+      "closed": true,
+      "ledger_hash": "4FFF5C194A0C85BCDC8C3E8756BF30658BDE4AF6270CEFFE6DC51C1C2B19B5AC",
+      "ledger_index": 74,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845331933,
+      "closed": true,
+      "ledger_hash": "B0ED399C28C99BB97CB2CCD87E9AD24AFD0332A67F88B250CB9EF2642C470546",
+      "ledger_index": 75,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845331934,
+      "closed": true,
+      "ledger_hash": "6A13FE1CC94DDC64CDB76C889897E9508FD21533C50F73898CEC4482E2D8051E",
+      "ledger_index": 76,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845331935,
+      "closed": true,
+      "ledger_hash": "DE94B7F159471C7E0ED75F785D5DDEDF23005BE29E1528235C70445A8F1CEEC3",
+      "ledger_index": 77,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845331936,
+      "closed": true,
+      "ledger_hash": "46DD5CD1472BA694CE2B7DF1EA5EBD32BADAC6CDAE0297AA8767CCC57385D054",
+      "ledger_index": 78,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845331937,
+      "closed": true,
+      "ledger_hash": "779142E4F7F47FE9AEFBB48957863C9D548EE2AA9749EB44C131397D81BB9824",
+      "ledger_index": 79,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845331938,
+      "closed": true,
+      "ledger_hash": "7D4E0271E34AEBDBFED51893FE64269A331FF014E13DE2484A4C6287AC95C684",
+      "ledger_index": 80,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845331939,
+      "closed": true,
+      "ledger_hash": "0EF6592C7CBB5E1397121E93D339043EEDE3A7074A5A2702EE27002292BC0F5A",
+      "ledger_index": 81,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845331940,
+      "closed": true,
+      "ledger_hash": "928EE4457D4DA00F75BE13B138D7785F78AB694BB5D0AADF08AD96C0F86FDBC2",
+      "ledger_index": 82,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845331941,
+      "closed": true,
+      "ledger_hash": "111DCFE9375D63112BF29CC75727F9F8FF3D17DFD5BE180A1E5BF22E8353CC73",
+      "ledger_index": 83,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845331942,
+      "closed": true,
+      "ledger_hash": "32F681BDC1009DF08F906B924F6B46056F130CC60EDD3E5652A1F17773A17348",
+      "ledger_index": 84,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845331943,
+      "closed": true,
+      "ledger_hash": "413CD2B5D8E6FE4A555D21FC8BF07B03759C93210BDBFB897080B9424CD21ACF",
+      "ledger_index": 85,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845331944,
+      "closed": true,
+      "ledger_hash": "6898771B974D247D8965BFB1BA5CDD1F0B0815CEECBC68C84D4EF17FE741BDCD",
+      "ledger_index": 86,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845331945,
+      "closed": true,
+      "ledger_hash": "F89E46D90705FB1F2CEE79EA519CD038FC46DB3D1016F3A697E7937B644ABB2D",
+      "ledger_index": 87,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845331946,
+      "closed": true,
+      "ledger_hash": "5437B7D229FEDB3DE656CA2176756DC40A19CBDDECECE42801E88F2E4ECBB62F",
+      "ledger_index": 88,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845331947,
+      "closed": true,
+      "ledger_hash": "38543D1C1B2C1A39E1D79F49849A912DD782A37E00C394972F15A047EBF72192",
+      "ledger_index": 89,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845331948,
+      "closed": true,
+      "ledger_hash": "22915EE6063DC466424DB443C05E45822B03BF0E6F7B871D69DAE25F13DA1CA2",
+      "ledger_index": 90,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845331949,
+      "closed": true,
+      "ledger_hash": "436EA03E6F871D2006EE9329E9A90364C978D9EC0DDCDF6E14D929BB8157005B",
+      "ledger_index": 91,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845331950,
+      "closed": true,
+      "ledger_hash": "D12615B5654401A77F7F762AA6D24FBC7E1D11AD6C91D7EDEEF1A4E89A7E2C62",
+      "ledger_index": 92,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845331951,
+      "closed": true,
+      "ledger_hash": "1176FFDD67F4AE76B8F7ABD48DD4235E80B00EBB54DC45A1B290F57FE5809F34",
+      "ledger_index": 93,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845331952,
+      "closed": true,
+      "ledger_hash": "BB6DC28271A97EE95E52AAD39423677A3E85A3EE1E9F760C183A8CC9F9539ACC",
+      "ledger_index": 94,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845331953,
+      "closed": true,
+      "ledger_hash": "07533AAADBA55950D3BEC5D652978D80B062E4917C4F8323850CC76F4B5E2969",
+      "ledger_index": 95,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845331954,
+      "closed": true,
+      "ledger_hash": "11E25181FB98D13DD9973305C27F18E23494D9737394CD6EB689CA2620BF3109",
+      "ledger_index": 96,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845331955,
+      "closed": true,
+      "ledger_hash": "CD181EE59D8ACF7258A1D0EFE802D4565E96B4E36D29FCB1F9D8943243510415",
+      "ledger_index": 97,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845331956,
+      "closed": true,
+      "ledger_hash": "1EE460CFD47AA1EE391432E7B1A2F73336EF22B33853F2C762936494CEBAB6D7",
+      "ledger_index": 98,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845331957,
+      "closed": true,
+      "ledger_hash": "DC3BA1B61D9D1CC78E1E36D4956E0FF4860501D86F62B7185027E211CD48C075",
+      "ledger_index": 99,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845331958,
+      "closed": true,
+      "ledger_hash": "9E8E0D0C6C3A6010FA553EABB85DF33D0943C54BE34339A20C15F48F5EBB60AD",
+      "ledger_index": 100,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845331959,
+      "closed": true,
+      "ledger_hash": "A0996DC742459269AB5E1B06BCDBCB3D7D495195BC14FB41347A6A1F474FE914",
+      "ledger_index": 101,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845331960,
+      "closed": true,
+      "ledger_hash": "DA0448190481E77DCAA1FBBDB85BA660E9E6249A0DBF25FE58D32058F250610E",
+      "ledger_index": 102,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845331961,
+      "closed": true,
+      "ledger_hash": "971B4C7A9E119894868D0F2136F74C50E057F5DBAF5CC7E489B1353DAEDB92CF",
+      "ledger_index": 103,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845331962,
+      "closed": true,
+      "ledger_hash": "23355B3FCA9B05EE9E631E0F1C84274DCD1C9CE189D031D3CD091915F87430D0",
+      "ledger_index": 104,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845331963,
+      "closed": true,
+      "ledger_hash": "5564F2247E9EC94B0E317F6120A6D88DA2233AF46CCE36B82AF5E44475C09B3D",
+      "ledger_index": 105,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845331964,
+      "closed": true,
+      "ledger_hash": "FA99C3B13B438EF79A2A932D5340AA147ECE9EA0EC421831ED5CA1F6AC790479",
+      "ledger_index": 106,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845331965,
+      "closed": true,
+      "ledger_hash": "55B67DB27CCFC61F89F6F875A3ABC4D6E79E0BDA6F3FAA8DDFF14B30AD738B88",
+      "ledger_index": 107,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845331966,
+      "closed": true,
+      "ledger_hash": "FF293A4566ECE98EB9EB8AEF6FE8D16CF78FBD202A33D48628718B51E2715ABC",
+      "ledger_index": 108,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845331967,
+      "closed": true,
+      "ledger_hash": "E0E93638A75ED59FF129D3237B338151755F6CEC5AE6D6D6DEE2AB0C3219F8F2",
+      "ledger_index": 109,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845331968,
+      "closed": true,
+      "ledger_hash": "255795842DC3438969CFE58354A6866950BBFD3CA0B00964259C474F6A950980",
+      "ledger_index": 110,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845331969,
+      "closed": true,
+      "ledger_hash": "ED748D47805EA348CC15092F6E4C3AB32E1F6919EFDC1473A4CB4BB385E2D24D",
+      "ledger_index": 111,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845331970,
+      "closed": true,
+      "ledger_hash": "72ECD5F4E51EFBB7FE5E61CC7BB92B4A3C9ECD1875EC6F96D1EE15E028BA0529",
+      "ledger_index": 112,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845331971,
+      "closed": true,
+      "ledger_hash": "E44745CB589B1C3C6A4D6D8C92C9D7D82D75163507E78DD70482DA7D53F06A2E",
+      "ledger_index": 113,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845331972,
+      "closed": true,
+      "ledger_hash": "DBEEB9DF467AE9DBCED9756AA76C11619025123B82C072731D0C48C5E366AC2E",
+      "ledger_index": 114,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845331973,
+      "closed": true,
+      "ledger_hash": "60A6293F117D214006F795CA0C46572CED1AE2E8315617650B6880812B217AD5",
+      "ledger_index": 115,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845331974,
+      "closed": true,
+      "ledger_hash": "D330D42B966435DBE1B87E6BD0E5D368F19784F6761437B8634D538F34883510",
+      "ledger_index": 116,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845331975,
+      "closed": true,
+      "ledger_hash": "EDC3050C941A6431C2A4D0B51D41A44CF87C19A922077B932A01DE3BFCD973BC",
+      "ledger_index": 117,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845331976,
+      "closed": true,
+      "ledger_hash": "263FAB748128D12C773A210EA598ABE7364409F6D84D53672CAA774E1B467A13",
+      "ledger_index": 118,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845331977,
+      "closed": true,
+      "ledger_hash": "1A8DF768C27DE9978D3F667BD232F3C3E168C4BE8BBBFABEF27E11F5865426A9",
+      "ledger_index": 119,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845331978,
+      "closed": true,
+      "ledger_hash": "DD251653C56C39CE675EB092C9195EAE5CBBE68340653F3B16AE5F9498506D84",
+      "ledger_index": 120,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845331979,
+      "closed": true,
+      "ledger_hash": "6A13E6932696F71A8DF614D42DAC3DA8013D7D9B5987980E6C4BB5CEE5F4D7DF",
+      "ledger_index": 121,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845331980,
+      "closed": true,
+      "ledger_hash": "F69E5481CFB7DDEA0CA395769ABFF4418443FC09AD1B8E52D6A5D765EC84DD2B",
+      "ledger_index": 122,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845331981,
+      "closed": true,
+      "ledger_hash": "87D6EAFB6AC2D6E11D149155751BEA713A1B87B4694CEFE4765E615AEA856E1E",
+      "ledger_index": 123,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845331982,
+      "closed": true,
+      "ledger_hash": "D0C234FB3715FD8B884032A999B7BD1D141C6D4F917CAE83DF3D1EDBE914205E",
+      "ledger_index": 124,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845331983,
+      "closed": true,
+      "ledger_hash": "0FAD6906148FBE92C2E2E4BAE80E4C184C769064361974552DC183D031673CBA",
+      "ledger_index": 125,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845331984,
+      "closed": true,
+      "ledger_hash": "844AAA9F67C624BF4025FF689822060AA34BFA35B4957D0A198D7B0342E33976",
+      "ledger_index": 126,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845331985,
+      "closed": true,
+      "ledger_hash": "CBF095AB6C5BEDDE98FB944C980960530DB08DDEBD530E554DB188C2FAE62412",
+      "ledger_index": 127,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845331986,
+      "closed": true,
+      "ledger_hash": "214862AAC80B906CF9885FFBDCDE0E377F7A15C96FCEC593F22545CF06B63289",
+      "ledger_index": 128,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845331987,
+      "closed": true,
+      "ledger_hash": "88EBF71D51C87C398D8B9C723F54F6D0F372B87F859E0871483EBF852ECC610F",
+      "ledger_index": 129,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845331988,
+      "closed": true,
+      "ledger_hash": "87471A7D67D79AEF88E91B388FCCA3A33C353536549DA6A931BD134498073E6C",
+      "ledger_index": 130,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845331989,
+      "closed": true,
+      "ledger_hash": "4166AE516684A9ABBFC02BF634A2A9F8947260C3D22F1EF79593CFF48373DCA6",
+      "ledger_index": 131,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845331990,
+      "closed": true,
+      "ledger_hash": "F35DF0A61992A8C6F952FA147CBE6A11D4FB187373950F0D5ED53D71C6A3B2B7",
+      "ledger_index": 132,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845331991,
+      "closed": true,
+      "ledger_hash": "C36AD4B54C9FF146AE1394FA4BFD4CA74277602096D76BC0821CD89CF694CEAD",
+      "ledger_index": 133,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845331992,
+      "closed": true,
+      "ledger_hash": "35CA77368F9E56B77D1EF48B27565D2F25B6FCDA944473B8F70C0C2A817FE01D",
+      "ledger_index": 134,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845331993,
+      "closed": true,
+      "ledger_hash": "EA37F86B14C2A0F8DAB5F70A63C9E6A95956A5252316C7B2CA3322CA547A3F05",
+      "ledger_index": 135,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845331994,
+      "closed": true,
+      "ledger_hash": "75F302DD6400936E1D706C3BD70609271B552A62E690281CD41BDD12139EF79F",
+      "ledger_index": 136,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845331995,
+      "closed": true,
+      "ledger_hash": "6B0D11EF111C03565E568E5A6A76051BE8401C32E4B89B17550B9DFD5A4BA851",
+      "ledger_index": 137,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845331996,
+      "closed": true,
+      "ledger_hash": "1277CA30D300D765DF99BD4514EF4D735BCC9B8A62DD0C790D99E0BD6A7C8DCF",
+      "ledger_index": 138,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845331997,
+      "closed": true,
+      "ledger_hash": "0992A918F30389CA308358CB341A3848C6DB0E7EAA13844BC862AA3B38FA479A",
+      "ledger_index": 139,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845331998,
+      "closed": true,
+      "ledger_hash": "FF94956A4A9F784CAE90B00690CDF8EA7BBD861DF3877867DB875A5C501B0E3B",
+      "ledger_index": 140,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845331999,
+      "closed": true,
+      "ledger_hash": "4F0FF3F8EC6FCBD0B208398E3CEA8198FD6FD6A3EEF7513462E801CF07901497",
+      "ledger_index": 141,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845332000,
+      "closed": true,
+      "ledger_hash": "9F43D857A80D6BF3C3843093E73346E131990A44B782E56CBD135AD69AAA0D93",
+      "ledger_index": 142,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845332001,
+      "closed": true,
+      "ledger_hash": "E4E2099F5D4008AA697E063845E26B809FD348338723C01D9E6A3DBF20ACC9F8",
+      "ledger_index": 143,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845332002,
+      "closed": true,
+      "ledger_hash": "0EFE9495E144F5965582041C9F313866B2C29B586002BE1144C91AAB9A66FD5D",
+      "ledger_index": 144,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845332003,
+      "closed": true,
+      "ledger_hash": "A345C36BDF2764A1D6155C49E3EADFB2A8006A731BADB860505CB1B5456D0491",
+      "ledger_index": 145,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845332004,
+      "closed": true,
+      "ledger_hash": "DF57864AA2BD4BC9CA7A2164859D917390673D77273F3BEBFA30212FDBED8FC4",
+      "ledger_index": 146,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845332005,
+      "closed": true,
+      "ledger_hash": "BF4A5042846C41168B257F08CC7F03403427D7D8AE5E1E6B39398AE19B35A221",
+      "ledger_index": 147,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845332006,
+      "closed": true,
+      "ledger_hash": "125A081AC4AE754495D1616507F562B27BEA94A2DCEE5A43AC0CB8A5078094FD",
+      "ledger_index": 148,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845332007,
+      "closed": true,
+      "ledger_hash": "FC9301AF31D52633EDFD12A961A34459F2B9908290E7F7EA4F71F7BAFF6CA8DB",
+      "ledger_index": 149,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845332008,
+      "closed": true,
+      "ledger_hash": "E00641863490829517DF336B04E84B873457DC7BA2AF9144606C9E21F3F49D3A",
+      "ledger_index": 150,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845332009,
+      "closed": true,
+      "ledger_hash": "0018A88EF8FED9FE501DE4720F828A88AB53F5BDFCE0A32E05718D25A8C5A411",
+      "ledger_index": 151,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845332010,
+      "closed": true,
+      "ledger_hash": "741B60C3E01D96BB22EB719F7A0DF0C3E1207D6A8105D0ED5DD160D37037F51E",
+      "ledger_index": 152,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845332011,
+      "closed": true,
+      "ledger_hash": "B56A3D598B2C6C7693A07369CB8FF1C8E92911A633BAC88265FA8C86467A242E",
+      "ledger_index": 153,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845332012,
+      "closed": true,
+      "ledger_hash": "16026D80EC81E1A27998A0EC36D01E69FDCE71D5C3BE2F0DD14B667B76BF17A4",
+      "ledger_index": 154,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845332013,
+      "closed": true,
+      "ledger_hash": "45CF893413A2F38DFFE54999BAD1128974A2993A7B10173E4A495BF8288AE9D9",
+      "ledger_index": 155,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845332014,
+      "closed": true,
+      "ledger_hash": "96B8FCBCF44C96D71460C3EB48F7C96DB4E4E5E7730BCC1C0001AA09F7E14B45",
+      "ledger_index": 156,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845332015,
+      "closed": true,
+      "ledger_hash": "F31EEF6206A762D41802CCB9978B7B95E3AC4CB4658FBDDEB67DB7B58B0DD5EE",
+      "ledger_index": 157,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845332016,
+      "closed": true,
+      "ledger_hash": "D788196B2C0D7B4DC22D6B9DEFF2BDF52F26AA8FD1759B39EBF1A6487279CB93",
+      "ledger_index": 158,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845332017,
+      "closed": true,
+      "ledger_hash": "3614C222ECDC61861252A5FC4D75D287F88E43EFC022F806EB6639AC4AC2F24F",
+      "ledger_index": 159,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845332018,
+      "closed": true,
+      "ledger_hash": "4DD9155F092BE42E277D795318E77451D3F102E325B581F7A4D1A85143932C1D",
+      "ledger_index": 160,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845332019,
+      "closed": true,
+      "ledger_hash": "5AF8A5E1B891BA11C8F9240C621B98024C113DC482FBFBCBB3B7FB40C0A9C3EA",
+      "ledger_index": 161,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845332020,
+      "closed": true,
+      "ledger_hash": "F64F04DA1E67736BD013365B7C25835D97792F37E06D2DFF83B719DCDD8FA708",
+      "ledger_index": 162,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845332021,
+      "closed": true,
+      "ledger_hash": "FEB4E6931B8FF5A5EB96F87BF129DAFCF27A3F039404B10C614FF309BF9598F2",
+      "ledger_index": 163,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845332022,
+      "closed": true,
+      "ledger_hash": "68D7714C3DE06A234573C4BBBB94A6259E687508F67D78FA20A32D0F57B35DCA",
+      "ledger_index": 164,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845332023,
+      "closed": true,
+      "ledger_hash": "81BE4190BB00BDD7D7D7D37EBDA9614C8F373DDEDD0345FFA5F027BB9DC2CA98",
+      "ledger_index": 165,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845332024,
+      "closed": true,
+      "ledger_hash": "B483A23A15E24B5EA091F9154B8CA7137EF248282FE214B61F622100E21A2ACF",
+      "ledger_index": 166,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845332025,
+      "closed": true,
+      "ledger_hash": "59D9F8606E64841E31D2EB646CDC7C2A64EEF7552C6163D6184F10C0B6A8503E",
+      "ledger_index": 167,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845332026,
+      "closed": true,
+      "ledger_hash": "94650B58B42ABCABD331606547A0D5E6E38A0FC8CD299FA57368C080B09DC0F4",
+      "ledger_index": 168,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845332027,
+      "closed": true,
+      "ledger_hash": "B07F568AE0D4DE5656CF8E5B799E5F5BFA73F0587C96AF0AAD6BFDE05476E378",
+      "ledger_index": 169,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845332028,
+      "closed": true,
+      "ledger_hash": "63617023193E37713974A2242775CDE23ADECE4A8D28FC3DBEBD35CB6C10E6EF",
+      "ledger_index": 170,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845332029,
+      "closed": true,
+      "ledger_hash": "E08BA9B53161F5271F4A327B50BBC5C792B0979D3BD08FFD5B37DAC33A4C60EA",
+      "ledger_index": 171,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845332030,
+      "closed": true,
+      "ledger_hash": "3CADBBD11CF292E5357789E292CCC532004FB844B5FF666492B9060594DB33D6",
+      "ledger_index": 172,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845332031,
+      "closed": true,
+      "ledger_hash": "078B695C6F1DB79C6AEF48E88F24CD47B118E4F318CBE445D8B14AD8EBF1667D",
+      "ledger_index": 173,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845332032,
+      "closed": true,
+      "ledger_hash": "CDD67F31325EF703E9A17815B6D0FF84D53836A3B35B045F1C6CF5B63E082F28",
+      "ledger_index": 174,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845332033,
+      "closed": true,
+      "ledger_hash": "F528E978023180C633EB02961750609BC0BBD06853681B264E3489B336CAC017",
+      "ledger_index": 175,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845332034,
+      "closed": true,
+      "ledger_hash": "ACD0BDDC73102F55A243076BFA2F7FFDA313562917A2971A30B439F9797D4376",
+      "ledger_index": 176,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845332035,
+      "closed": true,
+      "ledger_hash": "3F3BCDD5893B8BDE1064440EF52F1E3A285F90F3D3667EFC0AD41A445BC6A993",
+      "ledger_index": 177,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845332036,
+      "closed": true,
+      "ledger_hash": "1292296361539A3A6693D257872EC3AA7658AFD57189EF1286DCBBC7D37377D8",
+      "ledger_index": 178,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845332037,
+      "closed": true,
+      "ledger_hash": "D68C562192CA94588EAC2772FE136CA46D5B795012F93A60D84E8FB4C4DCEB08",
+      "ledger_index": 179,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845332038,
+      "closed": true,
+      "ledger_hash": "93C9E331C9AE93B0BDFC87734817661E2A5658DF299B60B0EC8DCE33BBF9BA48",
+      "ledger_index": 180,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845332039,
+      "closed": true,
+      "ledger_hash": "33A21CFFE87519F7BF692970C809EB1EF88C6766F89493C19F012A4780193107",
+      "ledger_index": 181,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845332040,
+      "closed": true,
+      "ledger_hash": "5C3BCE20A02EC00C135DA07E577F19DC00C7BA19DA85B0D6E5464CBCF168F1A7",
+      "ledger_index": 182,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845332041,
+      "closed": true,
+      "ledger_hash": "8807B8F6B623592AACF8D21BF38A24DCC08936D28E36FE02878398F93A90377B",
+      "ledger_index": 183,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845332042,
+      "closed": true,
+      "ledger_hash": "97515F6EC5C7386F8A54D818F02E2BF97C12AEE067838BD4E246135D5CFAB1A1",
+      "ledger_index": 184,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845332043,
+      "closed": true,
+      "ledger_hash": "422E23C761B26AD5BA4D2F09F8E54C487EA2114192EFA2FBCDB0FBD1C0409964",
+      "ledger_index": 185,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845332044,
+      "closed": true,
+      "ledger_hash": "96BB3EE0513B97CA494B58DA7C3DB62DBB4EB9B8FFC9B89B3AD2BCEFEBD19A46",
+      "ledger_index": 186,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845332045,
+      "closed": true,
+      "ledger_hash": "06D31ECA1C2B67FD78C6CA2AAED2A37C8F9857BC74603F6315889251F732042D",
+      "ledger_index": 187,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845332046,
+      "closed": true,
+      "ledger_hash": "8DEC2128EE0CFB2932E06747361FF3912261B8F4267BE95C150F6B1E2E885208",
+      "ledger_index": 188,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845332047,
+      "closed": true,
+      "ledger_hash": "F3B51A038E57BCA22D0B44B81DEBBC025C242C28BBFE3903A79D2B8D572E56AE",
+      "ledger_index": 189,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845332048,
+      "closed": true,
+      "ledger_hash": "E43173EBFCDC8467EBFA0D16C7BCD36B3E448955BB3C15C692FED73A2289C2C3",
+      "ledger_index": 190,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845332049,
+      "closed": true,
+      "ledger_hash": "AB79950DF45FEFDA59C308FFCC45DD2D648FC19E312B30BDF981F401E108D2C8",
+      "ledger_index": 191,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845332050,
+      "closed": true,
+      "ledger_hash": "1E1083FD75D58CB72575E886D93DE0D0249A9AF3E421DB4A26C35047CD6D2D8B",
+      "ledger_index": 192,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845332051,
+      "closed": true,
+      "ledger_hash": "1FD63CFF2CE466D77FA836AF015772C7D4461335528388713DD986059E7B9068",
+      "ledger_index": 193,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845332052,
+      "closed": true,
+      "ledger_hash": "6F1F85B2D49B59D25565B0F4AFC801373A448331BE40BAD9F1DBB4B3473728D6",
+      "ledger_index": 194,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845332053,
+      "closed": true,
+      "ledger_hash": "799CC0043C8FB33A6FBA59E5623376F15618829B52981B35064FD667034CFD74",
+      "ledger_index": 195,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845332054,
+      "closed": true,
+      "ledger_hash": "E2EDABF9DA466772DEF6E6313294AA589A80BEBD51D58F444BA0B4124E43C609",
+      "ledger_index": 196,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845332055,
+      "closed": true,
+      "ledger_hash": "917FDB84FA7888A1C369AF13FD89FBE68CF06352C68D532B63E40DCA4A71BECC",
+      "ledger_index": 197,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845332056,
+      "closed": true,
+      "ledger_hash": "04E187E33642F425A9F00F0BDD9870C8A41EAFAE0A2AE06B6AF04C8AB2690BCB",
+      "ledger_index": 198,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845332057,
+      "closed": true,
+      "ledger_hash": "823A528CDA22B5B6337BFAFB1A32832F114104B009D9F2DA16F183BEC70B43A4",
+      "ledger_index": 199,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845332058,
+      "closed": true,
+      "ledger_hash": "467BF2A72151A05E1419CFAB2703E7DAC395F47CD035E837D8BDA5E102D2B541",
+      "ledger_index": 200,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845332059,
+      "closed": true,
+      "ledger_hash": "96481F8383A14AD5B6E2A65D2BD86B3A0B381DD9E4538C50AEB8B56372B76D7B",
+      "ledger_index": 201,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845332060,
+      "closed": true,
+      "ledger_hash": "4BC6780753AFF7A35DF7A5DBB0BE04E8493E98755C376ACC5A1CC4181C04025C",
+      "ledger_index": 202,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845332061,
+      "closed": true,
+      "ledger_hash": "658DC24986BE95BA7EE26C5D0D1CE31B80D5FB692A6BC83DEF95D2E32BF863C9",
+      "ledger_index": 203,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845332062,
+      "closed": true,
+      "ledger_hash": "80DA44B49394DB686799D2509B81DFE8983E5C40CD458E38D315467671CBD010",
+      "ledger_index": 204,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845332063,
+      "closed": true,
+      "ledger_hash": "830B16B88097CCEA82792681AF72C6599A4BC8513C07F2F0BBAAC61F46AAAE9F",
+      "ledger_index": 205,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845332064,
+      "closed": true,
+      "ledger_hash": "B4DD46CBAE2E6AF4E58FFF82143B24E948E2F6F31AE5D8C2638F19B9846B7E1B",
+      "ledger_index": 206,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845332065,
+      "closed": true,
+      "ledger_hash": "36C9A83D8C088BC23FBEC626A7EFDC54B7E680E6417EEA67A769E0918603F73F",
+      "ledger_index": 207,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845332066,
+      "closed": true,
+      "ledger_hash": "44AE29900B2B7981EC139BB9DEA3EF87CCBE3BA356932D0573C08A6BFB12BE05",
+      "ledger_index": 208,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845332067,
+      "closed": true,
+      "ledger_hash": "CFA6C81581BAC3708BAC633A5EA2B8016D8E9844719C9F9D6EC1911A71CBA284",
+      "ledger_index": 209,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845332068,
+      "closed": true,
+      "ledger_hash": "1BF00369818847F5C5D141A530C33FD803F5F94F7BC03009EDABDCAEC32793C6",
+      "ledger_index": 210,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845332069,
+      "closed": true,
+      "ledger_hash": "43153FF0A8E8A75FD6BD8147437D07D7D232C5C8F532B492CE72746311CEF216",
+      "ledger_index": 211,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845332070,
+      "closed": true,
+      "ledger_hash": "1BE0B9AFC59C3764D945C69DA88907F40B906DC9AA5E67DD50B0CCBA981401EA",
+      "ledger_index": 212,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845332071,
+      "closed": true,
+      "ledger_hash": "FCE03BB62D0DBF2BDC40E441FD3968EF6D5B1F8050D9B5C4C9CED08FA52110BD",
+      "ledger_index": 213,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845332072,
+      "closed": true,
+      "ledger_hash": "34CD2E31C787F41EB898A08A9C94FB0EC112A74A37CC7FCB2C8847A699420CE1",
+      "ledger_index": 214,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845332073,
+      "closed": true,
+      "ledger_hash": "C23EEC761BD519FA08CE20D6C67F1EC501B540B1A0098EEE78C9FCC429AAEDE5",
+      "ledger_index": 215,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845332074,
+      "closed": true,
+      "ledger_hash": "0B18AFF48824E97A4609CCB45F4DB2D12F8FB951FD8D81A7B400DDC1636BB402",
+      "ledger_index": 216,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845332075,
+      "closed": true,
+      "ledger_hash": "0FF39620032951485C9D19018B05148FFB53F4ED116759389355D55BBDDB2E42",
+      "ledger_index": 217,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845332076,
+      "closed": true,
+      "ledger_hash": "D501A54E11087263C0D9D3C9E3F1FEF4BD9B99E79CAFABAAB5AF6EDF44EE9DDD",
+      "ledger_index": 218,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845332077,
+      "closed": true,
+      "ledger_hash": "5A6BB16A06643D85FC687ED812FD54CCBC17140FE26854629477216F2390AD3C",
+      "ledger_index": 219,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845332078,
+      "closed": true,
+      "ledger_hash": "86CFBA84ACEBE0906BC79566767495A808C523C75EF6DFA1F4FC451D9EE0FA3C",
+      "ledger_index": 220,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845332079,
+      "closed": true,
+      "ledger_hash": "5C2C46AD2684AD2FD03DEC292EECBCB7F2A832B2B586CE5F443ACC74FCE359EE",
+      "ledger_index": 221,
+      "phase": "Investment"
+    },
+    {
+      "close_time": 845332080,
+      "closed": true,
+      "ledger_hash": "41E8250E9188F8F6F85AFAC05512C05485DFC238AB5595622B83FC5ACFB8F7F5",
+      "ledger_index": 222,
+      "phase": "Redemption"
+    }
+  ],
+  "redemption_date": 845332080,
+  "subscription_date": 845331900,
+  "target_phase": "Redemption",
+  "vault": {
+    "Account": "rECkRrRX4qkr9NqJEdzNyG2XitJrTJNzq3",
+    "Asset": {
+      "currency": "74524C5553440000000000000000000000000000",
+      "issuer": "rUQwCP6PANmARuJEmyK9q2wBd5XXkxT73h"
+    },
+    "AssetsAvailable": "99000",
+    "AssetsTotal": "99000",
+    "Flags": 0,
+    "LEVersion": 1,
+    "LedgerEntryType": "Vault",
+    "Owner": "rHTUQ57nLKi34FDtay7CCkVzkSdfoh5m3u",
+    "OwnerNode": "0",
+    "PreviousTxnID": "949595F0526A7C2EB04ACF7C1B6610E74BC33283BB83C809CFA450837CB434DE",
+    "PreviousTxnLgrSeq": 15,
+    "RedemptionDate": 845332080,
+    "Scale": 6,
+    "Sequence": 7,
+    "ShareMPTID": "00000001A0E5CEC12F048E52D88E026106BE5B3D7417DC56",
+    "SubscriptionDate": 845331900,
+    "VaultKind": 1,
+    "WithdrawalPolicy": 1,
+    "index": "B87C0BAC5B3E2E11A63CF26576F777553FCBE36376493F0D407AC485FCE65C1B"
+  }
+}

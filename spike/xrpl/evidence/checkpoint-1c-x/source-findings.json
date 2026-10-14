@@ -1,0 +1,25 @@
+{
+  "findings": [
+    {
+      "finding": "LoanBrokerSet requires its Account to equal the Vault Owner.",
+      "lines": "88-98",
+      "path": "src/libxrpl/tx/transactors/lending/LoanBrokerSet.cpp"
+    },
+    {
+      "finding": "The pinned test expects tecNO_PERMISSION for a non-owner.",
+      "lines": "665-669",
+      "path": "src/test/app/lending/LoanBroker_test.cpp"
+    },
+    {
+      "finding": "Subscription includes equality at SubscriptionDate; Investment is strictly later and before RedemptionDate; Redemption begins at expiry.",
+      "lines": "290-305",
+      "path": "src/libxrpl/ledger/helpers/VaultHelpers.cpp"
+    },
+    {
+      "finding": "The minimum Investment interval is 180 seconds.",
+      "lines": "361-368",
+      "path": "include/xrpl/protocol/Protocol.h"
+    }
+  ],
+  "pinned_source_commit": "4a4fded2eba11427c48ce3f24d9c1aea5e7a9d17"
+}

@@ -1,3 +1,182 @@
+# Checkpoint 1C-X — execute frozen E3/E4 oracle
+
+## Outcome
+
+**PASS — E3 and E4 completed against the unchanged frozen A-K oracle.**
+
+Checkpoint 1C-X began at clean commit
+`5369ff0fe61b0d64faebc95b72d41e6a6938c6ae`, retained checkpoint-0 ancestry
+and unchanged submodule gitlinks, and modified only `spike/xrpl/` report/result
+and live-evidence artifacts.
+
+The committed runner was executed exactly once. It recorded the required order
+`A → B → C → D → E → F → G → H → I → J → K`. No step failed, no retry was
+performed, and E5-E9 were not executed.
+
+## Frozen-oracle immutability
+
+The following start hashes are unchanged after the run:
+
+| Frozen file | SHA-256 |
+| --- | --- |
+| `STATE-ASSERTIONS.md` | `836b90b7db41b04a9fdefb78d340f030f798b7650b4945b89ba48990545b416a` |
+| `scripts/harness.py` | `098bc81f3358b8c68a235bf8d9c9101f209ff7074232fb9021f645a4b0efae7b` |
+| `scripts/frozen_oracle.py` | `bfa00b417de86518a1c9eab266c6fb138f9b3f677373e58c96a97175c300b2be` |
+| `tests/test_state_assertions.py` | `634880c33181da678d8dead2dac1e932c0dd6aafac44c862fa48259b7710b77c` |
+| `tests/test_frozen_oracle_runner.py` | `935e53b4c66f99e2332613d94bc00582f331bc3d86cf1f4835147bff9fc3e37e` |
+
+No frozen assertion, binding, expected result, classification rule, or test was
+changed during or after execution.
+
+## Fresh runtime and prerequisite setup
+
+The committed reproducible mechanism rebuilt the pinned xrpld 3.4.0 image,
+removed and recreated the dedicated volume, and started a fresh standalone
+ledger at index 2 and close time `845331860`. The server reported network ID
+`21337`; the frozen E1 cross-check accepted all eight required amendments.
+
+The ten prerequisite transactions recreated the four public actors, issuer
+DefaultRipple flag, three tRLUSD trust lines, lender balance `200000`, and Loan
+Broker owner balance `20000`. This was SETUP only and did not reopen E2. The
+fixture reached validated ledger 12.
+
+## A-K live results
+
+| Step | Result | Validation | Ledger transition | Close-time transition |
+| --- | --- | --- | --- | --- |
+| A VaultCreate | PASS — `tesSUCCESS` | `VALIDATED` / `tesSUCCESS` | 12 → 13 | 845331870 → 845331871 |
+| B Subscription deposit | PASS — `tesSUCCESS` | `VALIDATED` / `tesSUCCESS` | 13 → 14 | 845331871 → 845331872 |
+| C Subscription withdrawal | PASS — `tesSUCCESS` | `VALIDATED` / `tesSUCCESS` | 14 → 15 | 845331872 → 845331873 |
+| D Investment deposit rejection | PASS — `tecEXPIRED` | not included; authoritative submission retained | 43 → 44 | 845331901 → 845331902 |
+| E Investment withdrawal rejection | PASS — `tecTOO_SOON` | not included; authoritative submission retained | 44 → 45 | 845331902 → 845331903 |
+| F Redemption withdrawal | PASS — `tesSUCCESS` | `VALIDATED` / `tesSUCCESS` | 222 → 223 | 845332080 → 845332081 |
+| G Redemption deposit rejection | PASS — `tecEXPIRED` | not included; authoritative submission retained | 223 → 224 | 845332081 → 845332082 |
+| H Loan Broker creation | PASS — `tesSUCCESS` | `VALIDATED` / `tesSUCCESS` | 225 → 226 | 845332083 → 845332084 |
+| I Vault/Broker relationship | PASS — inherited H evidence | `VALIDATED` / `tesSUCCESS` | inherited 225 → 226 | inherited 845332083 → 845332084 |
+| J cover establishment | PASS — `tesSUCCESS` | `VALIDATED` / `tesSUCCESS` | 226 → 227 | 845332084 → 845332085 |
+| K non-owner negative | PASS — `tecNO_PERMISSION` | not included; authoritative submission retained | 227 → 228 | 845332085 → 845332086 |
+
+Every negative operation retained the exact authoritative submission result and
+passed complete protected-state equality. Every positive operation had matching
+validated metadata and passed all bound semantic predicates.
+
+## E3 phase observations
+
+The E3 Vault was created with SubscriptionDate `845331900` and RedemptionDate
+`845332080`.
+
+- Subscription operations B and C executed at parent close times `845331871`
+  and `845331872`.
+- From ledger 15 / close time `845331873`, exactly 28 scripted closes entered
+  Investment at ledger 43 / close time `845331901`, one second after the
+  SubscriptionDate.
+- D and E executed in Investment at parent close times `845331901` and
+  `845331902`.
+- From ledger 45 / close time `845331903`, exactly 177 scripted closes entered
+  Redemption at ledger 222 / close time `845332080`, exactly the configured
+  RedemptionDate.
+- F and G executed in Redemption at parent close times `845332080` and
+  `845332081`.
+
+No wall-clock sleep was used as phase evidence. The complete checkpoint made
+226 scripted closes, including setup, transaction validation/absence closes,
+and both phase transitions.
+
+E3 verdict: **PASS**. This does not claim LoanSet phase behavior; no LoanSet was
+submitted.
+
+The E3 Vault ID is
+`B87C0BAC5B3E2E11A63CF26576F777553FCBE36376493F0D407AC485FCE65C1B`.
+Its final state recorded `AssetsTotal = 98000`, `AssetsAvailable = 98000`,
+lender tRLUSD balance `102000`, and outstanding/holder shares
+`98000000000`.
+
+## E4 cover observation
+
+The E4 Vault ID is
+`D17C5E01705B3A6BD3268147679415031F5B20757FA804FB46A762CD121508CA`.
+The LoanBroker ID is
+`220A56298757CBA15A63DDB58685F6F0ACA4902BEC70DEE6541060310ED0AEC8`.
+H observed the LoanBroker owner equal to the Vault owner and I observed the
+VaultID relationship plus present, distinct Vault and LoanBroker pseudo
+accounts.
+
+J observed:
+
+- `CoverAvailable = 10000`;
+- LoanBroker pseudo-account tRLUSD holding `0 → 10000`;
+- owner tRLUSD balance `20000 → 10000`;
+- `CoverRateMinimum = 10000`;
+- `CoverRateLiquidation = 25000`;
+- `DebtMaximum = 50000`; and
+- `DebtTotal = 0`.
+
+K observed `tecNO_PERMISSION` for the non-owner LoanBrokerSet attempt, no
+matching non-owner LoanBroker, and unchanged protected state.
+
+E4 verdict: **PASS**.
+
+### Cover conclusions
+
+**OBSERVED:** the exact configured fields and tRLUSD balance/holding deltas
+listed above, with zero debt and the expected Vault/Broker ownership
+relationship.
+
+**DERIVED:** pinned protocol semantics bound default cover by the applicable
+rate, debt/default amount, and `CoverAvailable`, using protocol
+tenth-basis-point scaling.
+
+**UNRESOLVED:** default, realized loss, liquidation, clawback, and lender-loss
+behavior were not executed. No claim is made that cover guarantees lenders
+against all losses.
+
+## Evidence manifest
+
+`evidence/checkpoint-1c-x/MANIFEST.json` verifies 34 public evidence files
+totaling 1197099 bytes. The directory contains environment identity, public
+actors, prerequisite state, 21 transaction records, 226 closes, all eleven A-K
+records, phase transitions, E3/E4 results, and the final checkpoint result.
+Seeds, private keys, signatures, signing public keys, and transaction blobs are
+absent.
+
+## Gates
+
+- H1-H12: **PASS** (17 tests).
+- B1-B12: **PASS** (29 tests).
+- All spike tests: **PASS** (64 tests).
+- Repository unit tests: **PASS** (17 tests).
+- Conformance tests: **PASS** (4 tests).
+- Lint, formatting, and large-file check: **PASS** (67 formatted files checked).
+- Strict typecheck: **PASS** (25 source files).
+- Secrets scan: **PASS**.
+- JSON validation: **PASS** (110 files).
+- Evidence-manifest verification: **PASS** (7 manifests, 85 payload files).
+- Frozen oracle/bindings immutability: **PASS**.
+- Checkpoint-0 ancestry and unchanged submodule gitlinks: **PASS**.
+- Authorized-path check: **PASS**.
+- `git diff --check`: **PASS**.
+
+## Experiment state and recommendation
+
+- E1: **PASS/FROZEN**
+- E2: **PASS/FROZEN**
+- E3: **PASS**
+- E4: **PASS**
+- E5-E9: **NOT_ATTEMPTED**
+
+Overall Checkpoint 1C-X verdict: **PASS**. The E3/E4 stop/go protocol gate is
+satisfied. Consistent with the adjudication workflow, the next action should be
+an independent bounded evidence audit of this commit before authorizing E5.
+E5 and E6 must not begin during this checkpoint.
+
+## Checkpoint 1C-X modified paths
+
+- `spike/xrpl/REPORT.md`
+- `spike/xrpl/RESULTS.json`
+- `spike/xrpl/evidence/checkpoint-1c-x/`
+
+---
+
 # Checkpoint 1C-B — bind frozen A-K oracle to runner
 
 ## Outcome

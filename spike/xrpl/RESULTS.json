@@ -1,8 +1,65 @@
 {
-  "schema_version": 8,
-  "overall": "BLOCKED",
-  "scope": "Checkpoint 1C-B frozen A-K oracle runner binding; protocol state remains frozen",
-  "start_commit": "377d994eee74d489f89f22509547a7b2ec857c0a",
+  "schema_version": 9,
+  "overall": "PASS",
+  "scope": "Checkpoint 1C-X live execution of the frozen E3/E4 A-K oracle",
+  "start_commit": "5369ff0fe61b0d64faebc95b72d41e6a6938c6ae",
+  "live_execution": {
+    "name": "Checkpoint 1C-X",
+    "outcome": "PASS",
+    "runner_executions": 1,
+    "frozen_oracle_unchanged": true,
+    "oracle_order": ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K"],
+    "transaction_count": 21,
+    "ledger_close_count": 226,
+    "first_failure": null,
+    "fresh_environment": {
+      "xrpld_version": "3.4.0",
+      "network_id": 21337,
+      "initial_ledger_index": 2,
+      "initial_close_time": 845331860,
+      "frozen_e1_invariants": "PASS"
+    },
+    "phase_timing": {
+      "subscription_date": 845331900,
+      "investment_entry": {
+        "ledger_index": 43,
+        "close_time": 845331901,
+        "scripted_closes": 28
+      },
+      "redemption_date": 845332080,
+      "redemption_entry": {
+        "ledger_index": 222,
+        "close_time": 845332080,
+        "scripted_closes": 177
+      }
+    },
+    "evidence_paths": [
+      "evidence/checkpoint-1c-x/checkpoint-result.json",
+      "evidence/checkpoint-1c-x/oracle-a-k.json",
+      "evidence/checkpoint-1c-x/MANIFEST.json"
+    ],
+    "evidence_manifest": {
+      "file_count": 34,
+      "bytes": 1197099,
+      "verified": true
+    },
+    "gates": {
+      "h1_h12": "PASS (17)",
+      "b1_b12": "PASS (29)",
+      "all_spike_tests": "PASS (64)",
+      "repository_unit_tests": "PASS (17)",
+      "conformance_tests": "PASS (4)",
+      "lint_format_large_file": "PASS (67 formatted files checked)",
+      "strict_typecheck": "PASS (25 source files)",
+      "secrets_scan": "PASS",
+      "json_validation": "PASS (110 files)",
+      "evidence_manifest_verification": "PASS (7 manifests, 85 payload files)",
+      "frozen_oracle_immutability": "PASS",
+      "checkpoint_0_ancestry_and_submodules": "PASS",
+      "authorized_paths": "PASS",
+      "git_diff_check": "PASS"
+    }
+  },
   "oracle_binding_checkpoint": {
     "name": "Checkpoint 1C-B",
     "outcome": "PASS",
@@ -166,7 +223,7 @@
       "frozen": true,
       "evidence_paths": [
         "evidence/checkpoint-1b-r/e1-validation.json",
-        "evidence/checkpoint-1c-r/environment-start.json"
+        "evidence/checkpoint-1c-x/environment-start.json"
       ],
       "transaction_hashes": [],
       "ledger_indices": [2],
@@ -184,7 +241,7 @@
       "frozen": true,
       "evidence_paths": [
         "evidence/checkpoint-1c/e2-final-state.json",
-        "evidence/checkpoint-1c-r/fixture-final-state.json"
+        "evidence/checkpoint-1c-x/fixture-final-state.json"
       ],
       "transaction_hashes": [],
       "ledger_indices": [12],
@@ -201,51 +258,83 @@
     },
     "E3": {
       "claim": "A closed-ended tRLUSD vault follows subscription, investment, and redemption deposit/withdraw rules.",
-      "outcome": "BLOCKED",
+      "outcome": "PASS",
       "evidence_paths": [
-        "evidence/checkpoint-1c-r/transactions/11-e3_create_closed_ended_vault.json",
-        "evidence/checkpoint-1c-r/unexpected-result.json"
+        "evidence/checkpoint-1c-x/e3-result.json",
+        "evidence/checkpoint-1c-x/e3-investment-entry.json",
+        "evidence/checkpoint-1c-x/e3-redemption-entry.json",
+        "evidence/checkpoint-1c-x/oracle-a-k.json"
       ],
       "transaction_hashes": [
-        "7F2F22090B6A120B5E404A6D985D337DA00E791D6D9E95007938FFE844069D79"
+        "2604E1A3D9901B3C3BEC9B47D48274C8B7FC71855A5F2503701E9B83A0FABEDB",
+        "CA6EFADF69D318E76B26D9CCCDCF439514FF9FD228C2E87F52AE0D041B1226BF",
+        "949595F0526A7C2EB04ACF7C1B6610E74BC33283BB83C809CFA450837CB434DE",
+        "98A0D90834D645D537CAB3EB720A7941B4192331A4228FF8CF4469DA1EC19339",
+        "C4ADAF5DAFCE323936B4501F893F4AAC835E665A8DE6972D55018E45326AE27E",
+        "E506509E4934BFE38C4916AAEBAA3B654376FF6D645AF79A7E77C1D5BE357392",
+        "B741566B73EF408F6130B58CD7CAC8CDD9E4B95BBF3B4675ABB52A8B2B3EC8D1"
       ],
-      "ledger_indices": [13],
+      "ledger_indices": [13, 14, 15, 44, 45, 223, 224],
       "state_assertions": [
         {
-          "name": "submission and validated result equal tesSUCCESS",
+          "name": "A-G pass the frozen semantic identity, type, field, balance, and phase assertions",
           "passed": true
         },
         {
-          "name": "owner object count increases by one",
-          "passed": false,
-          "expected": 1,
-          "actual": 2
+          "name": "D, E, and G retain their deterministic negative results outside the validated ledger and preserve protected state",
+          "passed": true
         }
       ],
       "phase_results": {
-        "Subscription": "NOT_ATTEMPTED",
-        "Investment": "NOT_ATTEMPTED",
-        "Redemption": "NOT_ATTEMPTED"
+        "Subscription": "PASS",
+        "Investment": "PASS",
+        "Redemption": "PASS"
       },
       "unresolved_subclaims": [
-        "No deposit or withdrawal phase behavior was attempted after STOP.",
-        "No phase transition timing was observed after STOP.",
-        "Loan origination remains outside E3 and was not exercised."
+        "LoanSet phase behavior was not exercised and must not be inferred from this E3 result."
       ]
     },
     "E4": {
       "claim": "A fresh vault supports the required Loan Broker relationship and bounded cover configuration.",
-      "outcome": "NOT_ATTEMPTED",
+      "outcome": "PASS",
       "evidence_paths": [
-        "REPORT.md",
-        "evidence/checkpoint-1c-r/source-findings.json"
+        "evidence/checkpoint-1c-x/e4-result.json",
+        "evidence/checkpoint-1c-x/oracle-a-k.json"
       ],
-      "transaction_hashes": [],
-      "ledger_indices": [],
-      "state_assertions": [],
+      "transaction_hashes": [
+        "9C168D6A83B4A264178833DB82C1B2D296F830F3B3AAA3CC1E3639D374DC5443",
+        "81F52D2D93BE04B7286E77CBAADD536D6500DEF6545DBA5369FB483B24ED2B15",
+        "109CA7FEACAD541D585F7624BCB903B31696DCC70CB6E227D3C3DACFA189279E"
+      ],
+      "ledger_indices": [226, 227, 228],
+      "state_assertions": [
+        {
+          "name": "H and I establish the semantic LoanBroker/Vault relationship and distinct pseudo-accounts",
+          "passed": true
+        },
+        {
+          "name": "J observes the exact cover fields and the 10000 tRLUSD owner-to-broker holding transfer",
+          "passed": true
+        },
+        {
+          "name": "K returns tecNO_PERMISSION, is absent from the validated ledger, and preserves protected state",
+          "passed": true
+        }
+      ],
+      "observed_cover": {
+        "CoverAvailable": 10000,
+        "broker_holding_before": 0,
+        "broker_holding_after": 10000,
+        "owner_tRLUSD_before": 20000,
+        "owner_tRLUSD_after": 10000,
+        "CoverRateMinimum": 10000,
+        "CoverRateLiquidation": 25000,
+        "DebtMaximum": 50000,
+        "DebtTotal": 0
+      },
       "unresolved_subclaims": [
-        "STOP occurred during the first E3 transaction before E4 began.",
-        "Ownership and cover findings remain source-derived or unresolved, not observed."
+        "Default, realized loss, liquidation, clawback, and lender-loss behavior were not exercised.",
+        "The observed cover configuration does not establish a guarantee claim."
       ]
     },
     "E5": {
@@ -255,7 +344,7 @@
       "transaction_hashes": [],
       "ledger_indices": [],
       "state_assertions": [],
-      "unresolved_subclaims": ["Outside Checkpoint 1C-R scope."]
+      "unresolved_subclaims": ["Outside Checkpoint 1C-X scope."]
     },
     "E6": {
       "claim": "LoanSet composition.",
@@ -264,7 +353,7 @@
       "transaction_hashes": [],
       "ledger_indices": [],
       "state_assertions": [],
-      "unresolved_subclaims": ["Outside Checkpoint 1C-R scope."]
+      "unresolved_subclaims": ["Outside Checkpoint 1C-X scope."]
     },
     "E7": {
       "claim": "Loan disbursement.",
@@ -273,7 +362,7 @@
       "transaction_hashes": [],
       "ledger_indices": [],
       "state_assertions": [],
-      "unresolved_subclaims": ["Outside Checkpoint 1C-R scope."]
+      "unresolved_subclaims": ["Outside Checkpoint 1C-X scope."]
     },
     "E8": {
       "claim": "LoanPay.",
@@ -282,7 +371,7 @@
       "transaction_hashes": [],
       "ledger_indices": [],
       "state_assertions": [],
-      "unresolved_subclaims": ["Outside Checkpoint 1C-R scope."]
+      "unresolved_subclaims": ["Outside Checkpoint 1C-X scope."]
     },
     "E9": {
       "claim": "Full loan lifecycle.",
@@ -291,12 +380,13 @@
       "transaction_hashes": [],
       "ledger_indices": [],
       "state_assertions": [],
-      "unresolved_subclaims": ["Outside Checkpoint 1C-R scope."]
+      "unresolved_subclaims": ["Outside Checkpoint 1C-X scope."]
     }
   },
   "e1_frozen": true,
   "e2_frozen": true,
-  "e3_e4_rerun_performed": false,
+  "e3_e4_rerun_performed": true,
   "e5_may_begin": false,
-  "minimum_next_experiment_performed": false
+  "e5_gate_status": "E3/E4 protocol gate passed; independent bounded evidence audit pending.",
+  "minimum_next_experiment_performed": true
 }

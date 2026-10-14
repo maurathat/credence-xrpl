@@ -1,0 +1,241 @@
+{
+  "entry": {
+    "close_time": 845331901,
+    "closed": true,
+    "ledger_hash": "4F258B163E2CAD5FFACAE5FC1724B910E6D51D8FF87FD22B936A849C0F8969F8",
+    "ledger_index": 43,
+    "phase": "Investment"
+  },
+  "observations": [
+    {
+      "close_time": 845331873,
+      "closed": true,
+      "ledger_hash": "BEA5FB35D03B0821AE87DE495FBF2D7A0C088806CD5AC709099048356887E66A",
+      "ledger_index": 15,
+      "phase": "Subscription"
+    },
+    {
+      "close_time": 845331874,
+      "closed": true,
+      "ledger_hash": "1D39D77194A0D5A0B41EAE06F54D78DE89BF7B286AB1E364AB4BD49F267A452F",
+      "ledger_index": 16,
+      "phase": "Subscription"
+    },
+    {
+      "close_time": 845331875,
+      "closed": true,
+      "ledger_hash": "CECFA8FA25019ECFE533260FCAFB952D18FF631CA59D88457F8D4274A79E6449",
+      "ledger_index": 17,
+      "phase": "Subscription"
+    },
+    {
+      "close_time": 845331876,
+      "closed": true,
+      "ledger_hash": "D825C69A2AD5E58C6671E9741DA9AEFB8CC1BDCA233414D2297AC850863CB665",
+      "ledger_index": 18,
+      "phase": "Subscription"
+    },
+    {
+      "close_time": 845331877,
+      "closed": true,
+      "ledger_hash": "E966AAD3D695F5BCA232969011D06924CB3D9B28DC639CF7DE89F61EB11B8343",
+      "ledger_index": 19,
+      "phase": "Subscription"
+    },
+    {
+      "close_time": 845331878,
+      "closed": true,
+      "ledger_hash": "159DA05F0FBA5EA59AC531267B6ECE17BDD138DDE26AA084A52670DA98AADD5E",
+      "ledger_index": 20,
+      "phase": "Subscription"
+    },
+    {
+      "close_time": 845331879,
+      "closed": true,
+      "ledger_hash": "4A8743E097614DFB77A8140AD9220DD0F11B9F593B83A896F333EB3F5B914ADE",
+      "ledger_index": 21,
+      "phase": "Subscription"
+    },
+    {
+      "close_time": 845331880,
+      "closed": true,
+      "ledger_hash": "1A2A1D4FFD980F90BBA827A89F6A6ADD649B0B5BD0EB1E027386F068D31B99EB",
+      "ledger_index": 22,
+      "phase": "Subscription"
+    },
+    {
+      "close_time": 845331881,
+      "closed": true,
+      "ledger_hash": "7E2AD7D5515A2DDB440146B81D063EDCBB0456054958481D5A1FF98211EC9EFB",
+      "ledger_index": 23,
+      "phase": "Subscription"
+    },
+    {
+      "close_time": 845331882,
+      "closed": true,
+      "ledger_hash": "B230CEBC66D4BFF8DC82C414491C3536B8AF403E666CC214B3736968D836D5CC",
+      "ledger_index": 24,
+      "phase": "Subscription"
+    },
+    {
+      "close_time": 845331883,
+      "closed": true,
+      "ledger_hash": "6568349F3C98743D17479CA44B43E97A425B7D7EF9DD8302ED7B495649467661",
+      "ledger_index": 25,
+      "phase": "Subscription"
+    },
+    {
+      "close_time": 845331884,
+      "closed": true,
+      "ledger_hash": "03FD8F9147E081139FE346ED5AA54FE613A9E33D47E7C0384FF13C148D135DDB",
+      "ledger_index": 26,
+      "phase": "Subscription"
+    },
+    {
+      "close_time": 845331885,
+      "closed": true,
+      "ledger_hash": "E849CDD74D1A7C3796EE5250E3008E08C5E23C2B5EA80374CDC0561570B146DF",
+      "ledger_index": 27,
+      "phase": "Subscription"
+    },
+    {
+      "close_time": 845331886,
+      "closed": true,
+      "ledger_hash": "26C093BEA67027FD469BEBCAF6F3FCF70942801EC43BCCDFCB8584C193EE40FB",
+      "ledger_index": 28,
+      "phase": "Subscription"
+    },
+    {
+      "close_time": 845331887,
+      "closed": true,
+      "ledger_hash": "06C523AE3F3EBFC3F97117ECD88DE6E6FD82B71397E1D2C12106D1E5C8182209",
+      "ledger_index": 29,
+      "phase": "Subscription"
+    },
+    {
+      "close_time": 845331888,
+      "closed": true,
+      "ledger_hash": "CFC9CB172A48FFDADF43A1C014D219C3A5A8C4B0535557E072169433FD3966D7",
+      "ledger_index": 30,
+      "phase": "Subscription"
+    },
+    {
+      "close_time": 845331889,
+      "closed": true,
+      "ledger_hash": "A3BC757B9E4937C3D1D6C500BAD0508B60E19EC2F64EBC4331318B3CED2968A5",
+      "ledger_index": 31,
+      "phase": "Subscription"
+    },
+    {
+      "close_time": 845331890,
+      "closed": true,
+      "ledger_hash": "F28382517E29FD71D311B2DE336005CDFB03F4F37B44B19ECB435C886C714FA4",
+      "ledger_index": 32,
+      "phase": "Subscription"
+    },
+    {
+      "close_time": 845331891,
+      "closed": true,
+      "ledger_hash": "A9F93552A3937140CB8F76CF52C7AD91D8B94BAF781019D1F8F1170854F701C9",
+      "ledger_index": 33,
+      "phase": "Subscription"
+    },
+    {
+      "close_time": 845331892,
+      "closed": true,
+      "ledger_hash": "B53381D9B8C6C7E765BCAA09AFC3D4F225244C58AC70752C8EED769D3E8B2262",
+      "ledger_index": 34,
+      "phase": "Subscription"
+    },
+    {
+      "close_time": 845331893,
+      "closed": true,
+      "ledger_hash": "B80EB9292BE1893EF0A47796701F0BBE8C29F821BC1F2D80E6579CFE3B1A3CD6",
+      "ledger_index": 35,
+      "phase": "Subscription"
+    },
+    {
+      "close_time": 845331894,
+      "closed": true,
+      "ledger_hash": "82603CEC8D185C874CBD8CF3FC307D5760EEF99CE4F3218F0EABEC5CAD6155C7",
+      "ledger_index": 36,
+      "phase": "Subscription"
+    },
+    {
+      "close_time": 845331895,
+      "closed": true,
+      "ledger_hash": "671ECA910869F2DAEF8E526870B4765C0BF8618BDE71C3D81E59947F74ABE91B",
+      "ledger_index": 37,
+      "phase": "Subscription"
+    },
+    {
+      "close_time": 845331896,
+      "closed": true,
+      "ledger_hash": "B5FB0244773442118F501F3047FE3B99D892AB73C9AC9253D55D9054BCC03BA9",
+      "ledger_index": 38,
+      "phase": "Subscription"
+    },
+    {
+      "close_time": 845331897,
+      "closed": true,
+      "ledger_hash": "2993260A6A3AAF35514F6296DFAE54E06DDEC102412D46C3D105AAF8EA4740ED",
+      "ledger_index": 39,
+      "phase": "Subscription"
+    },
+    {
+      "close_time": 845331898,
+      "closed": true,
+      "ledger_hash": "F7B1A5A52CAA3BAEDE2F8723124D40FDF3E25875683529A6BA3ADE7BC2A5CDD4",
+      "ledger_index": 40,
+      "phase": "Subscription"
+    },
+    {
+      "close_time": 845331899,
+      "closed": true,
+      "ledger_hash": "A0B4962D6A0A5FCE615AA29DE6841AD6F67D923D8041BFB7B0231C9B8534BEBA",
+      "ledger_index": 41,
+      "phase": "Subscription"
+    },
+    {
+      "close_time": 845331900,
+      "closed": true,
+      "ledger_hash": "7C1CA8337CC4E2BF9F6F8E05FC21E4524C652BA9DBEF95A42CED7A5F4B189F4B",
+      "ledger_index": 42,
+      "phase": "Subscription"
+    },
+    {
+      "close_time": 845331901,
+      "closed": true,
+      "ledger_hash": "4F258B163E2CAD5FFACAE5FC1724B910E6D51D8FF87FD22B936A849C0F8969F8",
+      "ledger_index": 43,
+      "phase": "Investment"
+    }
+  ],
+  "redemption_date": 845332080,
+  "subscription_date": 845331900,
+  "target_phase": "Investment",
+  "vault": {
+    "Account": "rECkRrRX4qkr9NqJEdzNyG2XitJrTJNzq3",
+    "Asset": {
+      "currency": "74524C5553440000000000000000000000000000",
+      "issuer": "rUQwCP6PANmARuJEmyK9q2wBd5XXkxT73h"
+    },
+    "AssetsAvailable": "99000",
+    "AssetsTotal": "99000",
+    "Flags": 0,
+    "LEVersion": 1,
+    "LedgerEntryType": "Vault",
+    "Owner": "rHTUQ57nLKi34FDtay7CCkVzkSdfoh5m3u",
+    "OwnerNode": "0",
+    "PreviousTxnID": "949595F0526A7C2EB04ACF7C1B6610E74BC33283BB83C809CFA450837CB434DE",
+    "PreviousTxnLgrSeq": 15,
+    "RedemptionDate": 845332080,
+    "Scale": 6,
+    "Sequence": 7,
+    "ShareMPTID": "00000001A0E5CEC12F048E52D88E026106BE5B3D7417DC56",
+    "SubscriptionDate": 845331900,
+    "VaultKind": 1,
+    "WithdrawalPolicy": 1,
+    "index": "B87C0BAC5B3E2E11A63CF26576F777553FCBE36376493F0D407AC485FCE65C1B"
+  }
+}

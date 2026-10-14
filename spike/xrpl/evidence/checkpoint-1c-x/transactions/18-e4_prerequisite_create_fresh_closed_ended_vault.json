@@ -1,0 +1,549 @@
+{
+  "after_state": {
+    "objects": [
+      {
+        "Account": "rHTUQ57nLKi34FDtay7CCkVzkSdfoh5m3u",
+        "Flags": 0,
+        "LedgerEntryType": "MPToken",
+        "MPTokenIssuanceID": "00000001A0E5CEC12F048E52D88E026106BE5B3D7417DC56",
+        "OwnerNode": "0",
+        "PreviousTxnID": "2604E1A3D9901B3C3BEC9B47D48274C8B7FC71855A5F2503701E9B83A0FABEDB",
+        "PreviousTxnLgrSeq": 13,
+        "index": "7AF62A32FF1A9BF54493082F70DFEB8E9597E8857E1CB3DD3A5206C834BA4643"
+      },
+      {
+        "Account": "rECkRrRX4qkr9NqJEdzNyG2XitJrTJNzq3",
+        "Asset": {
+          "currency": "74524C5553440000000000000000000000000000",
+          "issuer": "rUQwCP6PANmARuJEmyK9q2wBd5XXkxT73h"
+        },
+        "AssetsAvailable": "98000",
+        "AssetsTotal": "98000",
+        "Flags": 0,
+        "LEVersion": 1,
+        "LedgerEntryType": "Vault",
+        "Owner": "rHTUQ57nLKi34FDtay7CCkVzkSdfoh5m3u",
+        "OwnerNode": "0",
+        "PreviousTxnID": "E506509E4934BFE38C4916AAEBAA3B654376FF6D645AF79A7E77C1D5BE357392",
+        "PreviousTxnLgrSeq": 223,
+        "RedemptionDate": 845332080,
+        "Scale": 6,
+        "Sequence": 7,
+        "ShareMPTID": "00000001A0E5CEC12F048E52D88E026106BE5B3D7417DC56",
+        "SubscriptionDate": 845331900,
+        "VaultKind": 1,
+        "WithdrawalPolicy": 1,
+        "index": "B87C0BAC5B3E2E11A63CF26576F777553FCBE36376493F0D407AC485FCE65C1B"
+      },
+      {
+        "Balance": {
+          "currency": "74524C5553440000000000000000000000000000",
+          "issuer": "rrrrrrrrrrrrrrrrrrrrBZbvji",
+          "value": "-20000"
+        },
+        "Flags": 131072,
+        "HighLimit": {
+          "currency": "74524C5553440000000000000000000000000000",
+          "issuer": "rHTUQ57nLKi34FDtay7CCkVzkSdfoh5m3u",
+          "value": "1000000"
+        },
+        "HighNode": "0",
+        "LedgerEntryType": "RippleState",
+        "LowLimit": {
+          "currency": "74524C5553440000000000000000000000000000",
+          "issuer": "rUQwCP6PANmARuJEmyK9q2wBd5XXkxT73h",
+          "value": "0"
+        },
+        "LowNode": "0",
+        "PreviousTxnID": "01137AC2B8C4A2BA8CB1CAF293DDF07A8EDAB67ED64D790DA6EC0002F731B2E1",
+        "PreviousTxnLgrSeq": 12,
+        "index": "CB05353629F6C19ECF7B029FF43E5F957C05B55111870281BE3D14D4D24E4956"
+      },
+      {
+        "Account": "rUWkezfEDWS5uknsUDza7Jfd6VjknGiNTj",
+        "Asset": {
+          "currency": "74524C5553440000000000000000000000000000",
+          "issuer": "rUQwCP6PANmARuJEmyK9q2wBd5XXkxT73h"
+        },
+        "Flags": 0,
+        "LEVersion": 1,
+        "LedgerEntryType": "Vault",
+        "Owner": "rHTUQ57nLKi34FDtay7CCkVzkSdfoh5m3u",
+        "OwnerNode": "0",
+        "PreviousTxnID": "31F76BE3A77D8A02661D9D59C83C37E82202FDA29CF682E05B04C9525ADF6515",
+        "PreviousTxnLgrSeq": 225,
+        "RedemptionDate": 845332292,
+        "Scale": 6,
+        "Sequence": 8,
+        "ShareMPTID": "000000017E49E34684909D8EA01D6230AFB648657742523D",
+        "SubscriptionDate": 845332112,
+        "VaultKind": 1,
+        "WithdrawalPolicy": 1,
+        "index": "D17C5E01705B3A6BD3268147679415031F5B20757FA804FB46A762CD121508CA"
+      },
+      {
+        "Account": "rHTUQ57nLKi34FDtay7CCkVzkSdfoh5m3u",
+        "Flags": 0,
+        "LedgerEntryType": "MPToken",
+        "MPTokenIssuanceID": "000000017E49E34684909D8EA01D6230AFB648657742523D",
+        "OwnerNode": "0",
+        "PreviousTxnID": "31F76BE3A77D8A02661D9D59C83C37E82202FDA29CF682E05B04C9525ADF6515",
+        "PreviousTxnLgrSeq": 225,
+        "index": "DA1AD8F2F34DBF104E2413F4EBA81AFF761309089C9C43FF8521B302D2545024"
+      }
+    ]
+  },
+  "before_state": {
+    "objects": [
+      {
+        "Account": "rHTUQ57nLKi34FDtay7CCkVzkSdfoh5m3u",
+        "Flags": 0,
+        "LedgerEntryType": "MPToken",
+        "MPTokenIssuanceID": "00000001A0E5CEC12F048E52D88E026106BE5B3D7417DC56",
+        "OwnerNode": "0",
+        "PreviousTxnID": "2604E1A3D9901B3C3BEC9B47D48274C8B7FC71855A5F2503701E9B83A0FABEDB",
+        "PreviousTxnLgrSeq": 13,
+        "index": "7AF62A32FF1A9BF54493082F70DFEB8E9597E8857E1CB3DD3A5206C834BA4643"
+      },
+      {
+        "Account": "rECkRrRX4qkr9NqJEdzNyG2XitJrTJNzq3",
+        "Asset": {
+          "currency": "74524C5553440000000000000000000000000000",
+          "issuer": "rUQwCP6PANmARuJEmyK9q2wBd5XXkxT73h"
+        },
+        "AssetsAvailable": "98000",
+        "AssetsTotal": "98000",
+        "Flags": 0,
+        "LEVersion": 1,
+        "LedgerEntryType": "Vault",
+        "Owner": "rHTUQ57nLKi34FDtay7CCkVzkSdfoh5m3u",
+        "OwnerNode": "0",
+        "PreviousTxnID": "E506509E4934BFE38C4916AAEBAA3B654376FF6D645AF79A7E77C1D5BE357392",
+        "PreviousTxnLgrSeq": 223,
+        "RedemptionDate": 845332080,
+        "Scale": 6,
+        "Sequence": 7,
+        "ShareMPTID": "00000001A0E5CEC12F048E52D88E026106BE5B3D7417DC56",
+        "SubscriptionDate": 845331900,
+        "VaultKind": 1,
+        "WithdrawalPolicy": 1,
+        "index": "B87C0BAC5B3E2E11A63CF26576F777553FCBE36376493F0D407AC485FCE65C1B"
+      },
+      {
+        "Balance": {
+          "currency": "74524C5553440000000000000000000000000000",
+          "issuer": "rrrrrrrrrrrrrrrrrrrrBZbvji",
+          "value": "-20000"
+        },
+        "Flags": 131072,
+        "HighLimit": {
+          "currency": "74524C5553440000000000000000000000000000",
+          "issuer": "rHTUQ57nLKi34FDtay7CCkVzkSdfoh5m3u",
+          "value": "1000000"
+        },
+        "HighNode": "0",
+        "LedgerEntryType": "RippleState",
+        "LowLimit": {
+          "currency": "74524C5553440000000000000000000000000000",
+          "issuer": "rUQwCP6PANmARuJEmyK9q2wBd5XXkxT73h",
+          "value": "0"
+        },
+        "LowNode": "0",
+        "PreviousTxnID": "01137AC2B8C4A2BA8CB1CAF293DDF07A8EDAB67ED64D790DA6EC0002F731B2E1",
+        "PreviousTxnLgrSeq": 12,
+        "index": "CB05353629F6C19ECF7B029FF43E5F957C05B55111870281BE3D14D4D24E4956"
+      }
+    ]
+  },
+  "canonical_public_transaction": {
+    "Account": "rHTUQ57nLKi34FDtay7CCkVzkSdfoh5m3u",
+    "Asset": {
+      "currency": "74524C5553440000000000000000000000000000",
+      "issuer": "rUQwCP6PANmARuJEmyK9q2wBd5XXkxT73h"
+    },
+    "Fee": "2000000",
+    "LastLedgerSequence": 244,
+    "NetworkID": 21337,
+    "RedemptionDate": 845332292,
+    "Sequence": 8,
+    "SubscriptionDate": 845332112,
+    "TransactionType": "VaultCreate",
+    "VaultKind": 1,
+    "WithdrawalPolicy": 1,
+    "authorization": {
+      "mode": "single_sign",
+      "signers": [],
+      "top_level_signing_public_key_present": true,
+      "top_level_transaction_signature_present": true
+    }
+  },
+  "classification": {
+    "expected_result": "tesSUCCESS",
+    "observed_result": "tesSUCCESS",
+    "reasons": [],
+    "state_assertion": "PASS",
+    "state_unchanged": null,
+    "status": "PASS"
+  },
+  "expected_result": "tesSUCCESS",
+  "experiment": "SETUP",
+  "label": "e4_prerequisite_create_fresh_closed_ended_vault",
+  "ledger_after": {
+    "close_time": 845332083,
+    "closed": true,
+    "ledger_hash": "77FC6CEB54AE0E07F98B1492B63C872C4466B6F43D46EFBC894A89C98F9C6AD5",
+    "ledger_index": 225
+  },
+  "ledger_before": {
+    "close_time": 845332082,
+    "closed": true,
+    "ledger_hash": "5FCB301682F5F88805E7B282F5DA274E510D6AF19D1FB52CD8EAAD9C59236966",
+    "ledger_index": 224
+  },
+  "relevant_state_unchanged": false,
+  "result_resolution": {
+    "authoritative_result": "tesSUCCESS",
+    "category": "ACCEPTED_VALIDATED_SUCCESS",
+    "client_exception": null,
+    "malformed_request": null,
+    "submission_hash_if_any": "31F76BE3A77D8A02661D9D59C83C37E82202FDA29CF682E05B04C9525ADF6515",
+    "submission_result": "tesSUCCESS",
+    "transport_or_server_failure": null,
+    "validated_lookup_status": "VALIDATED",
+    "validated_result_if_any": "tesSUCCESS"
+  },
+  "state_assertion": "PASS",
+  "state_assertions": [
+    {
+      "actual": 1,
+      "expected": 1,
+      "name": "one new semantic Vault identity",
+      "passed": true
+    },
+    {
+      "actual": 1,
+      "expected": 1,
+      "name": "expected Vault match count",
+      "passed": true
+    },
+    {
+      "actual": "Vault",
+      "expected": "Vault",
+      "name": "Vault LedgerEntryType",
+      "passed": true
+    },
+    {
+      "actual": "D17C5E01705B3A6BD3268147679415031F5B20757FA804FB46A762CD121508CA",
+      "expected": "D17C5E01705B3A6BD3268147679415031F5B20757FA804FB46A762CD121508CA",
+      "name": "Vault index",
+      "passed": true
+    },
+    {
+      "actual": "rHTUQ57nLKi34FDtay7CCkVzkSdfoh5m3u",
+      "expected": "rHTUQ57nLKi34FDtay7CCkVzkSdfoh5m3u",
+      "name": "Vault Owner",
+      "passed": true
+    },
+    {
+      "actual": {
+        "currency": "74524C5553440000000000000000000000000000",
+        "issuer": "rUQwCP6PANmARuJEmyK9q2wBd5XXkxT73h"
+      },
+      "expected": {
+        "currency": "74524C5553440000000000000000000000000000",
+        "issuer": "rUQwCP6PANmARuJEmyK9q2wBd5XXkxT73h"
+      },
+      "name": "Vault Asset",
+      "passed": true
+    },
+    {
+      "actual": 1,
+      "expected": 1,
+      "name": "Vault VaultKind",
+      "passed": true
+    },
+    {
+      "actual": 845332112,
+      "expected": 845332112,
+      "name": "Vault SubscriptionDate",
+      "passed": true
+    },
+    {
+      "actual": 845332292,
+      "expected": 845332292,
+      "name": "Vault RedemptionDate",
+      "passed": true
+    },
+    {
+      "actual": 1,
+      "expected": 1,
+      "name": "Vault WithdrawalPolicy",
+      "passed": true
+    },
+    {
+      "actual": 0,
+      "expected": 0,
+      "name": "Vault Flags",
+      "passed": true
+    },
+    {
+      "actual": "rUWkezfEDWS5uknsUDza7Jfd6VjknGiNTj",
+      "expected": true,
+      "name": "Vault pseudo Account present",
+      "passed": true
+    },
+    {
+      "actual": "000000017E49E34684909D8EA01D6230AFB648657742523D",
+      "expected": true,
+      "name": "Vault ShareMPTID present",
+      "passed": true
+    },
+    {
+      "actual": 1,
+      "expected": 1,
+      "name": "expected owner MPToken match count",
+      "passed": true
+    },
+    {
+      "actual": "MPToken",
+      "expected": "MPToken",
+      "name": "MPToken LedgerEntryType",
+      "passed": true
+    },
+    {
+      "actual": "rHTUQ57nLKi34FDtay7CCkVzkSdfoh5m3u",
+      "expected": "rHTUQ57nLKi34FDtay7CCkVzkSdfoh5m3u",
+      "name": "MPToken Account",
+      "passed": true
+    },
+    {
+      "actual": "000000017E49E34684909D8EA01D6230AFB648657742523D",
+      "expected": "000000017E49E34684909D8EA01D6230AFB648657742523D",
+      "name": "MPToken MPTokenIssuanceID",
+      "passed": true
+    },
+    {
+      "actual": 0,
+      "expected": 0,
+      "name": "MPToken Flags",
+      "passed": true
+    },
+    {
+      "actual": 0,
+      "expected": 0,
+      "name": "expected Vault absent from pre-state",
+      "passed": true
+    },
+    {
+      "actual": 0,
+      "expected": 0,
+      "name": "expected owner MPToken absent from pre-state",
+      "passed": true
+    }
+  ],
+  "submission_hash_if_any": "31F76BE3A77D8A02661D9D59C83C37E82202FDA29CF682E05B04C9525ADF6515",
+  "submission_response": {
+    "accepted": true,
+    "account_sequence_available": 9,
+    "account_sequence_next": 9,
+    "applied": true,
+    "broadcast": true,
+    "engine_result": "tesSUCCESS",
+    "engine_result_code": 0,
+    "engine_result_message": "The transaction was applied. Only final in a validated ledger.",
+    "kept": true,
+    "open_ledger_cost": "10",
+    "queued": false,
+    "tx_json": {
+      "Account": "rHTUQ57nLKi34FDtay7CCkVzkSdfoh5m3u",
+      "Asset": {
+        "currency": "74524C5553440000000000000000000000000000",
+        "issuer": "rUQwCP6PANmARuJEmyK9q2wBd5XXkxT73h"
+      },
+      "Fee": "2000000",
+      "LastLedgerSequence": 244,
+      "NetworkID": 21337,
+      "RedemptionDate": 845332292,
+      "Sequence": 8,
+      "SubscriptionDate": 845332112,
+      "TransactionType": "VaultCreate",
+      "VaultKind": 1,
+      "WithdrawalPolicy": 1,
+      "hash": "31F76BE3A77D8A02661D9D59C83C37E82202FDA29CF682E05B04C9525ADF6515"
+    },
+    "validated_ledger_index": 224
+  },
+  "submission_result": "tesSUCCESS",
+  "validated_lookup_status": "VALIDATED",
+  "validated_result_if_any": "tesSUCCESS",
+  "validated_transaction_response": {
+    "Account": "rHTUQ57nLKi34FDtay7CCkVzkSdfoh5m3u",
+    "Asset": {
+      "currency": "74524C5553440000000000000000000000000000",
+      "issuer": "rUQwCP6PANmARuJEmyK9q2wBd5XXkxT73h"
+    },
+    "Fee": "2000000",
+    "LastLedgerSequence": 244,
+    "NetworkID": 21337,
+    "RedemptionDate": 845332292,
+    "Sequence": 8,
+    "SubscriptionDate": 845332112,
+    "TransactionType": "VaultCreate",
+    "VaultKind": 1,
+    "WithdrawalPolicy": 1,
+    "ctid": "C00000E100005359",
+    "date": 845332083,
+    "hash": "31F76BE3A77D8A02661D9D59C83C37E82202FDA29CF682E05B04C9525ADF6515",
+    "inLedger": 225,
+    "ledger_index": 225,
+    "meta": {
+      "AffectedNodes": [
+        {
+          "CreatedNode": {
+            "LedgerEntryType": "DirectoryNode",
+            "LedgerIndex": "26F663F8E13813A3EA7A6F7BF532E052B19F7FA6BFAF66971F0EC82EE0486327",
+            "NewFields": {
+              "Owner": "rUWkezfEDWS5uknsUDza7Jfd6VjknGiNTj",
+              "RootIndex": "26F663F8E13813A3EA7A6F7BF532E052B19F7FA6BFAF66971F0EC82EE0486327"
+            }
+          }
+        },
+        {
+          "CreatedNode": {
+            "LedgerEntryType": "RippleState",
+            "LedgerIndex": "45C1F160CF3021F050209931B42D43375B2C858F69CAFFB844B4040A3086AEA2",
+            "NewFields": {
+              "Balance": {
+                "currency": "74524C5553440000000000000000000000000000",
+                "issuer": "rrrrrrrrrrrrrrrrrrrrBZbvji",
+                "value": "0"
+              },
+              "Flags": 2228224,
+              "HighLimit": {
+                "currency": "74524C5553440000000000000000000000000000",
+                "issuer": "rUWkezfEDWS5uknsUDza7Jfd6VjknGiNTj",
+                "value": "0"
+              },
+              "LowLimit": {
+                "currency": "74524C5553440000000000000000000000000000",
+                "issuer": "rUQwCP6PANmARuJEmyK9q2wBd5XXkxT73h",
+                "value": "0"
+              }
+            }
+          }
+        },
+        {
+          "ModifiedNode": {
+            "FinalFields": {
+              "Flags": 0,
+              "Owner": "rHTUQ57nLKi34FDtay7CCkVzkSdfoh5m3u",
+              "RootIndex": "5DFCA3AF66EF4671BB373C05F65D40DB8A5202E627FE6303E64F8B0F733B69FD"
+            },
+            "LedgerEntryType": "DirectoryNode",
+            "LedgerIndex": "5DFCA3AF66EF4671BB373C05F65D40DB8A5202E627FE6303E64F8B0F733B69FD"
+          }
+        },
+        {
+          "ModifiedNode": {
+            "LedgerEntryType": "AccountRoot",
+            "LedgerIndex": "60A778C163AE35F9B3A3599F0BB16C68B07EA890F662566609815E73A6692471",
+            "PreviousTxnID": "2604E1A3D9901B3C3BEC9B47D48274C8B7FC71855A5F2503701E9B83A0FABEDB",
+            "PreviousTxnLgrSeq": 13
+          }
+        },
+        {
+          "CreatedNode": {
+            "LedgerEntryType": "AccountRoot",
+            "LedgerIndex": "805C9AC4B30D20280218CB293BD2062B4E8A506CEB41213CFAB8F76167FD4EC0",
+            "NewFields": {
+              "Account": "rUWkezfEDWS5uknsUDza7Jfd6VjknGiNTj",
+              "Flags": 26214400,
+              "OwnerCount": 2,
+              "VaultID": "D17C5E01705B3A6BD3268147679415031F5B20757FA804FB46A762CD121508CA"
+            }
+          }
+        },
+        {
+          "ModifiedNode": {
+            "FinalFields": {
+              "Flags": 0,
+              "Owner": "rUQwCP6PANmARuJEmyK9q2wBd5XXkxT73h",
+              "RootIndex": "9A2954673F66AA350289C097C9A95457C5BA8A40902D2556364359912AA6AE02"
+            },
+            "LedgerEntryType": "DirectoryNode",
+            "LedgerIndex": "9A2954673F66AA350289C097C9A95457C5BA8A40902D2556364359912AA6AE02"
+          }
+        },
+        {
+          "CreatedNode": {
+            "LedgerEntryType": "Vault",
+            "LedgerIndex": "D17C5E01705B3A6BD3268147679415031F5B20757FA804FB46A762CD121508CA",
+            "NewFields": {
+              "Account": "rUWkezfEDWS5uknsUDza7Jfd6VjknGiNTj",
+              "Asset": {
+                "currency": "74524C5553440000000000000000000000000000",
+                "issuer": "rUQwCP6PANmARuJEmyK9q2wBd5XXkxT73h"
+              },
+              "LEVersion": 1,
+              "Owner": "rHTUQ57nLKi34FDtay7CCkVzkSdfoh5m3u",
+              "RedemptionDate": 845332292,
+              "Scale": 6,
+              "Sequence": 8,
+              "ShareMPTID": "000000017E49E34684909D8EA01D6230AFB648657742523D",
+              "SubscriptionDate": 845332112,
+              "VaultKind": 1,
+              "WithdrawalPolicy": 1
+            }
+          }
+        },
+        {
+          "ModifiedNode": {
+            "FinalFields": {
+              "Account": "rHTUQ57nLKi34FDtay7CCkVzkSdfoh5m3u",
+              "Balance": "995999990",
+              "Flags": 0,
+              "OwnerCount": 7,
+              "Sequence": 9
+            },
+            "LedgerEntryType": "AccountRoot",
+            "LedgerIndex": "D1B28BB621EAD498D268597D08660D114D03D628C6E35DE37C631B41B02469B6",
+            "PreviousFields": {
+              "Balance": "997999990",
+              "OwnerCount": 4,
+              "Sequence": 8
+            },
+            "PreviousTxnID": "2604E1A3D9901B3C3BEC9B47D48274C8B7FC71855A5F2503701E9B83A0FABEDB",
+            "PreviousTxnLgrSeq": 13
+          }
+        },
+        {
+          "CreatedNode": {
+            "LedgerEntryType": "MPToken",
+            "LedgerIndex": "DA1AD8F2F34DBF104E2413F4EBA81AFF761309089C9C43FF8521B302D2545024",
+            "NewFields": {
+              "Account": "rHTUQ57nLKi34FDtay7CCkVzkSdfoh5m3u",
+              "MPTokenIssuanceID": "000000017E49E34684909D8EA01D6230AFB648657742523D"
+            }
+          }
+        },
+        {
+          "CreatedNode": {
+            "LedgerEntryType": "MPTokenIssuance",
+            "LedgerIndex": "F9E5D28DF2881F998F2D477E1AF835BE0C4995EC3D94261C35EF5C9087834614",
+            "NewFields": {
+              "AssetScale": 6,
+              "Flags": 56,
+              "Issuer": "rUWkezfEDWS5uknsUDza7Jfd6VjknGiNTj",
+              "ReferenceHolding": "45C1F160CF3021F050209931B42D43375B2C858F69CAFFB844B4040A3086AEA2",
+              "Sequence": 1
+            }
+          }
+        }
+      ],
+      "TransactionIndex": 0,
+      "TransactionResult": "tesSUCCESS"
+    },
+    "status": "success",
+    "validated": true
+  }
+}
