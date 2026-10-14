@@ -1,0 +1,11 @@
+{
+  "algorithm": "SHA-256",
+  "file_count": 1,
+  "files": [
+    {
+      "bytes": 107421,
+      "path": "fixture-dry-run.json",
+      "sha256": "24acbf1cc6de3643beb3d4cd4e4d7d8dc546adb08f016264014f6a5d3f61030f"
+    }
+  ]
+}

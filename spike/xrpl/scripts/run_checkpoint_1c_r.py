@@ -9,20 +9,20 @@ import sys
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import httpx
 from amendment_validation import REQUIRED_AMENDMENTS, validate_feature_response
+from frozen_oracle import OracleSession
 from harness import (
     StateAssertion,
     classify_transaction,
-    cover_transition_assertions,
     create_manifest,
-    loan_broker_create_transition_assertions,
     predicate_assertion,
     public_transaction,
     resolve_transaction_result,
     sanitize_response,
+    semantic_objects,
     state_assertion,
     vault_create_transition_assertions,
     write_json,
@@ -50,7 +50,9 @@ ROOT_SEED_ENV = "XRPL_STANDALONE_GENESIS_SEED"
 NETWORK_ID = 21_337
 TR_USD = b"tRLUSD".hex().upper().ljust(40, "0")
 ROOT = Path(__file__).resolve().parents[1]
-EVIDENCE = ROOT / "evidence" / "checkpoint-1c-r"
+EVIDENCE = (
+    ROOT / "evidence" / os.environ.get("XRPL_CHECKPOINT_EVIDENCE_DIRECTORY", "checkpoint-1c-live")
+)
 TRANSACTIONS = EVIDENCE / "transactions"
 
 
@@ -116,14 +118,17 @@ def account_data(account: str) -> dict[str, Any] | None:
 
 def account_objects(account: str) -> list[dict[str, Any]]:
     result = rpc_success("account_objects", account=account, ledger_index="validated")
-    return sanitize_response(result.get("account_objects", []))
+    value = sanitize_response(result.get("account_objects", []))
+    if not isinstance(value, list):
+        raise RpcFailure("account_objects: response has no account_objects list")
+    return cast(list[dict[str, Any]], value)
 
 
 def trust_line(account: str, issuer: str) -> dict[str, Any] | None:
     result = rpc_success("account_lines", account=account, ledger_index="validated")
     for line in result.get("lines", []):
         if line.get("account") == issuer and line.get("currency") == TR_USD:
-            return sanitize_response(line)
+            return cast(dict[str, Any], sanitize_response(line))
     return None
 
 
@@ -144,6 +149,17 @@ def extract_created(meta: dict[str, Any], ledger_type: str) -> str:
     raise CheckpointStop(f"validated metadata has no created {ledger_type} node")
 
 
+def created_indices(lookup: dict[str, Any] | None, ledger_type: str) -> list[str]:
+    meta = (lookup or {}).get("meta", {})
+    return [
+        str(created["LedgerIndex"])
+        for wrapper in meta.get("AffectedNodes", [])
+        if isinstance((created := wrapper.get("CreatedNode")), dict)
+        and created.get("LedgerEntryType") == ledger_type
+        and isinstance(created.get("LedgerIndex"), str)
+    ]
+
+
 def phase(close_time: int, subscription: int, redemption: int) -> str:
     if close_time <= subscription:
         return "Subscription"
@@ -159,6 +175,7 @@ def numeric(node: dict[str, Any] | None, field_name: str) -> int:
 @dataclass
 class Runner:
     client: JsonRpcClient
+    oracle: OracleSession
     records: list[dict[str, Any]] = field(default_factory=list)
     closes: list[dict[str, Any]] = field(default_factory=list)
     sequence: int = 0
@@ -270,6 +287,132 @@ class Runner:
             )
         return record
 
+    def execute_oracle(
+        self,
+        *,
+        step: str,
+        label: str,
+        transaction: Any,
+        wallet: Wallet,
+        before_state: Callable[[], dict[str, Any]],
+        after_state: Callable[[dict[str, Any] | None], dict[str, Any]],
+        context: Callable[[dict[str, Any] | None, dict[str, Any], dict[str, Any]], dict[str, Any]],
+    ) -> dict[str, Any]:
+        """Capture one live observation and evaluate its frozen A-K binding."""
+
+        self.sequence += 1
+        output = TRANSACTIONS / f"{self.sequence:02d}-{step.lower()}-{label}.json"
+        before = before_state()
+        ledger_before = ledger_header()
+        submission: dict[str, Any] | None = None
+        tx_hash: str | None = None
+        client_exception: dict[str, str] | None = None
+        transport_failure: dict[str, Any] | None = None
+        lookup: dict[str, Any] | None = None
+        public_tx: dict[str, Any] | None = None
+
+        try:
+            filled = autofill(transaction, self.client)
+            signed = sign(filled, wallet)
+            tx_hash = signed.get_hash()
+            public_tx = public_transaction(signed.to_xrpl())
+            response = submit(signed, self.client, fail_hard=True)
+            submission = sanitize_response(response.result)
+        except Exception as exc:  # noqa: BLE001 - preserve client failure as evidence
+            client_exception = {"type": type(exc).__name__, "message": str(exc)}
+
+        if client_exception is None:
+            try:
+                self.close(f"validate frozen oracle step {step}: {label}")
+                if tx_hash is not None:
+                    lookup = sanitize_response(rpc("tx", transaction=tx_hash, binary=False))
+            except RpcFailure as exc:
+                transport_failure = {"type": type(exc).__name__, "message": str(exc)}
+
+        after = after_state(lookup)
+        ledger_after = ledger_header()
+        observation = {
+            "pre_state": before,
+            "submission_response": submission,
+            "submission_hash_if_any": tx_hash,
+            "client_exception": client_exception,
+            "validated_lookup": lookup,
+            "transport_or_server_failure": transport_failure,
+            "post_state": after,
+            "ledger_before": ledger_before,
+            "ledger_after": ledger_after,
+            "context": context(lookup, before, after),
+            "synthetic": False,
+        }
+        record = self.oracle.record(step, observation)
+        record.update(
+            {
+                "experiment": "E3" if step <= "G" else "E4",
+                "label": label,
+                "canonical_public_transaction": public_tx,
+                "submission_response": submission,
+                "validated_transaction_response": lookup,
+            }
+        )
+        write_json(output, record)
+        self.records.append(record)
+        write_json(EVIDENCE / "experiment-summary.json", self.records)
+        write_json(EVIDENCE / "oracle-a-k.json", self.oracle.records)
+        if record["classification"]["status"] != "PASS":
+            write_json(EVIDENCE / "unexpected-result.json", record)
+            observed = record["result_resolution"]["authoritative_result"]
+            raise CheckpointStop(
+                f"oracle {step} {label}: expected {record['expected_result']}, "
+                f"observed {observed}; result or frozen state assertion failed"
+            )
+        return record
+
+    def record_oracle_validation(
+        self,
+        *,
+        step: str,
+        label: str,
+        inherited: dict[str, Any],
+        before_state: dict[str, Any],
+        post_state: dict[str, Any],
+        context: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Record a no-submission semantic step inheriting validated transaction evidence."""
+
+        observation = {
+            "pre_state": before_state,
+            "submission_response": inherited["submission_response"],
+            "submission_hash_if_any": inherited["submission_hash_if_any"],
+            "client_exception": inherited["client_exception"],
+            "validated_lookup": inherited["validated_transaction_response"],
+            "transport_or_server_failure": inherited["result_resolution"][
+                "transport_or_server_failure"
+            ],
+            "post_state": post_state,
+            "ledger_before": inherited["ledger_before"],
+            "ledger_after": inherited["ledger_after"],
+            "context": context,
+            "synthetic": False,
+        }
+        record = self.oracle.record(step, observation)
+        record.update(
+            {
+                "experiment": "E4",
+                "label": label,
+                "inherited_transaction_step": "H",
+                "submission_response": inherited["submission_response"],
+                "validated_transaction_response": inherited["validated_transaction_response"],
+            }
+        )
+        write_json(EVIDENCE / f"oracle-{step.lower()}-{label}.json", record)
+        self.records.append(record)
+        write_json(EVIDENCE / "experiment-summary.json", self.records)
+        write_json(EVIDENCE / "oracle-a-k.json", self.oracle.records)
+        if record["classification"]["status"] != "PASS":
+            write_json(EVIDENCE / "unexpected-result.json", record)
+            raise CheckpointStop(f"oracle {step} {label}: frozen state assertion failed")
+        return record
+
     def advance_to(
         self,
         *,
@@ -314,6 +457,37 @@ def vault_state(vault_id: str, lender: str, issuer: str) -> dict[str, Any]:
         "lender_share": holder,
         "lender_tRLUSD_balance": line_balance(lender, issuer),
     }
+
+
+def lifecycle_state(
+    vault_id: str,
+    lender: str,
+    issuer: str,
+    actors: dict[str, Wallet],
+) -> dict[str, Any]:
+    """Capture every frozen B-G protocol and protected-state input."""
+
+    base = vault_state(vault_id, lender, issuer)
+    lender_account = account_data(lender)
+    state = {
+        "vault": base["vault"],
+        "share_issuance": base["share_issuance"],
+        "lender_share": base["lender_share"],
+        "lender_balance": base["lender_tRLUSD_balance"],
+        "unrelated_state": {
+            "borrower_balance": line_balance(actors["borrower"].address, issuer),
+            "owner_balance": line_balance(actors["loan_broker"].address, issuer),
+            "issuer_account": account_data(issuer),
+        },
+    }
+    state["protected"] = {
+        "vault": state["vault"],
+        "share_issuance": state["share_issuance"],
+        "lender_share": state["lender_share"],
+        "lender_balance": state["lender_balance"],
+        "lender_account_sequence": (lender_account or {}).get("Sequence"),
+    }
+    return state
 
 
 def vault_checks(
@@ -378,6 +552,26 @@ def setup_fixture(runner: Runner, root: Wallet) -> dict[str, Wallet]:
         },
     )
     for name, wallet in actors.items():
+        actor_name = name
+        actor_wallet = wallet
+
+        def capture_actor_account(actor_wallet: Wallet = actor_wallet) -> dict[str, Any]:
+            return {"account": account_data(actor_wallet.address)}
+
+        def assert_actor_account(
+            _before: dict[str, Any],
+            after: dict[str, Any],
+            actor_name: str = actor_name,
+            actor_wallet: Wallet = actor_wallet,
+        ) -> list[StateAssertion]:
+            return [
+                state_assertion(
+                    f"{actor_name} AccountRoot created",
+                    (after["account"] or {}).get("Account"),
+                    actor_wallet.address,
+                )
+            ]
+
         runner.execute(
             experiment="SETUP",
             label=f"fund_{name}",
@@ -386,14 +580,8 @@ def setup_fixture(runner: Runner, root: Wallet) -> dict[str, Wallet]:
             ),
             wallet=root,
             expected_result="tesSUCCESS",
-            state=lambda wallet=wallet: {"account": account_data(wallet.address)},
-            assertions=lambda _before, after, wallet=wallet, name=name: [
-                state_assertion(
-                    f"{name} AccountRoot created",
-                    (after["account"] or {}).get("Account"),
-                    wallet.address,
-                )
-            ],
+            state=capture_actor_account,
+            assertions=assert_actor_account,
         )
 
     issuer = actors["issuer"]
@@ -418,6 +606,23 @@ def setup_fixture(runner: Runner, root: Wallet) -> dict[str, Wallet]:
 
     for name in ("lender", "borrower", "loan_broker"):
         holder = actors[name]
+
+        def capture_holder_line(holder: Wallet = holder) -> dict[str, Any]:
+            return {"trust_line": trust_line(holder.address, issuer.address)}
+
+        def assert_holder_line(
+            _before: dict[str, Any],
+            after: dict[str, Any],
+            name: str = name,
+        ) -> list[StateAssertion]:
+            return [
+                state_assertion(
+                    f"{name} tRLUSD trust line limit",
+                    (after["trust_line"] or {}).get("limit"),
+                    "1000000",
+                )
+            ]
+
         runner.execute(
             experiment="SETUP",
             label=f"{name}_trust_tRLUSD",
@@ -426,18 +631,24 @@ def setup_fixture(runner: Runner, root: Wallet) -> dict[str, Wallet]:
             ),
             wallet=holder,
             expected_result="tesSUCCESS",
-            state=lambda holder=holder: {"trust_line": trust_line(holder.address, issuer.address)},
-            assertions=lambda _before, after, name=name: [
-                state_assertion(
-                    f"{name} tRLUSD trust line limit",
-                    (after["trust_line"] or {}).get("limit"),
-                    "1000000",
-                )
-            ],
+            state=capture_holder_line,
+            assertions=assert_holder_line,
         )
 
     for name, value in (("lender", "200000"), ("loan_broker", "20000")):
         holder = actors[name]
+
+        def capture_holder_balance(holder: Wallet = holder) -> dict[str, Any]:
+            return {"balance": line_balance(holder.address, issuer.address)}
+
+        def assert_holder_balance(
+            _before: dict[str, Any],
+            after: dict[str, Any],
+            name: str = name,
+            value: str = value,
+        ) -> list[StateAssertion]:
+            return [state_assertion(f"{name} tRLUSD fixture balance", after["balance"], value)]
+
         runner.execute(
             experiment="SETUP",
             label=f"issue_tRLUSD_to_{name}",
@@ -448,10 +659,8 @@ def setup_fixture(runner: Runner, root: Wallet) -> dict[str, Wallet]:
             ),
             wallet=issuer,
             expected_result="tesSUCCESS",
-            state=lambda holder=holder: {"balance": line_balance(holder.address, issuer.address)},
-            assertions=lambda _before, after, value=value, name=name: [
-                state_assertion(f"{name} tRLUSD fixture balance", after["balance"], value)
-            ],
+            state=capture_holder_balance,
+            assertions=assert_holder_balance,
         )
 
     write_json(
@@ -479,33 +688,128 @@ def create_closed_vault(
     issuer: Wallet,
     subscription: int,
     redemption: int,
+    oracle_step: str | None = None,
 ) -> tuple[str, dict[str, Any]]:
-    record = runner.execute(
-        experiment=experiment,
-        label=label,
-        transaction=VaultCreate(
-            account=owner.address,
-            asset=IssuedCurrency(currency=TR_USD, issuer=issuer.address),
-            withdrawal_policy=WithdrawalPolicy.VAULT_STRATEGY_FIRST_COME_FIRST_SERVE,
-            vault_kind=VaultKind.CLOSED,
-            subscription_date=subscription,
-            redemption_date=redemption,
-        ),
-        wallet=owner,
-        expected_result="tesSUCCESS",
-        state=lambda: {"objects": account_objects(owner.address)},
-        assertions=lambda before, after: vault_create_transition_assertions(
-            before_objects=before["objects"],
-            after_objects=after["objects"],
-            vault_index=None,
-            owner=owner.address,
-            asset={"currency": TR_USD, "issuer": issuer.address},
-            vault_kind=1,
-            subscription_date=subscription,
-            redemption_date=redemption,
-            withdrawal_policy=1,
-        ),
+    transaction = VaultCreate(
+        account=owner.address,
+        asset=IssuedCurrency(currency=TR_USD, issuer=issuer.address),
+        withdrawal_policy=WithdrawalPolicy.VAULT_STRATEGY_FIRST_COME_FIRST_SERVE,
+        vault_kind=VaultKind.CLOSED,
+        subscription_date=subscription,
+        redemption_date=redemption,
     )
+    if oracle_step is None:
+
+        def setup_creation_assertions(
+            before: dict[str, Any], after: dict[str, Any]
+        ) -> list[StateAssertion]:
+            old_indices = {
+                item.get("index")
+                for item in before["objects"]
+                if item.get("LedgerEntryType") == "Vault"
+            }
+            new_vaults = [
+                item
+                for item in after["objects"]
+                if item.get("LedgerEntryType") == "Vault" and item.get("index") not in old_indices
+            ]
+            new_index = (
+                str(new_vaults[0]["index"])
+                if len(new_vaults) == 1 and isinstance(new_vaults[0].get("index"), str)
+                else ""
+            )
+            return [
+                state_assertion("one new semantic Vault identity", len(new_vaults), 1),
+                *vault_create_transition_assertions(
+                    before_objects=before["objects"],
+                    after_objects=after["objects"],
+                    vault_index=new_index,
+                    owner=owner.address,
+                    asset={"currency": TR_USD, "issuer": issuer.address},
+                    vault_kind=1,
+                    subscription_date=subscription,
+                    redemption_date=redemption,
+                    withdrawal_policy=1,
+                ),
+            ]
+
+        record = runner.execute(
+            experiment=experiment,
+            label=label,
+            transaction=transaction,
+            wallet=owner,
+            expected_result="tesSUCCESS",
+            state=lambda: {"objects": account_objects(owner.address)},
+            assertions=setup_creation_assertions,
+        )
+    else:
+
+        def before_state() -> dict[str, Any]:
+            return {
+                "owner_account": account_data(owner.address),
+                "owner_trustline": trust_line(owner.address, issuer.address),
+                "owner_objects": account_objects(owner.address),
+            }
+
+        def after_state(lookup: dict[str, Any] | None) -> dict[str, Any]:
+            indices = created_indices(lookup, "Vault")
+            vault_id = indices[0] if len(indices) == 1 else ""
+            vault = ledger_node(index=vault_id) if vault_id else None
+            objects = account_objects(owner.address)
+            share_id = None if vault is None else vault.get("ShareMPTID")
+            owner_tokens = (
+                semantic_objects(
+                    objects,
+                    ledger_entry_type="MPToken",
+                    identity={
+                        "Account": owner.address,
+                        "MPTokenIssuanceID": share_id,
+                    },
+                )
+                if share_id is not None
+                else []
+            )
+            pseudo_account = None if vault is None else vault.get("Account")
+            return {
+                "owner_account": account_data(owner.address),
+                "owner_trustline": trust_line(owner.address, issuer.address),
+                "owner_objects": objects,
+                "vault": vault,
+                "owner_mptoken": owner_tokens[0] if len(owner_tokens) == 1 else None,
+                "share_issuance": (
+                    None if share_id is None else ledger_node(mpt_issuance=share_id)
+                ),
+                "vault_pseudo_account": (
+                    None if pseudo_account is None else account_data(str(pseudo_account))
+                ),
+            }
+
+        def context(
+            lookup: dict[str, Any] | None,
+            _before: dict[str, Any],
+            _after: dict[str, Any],
+        ) -> dict[str, Any]:
+            indices = created_indices(lookup, "Vault")
+            return {
+                "vault_index": indices[0] if len(indices) == 1 else "",
+                "owner": owner.address,
+                "asset": {"currency": TR_USD, "issuer": issuer.address},
+                "vault_kind": 1,
+                "subscription_date": subscription,
+                "redemption_date": redemption,
+                "withdrawal_policy": 1,
+                "flags": 0,
+            }
+
+        record = runner.execute_oracle(
+            step=oracle_step,
+            label=label,
+            transaction=transaction,
+            wallet=owner,
+            before_state=before_state,
+            after_state=after_state,
+            context=context,
+        )
     meta = record["validated_transaction_response"]["meta"]
     vault_id = extract_created(meta, "Vault")
     node = ledger_node(index=vault_id)
@@ -542,13 +846,33 @@ def run_e3(runner: Runner, actors: dict[str, Wallet]) -> dict[str, Any]:
         issuer=issuer,
         subscription=subscription,
         redemption=redemption,
+        oracle_step="A",
     )
 
     def state() -> dict[str, Any]:
-        return vault_state(vault_id, lender.address, issuer.address)
+        return lifecycle_state(vault_id, lender.address, issuer.address, actors)
 
-    runner.execute(
-        experiment="E3",
+    def lifecycle_context(
+        *, asset_delta: int, balance_delta: int, share_delta: int
+    ) -> Callable[[dict[str, Any] | None, dict[str, Any], dict[str, Any]], dict[str, Any]]:
+        return lambda _lookup, _before, _after: {
+            "lender": lender.address,
+            "subscription_date": subscription,
+            "redemption_date": redemption,
+            "asset_delta": asset_delta,
+            "balance_delta": balance_delta,
+            "share_delta": share_delta,
+        }
+
+    def phase_context(
+        _lookup: dict[str, Any] | None,
+        _before: dict[str, Any],
+        _after: dict[str, Any],
+    ) -> dict[str, Any]:
+        return {"subscription_date": subscription, "redemption_date": redemption}
+
+    runner.execute_oracle(
+        step="B",
         label="e3_subscription_deposit",
         transaction=VaultDeposit(
             account=lender.address,
@@ -556,16 +880,16 @@ def run_e3(runner: Runner, actors: dict[str, Wallet]) -> dict[str, Any]:
             amount=amount(issuer.address, "100000"),
         ),
         wallet=lender,
-        expected_result="tesSUCCESS",
-        state=state,
-        assertions=vault_checks(
+        before_state=state,
+        after_state=lambda _lookup: state(),
+        context=lifecycle_context(
             asset_delta=100000,
             balance_delta=-100000,
             share_delta=100000000000,
         ),
     )
-    runner.execute(
-        experiment="E3",
+    runner.execute_oracle(
+        step="C",
         label="e3_subscription_withdraw",
         transaction=VaultWithdraw(
             account=lender.address,
@@ -573,9 +897,9 @@ def run_e3(runner: Runner, actors: dict[str, Wallet]) -> dict[str, Any]:
             amount=amount(issuer.address, "1000"),
         ),
         wallet=lender,
-        expected_result="tesSUCCESS",
-        state=state,
-        assertions=vault_checks(
+        before_state=state,
+        after_state=lambda _lookup: state(),
+        context=lifecycle_context(
             asset_delta=-1000,
             balance_delta=1000,
             share_delta=-1000000000,
@@ -588,27 +912,27 @@ def run_e3(runner: Runner, actors: dict[str, Wallet]) -> dict[str, Any]:
         wanted_phase="Investment",
         vault_id=vault_id,
     )
-    runner.execute(
-        experiment="E3",
+    runner.execute_oracle(
+        step="D",
         label="e3_investment_deposit_rejected",
         transaction=VaultDeposit(
             account=lender.address, vault_id=vault_id, amount=amount(issuer.address, "1")
         ),
         wallet=lender,
-        expected_result="tecEXPIRED",
-        state=state,
-        assertions=unchanged_checks,
+        before_state=state,
+        after_state=lambda _lookup: state(),
+        context=phase_context,
     )
-    runner.execute(
-        experiment="E3",
+    runner.execute_oracle(
+        step="E",
         label="e3_investment_withdraw_rejected",
         transaction=VaultWithdraw(
             account=lender.address, vault_id=vault_id, amount=amount(issuer.address, "1")
         ),
         wallet=lender,
-        expected_result="tecTOO_SOON",
-        state=state,
-        assertions=unchanged_checks,
+        before_state=state,
+        after_state=lambda _lookup: state(),
+        context=phase_context,
     )
     redemption_entry = runner.advance_to(
         label="e3-redemption-entry",
@@ -617,19 +941,8 @@ def run_e3(runner: Runner, actors: dict[str, Wallet]) -> dict[str, Any]:
         wanted_phase="Redemption",
         vault_id=vault_id,
     )
-    runner.execute(
-        experiment="E3",
-        label="e3_redemption_deposit_rejected",
-        transaction=VaultDeposit(
-            account=lender.address, vault_id=vault_id, amount=amount(issuer.address, "1")
-        ),
-        wallet=lender,
-        expected_result="tecEXPIRED",
-        state=state,
-        assertions=unchanged_checks,
-    )
-    runner.execute(
-        experiment="E3",
+    runner.execute_oracle(
+        step="F",
         label="e3_redemption_withdraw",
         transaction=VaultWithdraw(
             account=lender.address,
@@ -637,13 +950,24 @@ def run_e3(runner: Runner, actors: dict[str, Wallet]) -> dict[str, Any]:
             amount=amount(issuer.address, "1000"),
         ),
         wallet=lender,
-        expected_result="tesSUCCESS",
-        state=state,
-        assertions=vault_checks(
+        before_state=state,
+        after_state=lambda _lookup: state(),
+        context=lifecycle_context(
             asset_delta=-1000,
             balance_delta=1000,
             share_delta=-1000000000,
         ),
+    )
+    runner.execute_oracle(
+        step="G",
+        label="e3_redemption_deposit_rejected",
+        transaction=VaultDeposit(
+            account=lender.address, vault_id=vault_id, amount=amount(issuer.address, "1")
+        ),
+        wallet=lender,
+        before_state=state,
+        after_state=lambda _lookup: state(),
+        context=phase_context,
     )
     result = {
         "vault_id": vault_id,
@@ -668,39 +992,60 @@ def run_e4(runner: Runner, actors: dict[str, Wallet]) -> dict[str, Any]:
     redemption = subscription + 180
     vault_id, creation = create_closed_vault(
         runner,
-        experiment="E4",
-        label="e4_create_fresh_closed_ended_vault",
+        experiment="SETUP",
+        label="e4_prerequisite_create_fresh_closed_ended_vault",
         owner=broker,
         issuer=issuer,
         subscription=subscription,
         redemption=redemption,
     )
 
-    def relationship_state() -> dict[str, Any]:
+    broker_context_base = {
+        "owner": broker.address,
+        "vault_id": vault_id,
+        "debt_maximum": "50000",
+        "cover_rate_minimum": 10000,
+        "cover_rate_liquidation": 25000,
+        "owner_count_delta": 2,
+    }
+
+    def broker_before_state() -> dict[str, Any]:
         return {
             "vault": ledger_node(index=vault_id),
-            "broker_owner_objects": account_objects(broker.address),
-            "borrower": account_data(borrower.address),
+            "owner_objects": account_objects(broker.address),
+            "owner_account": account_data(broker.address),
+            "owner_balance": line_balance(broker.address, issuer.address),
         }
 
-    runner.execute(
-        experiment="E4",
-        label="e4_non_owner_loan_broker_set_rejected",
-        transaction=LoanBrokerSet(
-            account=borrower.address,
-            vault_id=vault_id,
-            debt_maximum="50000",
-            cover_rate_minimum=10000,
-            cover_rate_liquidation=25000,
-            management_fee_rate=0,
-        ),
-        wallet=borrower,
-        expected_result="tecNO_PERMISSION",
-        state=relationship_state,
-        assertions=unchanged_checks,
-    )
-    broker_record = runner.execute(
-        experiment="E4",
+    def broker_after_state(lookup: dict[str, Any] | None) -> dict[str, Any]:
+        indices = created_indices(lookup, "LoanBroker")
+        broker_id = indices[0] if len(indices) == 1 else ""
+        node = ledger_node(index=broker_id) if broker_id else None
+        pseudo_account = None if node is None else node.get("Account")
+        return {
+            "vault": ledger_node(index=vault_id),
+            "owner_objects": account_objects(broker.address),
+            "owner_account": account_data(broker.address),
+            "owner_balance": line_balance(broker.address, issuer.address),
+            "loan_broker": node,
+            "broker_pseudo_account": (
+                None if pseudo_account is None else account_data(str(pseudo_account))
+            ),
+        }
+
+    def broker_context(
+        lookup: dict[str, Any] | None,
+        _before: dict[str, Any],
+        _after: dict[str, Any],
+    ) -> dict[str, Any]:
+        indices = created_indices(lookup, "LoanBroker")
+        return {
+            **broker_context_base,
+            "loan_broker_index": indices[0] if len(indices) == 1 else "",
+        }
+
+    broker_record = runner.execute_oracle(
+        step="H",
         label="e4_owner_create_loan_broker",
         transaction=LoanBrokerSet(
             account=broker.address,
@@ -711,31 +1056,41 @@ def run_e4(runner: Runner, actors: dict[str, Wallet]) -> dict[str, Any]:
             management_fee_rate=0,
         ),
         wallet=broker,
-        expected_result="tesSUCCESS",
-        state=lambda: {"objects": account_objects(broker.address)},
-        assertions=lambda before, after: loan_broker_create_transition_assertions(
-            before_objects=before["objects"],
-            after_objects=after["objects"],
-            broker_index=None,
-            owner=broker.address,
-            vault_id=vault_id,
-            debt_maximum="50000",
-            cover_rate_minimum=10000,
-            cover_rate_liquidation=25000,
-        ),
+        before_state=broker_before_state,
+        after_state=broker_after_state,
+        context=broker_context,
     )
     broker_id = extract_created(
         broker_record["validated_transaction_response"]["meta"], "LoanBroker"
     )
 
+    relationship = runner.record_oracle_validation(
+        step="I",
+        label="e4_validate_vault_broker_relationship",
+        inherited=broker_record,
+        before_state={"vault": broker_record["pre_state"]["vault"]},
+        post_state={
+            "vault": broker_record["post_state"]["vault"],
+            "loan_broker": broker_record["post_state"]["loan_broker"],
+        },
+        context={**broker_context_base, "loan_broker_index": broker_id},
+    )
+
     def cover_state() -> dict[str, Any]:
+        node = ledger_node(index=broker_id)
+        pseudo_account = None if node is None else node.get("Account")
         return {
-            "loan_broker": ledger_node(index=broker_id),
-            "owner_tRLUSD_balance": line_balance(broker.address, issuer.address),
+            "loan_broker": node,
+            "owner_balance": line_balance(broker.address, issuer.address),
+            "broker_holding": (
+                "0" if pseudo_account is None else line_balance(str(pseudo_account), issuer.address)
+            ),
+            "vault": ledger_node(index=vault_id),
+            "unrelated_state": {"borrower_balance": line_balance(borrower.address, issuer.address)},
         }
 
-    runner.execute(
-        experiment="E4",
+    runner.execute_oracle(
+        step="J",
         label="e4_deposit_first_loss_cover",
         transaction=LoanBrokerCoverDeposit(
             account=broker.address,
@@ -743,19 +1098,51 @@ def run_e4(runner: Runner, actors: dict[str, Wallet]) -> dict[str, Any]:
             amount=amount(issuer.address, "10000"),
         ),
         wallet=broker,
-        expected_result="tesSUCCESS",
-        state=cover_state,
-        assertions=lambda before, after: cover_transition_assertions(
-            before_broker=before["loan_broker"],
-            after_broker=after["loan_broker"],
-            broker_index=broker_id,
-            owner=broker.address,
-            vault_id=vault_id,
-            before_owner_balance=before["owner_tRLUSD_balance"],
-            after_owner_balance=after["owner_tRLUSD_balance"],
-            cover_delta=10000,
-        ),
+        before_state=cover_state,
+        after_state=lambda _lookup: cover_state(),
+        context=lambda _lookup, _before, _after: {
+            **broker_context_base,
+            "loan_broker_index": broker_id,
+            "cover_delta": 10000,
+        },
     )
+
+    def negative_state() -> dict[str, Any]:
+        owner_account = account_data(broker.address)
+        non_owner_account = account_data(borrower.address)
+        owner_objects = account_objects(broker.address)
+        non_owner_objects = account_objects(borrower.address)
+        protected = {
+            "vault": ledger_node(index=vault_id),
+            "owner_account_sequence": (owner_account or {}).get("Sequence"),
+            "non_owner_account_sequence": (non_owner_account or {}).get("Sequence"),
+            "owner_objects": owner_objects,
+            "non_owner_objects": non_owner_objects,
+            "owner_balance": line_balance(broker.address, issuer.address),
+            "non_owner_balance": line_balance(borrower.address, issuer.address),
+        }
+        return {"protected": protected, "non_owner_objects": non_owner_objects}
+
+    runner.execute_oracle(
+        step="K",
+        label="e4_non_owner_loan_broker_set_rejected",
+        transaction=LoanBrokerSet(
+            account=borrower.address,
+            vault_id=vault_id,
+            debt_maximum="50000",
+            cover_rate_minimum=10000,
+            cover_rate_liquidation=25000,
+            management_fee_rate=0,
+        ),
+        wallet=borrower,
+        before_state=negative_state,
+        after_state=lambda _lookup: negative_state(),
+        context=lambda _lookup, _before, _after: {
+            "non_owner": borrower.address,
+            "vault_id": vault_id,
+        },
+    )
+
     final = cover_state()
     broker_node = final["loan_broker"] or {}
     exact_checks = [
@@ -778,6 +1165,7 @@ def run_e4(runner: Runner, actors: dict[str, Wallet]) -> dict[str, Any]:
         "vault_owner": broker.address,
         "loan_broker_owner": broker_node.get("Owner"),
         "ownership_relationship_observed": "LoanBrokerSet Account equals Vault Owner",
+        "relationship_assertion": relationship,
         "final_state": final,
         "field_assertions": exact_checks,
         "cover_findings": {
@@ -805,9 +1193,10 @@ def run_e4(runner: Runner, actors: dict[str, Wallet]) -> dict[str, Any]:
 
 
 def main() -> int:
+    oracle = OracleSession()
     if EVIDENCE.exists():
         raise CheckpointStop(
-            "checkpoint-1c-r evidence directory already exists; refusing to retry the experiment"
+            f"{EVIDENCE.name} evidence directory already exists; refusing to retry the experiment"
         )
     root_seed = os.environ.get(ROOT_SEED_ENV)
     if not root_seed:
@@ -816,7 +1205,7 @@ def main() -> int:
     EVIDENCE.mkdir(parents=True)
     TRANSACTIONS.mkdir()
     client = JsonRpcClient(RPC_URL)
-    runner = Runner(client=client)
+    runner = Runner(client=client, oracle=oracle)
 
     public_server_info = sanitize_response(rpc_success("server_info")["info"])
     public_server_info.pop("pubkey_node", None)
@@ -871,8 +1260,9 @@ def main() -> int:
     actors = setup_fixture(runner, Wallet.from_seed(root_seed))
     e3 = run_e3(runner, actors)
     e4 = run_e4(runner, actors)
+    runner.oracle.require_complete()
     summary = {
-        "checkpoint": "1C-R",
+        "checkpoint": EVIDENCE.name,
         "outcome": "PASS",
         "e1": "PASS/FROZEN",
         "e2": "PASS/FROZEN",
@@ -881,12 +1271,13 @@ def main() -> int:
         "e5_through_e9": "NOT_ATTEMPTED",
         "e3_result": e3,
         "e4_result": e4,
-        "transaction_count": len(runner.records),
+        "oracle_step_order": [record["step"] for record in runner.oracle.records],
+        "transaction_count": runner.sequence,
         "close_count": len(runner.closes),
     }
     write_json(EVIDENCE / "checkpoint-result.json", summary)
     create_manifest(EVIDENCE, EVIDENCE / "MANIFEST.json")
-    print("Checkpoint 1C-R completed: E3 PASS, E4 PASS. E5-E9 were not attempted.")
+    print("Frozen A-K execution completed: E3 PASS, E4 PASS. E5-E9 were not attempted.")
     return 0
 
 

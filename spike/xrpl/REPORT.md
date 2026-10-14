@@ -1,3 +1,154 @@
+# Checkpoint 1C-B — bind frozen A-K oracle to runner
+
+## Outcome
+
+**Harness checkpoint: PASS. Protocol experiments remain frozen.**
+
+Checkpoint 1C-B began at clean commit
+`377d994eee74d489f89f22509547a7b2ec857c0a`, retained checkpoint-0 ancestry
+and unchanged submodule gitlinks, and modified only `spike/xrpl/`.
+
+**ZERO XRPL transactions were submitted.** xrpld was not started, no RPC call
+was made, and no ledger was closed, advanced, or mutated. The complete A-K
+control flow ran only against explicitly synthetic fixtures.
+
+## Frozen inputs
+
+| Frozen file | Before SHA-256 | After SHA-256 | Result |
+| --- | --- | --- | --- |
+| `STATE-ASSERTIONS.md` | `836b90b7db41b04a9fdefb78d340f030f798b7650b4945b89ba48990545b416a` | `836b90b7db41b04a9fdefb78d340f030f798b7650b4945b89ba48990545b416a` | UNCHANGED |
+| `tests/test_state_assertions.py` | `634880c33181da678d8dead2dac1e932c0dd6aafac44c862fa48259b7710b77c` | `634880c33181da678d8dead2dac1e932c0dd6aafac44c862fa48259b7710b77c` | UNCHANGED |
+
+The semantic helper file was also left unchanged. No A-K meaning, expected
+result, predicate, or order was changed.
+
+## Binding architecture
+
+`scripts/frozen_oracle.py` defines an ordered, data-driven binding registry for
+A-K. Each binding declares its frozen result, predicate identifiers, capture
+paths, positive validated-state requirement, and negative protected-state
+requirement. A static preflight rejects a missing/reordered step, missing
+predicate or capture path, positive binding without validated post-state, and
+negative binding without protected-state comparison.
+
+`OracleSession` accepts observations only in A-K order, invokes every declared
+predicate, serializes the required evidence metadata, and permanently stops on
+the first FAIL. Runtime verification rejects an evaluator that declares but
+does not invoke a predicate.
+
+The protocol runner now constructs the preflighted session before its first RPC
+and maps live captures into the same binding engine. Step I inherits H's
+validated transaction evidence and adds no submission. The fixture adapter
+exercises the identical registry and evaluation path without importing a key,
+starting a server, or making a network call.
+
+## A-K bindings
+
+| Step | Bound frozen behavior |
+| --- | --- |
+| A | Unique metadata Vault index; semantic Vault and owner MPToken; indexed pre-state absence; protected owner trust line; captured issuance and pseudo-account. |
+| B | Subscription phase; stable Vault/share identities; exact deposit asset, balance, issuance, and holder deltas; unrelated-state protection. |
+| C | Subscription phase; the same stable identities and protected state; exact inverse withdrawal deltas. |
+| D | Investment phase; authoritative `tecEXPIRED`; complete protected-state equality including lender sequence. |
+| E | Investment phase; authoritative `tecTOO_SOON`; the same complete protected-state equality. |
+| F | Redemption phase; stable identities and exact withdrawal deltas; unrelated-state protection. |
+| G | Redemption phase; authoritative `tecEXPIRED`; complete protected-state equality. |
+| H | Unique metadata LoanBroker index; semantic owner/Vault/rate/limit/default fields; indexed pre-state absence; protected Vault/owner asset; scoped OwnerCount effect; pseudo-account capture. |
+| I | H-derived validated evidence; VaultID/Owner equality; present and distinct Vault/Broker pseudo accounts; stable Vault configuration. |
+| J | Stable broker configuration; exact cover/owner/pseudo-holding deltas; zero debt; protected Vault and unrelated state. |
+| K | Authoritative `tecNO_PERMISSION`; explicit absence of the attempted non-owner LoanBroker identity; complete owner/non-owner protected-state equality. |
+
+## B1-B12 results
+
+| Test | Result |
+| --- | --- |
+| B1 complete A-K preflight | PASS |
+| B2 missing A rejected | PASS |
+| B3 missing K rejected | PASS |
+| B4 reordered A-K rejected | PASS |
+| B5 missing predicate binding rejected | PASS |
+| B6 `tesSUCCESS` without validated post-state rejected | PASS |
+| B7 negative result with changed protected state rejected | PASS |
+| B8 client exception recorded distinctly | PASS |
+| B9 D failure prevents E-K | PASS |
+| B10 fixture dry run traverses A-K | PASS |
+| B11 every output contains required evidence metadata | PASS |
+| B12 H1-H12 file unchanged | PASS |
+
+Additional regressions prove preflight rejection for missing capture,
+positive-validation, and negative-protection bindings; runtime rejection when a
+declared predicate is not invoked; the live runner's A-K source order; and
+short-circuit behavior independently at every A-K step. The 1C-B test module
+contains 29 passing cases.
+
+## Synthetic fixture dry run
+
+The dry run traversed exactly
+`A → B → C → D → E → F → G → H → I → J → K`. All eleven records passed their
+bound assertions and contain the required submission/client/validation,
+pre/post state, ledger index, close time, assertion, and classification fields.
+
+`evidence/checkpoint-1c-b/fixture-dry-run.json` is labeled
+`SYNTHETIC HARNESS EVIDENCE — NOT XRPL PROTOCOL EVIDENCE`. Its SHA-256 is
+`24acbf1cc6de3643beb3d4cd4e4d7d8dc546adb08f016264014f6a5d3f61030f`.
+The manifest covers one file totaling 107421 bytes.
+
+The failure fixtures prove a failing step prevents every later provider from
+being called. The D-specific regression observes only A-D, and a parameterized
+regression repeats that proof for each possible failure point A-K.
+
+## Remaining runner risks
+
+- The bound runner has not been exercised against a fresh runtime.
+- First live observations may expose source/fixture shape differences; those
+  must fail closed rather than trigger an in-run oracle change.
+- E4 LoanBroker and cover bindings remain source/synthetic-derived.
+- Phase-boundary close counts and pseudo-account holding representation still
+  require runtime observation.
+- LoanSet and LoanPay remain deliberately outside this runner checkpoint.
+
+## Results state and recommendation
+
+- E1: **PASS/FROZEN**
+- E2: **PASS/FROZEN**
+- E3: **BLOCKED**
+- E4-E9: **NOT_ATTEMPTED**
+
+The 1C-B harness verdict is **PASS WITH CONDITIONS**. A separately authorized
+frozen-oracle E3/E4 execution may begin. The execution must use the bound oracle
+unchanged and stop on the first contradictory observation. E5 and E6 must not
+begin.
+
+## Checkpoint 1C-B gates
+
+- B1-B12 and binding regressions: PASS — 29 cases.
+- H1-H12 and helper regressions: PASS — 17 cases; frozen file unchanged.
+- All spike tests: PASS — 64 cases.
+- Repository unit tests: PASS — 17 cases.
+- Conformance tests: PASS — 4 cases.
+- Lint, formatting, and large-file check: PASS — 67 formatted files checked.
+- Strict typecheck: PASS over 25 source files.
+- Secrets scan: PASS.
+- JSON validation: PASS — 65 files.
+- Existing evidence manifests: PASS — Checkpoints 1B, 1B-R, 1C, 1C-R,
+  1C-F, and 1C-B.
+- Frozen-file immutability: PASS.
+- Authorized-path, submodule, and `review/xrpl/` checks: PASS.
+- `git diff --check`: PASS.
+
+## Checkpoint 1C-B modified paths
+
+- `spike/xrpl/REPORT.md`
+- `spike/xrpl/RESULTS.json`
+- `spike/xrpl/scripts/frozen_oracle.py`
+- `spike/xrpl/scripts/oracle_fixture.py`
+- `spike/xrpl/scripts/run_checkpoint_1c_r.py`
+- `spike/xrpl/tests/test_frozen_oracle_runner.py`
+- `spike/xrpl/evidence/checkpoint-1c-b/MANIFEST.json`
+- `spike/xrpl/evidence/checkpoint-1c-b/fixture-dry-run.json`
+
+---
+
 # Checkpoint 1C-F — frozen-oracle pre-runtime stop
 
 ## Outcome

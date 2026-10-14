@@ -1,8 +1,71 @@
 {
-  "schema_version": 7,
+  "schema_version": 8,
   "overall": "BLOCKED",
-  "scope": "Checkpoint 1C-F frozen-oracle pre-runtime audit; E3/E4 were not rerun",
-  "start_commit": "42845caf4801894fed5133f5bd33639bfe8cf422",
+  "scope": "Checkpoint 1C-B frozen A-K oracle runner binding; protocol state remains frozen",
+  "start_commit": "377d994eee74d489f89f22509547a7b2ec857c0a",
+  "oracle_binding_checkpoint": {
+    "name": "Checkpoint 1C-B",
+    "outcome": "PASS",
+    "verdict": "PASS WITH CONDITIONS",
+    "new_xrpl_transactions_submitted": 0,
+    "environment_started": false,
+    "rpc_calls_made": 0,
+    "normative_oracle": {
+      "path": "STATE-ASSERTIONS.md",
+      "sha256_before": "836b90b7db41b04a9fdefb78d340f030f798b7650b4945b89ba48990545b416a",
+      "sha256_after": "836b90b7db41b04a9fdefb78d340f030f798b7650b4945b89ba48990545b416a",
+      "unchanged": true
+    },
+    "h1_h12_tests": {
+      "path": "tests/test_state_assertions.py",
+      "sha256_before": "634880c33181da678d8dead2dac1e932c0dd6aafac44c862fa48259b7710b77c",
+      "sha256_after": "634880c33181da678d8dead2dac1e932c0dd6aafac44c862fa48259b7710b77c",
+      "unchanged": true
+    },
+    "preflight": "PASS",
+    "bound_order": ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K"],
+    "regression_tests": {
+      "B1": "PASS",
+      "B2": "PASS",
+      "B3": "PASS",
+      "B4": "PASS",
+      "B5": "PASS",
+      "B6": "PASS",
+      "B7": "PASS",
+      "B8": "PASS",
+      "B9": "PASS",
+      "B10": "PASS",
+      "B11": "PASS",
+      "B12": "PASS"
+    },
+    "gates": {
+      "binding_test_cases": "PASS (29)",
+      "harness_state_assertion_test_cases": "PASS (17)",
+      "all_spike_tests": "PASS (64)",
+      "repository_unit_tests": "PASS (17)",
+      "conformance_tests": "PASS (4)",
+      "lint_format_large_file": "PASS (67 formatted files checked)",
+      "strict_typecheck": "PASS (25 source files)",
+      "secrets_scan": "PASS",
+      "json_validation": "PASS (65 files)",
+      "evidence_manifest_verification": "PASS",
+      "frozen_file_immutability": "PASS",
+      "authorized_paths": "PASS",
+      "git_diff_check": "PASS"
+    },
+    "fixture_dry_run": {
+      "outcome": "PASS",
+      "synthetic": true,
+      "protocol_evidence": false,
+      "order": ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K"],
+      "failure_short_circuit_all_steps": "PASS",
+      "evidence_paths": [
+        "evidence/checkpoint-1c-b/fixture-dry-run.json",
+        "evidence/checkpoint-1c-b/MANIFEST.json"
+      ]
+    },
+    "separately_authorized_e3_e4_execution_ready": true
+  },
   "frozen_oracle_execution": {
     "name": "Checkpoint 1C-F",
     "outcome": "BLOCKED",

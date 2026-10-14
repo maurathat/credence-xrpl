@@ -1,0 +1,3428 @@
+{
+  "checkpoint": "1C-B",
+  "classification": "SYNTHETIC HARNESS EVIDENCE \u2014 NOT XRPL PROTOCOL EVIDENCE",
+  "environment_started": false,
+  "expected_order": [
+    "A",
+    "B",
+    "C",
+    "D",
+    "E",
+    "F",
+    "G",
+    "H",
+    "I",
+    "J",
+    "K"
+  ],
+  "order": [
+    "A",
+    "B",
+    "C",
+    "D",
+    "E",
+    "F",
+    "G",
+    "H",
+    "I",
+    "J",
+    "K"
+  ],
+  "outcome": "PASS",
+  "protocol_transactions_submitted": 0,
+  "records": [
+    {
+      "classification": {
+        "expected_result": "tesSUCCESS",
+        "observed_result": "tesSUCCESS",
+        "reasons": [],
+        "state_assertion": "PASS",
+        "state_unchanged": null,
+        "status": "PASS"
+      },
+      "client_exception": null,
+      "close_time": 101,
+      "expected_result": "tesSUCCESS",
+      "ledger_after": {
+        "close_time": 101,
+        "closed": true,
+        "ledger_index": 11
+      },
+      "ledger_before": {
+        "close_time": 100,
+        "closed": true,
+        "ledger_index": 10
+      },
+      "ledger_index": 11,
+      "name": "E3 VaultCreate",
+      "post_state": {
+        "owner_mptoken": {
+          "Account": "rSyntheticOwner",
+          "Flags": 0,
+          "LedgerEntryType": "MPToken",
+          "MPTAmount": "0",
+          "MPTokenIssuanceID": "SYNTHETIC-SHARE-1",
+          "index": "SYNTHETIC-HOLDER-rSyntheticOwner"
+        },
+        "owner_objects": [
+          {
+            "LedgerEntryType": "RippleState",
+            "index": "SYNTHETIC-OWNER-LINE"
+          },
+          {
+            "Account": "rSyntheticVaultPseudo",
+            "Asset": {
+              "currency": "74524C5553440000000000000000000000000000",
+              "issuer": "rSyntheticIssuer"
+            },
+            "AssetsAvailable": "0",
+            "AssetsTotal": "0",
+            "Flags": 0,
+            "LedgerEntryType": "Vault",
+            "Owner": "rSyntheticOwner",
+            "RedemptionDate": 310,
+            "ShareMPTID": "SYNTHETIC-SHARE-1",
+            "SubscriptionDate": 130,
+            "VaultKind": 1,
+            "WithdrawalPolicy": 1,
+            "index": "SYNTHETIC-VAULT-1"
+          },
+          {
+            "Account": "rSyntheticOwner",
+            "Flags": 0,
+            "LedgerEntryType": "MPToken",
+            "MPTAmount": "0",
+            "MPTokenIssuanceID": "SYNTHETIC-SHARE-1",
+            "index": "SYNTHETIC-HOLDER-rSyntheticOwner"
+          }
+        ],
+        "owner_trustline": {
+          "account": "rSyntheticIssuer",
+          "balance": "100",
+          "currency": "74524C5553440000000000000000000000000000"
+        },
+        "share_issuance": {
+          "AssetScale": 6,
+          "LedgerEntryType": "MPTokenIssuance",
+          "OutstandingAmount": "0",
+          "index": "SYNTHETIC-ISSUANCE-INDEX",
+          "mpt_issuance_id": "SYNTHETIC-SHARE-1"
+        },
+        "vault": {
+          "Account": "rSyntheticVaultPseudo",
+          "Asset": {
+            "currency": "74524C5553440000000000000000000000000000",
+            "issuer": "rSyntheticIssuer"
+          },
+          "AssetsAvailable": "0",
+          "AssetsTotal": "0",
+          "Flags": 0,
+          "LedgerEntryType": "Vault",
+          "Owner": "rSyntheticOwner",
+          "RedemptionDate": 310,
+          "ShareMPTID": "SYNTHETIC-SHARE-1",
+          "SubscriptionDate": 130,
+          "VaultKind": 1,
+          "WithdrawalPolicy": 1,
+          "index": "SYNTHETIC-VAULT-1"
+        },
+        "vault_pseudo_account": {
+          "Account": "rSyntheticVaultPseudo",
+          "LedgerEntryType": "AccountRoot"
+        }
+      },
+      "pre_state": {
+        "owner_objects": [
+          {
+            "LedgerEntryType": "RippleState",
+            "index": "SYNTHETIC-OWNER-LINE"
+          }
+        ],
+        "owner_trustline": {
+          "account": "rSyntheticIssuer",
+          "balance": "100",
+          "currency": "74524C5553440000000000000000000000000000"
+        }
+      },
+      "protected_state_unchanged": null,
+      "result_resolution": {
+        "authoritative_result": "tesSUCCESS",
+        "category": "ACCEPTED_VALIDATED_SUCCESS",
+        "client_exception": null,
+        "malformed_request": null,
+        "submission_hash_if_any": "synthetic-a-hash",
+        "submission_result": "tesSUCCESS",
+        "transport_or_server_failure": null,
+        "validated_lookup_status": "VALIDATED",
+        "validated_result_if_any": "tesSUCCESS"
+      },
+      "state_assertion": "PASS",
+      "state_assertions": [
+        {
+          "actual": [
+            {
+              "actual": [
+                "SYNTHETIC-VAULT-1"
+              ],
+              "expected": [
+                "SYNTHETIC-VAULT-1"
+              ],
+              "name": "created Vault indices",
+              "passed": true
+            }
+          ],
+          "expected": true,
+          "name": "unique_created_vault",
+          "passed": true
+        },
+        {
+          "actual": [
+            {
+              "actual": 1,
+              "expected": 1,
+              "name": "expected Vault match count",
+              "passed": true
+            },
+            {
+              "actual": "Vault",
+              "expected": "Vault",
+              "name": "Vault LedgerEntryType",
+              "passed": true
+            },
+            {
+              "actual": "SYNTHETIC-VAULT-1",
+              "expected": "SYNTHETIC-VAULT-1",
+              "name": "Vault index",
+              "passed": true
+            },
+            {
+              "actual": "rSyntheticOwner",
+              "expected": "rSyntheticOwner",
+              "name": "Vault Owner",
+              "passed": true
+            },
+            {
+              "actual": {
+                "currency": "74524C5553440000000000000000000000000000",
+                "issuer": "rSyntheticIssuer"
+              },
+              "expected": {
+                "currency": "74524C5553440000000000000000000000000000",
+                "issuer": "rSyntheticIssuer"
+              },
+              "name": "Vault Asset",
+              "passed": true
+            },
+            {
+              "actual": 1,
+              "expected": 1,
+              "name": "Vault VaultKind",
+              "passed": true
+            },
+            {
+              "actual": 130,
+              "expected": 130,
+              "name": "Vault SubscriptionDate",
+              "passed": true
+            },
+            {
+              "actual": 310,
+              "expected": 310,
+              "name": "Vault RedemptionDate",
+              "passed": true
+            },
+            {
+              "actual": 1,
+              "expected": 1,
+              "name": "Vault WithdrawalPolicy",
+              "passed": true
+            },
+            {
+              "actual": 0,
+              "expected": 0,
+              "name": "Vault Flags",
+              "passed": true
+            },
+            {
+              "actual": "rSyntheticVaultPseudo",
+              "expected": true,
+              "name": "Vault pseudo Account present",
+              "passed": true
+            },
+            {
+              "actual": "SYNTHETIC-SHARE-1",
+              "expected": true,
+              "name": "Vault ShareMPTID present",
+              "passed": true
+            },
+            {
+              "actual": 1,
+              "expected": 1,
+              "name": "expected owner MPToken match count",
+              "passed": true
+            },
+            {
+              "actual": "MPToken",
+              "expected": "MPToken",
+              "name": "MPToken LedgerEntryType",
+              "passed": true
+            },
+            {
+              "actual": "rSyntheticOwner",
+              "expected": "rSyntheticOwner",
+              "name": "MPToken Account",
+              "passed": true
+            },
+            {
+              "actual": "SYNTHETIC-SHARE-1",
+              "expected": "SYNTHETIC-SHARE-1",
+              "name": "MPToken MPTokenIssuanceID",
+              "passed": true
+            },
+            {
+              "actual": 0,
+              "expected": 0,
+              "name": "MPToken Flags",
+              "passed": true
+            },
+            {
+              "actual": 0,
+              "expected": 0,
+              "name": "expected Vault absent from pre-state",
+              "passed": true
+            },
+            {
+              "actual": 0,
+              "expected": 0,
+              "name": "expected owner MPToken absent from pre-state",
+              "passed": true
+            },
+            {
+              "actual": "Vault",
+              "expected": "Vault",
+              "name": "Vault LedgerEntryType",
+              "passed": true
+            },
+            {
+              "actual": "SYNTHETIC-VAULT-1",
+              "expected": "SYNTHETIC-VAULT-1",
+              "name": "Vault index",
+              "passed": true
+            },
+            {
+              "actual": "rSyntheticOwner",
+              "expected": "rSyntheticOwner",
+              "name": "Vault Owner",
+              "passed": true
+            },
+            {
+              "actual": {
+                "currency": "74524C5553440000000000000000000000000000",
+                "issuer": "rSyntheticIssuer"
+              },
+              "expected": {
+                "currency": "74524C5553440000000000000000000000000000",
+                "issuer": "rSyntheticIssuer"
+              },
+              "name": "Vault Asset",
+              "passed": true
+            },
+            {
+              "actual": 1,
+              "expected": 1,
+              "name": "Vault VaultKind",
+              "passed": true
+            },
+            {
+              "actual": 130,
+              "expected": 130,
+              "name": "Vault SubscriptionDate",
+              "passed": true
+            },
+            {
+              "actual": 310,
+              "expected": 310,
+              "name": "Vault RedemptionDate",
+              "passed": true
+            },
+            {
+              "actual": 1,
+              "expected": 1,
+              "name": "Vault WithdrawalPolicy",
+              "passed": true
+            },
+            {
+              "actual": 0,
+              "expected": 0,
+              "name": "Vault Flags",
+              "passed": true
+            },
+            {
+              "actual": "rSyntheticVaultPseudo",
+              "expected": true,
+              "name": "Vault pseudo Account present",
+              "passed": true
+            },
+            {
+              "actual": "SYNTHETIC-SHARE-1",
+              "expected": true,
+              "name": "Vault ShareMPTID present",
+              "passed": true
+            },
+            {
+              "actual": "MPToken",
+              "expected": "MPToken",
+              "name": "MPToken LedgerEntryType",
+              "passed": true
+            },
+            {
+              "actual": "rSyntheticOwner",
+              "expected": "rSyntheticOwner",
+              "name": "MPToken Account",
+              "passed": true
+            },
+            {
+              "actual": "SYNTHETIC-SHARE-1",
+              "expected": "SYNTHETIC-SHARE-1",
+              "name": "MPToken MPTokenIssuanceID",
+              "passed": true
+            },
+            {
+              "actual": 0,
+              "expected": 0,
+              "name": "MPToken Flags",
+              "passed": true
+            }
+          ],
+          "expected": true,
+          "name": "vault_and_owner_mptoken",
+          "passed": true
+        },
+        {
+          "actual": [
+            {
+              "actual": 0,
+              "expected": 0,
+              "name": "Vault absent before",
+              "passed": true
+            },
+            {
+              "actual": 0,
+              "expected": 0,
+              "name": "owner MPToken absent before",
+              "passed": true
+            }
+          ],
+          "expected": true,
+          "name": "created_objects_absent_before",
+          "passed": true
+        },
+        {
+          "actual": [
+            {
+              "actual": {
+                "account": "rSyntheticIssuer",
+                "balance": "100",
+                "currency": "74524C5553440000000000000000000000000000"
+              },
+              "expected": {
+                "account": "rSyntheticIssuer",
+                "balance": "100",
+                "currency": "74524C5553440000000000000000000000000000"
+              },
+              "name": "owner tRLUSD trust line",
+              "passed": true
+            }
+          ],
+          "expected": true,
+          "name": "owner_trustline_protected",
+          "passed": true
+        },
+        {
+          "actual": [
+            {
+              "actual": "MPTokenIssuance",
+              "expected": "MPTokenIssuance",
+              "name": "share issuance type",
+              "passed": true
+            },
+            {
+              "actual": "AccountRoot",
+              "expected": "AccountRoot",
+              "name": "Vault pseudo AccountRoot type",
+              "passed": true
+            },
+            {
+              "actual": "rSyntheticVaultPseudo",
+              "expected": "rSyntheticVaultPseudo",
+              "name": "Vault pseudo account identity",
+              "passed": true
+            }
+          ],
+          "expected": true,
+          "name": "auxiliary_objects_captured",
+          "passed": true
+        }
+      ],
+      "step": "A",
+      "submission_hash_if_any": "synthetic-a-hash",
+      "submission_result": "tesSUCCESS",
+      "synthetic": true,
+      "validated_lookup_status": "VALIDATED",
+      "validated_result_if_any": "tesSUCCESS"
+    },
+    {
+      "classification": {
+        "expected_result": "tesSUCCESS",
+        "observed_result": "tesSUCCESS",
+        "reasons": [],
+        "state_assertion": "PASS",
+        "state_unchanged": null,
+        "status": "PASS"
+      },
+      "client_exception": null,
+      "close_time": 111,
+      "expected_result": "tesSUCCESS",
+      "ledger_after": {
+        "close_time": 111,
+        "closed": true,
+        "ledger_index": 12
+      },
+      "ledger_before": {
+        "close_time": 110,
+        "closed": true,
+        "ledger_index": 11
+      },
+      "ledger_index": 12,
+      "name": "E3 Subscription deposit",
+      "post_state": {
+        "lender_balance": "900",
+        "lender_share": {
+          "Account": "rSyntheticLender",
+          "Flags": 0,
+          "LedgerEntryType": "MPToken",
+          "MPTAmount": "100000000",
+          "MPTokenIssuanceID": "SYNTHETIC-SHARE-1",
+          "index": "SYNTHETIC-HOLDER-rSyntheticLender"
+        },
+        "share_issuance": {
+          "AssetScale": 6,
+          "LedgerEntryType": "MPTokenIssuance",
+          "OutstandingAmount": "100000000",
+          "index": "SYNTHETIC-ISSUANCE-INDEX",
+          "mpt_issuance_id": "SYNTHETIC-SHARE-1"
+        },
+        "unrelated_state": {
+          "borrower_balance": "0",
+          "owner_balance": "100"
+        },
+        "vault": {
+          "Account": "rSyntheticVaultPseudo",
+          "Asset": {
+            "currency": "74524C5553440000000000000000000000000000",
+            "issuer": "rSyntheticIssuer"
+          },
+          "AssetsAvailable": "100",
+          "AssetsTotal": "100",
+          "Flags": 0,
+          "LedgerEntryType": "Vault",
+          "Owner": "rSyntheticOwner",
+          "RedemptionDate": 310,
+          "ShareMPTID": "SYNTHETIC-SHARE-1",
+          "SubscriptionDate": 130,
+          "VaultKind": 1,
+          "WithdrawalPolicy": 1,
+          "index": "SYNTHETIC-VAULT-1"
+        }
+      },
+      "pre_state": {
+        "lender_balance": "1000",
+        "lender_share": null,
+        "share_issuance": {
+          "AssetScale": 6,
+          "LedgerEntryType": "MPTokenIssuance",
+          "OutstandingAmount": "0",
+          "index": "SYNTHETIC-ISSUANCE-INDEX",
+          "mpt_issuance_id": "SYNTHETIC-SHARE-1"
+        },
+        "unrelated_state": {
+          "borrower_balance": "0",
+          "owner_balance": "100"
+        },
+        "vault": {
+          "Account": "rSyntheticVaultPseudo",
+          "Asset": {
+            "currency": "74524C5553440000000000000000000000000000",
+            "issuer": "rSyntheticIssuer"
+          },
+          "AssetsAvailable": "0",
+          "AssetsTotal": "0",
+          "Flags": 0,
+          "LedgerEntryType": "Vault",
+          "Owner": "rSyntheticOwner",
+          "RedemptionDate": 310,
+          "ShareMPTID": "SYNTHETIC-SHARE-1",
+          "SubscriptionDate": 130,
+          "VaultKind": 1,
+          "WithdrawalPolicy": 1,
+          "index": "SYNTHETIC-VAULT-1"
+        }
+      },
+      "protected_state_unchanged": null,
+      "result_resolution": {
+        "authoritative_result": "tesSUCCESS",
+        "category": "ACCEPTED_VALIDATED_SUCCESS",
+        "client_exception": null,
+        "malformed_request": null,
+        "submission_hash_if_any": "synthetic-b-hash",
+        "submission_result": "tesSUCCESS",
+        "transport_or_server_failure": null,
+        "validated_lookup_status": "VALIDATED",
+        "validated_result_if_any": "tesSUCCESS"
+      },
+      "state_assertion": "PASS",
+      "state_assertions": [
+        {
+          "actual": [
+            {
+              "actual": "Subscription",
+              "expected": "Subscription",
+              "name": "vault phase",
+              "passed": true
+            }
+          ],
+          "expected": true,
+          "name": "subscription_phase",
+          "passed": true
+        },
+        {
+          "actual": [
+            {
+              "actual": "SYNTHETIC-VAULT-1",
+              "expected": "SYNTHETIC-VAULT-1",
+              "name": "Vault index",
+              "passed": true
+            },
+            {
+              "actual": "rSyntheticOwner",
+              "expected": "rSyntheticOwner",
+              "name": "Vault Owner",
+              "passed": true
+            },
+            {
+              "actual": {
+                "currency": "74524C5553440000000000000000000000000000",
+                "issuer": "rSyntheticIssuer"
+              },
+              "expected": {
+                "currency": "74524C5553440000000000000000000000000000",
+                "issuer": "rSyntheticIssuer"
+              },
+              "name": "Vault Asset",
+              "passed": true
+            },
+            {
+              "actual": 1,
+              "expected": 1,
+              "name": "Vault VaultKind",
+              "passed": true
+            },
+            {
+              "actual": 130,
+              "expected": 130,
+              "name": "Vault SubscriptionDate",
+              "passed": true
+            },
+            {
+              "actual": 310,
+              "expected": 310,
+              "name": "Vault RedemptionDate",
+              "passed": true
+            },
+            {
+              "actual": 1,
+              "expected": 1,
+              "name": "Vault WithdrawalPolicy",
+              "passed": true
+            },
+            {
+              "actual": 0,
+              "expected": 0,
+              "name": "Vault Flags",
+              "passed": true
+            },
+            {
+              "actual": "SYNTHETIC-SHARE-1",
+              "expected": "SYNTHETIC-SHARE-1",
+              "name": "Vault ShareMPTID",
+              "passed": true
+            },
+            {
+              "actual": "SYNTHETIC-SHARE-1",
+              "expected": "SYNTHETIC-SHARE-1",
+              "name": "share issuance relationship",
+              "passed": true
+            },
+            {
+              "actual": "MPToken",
+              "expected": "MPToken",
+              "name": "MPToken LedgerEntryType",
+              "passed": true
+            },
+            {
+              "actual": "rSyntheticLender",
+              "expected": "rSyntheticLender",
+              "name": "MPToken Account",
+              "passed": true
+            },
+            {
+              "actual": "SYNTHETIC-SHARE-1",
+              "expected": "SYNTHETIC-SHARE-1",
+              "name": "MPToken MPTokenIssuanceID",
+              "passed": true
+            }
+          ],
+          "expected": true,
+          "name": "vault_relationships_stable",
+          "passed": true
+        },
+        {
+          "actual": [
+            {
+              "actual": 100,
+              "expected": 100,
+              "name": "Vault AssetsTotal delta",
+              "passed": true
+            },
+            {
+              "actual": 100,
+              "expected": 100,
+              "name": "Vault AssetsAvailable delta",
+              "passed": true
+            },
+            {
+              "actual": -100,
+              "expected": -100,
+              "name": "lender tRLUSD balance delta",
+              "passed": true
+            }
+          ],
+          "expected": true,
+          "name": "asset_and_balance_delta",
+          "passed": true
+        },
+        {
+          "actual": [
+            {
+              "actual": 100000000,
+              "expected": 100000000,
+              "name": "issuance OutstandingAmount delta",
+              "passed": true
+            },
+            {
+              "actual": 100000000,
+              "expected": 100000000,
+              "name": "holder MPTAmount delta",
+              "passed": true
+            }
+          ],
+          "expected": true,
+          "name": "share_delta",
+          "passed": true
+        },
+        {
+          "actual": [
+            {
+              "actual": {
+                "borrower_balance": "0",
+                "owner_balance": "100"
+              },
+              "expected": {
+                "borrower_balance": "0",
+                "owner_balance": "100"
+              },
+              "name": "unrelated state",
+              "passed": true
+            }
+          ],
+          "expected": true,
+          "name": "unrelated_state_protected",
+          "passed": true
+        }
+      ],
+      "step": "B",
+      "submission_hash_if_any": "synthetic-b-hash",
+      "submission_result": "tesSUCCESS",
+      "synthetic": true,
+      "validated_lookup_status": "VALIDATED",
+      "validated_result_if_any": "tesSUCCESS"
+    },
+    {
+      "classification": {
+        "expected_result": "tesSUCCESS",
+        "observed_result": "tesSUCCESS",
+        "reasons": [],
+        "state_assertion": "PASS",
+        "state_unchanged": null,
+        "status": "PASS"
+      },
+      "client_exception": null,
+      "close_time": 121,
+      "expected_result": "tesSUCCESS",
+      "ledger_after": {
+        "close_time": 121,
+        "closed": true,
+        "ledger_index": 13
+      },
+      "ledger_before": {
+        "close_time": 120,
+        "closed": true,
+        "ledger_index": 12
+      },
+      "ledger_index": 13,
+      "name": "E3 Subscription withdrawal",
+      "post_state": {
+        "lender_balance": "910",
+        "lender_share": {
+          "Account": "rSyntheticLender",
+          "Flags": 0,
+          "LedgerEntryType": "MPToken",
+          "MPTAmount": "90000000",
+          "MPTokenIssuanceID": "SYNTHETIC-SHARE-1",
+          "index": "SYNTHETIC-HOLDER-rSyntheticLender"
+        },
+        "share_issuance": {
+          "AssetScale": 6,
+          "LedgerEntryType": "MPTokenIssuance",
+          "OutstandingAmount": "90000000",
+          "index": "SYNTHETIC-ISSUANCE-INDEX",
+          "mpt_issuance_id": "SYNTHETIC-SHARE-1"
+        },
+        "unrelated_state": {
+          "borrower_balance": "0",
+          "owner_balance": "100"
+        },
+        "vault": {
+          "Account": "rSyntheticVaultPseudo",
+          "Asset": {
+            "currency": "74524C5553440000000000000000000000000000",
+            "issuer": "rSyntheticIssuer"
+          },
+          "AssetsAvailable": "90",
+          "AssetsTotal": "90",
+          "Flags": 0,
+          "LedgerEntryType": "Vault",
+          "Owner": "rSyntheticOwner",
+          "RedemptionDate": 310,
+          "ShareMPTID": "SYNTHETIC-SHARE-1",
+          "SubscriptionDate": 130,
+          "VaultKind": 1,
+          "WithdrawalPolicy": 1,
+          "index": "SYNTHETIC-VAULT-1"
+        }
+      },
+      "pre_state": {
+        "lender_balance": "900",
+        "lender_share": {
+          "Account": "rSyntheticLender",
+          "Flags": 0,
+          "LedgerEntryType": "MPToken",
+          "MPTAmount": "100000000",
+          "MPTokenIssuanceID": "SYNTHETIC-SHARE-1",
+          "index": "SYNTHETIC-HOLDER-rSyntheticLender"
+        },
+        "share_issuance": {
+          "AssetScale": 6,
+          "LedgerEntryType": "MPTokenIssuance",
+          "OutstandingAmount": "100000000",
+          "index": "SYNTHETIC-ISSUANCE-INDEX",
+          "mpt_issuance_id": "SYNTHETIC-SHARE-1"
+        },
+        "unrelated_state": {
+          "borrower_balance": "0",
+          "owner_balance": "100"
+        },
+        "vault": {
+          "Account": "rSyntheticVaultPseudo",
+          "Asset": {
+            "currency": "74524C5553440000000000000000000000000000",
+            "issuer": "rSyntheticIssuer"
+          },
+          "AssetsAvailable": "100",
+          "AssetsTotal": "100",
+          "Flags": 0,
+          "LedgerEntryType": "Vault",
+          "Owner": "rSyntheticOwner",
+          "RedemptionDate": 310,
+          "ShareMPTID": "SYNTHETIC-SHARE-1",
+          "SubscriptionDate": 130,
+          "VaultKind": 1,
+          "WithdrawalPolicy": 1,
+          "index": "SYNTHETIC-VAULT-1"
+        }
+      },
+      "protected_state_unchanged": null,
+      "result_resolution": {
+        "authoritative_result": "tesSUCCESS",
+        "category": "ACCEPTED_VALIDATED_SUCCESS",
+        "client_exception": null,
+        "malformed_request": null,
+        "submission_hash_if_any": "synthetic-c-hash",
+        "submission_result": "tesSUCCESS",
+        "transport_or_server_failure": null,
+        "validated_lookup_status": "VALIDATED",
+        "validated_result_if_any": "tesSUCCESS"
+      },
+      "state_assertion": "PASS",
+      "state_assertions": [
+        {
+          "actual": [
+            {
+              "actual": "Subscription",
+              "expected": "Subscription",
+              "name": "vault phase",
+              "passed": true
+            }
+          ],
+          "expected": true,
+          "name": "subscription_phase",
+          "passed": true
+        },
+        {
+          "actual": [
+            {
+              "actual": "SYNTHETIC-VAULT-1",
+              "expected": "SYNTHETIC-VAULT-1",
+              "name": "Vault index",
+              "passed": true
+            },
+            {
+              "actual": "rSyntheticOwner",
+              "expected": "rSyntheticOwner",
+              "name": "Vault Owner",
+              "passed": true
+            },
+            {
+              "actual": {
+                "currency": "74524C5553440000000000000000000000000000",
+                "issuer": "rSyntheticIssuer"
+              },
+              "expected": {
+                "currency": "74524C5553440000000000000000000000000000",
+                "issuer": "rSyntheticIssuer"
+              },
+              "name": "Vault Asset",
+              "passed": true
+            },
+            {
+              "actual": 1,
+              "expected": 1,
+              "name": "Vault VaultKind",
+              "passed": true
+            },
+            {
+              "actual": 130,
+              "expected": 130,
+              "name": "Vault SubscriptionDate",
+              "passed": true
+            },
+            {
+              "actual": 310,
+              "expected": 310,
+              "name": "Vault RedemptionDate",
+              "passed": true
+            },
+            {
+              "actual": 1,
+              "expected": 1,
+              "name": "Vault WithdrawalPolicy",
+              "passed": true
+            },
+            {
+              "actual": 0,
+              "expected": 0,
+              "name": "Vault Flags",
+              "passed": true
+            },
+            {
+              "actual": "SYNTHETIC-SHARE-1",
+              "expected": "SYNTHETIC-SHARE-1",
+              "name": "Vault ShareMPTID",
+              "passed": true
+            },
+            {
+              "actual": "SYNTHETIC-SHARE-1",
+              "expected": "SYNTHETIC-SHARE-1",
+              "name": "share issuance relationship",
+              "passed": true
+            },
+            {
+              "actual": "MPToken",
+              "expected": "MPToken",
+              "name": "MPToken LedgerEntryType",
+              "passed": true
+            },
+            {
+              "actual": "rSyntheticLender",
+              "expected": "rSyntheticLender",
+              "name": "MPToken Account",
+              "passed": true
+            },
+            {
+              "actual": "SYNTHETIC-SHARE-1",
+              "expected": "SYNTHETIC-SHARE-1",
+              "name": "MPToken MPTokenIssuanceID",
+              "passed": true
+            }
+          ],
+          "expected": true,
+          "name": "vault_relationships_stable",
+          "passed": true
+        },
+        {
+          "actual": [
+            {
+              "actual": -10,
+              "expected": -10,
+              "name": "Vault AssetsTotal delta",
+              "passed": true
+            },
+            {
+              "actual": -10,
+              "expected": -10,
+              "name": "Vault AssetsAvailable delta",
+              "passed": true
+            },
+            {
+              "actual": 10,
+              "expected": 10,
+              "name": "lender tRLUSD balance delta",
+              "passed": true
+            }
+          ],
+          "expected": true,
+          "name": "asset_and_balance_delta",
+          "passed": true
+        },
+        {
+          "actual": [
+            {
+              "actual": -10000000,
+              "expected": -10000000,
+              "name": "issuance OutstandingAmount delta",
+              "passed": true
+            },
+            {
+              "actual": -10000000,
+              "expected": -10000000,
+              "name": "holder MPTAmount delta",
+              "passed": true
+            }
+          ],
+          "expected": true,
+          "name": "share_delta",
+          "passed": true
+        },
+        {
+          "actual": [
+            {
+              "actual": {
+                "borrower_balance": "0",
+                "owner_balance": "100"
+              },
+              "expected": {
+                "borrower_balance": "0",
+                "owner_balance": "100"
+              },
+              "name": "unrelated state",
+              "passed": true
+            }
+          ],
+          "expected": true,
+          "name": "unrelated_state_protected",
+          "passed": true
+        }
+      ],
+      "step": "C",
+      "submission_hash_if_any": "synthetic-c-hash",
+      "submission_result": "tesSUCCESS",
+      "synthetic": true,
+      "validated_lookup_status": "VALIDATED",
+      "validated_result_if_any": "tesSUCCESS"
+    },
+    {
+      "classification": {
+        "expected_result": "tecEXPIRED",
+        "observed_result": "tecEXPIRED",
+        "reasons": [],
+        "state_assertion": "PASS",
+        "state_unchanged": true,
+        "status": "PASS"
+      },
+      "client_exception": null,
+      "close_time": 201,
+      "expected_result": "tecEXPIRED",
+      "ledger_after": {
+        "close_time": 201,
+        "closed": true,
+        "ledger_index": 14
+      },
+      "ledger_before": {
+        "close_time": 200,
+        "closed": true,
+        "ledger_index": 13
+      },
+      "ledger_index": 14,
+      "name": "E3 Investment deposit rejection",
+      "post_state": {
+        "protected": {
+          "lender_account_sequence": 7,
+          "lender_balance": "910",
+          "lender_share": {
+            "Account": "rSyntheticLender",
+            "Flags": 0,
+            "LedgerEntryType": "MPToken",
+            "MPTAmount": "90000000",
+            "MPTokenIssuanceID": "SYNTHETIC-SHARE-1",
+            "index": "SYNTHETIC-HOLDER-rSyntheticLender"
+          },
+          "share_issuance": {
+            "AssetScale": 6,
+            "LedgerEntryType": "MPTokenIssuance",
+            "OutstandingAmount": "90000000",
+            "index": "SYNTHETIC-ISSUANCE-INDEX",
+            "mpt_issuance_id": "SYNTHETIC-SHARE-1"
+          },
+          "vault": {
+            "Account": "rSyntheticVaultPseudo",
+            "Asset": {
+              "currency": "74524C5553440000000000000000000000000000",
+              "issuer": "rSyntheticIssuer"
+            },
+            "AssetsAvailable": "90",
+            "AssetsTotal": "90",
+            "Flags": 0,
+            "LedgerEntryType": "Vault",
+            "Owner": "rSyntheticOwner",
+            "RedemptionDate": 310,
+            "ShareMPTID": "SYNTHETIC-SHARE-1",
+            "SubscriptionDate": 130,
+            "VaultKind": 1,
+            "WithdrawalPolicy": 1,
+            "index": "SYNTHETIC-VAULT-1"
+          }
+        }
+      },
+      "pre_state": {
+        "protected": {
+          "lender_account_sequence": 7,
+          "lender_balance": "910",
+          "lender_share": {
+            "Account": "rSyntheticLender",
+            "Flags": 0,
+            "LedgerEntryType": "MPToken",
+            "MPTAmount": "90000000",
+            "MPTokenIssuanceID": "SYNTHETIC-SHARE-1",
+            "index": "SYNTHETIC-HOLDER-rSyntheticLender"
+          },
+          "share_issuance": {
+            "AssetScale": 6,
+            "LedgerEntryType": "MPTokenIssuance",
+            "OutstandingAmount": "90000000",
+            "index": "SYNTHETIC-ISSUANCE-INDEX",
+            "mpt_issuance_id": "SYNTHETIC-SHARE-1"
+          },
+          "vault": {
+            "Account": "rSyntheticVaultPseudo",
+            "Asset": {
+              "currency": "74524C5553440000000000000000000000000000",
+              "issuer": "rSyntheticIssuer"
+            },
+            "AssetsAvailable": "90",
+            "AssetsTotal": "90",
+            "Flags": 0,
+            "LedgerEntryType": "Vault",
+            "Owner": "rSyntheticOwner",
+            "RedemptionDate": 310,
+            "ShareMPTID": "SYNTHETIC-SHARE-1",
+            "SubscriptionDate": 130,
+            "VaultKind": 1,
+            "WithdrawalPolicy": 1,
+            "index": "SYNTHETIC-VAULT-1"
+          }
+        }
+      },
+      "protected_state_unchanged": true,
+      "result_resolution": {
+        "authoritative_result": "tecEXPIRED",
+        "category": "SUBMISSION_DETERMINISTIC_FAILURE",
+        "client_exception": null,
+        "malformed_request": null,
+        "submission_hash_if_any": "synthetic-d-hash",
+        "submission_result": "tecEXPIRED",
+        "transport_or_server_failure": null,
+        "validated_lookup_status": "NOT_IN_VALIDATED_LEDGER",
+        "validated_result_if_any": null
+      },
+      "state_assertion": "PASS",
+      "state_assertions": [
+        {
+          "actual": [
+            {
+              "actual": "Investment",
+              "expected": "Investment",
+              "name": "vault phase",
+              "passed": true
+            }
+          ],
+          "expected": true,
+          "name": "investment_phase",
+          "passed": true
+        },
+        {
+          "actual": [
+            {
+              "actual": {
+                "lender_account_sequence": 7,
+                "lender_balance": "910",
+                "lender_share": {
+                  "Account": "rSyntheticLender",
+                  "Flags": 0,
+                  "LedgerEntryType": "MPToken",
+                  "MPTAmount": "90000000",
+                  "MPTokenIssuanceID": "SYNTHETIC-SHARE-1",
+                  "index": "SYNTHETIC-HOLDER-rSyntheticLender"
+                },
+                "share_issuance": {
+                  "AssetScale": 6,
+                  "LedgerEntryType": "MPTokenIssuance",
+                  "OutstandingAmount": "90000000",
+                  "index": "SYNTHETIC-ISSUANCE-INDEX",
+                  "mpt_issuance_id": "SYNTHETIC-SHARE-1"
+                },
+                "vault": {
+                  "Account": "rSyntheticVaultPseudo",
+                  "Asset": {
+                    "currency": "74524C5553440000000000000000000000000000",
+                    "issuer": "rSyntheticIssuer"
+                  },
+                  "AssetsAvailable": "90",
+                  "AssetsTotal": "90",
+                  "Flags": 0,
+                  "LedgerEntryType": "Vault",
+                  "Owner": "rSyntheticOwner",
+                  "RedemptionDate": 310,
+                  "ShareMPTID": "SYNTHETIC-SHARE-1",
+                  "SubscriptionDate": 130,
+                  "VaultKind": 1,
+                  "WithdrawalPolicy": 1,
+                  "index": "SYNTHETIC-VAULT-1"
+                }
+              },
+              "expected": {
+                "lender_account_sequence": 7,
+                "lender_balance": "910",
+                "lender_share": {
+                  "Account": "rSyntheticLender",
+                  "Flags": 0,
+                  "LedgerEntryType": "MPToken",
+                  "MPTAmount": "90000000",
+                  "MPTokenIssuanceID": "SYNTHETIC-SHARE-1",
+                  "index": "SYNTHETIC-HOLDER-rSyntheticLender"
+                },
+                "share_issuance": {
+                  "AssetScale": 6,
+                  "LedgerEntryType": "MPTokenIssuance",
+                  "OutstandingAmount": "90000000",
+                  "index": "SYNTHETIC-ISSUANCE-INDEX",
+                  "mpt_issuance_id": "SYNTHETIC-SHARE-1"
+                },
+                "vault": {
+                  "Account": "rSyntheticVaultPseudo",
+                  "Asset": {
+                    "currency": "74524C5553440000000000000000000000000000",
+                    "issuer": "rSyntheticIssuer"
+                  },
+                  "AssetsAvailable": "90",
+                  "AssetsTotal": "90",
+                  "Flags": 0,
+                  "LedgerEntryType": "Vault",
+                  "Owner": "rSyntheticOwner",
+                  "RedemptionDate": 310,
+                  "ShareMPTID": "SYNTHETIC-SHARE-1",
+                  "SubscriptionDate": 130,
+                  "VaultKind": 1,
+                  "WithdrawalPolicy": 1,
+                  "index": "SYNTHETIC-VAULT-1"
+                }
+              },
+              "name": "complete protected state",
+              "passed": true
+            }
+          ],
+          "expected": true,
+          "name": "complete_protected_state_unchanged",
+          "passed": true
+        }
+      ],
+      "step": "D",
+      "submission_hash_if_any": "synthetic-d-hash",
+      "submission_result": "tecEXPIRED",
+      "synthetic": true,
+      "validated_lookup_status": "NOT_IN_VALIDATED_LEDGER",
+      "validated_result_if_any": null
+    },
+    {
+      "classification": {
+        "expected_result": "tecTOO_SOON",
+        "observed_result": "tecTOO_SOON",
+        "reasons": [],
+        "state_assertion": "PASS",
+        "state_unchanged": true,
+        "status": "PASS"
+      },
+      "client_exception": null,
+      "close_time": 201,
+      "expected_result": "tecTOO_SOON",
+      "ledger_after": {
+        "close_time": 201,
+        "closed": true,
+        "ledger_index": 15
+      },
+      "ledger_before": {
+        "close_time": 200,
+        "closed": true,
+        "ledger_index": 14
+      },
+      "ledger_index": 15,
+      "name": "E3 Investment withdrawal rejection",
+      "post_state": {
+        "protected": {
+          "lender_account_sequence": 7,
+          "lender_balance": "910",
+          "lender_share": {
+            "Account": "rSyntheticLender",
+            "Flags": 0,
+            "LedgerEntryType": "MPToken",
+            "MPTAmount": "90000000",
+            "MPTokenIssuanceID": "SYNTHETIC-SHARE-1",
+            "index": "SYNTHETIC-HOLDER-rSyntheticLender"
+          },
+          "share_issuance": {
+            "AssetScale": 6,
+            "LedgerEntryType": "MPTokenIssuance",
+            "OutstandingAmount": "90000000",
+            "index": "SYNTHETIC-ISSUANCE-INDEX",
+            "mpt_issuance_id": "SYNTHETIC-SHARE-1"
+          },
+          "vault": {
+            "Account": "rSyntheticVaultPseudo",
+            "Asset": {
+              "currency": "74524C5553440000000000000000000000000000",
+              "issuer": "rSyntheticIssuer"
+            },
+            "AssetsAvailable": "90",
+            "AssetsTotal": "90",
+            "Flags": 0,
+            "LedgerEntryType": "Vault",
+            "Owner": "rSyntheticOwner",
+            "RedemptionDate": 310,
+            "ShareMPTID": "SYNTHETIC-SHARE-1",
+            "SubscriptionDate": 130,
+            "VaultKind": 1,
+            "WithdrawalPolicy": 1,
+            "index": "SYNTHETIC-VAULT-1"
+          }
+        }
+      },
+      "pre_state": {
+        "protected": {
+          "lender_account_sequence": 7,
+          "lender_balance": "910",
+          "lender_share": {
+            "Account": "rSyntheticLender",
+            "Flags": 0,
+            "LedgerEntryType": "MPToken",
+            "MPTAmount": "90000000",
+            "MPTokenIssuanceID": "SYNTHETIC-SHARE-1",
+            "index": "SYNTHETIC-HOLDER-rSyntheticLender"
+          },
+          "share_issuance": {
+            "AssetScale": 6,
+            "LedgerEntryType": "MPTokenIssuance",
+            "OutstandingAmount": "90000000",
+            "index": "SYNTHETIC-ISSUANCE-INDEX",
+            "mpt_issuance_id": "SYNTHETIC-SHARE-1"
+          },
+          "vault": {
+            "Account": "rSyntheticVaultPseudo",
+            "Asset": {
+              "currency": "74524C5553440000000000000000000000000000",
+              "issuer": "rSyntheticIssuer"
+            },
+            "AssetsAvailable": "90",
+            "AssetsTotal": "90",
+            "Flags": 0,
+            "LedgerEntryType": "Vault",
+            "Owner": "rSyntheticOwner",
+            "RedemptionDate": 310,
+            "ShareMPTID": "SYNTHETIC-SHARE-1",
+            "SubscriptionDate": 130,
+            "VaultKind": 1,
+            "WithdrawalPolicy": 1,
+            "index": "SYNTHETIC-VAULT-1"
+          }
+        }
+      },
+      "protected_state_unchanged": true,
+      "result_resolution": {
+        "authoritative_result": "tecTOO_SOON",
+        "category": "SUBMISSION_DETERMINISTIC_FAILURE",
+        "client_exception": null,
+        "malformed_request": null,
+        "submission_hash_if_any": "synthetic-e-hash",
+        "submission_result": "tecTOO_SOON",
+        "transport_or_server_failure": null,
+        "validated_lookup_status": "NOT_IN_VALIDATED_LEDGER",
+        "validated_result_if_any": null
+      },
+      "state_assertion": "PASS",
+      "state_assertions": [
+        {
+          "actual": [
+            {
+              "actual": "Investment",
+              "expected": "Investment",
+              "name": "vault phase",
+              "passed": true
+            }
+          ],
+          "expected": true,
+          "name": "investment_phase",
+          "passed": true
+        },
+        {
+          "actual": [
+            {
+              "actual": {
+                "lender_account_sequence": 7,
+                "lender_balance": "910",
+                "lender_share": {
+                  "Account": "rSyntheticLender",
+                  "Flags": 0,
+                  "LedgerEntryType": "MPToken",
+                  "MPTAmount": "90000000",
+                  "MPTokenIssuanceID": "SYNTHETIC-SHARE-1",
+                  "index": "SYNTHETIC-HOLDER-rSyntheticLender"
+                },
+                "share_issuance": {
+                  "AssetScale": 6,
+                  "LedgerEntryType": "MPTokenIssuance",
+                  "OutstandingAmount": "90000000",
+                  "index": "SYNTHETIC-ISSUANCE-INDEX",
+                  "mpt_issuance_id": "SYNTHETIC-SHARE-1"
+                },
+                "vault": {
+                  "Account": "rSyntheticVaultPseudo",
+                  "Asset": {
+                    "currency": "74524C5553440000000000000000000000000000",
+                    "issuer": "rSyntheticIssuer"
+                  },
+                  "AssetsAvailable": "90",
+                  "AssetsTotal": "90",
+                  "Flags": 0,
+                  "LedgerEntryType": "Vault",
+                  "Owner": "rSyntheticOwner",
+                  "RedemptionDate": 310,
+                  "ShareMPTID": "SYNTHETIC-SHARE-1",
+                  "SubscriptionDate": 130,
+                  "VaultKind": 1,
+                  "WithdrawalPolicy": 1,
+                  "index": "SYNTHETIC-VAULT-1"
+                }
+              },
+              "expected": {
+                "lender_account_sequence": 7,
+                "lender_balance": "910",
+                "lender_share": {
+                  "Account": "rSyntheticLender",
+                  "Flags": 0,
+                  "LedgerEntryType": "MPToken",
+                  "MPTAmount": "90000000",
+                  "MPTokenIssuanceID": "SYNTHETIC-SHARE-1",
+                  "index": "SYNTHETIC-HOLDER-rSyntheticLender"
+                },
+                "share_issuance": {
+                  "AssetScale": 6,
+                  "LedgerEntryType": "MPTokenIssuance",
+                  "OutstandingAmount": "90000000",
+                  "index": "SYNTHETIC-ISSUANCE-INDEX",
+                  "mpt_issuance_id": "SYNTHETIC-SHARE-1"
+                },
+                "vault": {
+                  "Account": "rSyntheticVaultPseudo",
+                  "Asset": {
+                    "currency": "74524C5553440000000000000000000000000000",
+                    "issuer": "rSyntheticIssuer"
+                  },
+                  "AssetsAvailable": "90",
+                  "AssetsTotal": "90",
+                  "Flags": 0,
+                  "LedgerEntryType": "Vault",
+                  "Owner": "rSyntheticOwner",
+                  "RedemptionDate": 310,
+                  "ShareMPTID": "SYNTHETIC-SHARE-1",
+                  "SubscriptionDate": 130,
+                  "VaultKind": 1,
+                  "WithdrawalPolicy": 1,
+                  "index": "SYNTHETIC-VAULT-1"
+                }
+              },
+              "name": "complete protected state",
+              "passed": true
+            }
+          ],
+          "expected": true,
+          "name": "complete_protected_state_unchanged",
+          "passed": true
+        }
+      ],
+      "step": "E",
+      "submission_hash_if_any": "synthetic-e-hash",
+      "submission_result": "tecTOO_SOON",
+      "synthetic": true,
+      "validated_lookup_status": "NOT_IN_VALIDATED_LEDGER",
+      "validated_result_if_any": null
+    },
+    {
+      "classification": {
+        "expected_result": "tesSUCCESS",
+        "observed_result": "tesSUCCESS",
+        "reasons": [],
+        "state_assertion": "PASS",
+        "state_unchanged": null,
+        "status": "PASS"
+      },
+      "client_exception": null,
+      "close_time": 311,
+      "expected_result": "tesSUCCESS",
+      "ledger_after": {
+        "close_time": 311,
+        "closed": true,
+        "ledger_index": 16
+      },
+      "ledger_before": {
+        "close_time": 310,
+        "closed": true,
+        "ledger_index": 15
+      },
+      "ledger_index": 16,
+      "name": "E3 Redemption withdrawal",
+      "post_state": {
+        "lender_balance": "920",
+        "lender_share": {
+          "Account": "rSyntheticLender",
+          "Flags": 0,
+          "LedgerEntryType": "MPToken",
+          "MPTAmount": "80000000",
+          "MPTokenIssuanceID": "SYNTHETIC-SHARE-1",
+          "index": "SYNTHETIC-HOLDER-rSyntheticLender"
+        },
+        "share_issuance": {
+          "AssetScale": 6,
+          "LedgerEntryType": "MPTokenIssuance",
+          "OutstandingAmount": "80000000",
+          "index": "SYNTHETIC-ISSUANCE-INDEX",
+          "mpt_issuance_id": "SYNTHETIC-SHARE-1"
+        },
+        "unrelated_state": {
+          "borrower_balance": "0",
+          "owner_balance": "100"
+        },
+        "vault": {
+          "Account": "rSyntheticVaultPseudo",
+          "Asset": {
+            "currency": "74524C5553440000000000000000000000000000",
+            "issuer": "rSyntheticIssuer"
+          },
+          "AssetsAvailable": "80",
+          "AssetsTotal": "80",
+          "Flags": 0,
+          "LedgerEntryType": "Vault",
+          "Owner": "rSyntheticOwner",
+          "RedemptionDate": 310,
+          "ShareMPTID": "SYNTHETIC-SHARE-1",
+          "SubscriptionDate": 130,
+          "VaultKind": 1,
+          "WithdrawalPolicy": 1,
+          "index": "SYNTHETIC-VAULT-1"
+        }
+      },
+      "pre_state": {
+        "lender_balance": "910",
+        "lender_share": {
+          "Account": "rSyntheticLender",
+          "Flags": 0,
+          "LedgerEntryType": "MPToken",
+          "MPTAmount": "90000000",
+          "MPTokenIssuanceID": "SYNTHETIC-SHARE-1",
+          "index": "SYNTHETIC-HOLDER-rSyntheticLender"
+        },
+        "share_issuance": {
+          "AssetScale": 6,
+          "LedgerEntryType": "MPTokenIssuance",
+          "OutstandingAmount": "90000000",
+          "index": "SYNTHETIC-ISSUANCE-INDEX",
+          "mpt_issuance_id": "SYNTHETIC-SHARE-1"
+        },
+        "unrelated_state": {
+          "borrower_balance": "0",
+          "owner_balance": "100"
+        },
+        "vault": {
+          "Account": "rSyntheticVaultPseudo",
+          "Asset": {
+            "currency": "74524C5553440000000000000000000000000000",
+            "issuer": "rSyntheticIssuer"
+          },
+          "AssetsAvailable": "90",
+          "AssetsTotal": "90",
+          "Flags": 0,
+          "LedgerEntryType": "Vault",
+          "Owner": "rSyntheticOwner",
+          "RedemptionDate": 310,
+          "ShareMPTID": "SYNTHETIC-SHARE-1",
+          "SubscriptionDate": 130,
+          "VaultKind": 1,
+          "WithdrawalPolicy": 1,
+          "index": "SYNTHETIC-VAULT-1"
+        }
+      },
+      "protected_state_unchanged": null,
+      "result_resolution": {
+        "authoritative_result": "tesSUCCESS",
+        "category": "ACCEPTED_VALIDATED_SUCCESS",
+        "client_exception": null,
+        "malformed_request": null,
+        "submission_hash_if_any": "synthetic-f-hash",
+        "submission_result": "tesSUCCESS",
+        "transport_or_server_failure": null,
+        "validated_lookup_status": "VALIDATED",
+        "validated_result_if_any": "tesSUCCESS"
+      },
+      "state_assertion": "PASS",
+      "state_assertions": [
+        {
+          "actual": [
+            {
+              "actual": "Redemption",
+              "expected": "Redemption",
+              "name": "vault phase",
+              "passed": true
+            }
+          ],
+          "expected": true,
+          "name": "redemption_phase",
+          "passed": true
+        },
+        {
+          "actual": [
+            {
+              "actual": "SYNTHETIC-VAULT-1",
+              "expected": "SYNTHETIC-VAULT-1",
+              "name": "Vault index",
+              "passed": true
+            },
+            {
+              "actual": "rSyntheticOwner",
+              "expected": "rSyntheticOwner",
+              "name": "Vault Owner",
+              "passed": true
+            },
+            {
+              "actual": {
+                "currency": "74524C5553440000000000000000000000000000",
+                "issuer": "rSyntheticIssuer"
+              },
+              "expected": {
+                "currency": "74524C5553440000000000000000000000000000",
+                "issuer": "rSyntheticIssuer"
+              },
+              "name": "Vault Asset",
+              "passed": true
+            },
+            {
+              "actual": 1,
+              "expected": 1,
+              "name": "Vault VaultKind",
+              "passed": true
+            },
+            {
+              "actual": 130,
+              "expected": 130,
+              "name": "Vault SubscriptionDate",
+              "passed": true
+            },
+            {
+              "actual": 310,
+              "expected": 310,
+              "name": "Vault RedemptionDate",
+              "passed": true
+            },
+            {
+              "actual": 1,
+              "expected": 1,
+              "name": "Vault WithdrawalPolicy",
+              "passed": true
+            },
+            {
+              "actual": 0,
+              "expected": 0,
+              "name": "Vault Flags",
+              "passed": true
+            },
+            {
+              "actual": "SYNTHETIC-SHARE-1",
+              "expected": "SYNTHETIC-SHARE-1",
+              "name": "Vault ShareMPTID",
+              "passed": true
+            },
+            {
+              "actual": "SYNTHETIC-SHARE-1",
+              "expected": "SYNTHETIC-SHARE-1",
+              "name": "share issuance relationship",
+              "passed": true
+            },
+            {
+              "actual": "MPToken",
+              "expected": "MPToken",
+              "name": "MPToken LedgerEntryType",
+              "passed": true
+            },
+            {
+              "actual": "rSyntheticLender",
+              "expected": "rSyntheticLender",
+              "name": "MPToken Account",
+              "passed": true
+            },
+            {
+              "actual": "SYNTHETIC-SHARE-1",
+              "expected": "SYNTHETIC-SHARE-1",
+              "name": "MPToken MPTokenIssuanceID",
+              "passed": true
+            }
+          ],
+          "expected": true,
+          "name": "vault_relationships_stable",
+          "passed": true
+        },
+        {
+          "actual": [
+            {
+              "actual": -10,
+              "expected": -10,
+              "name": "Vault AssetsTotal delta",
+              "passed": true
+            },
+            {
+              "actual": -10,
+              "expected": -10,
+              "name": "Vault AssetsAvailable delta",
+              "passed": true
+            },
+            {
+              "actual": 10,
+              "expected": 10,
+              "name": "lender tRLUSD balance delta",
+              "passed": true
+            }
+          ],
+          "expected": true,
+          "name": "asset_and_balance_delta",
+          "passed": true
+        },
+        {
+          "actual": [
+            {
+              "actual": -10000000,
+              "expected": -10000000,
+              "name": "issuance OutstandingAmount delta",
+              "passed": true
+            },
+            {
+              "actual": -10000000,
+              "expected": -10000000,
+              "name": "holder MPTAmount delta",
+              "passed": true
+            }
+          ],
+          "expected": true,
+          "name": "share_delta",
+          "passed": true
+        },
+        {
+          "actual": [
+            {
+              "actual": {
+                "borrower_balance": "0",
+                "owner_balance": "100"
+              },
+              "expected": {
+                "borrower_balance": "0",
+                "owner_balance": "100"
+              },
+              "name": "unrelated state",
+              "passed": true
+            }
+          ],
+          "expected": true,
+          "name": "unrelated_state_protected",
+          "passed": true
+        }
+      ],
+      "step": "F",
+      "submission_hash_if_any": "synthetic-f-hash",
+      "submission_result": "tesSUCCESS",
+      "synthetic": true,
+      "validated_lookup_status": "VALIDATED",
+      "validated_result_if_any": "tesSUCCESS"
+    },
+    {
+      "classification": {
+        "expected_result": "tecEXPIRED",
+        "observed_result": "tecEXPIRED",
+        "reasons": [],
+        "state_assertion": "PASS",
+        "state_unchanged": true,
+        "status": "PASS"
+      },
+      "client_exception": null,
+      "close_time": 312,
+      "expected_result": "tecEXPIRED",
+      "ledger_after": {
+        "close_time": 312,
+        "closed": true,
+        "ledger_index": 17
+      },
+      "ledger_before": {
+        "close_time": 311,
+        "closed": true,
+        "ledger_index": 16
+      },
+      "ledger_index": 17,
+      "name": "E3 Redemption deposit rejection",
+      "post_state": {
+        "protected": {
+          "lender_account_sequence": 8,
+          "lender_balance": "920",
+          "lender_share": {
+            "Account": "rSyntheticLender",
+            "Flags": 0,
+            "LedgerEntryType": "MPToken",
+            "MPTAmount": "80000000",
+            "MPTokenIssuanceID": "SYNTHETIC-SHARE-1",
+            "index": "SYNTHETIC-HOLDER-rSyntheticLender"
+          },
+          "share_issuance": {
+            "AssetScale": 6,
+            "LedgerEntryType": "MPTokenIssuance",
+            "OutstandingAmount": "80000000",
+            "index": "SYNTHETIC-ISSUANCE-INDEX",
+            "mpt_issuance_id": "SYNTHETIC-SHARE-1"
+          },
+          "vault": {
+            "Account": "rSyntheticVaultPseudo",
+            "Asset": {
+              "currency": "74524C5553440000000000000000000000000000",
+              "issuer": "rSyntheticIssuer"
+            },
+            "AssetsAvailable": "80",
+            "AssetsTotal": "80",
+            "Flags": 0,
+            "LedgerEntryType": "Vault",
+            "Owner": "rSyntheticOwner",
+            "RedemptionDate": 310,
+            "ShareMPTID": "SYNTHETIC-SHARE-1",
+            "SubscriptionDate": 130,
+            "VaultKind": 1,
+            "WithdrawalPolicy": 1,
+            "index": "SYNTHETIC-VAULT-1"
+          }
+        }
+      },
+      "pre_state": {
+        "protected": {
+          "lender_account_sequence": 8,
+          "lender_balance": "920",
+          "lender_share": {
+            "Account": "rSyntheticLender",
+            "Flags": 0,
+            "LedgerEntryType": "MPToken",
+            "MPTAmount": "80000000",
+            "MPTokenIssuanceID": "SYNTHETIC-SHARE-1",
+            "index": "SYNTHETIC-HOLDER-rSyntheticLender"
+          },
+          "share_issuance": {
+            "AssetScale": 6,
+            "LedgerEntryType": "MPTokenIssuance",
+            "OutstandingAmount": "80000000",
+            "index": "SYNTHETIC-ISSUANCE-INDEX",
+            "mpt_issuance_id": "SYNTHETIC-SHARE-1"
+          },
+          "vault": {
+            "Account": "rSyntheticVaultPseudo",
+            "Asset": {
+              "currency": "74524C5553440000000000000000000000000000",
+              "issuer": "rSyntheticIssuer"
+            },
+            "AssetsAvailable": "80",
+            "AssetsTotal": "80",
+            "Flags": 0,
+            "LedgerEntryType": "Vault",
+            "Owner": "rSyntheticOwner",
+            "RedemptionDate": 310,
+            "ShareMPTID": "SYNTHETIC-SHARE-1",
+            "SubscriptionDate": 130,
+            "VaultKind": 1,
+            "WithdrawalPolicy": 1,
+            "index": "SYNTHETIC-VAULT-1"
+          }
+        }
+      },
+      "protected_state_unchanged": true,
+      "result_resolution": {
+        "authoritative_result": "tecEXPIRED",
+        "category": "SUBMISSION_DETERMINISTIC_FAILURE",
+        "client_exception": null,
+        "malformed_request": null,
+        "submission_hash_if_any": "synthetic-g-hash",
+        "submission_result": "tecEXPIRED",
+        "transport_or_server_failure": null,
+        "validated_lookup_status": "NOT_IN_VALIDATED_LEDGER",
+        "validated_result_if_any": null
+      },
+      "state_assertion": "PASS",
+      "state_assertions": [
+        {
+          "actual": [
+            {
+              "actual": "Redemption",
+              "expected": "Redemption",
+              "name": "vault phase",
+              "passed": true
+            }
+          ],
+          "expected": true,
+          "name": "redemption_phase",
+          "passed": true
+        },
+        {
+          "actual": [
+            {
+              "actual": {
+                "lender_account_sequence": 8,
+                "lender_balance": "920",
+                "lender_share": {
+                  "Account": "rSyntheticLender",
+                  "Flags": 0,
+                  "LedgerEntryType": "MPToken",
+                  "MPTAmount": "80000000",
+                  "MPTokenIssuanceID": "SYNTHETIC-SHARE-1",
+                  "index": "SYNTHETIC-HOLDER-rSyntheticLender"
+                },
+                "share_issuance": {
+                  "AssetScale": 6,
+                  "LedgerEntryType": "MPTokenIssuance",
+                  "OutstandingAmount": "80000000",
+                  "index": "SYNTHETIC-ISSUANCE-INDEX",
+                  "mpt_issuance_id": "SYNTHETIC-SHARE-1"
+                },
+                "vault": {
+                  "Account": "rSyntheticVaultPseudo",
+                  "Asset": {
+                    "currency": "74524C5553440000000000000000000000000000",
+                    "issuer": "rSyntheticIssuer"
+                  },
+                  "AssetsAvailable": "80",
+                  "AssetsTotal": "80",
+                  "Flags": 0,
+                  "LedgerEntryType": "Vault",
+                  "Owner": "rSyntheticOwner",
+                  "RedemptionDate": 310,
+                  "ShareMPTID": "SYNTHETIC-SHARE-1",
+                  "SubscriptionDate": 130,
+                  "VaultKind": 1,
+                  "WithdrawalPolicy": 1,
+                  "index": "SYNTHETIC-VAULT-1"
+                }
+              },
+              "expected": {
+                "lender_account_sequence": 8,
+                "lender_balance": "920",
+                "lender_share": {
+                  "Account": "rSyntheticLender",
+                  "Flags": 0,
+                  "LedgerEntryType": "MPToken",
+                  "MPTAmount": "80000000",
+                  "MPTokenIssuanceID": "SYNTHETIC-SHARE-1",
+                  "index": "SYNTHETIC-HOLDER-rSyntheticLender"
+                },
+                "share_issuance": {
+                  "AssetScale": 6,
+                  "LedgerEntryType": "MPTokenIssuance",
+                  "OutstandingAmount": "80000000",
+                  "index": "SYNTHETIC-ISSUANCE-INDEX",
+                  "mpt_issuance_id": "SYNTHETIC-SHARE-1"
+                },
+                "vault": {
+                  "Account": "rSyntheticVaultPseudo",
+                  "Asset": {
+                    "currency": "74524C5553440000000000000000000000000000",
+                    "issuer": "rSyntheticIssuer"
+                  },
+                  "AssetsAvailable": "80",
+                  "AssetsTotal": "80",
+                  "Flags": 0,
+                  "LedgerEntryType": "Vault",
+                  "Owner": "rSyntheticOwner",
+                  "RedemptionDate": 310,
+                  "ShareMPTID": "SYNTHETIC-SHARE-1",
+                  "SubscriptionDate": 130,
+                  "VaultKind": 1,
+                  "WithdrawalPolicy": 1,
+                  "index": "SYNTHETIC-VAULT-1"
+                }
+              },
+              "name": "complete protected state",
+              "passed": true
+            }
+          ],
+          "expected": true,
+          "name": "complete_protected_state_unchanged",
+          "passed": true
+        }
+      ],
+      "step": "G",
+      "submission_hash_if_any": "synthetic-g-hash",
+      "submission_result": "tecEXPIRED",
+      "synthetic": true,
+      "validated_lookup_status": "NOT_IN_VALIDATED_LEDGER",
+      "validated_result_if_any": null
+    },
+    {
+      "classification": {
+        "expected_result": "tesSUCCESS",
+        "observed_result": "tesSUCCESS",
+        "reasons": [],
+        "state_assertion": "PASS",
+        "state_unchanged": null,
+        "status": "PASS"
+      },
+      "client_exception": null,
+      "close_time": 321,
+      "expected_result": "tesSUCCESS",
+      "ledger_after": {
+        "close_time": 321,
+        "closed": true,
+        "ledger_index": 18
+      },
+      "ledger_before": {
+        "close_time": 320,
+        "closed": true,
+        "ledger_index": 17
+      },
+      "ledger_index": 18,
+      "name": "E4 Loan Broker creation",
+      "post_state": {
+        "broker_pseudo_account": {
+          "Account": "rSyntheticBrokerPseudo",
+          "LedgerEntryType": "AccountRoot"
+        },
+        "loan_broker": {
+          "Account": "rSyntheticBrokerPseudo",
+          "CoverAvailable": "0",
+          "CoverRateLiquidation": 25000,
+          "CoverRateMinimum": 10000,
+          "DebtMaximum": "50000",
+          "DebtTotal": "0",
+          "LedgerEntryType": "LoanBroker",
+          "ManagementFeeRate": 0,
+          "Owner": "rSyntheticOwner",
+          "VaultID": "SYNTHETIC-VAULT-2",
+          "index": "SYNTHETIC-BROKER-1"
+        },
+        "owner_account": {
+          "Account": "rSyntheticOwner",
+          "OwnerCount": 5
+        },
+        "owner_balance": "100",
+        "owner_objects": [
+          {
+            "Account": "rSyntheticE4VaultPseudo",
+            "Asset": {
+              "currency": "74524C5553440000000000000000000000000000",
+              "issuer": "rSyntheticIssuer"
+            },
+            "AssetsAvailable": "0",
+            "AssetsTotal": "0",
+            "Flags": 0,
+            "LedgerEntryType": "Vault",
+            "Owner": "rSyntheticOwner",
+            "RedemptionDate": 310,
+            "ShareMPTID": "SYNTHETIC-SHARE-1",
+            "SubscriptionDate": 130,
+            "VaultKind": 1,
+            "WithdrawalPolicy": 1,
+            "index": "SYNTHETIC-VAULT-2"
+          },
+          {
+            "Account": "rSyntheticOwner",
+            "Flags": 0,
+            "LedgerEntryType": "MPToken",
+            "MPTAmount": "0",
+            "MPTokenIssuanceID": "SYNTHETIC-SHARE-1",
+            "index": "SYNTHETIC-HOLDER-rSyntheticOwner"
+          },
+          {
+            "Account": "rSyntheticBrokerPseudo",
+            "CoverAvailable": "0",
+            "CoverRateLiquidation": 25000,
+            "CoverRateMinimum": 10000,
+            "DebtMaximum": "50000",
+            "DebtTotal": "0",
+            "LedgerEntryType": "LoanBroker",
+            "ManagementFeeRate": 0,
+            "Owner": "rSyntheticOwner",
+            "VaultID": "SYNTHETIC-VAULT-2",
+            "index": "SYNTHETIC-BROKER-1"
+          }
+        ],
+        "vault": {
+          "Account": "rSyntheticE4VaultPseudo",
+          "Asset": {
+            "currency": "74524C5553440000000000000000000000000000",
+            "issuer": "rSyntheticIssuer"
+          },
+          "AssetsAvailable": "0",
+          "AssetsTotal": "0",
+          "Flags": 0,
+          "LedgerEntryType": "Vault",
+          "Owner": "rSyntheticOwner",
+          "RedemptionDate": 310,
+          "ShareMPTID": "SYNTHETIC-SHARE-1",
+          "SubscriptionDate": 130,
+          "VaultKind": 1,
+          "WithdrawalPolicy": 1,
+          "index": "SYNTHETIC-VAULT-2"
+        }
+      },
+      "pre_state": {
+        "owner_account": {
+          "Account": "rSyntheticOwner",
+          "OwnerCount": 3
+        },
+        "owner_balance": "100",
+        "owner_objects": [
+          {
+            "Account": "rSyntheticE4VaultPseudo",
+            "Asset": {
+              "currency": "74524C5553440000000000000000000000000000",
+              "issuer": "rSyntheticIssuer"
+            },
+            "AssetsAvailable": "0",
+            "AssetsTotal": "0",
+            "Flags": 0,
+            "LedgerEntryType": "Vault",
+            "Owner": "rSyntheticOwner",
+            "RedemptionDate": 310,
+            "ShareMPTID": "SYNTHETIC-SHARE-1",
+            "SubscriptionDate": 130,
+            "VaultKind": 1,
+            "WithdrawalPolicy": 1,
+            "index": "SYNTHETIC-VAULT-2"
+          },
+          {
+            "Account": "rSyntheticOwner",
+            "Flags": 0,
+            "LedgerEntryType": "MPToken",
+            "MPTAmount": "0",
+            "MPTokenIssuanceID": "SYNTHETIC-SHARE-1",
+            "index": "SYNTHETIC-HOLDER-rSyntheticOwner"
+          }
+        ],
+        "vault": {
+          "Account": "rSyntheticE4VaultPseudo",
+          "Asset": {
+            "currency": "74524C5553440000000000000000000000000000",
+            "issuer": "rSyntheticIssuer"
+          },
+          "AssetsAvailable": "0",
+          "AssetsTotal": "0",
+          "Flags": 0,
+          "LedgerEntryType": "Vault",
+          "Owner": "rSyntheticOwner",
+          "RedemptionDate": 310,
+          "ShareMPTID": "SYNTHETIC-SHARE-1",
+          "SubscriptionDate": 130,
+          "VaultKind": 1,
+          "WithdrawalPolicy": 1,
+          "index": "SYNTHETIC-VAULT-2"
+        }
+      },
+      "protected_state_unchanged": null,
+      "result_resolution": {
+        "authoritative_result": "tesSUCCESS",
+        "category": "ACCEPTED_VALIDATED_SUCCESS",
+        "client_exception": null,
+        "malformed_request": null,
+        "submission_hash_if_any": "synthetic-h-hash",
+        "submission_result": "tesSUCCESS",
+        "transport_or_server_failure": null,
+        "validated_lookup_status": "VALIDATED",
+        "validated_result_if_any": "tesSUCCESS"
+      },
+      "state_assertion": "PASS",
+      "state_assertions": [
+        {
+          "actual": [
+            {
+              "actual": [
+                "SYNTHETIC-BROKER-1"
+              ],
+              "expected": [
+                "SYNTHETIC-BROKER-1"
+              ],
+              "name": "created LoanBroker indices",
+              "passed": true
+            }
+          ],
+          "expected": true,
+          "name": "unique_created_loan_broker",
+          "passed": true
+        },
+        {
+          "actual": [
+            {
+              "actual": 1,
+              "expected": 1,
+              "name": "expected LoanBroker match count",
+              "passed": true
+            },
+            {
+              "actual": "LoanBroker",
+              "expected": "LoanBroker",
+              "name": "LoanBroker LedgerEntryType",
+              "passed": true
+            },
+            {
+              "actual": "SYNTHETIC-BROKER-1",
+              "expected": "SYNTHETIC-BROKER-1",
+              "name": "LoanBroker index",
+              "passed": true
+            },
+            {
+              "actual": "rSyntheticOwner",
+              "expected": "rSyntheticOwner",
+              "name": "LoanBroker Owner",
+              "passed": true
+            },
+            {
+              "actual": "SYNTHETIC-VAULT-2",
+              "expected": "SYNTHETIC-VAULT-2",
+              "name": "LoanBroker VaultID",
+              "passed": true
+            },
+            {
+              "actual": "50000",
+              "expected": "50000",
+              "name": "LoanBroker DebtMaximum",
+              "passed": true
+            },
+            {
+              "actual": 10000,
+              "expected": 10000,
+              "name": "LoanBroker CoverRateMinimum",
+              "passed": true
+            },
+            {
+              "actual": 25000,
+              "expected": 25000,
+              "name": "LoanBroker CoverRateLiquidation",
+              "passed": true
+            },
+            {
+              "actual": "0",
+              "expected": "0",
+              "name": "LoanBroker DebtTotal",
+              "passed": true
+            },
+            {
+              "actual": "0",
+              "expected": "0",
+              "name": "LoanBroker CoverAvailable",
+              "passed": true
+            },
+            {
+              "actual": 0,
+              "expected": 0,
+              "name": "LoanBroker ManagementFeeRate",
+              "passed": true
+            },
+            {
+              "actual": "rSyntheticBrokerPseudo",
+              "expected": true,
+              "name": "LoanBroker pseudo Account present",
+              "passed": true
+            },
+            {
+              "actual": 0,
+              "expected": 0,
+              "name": "expected LoanBroker absent from pre-state",
+              "passed": true
+            },
+            {
+              "actual": "LoanBroker",
+              "expected": "LoanBroker",
+              "name": "LoanBroker LedgerEntryType",
+              "passed": true
+            },
+            {
+              "actual": "SYNTHETIC-BROKER-1",
+              "expected": "SYNTHETIC-BROKER-1",
+              "name": "LoanBroker index",
+              "passed": true
+            },
+            {
+              "actual": "rSyntheticOwner",
+              "expected": "rSyntheticOwner",
+              "name": "LoanBroker Owner",
+              "passed": true
+            },
+            {
+              "actual": "SYNTHETIC-VAULT-2",
+              "expected": "SYNTHETIC-VAULT-2",
+              "name": "LoanBroker VaultID",
+              "passed": true
+            },
+            {
+              "actual": "50000",
+              "expected": "50000",
+              "name": "LoanBroker DebtMaximum",
+              "passed": true
+            },
+            {
+              "actual": 10000,
+              "expected": 10000,
+              "name": "LoanBroker CoverRateMinimum",
+              "passed": true
+            },
+            {
+              "actual": 25000,
+              "expected": 25000,
+              "name": "LoanBroker CoverRateLiquidation",
+              "passed": true
+            },
+            {
+              "actual": "0",
+              "expected": "0",
+              "name": "LoanBroker DebtTotal",
+              "passed": true
+            },
+            {
+              "actual": "0",
+              "expected": "0",
+              "name": "LoanBroker CoverAvailable",
+              "passed": true
+            },
+            {
+              "actual": 0,
+              "expected": 0,
+              "name": "LoanBroker ManagementFeeRate",
+              "passed": true
+            },
+            {
+              "actual": "rSyntheticBrokerPseudo",
+              "expected": true,
+              "name": "LoanBroker pseudo Account present",
+              "passed": true
+            }
+          ],
+          "expected": true,
+          "name": "loan_broker_semantics",
+          "passed": true
+        },
+        {
+          "actual": [
+            {
+              "actual": 0,
+              "expected": 0,
+              "name": "LoanBroker absent before",
+              "passed": true
+            }
+          ],
+          "expected": true,
+          "name": "created_broker_absent_before",
+          "passed": true
+        },
+        {
+          "actual": [
+            {
+              "actual": "SYNTHETIC-VAULT-2",
+              "expected": "SYNTHETIC-VAULT-2",
+              "name": "Vault index",
+              "passed": true
+            },
+            {
+              "actual": "rSyntheticOwner",
+              "expected": "rSyntheticOwner",
+              "name": "Vault Owner",
+              "passed": true
+            },
+            {
+              "actual": {
+                "currency": "74524C5553440000000000000000000000000000",
+                "issuer": "rSyntheticIssuer"
+              },
+              "expected": {
+                "currency": "74524C5553440000000000000000000000000000",
+                "issuer": "rSyntheticIssuer"
+              },
+              "name": "Vault Asset",
+              "passed": true
+            },
+            {
+              "actual": 1,
+              "expected": 1,
+              "name": "Vault VaultKind",
+              "passed": true
+            },
+            {
+              "actual": 130,
+              "expected": 130,
+              "name": "Vault SubscriptionDate",
+              "passed": true
+            },
+            {
+              "actual": 310,
+              "expected": 310,
+              "name": "Vault RedemptionDate",
+              "passed": true
+            },
+            {
+              "actual": 1,
+              "expected": 1,
+              "name": "Vault WithdrawalPolicy",
+              "passed": true
+            },
+            {
+              "actual": 0,
+              "expected": 0,
+              "name": "Vault Flags",
+              "passed": true
+            },
+            {
+              "actual": "SYNTHETIC-SHARE-1",
+              "expected": "SYNTHETIC-SHARE-1",
+              "name": "Vault ShareMPTID",
+              "passed": true
+            },
+            {
+              "actual": "100",
+              "expected": "100",
+              "name": "owner tRLUSD balance",
+              "passed": true
+            }
+          ],
+          "expected": true,
+          "name": "vault_and_owner_asset_protected",
+          "passed": true
+        },
+        {
+          "actual": [
+            {
+              "actual": 2,
+              "expected": 2,
+              "name": "owner OwnerCount delta",
+              "passed": true
+            }
+          ],
+          "expected": true,
+          "name": "owner_reserve_effects",
+          "passed": true
+        },
+        {
+          "actual": [
+            {
+              "actual": "AccountRoot",
+              "expected": "AccountRoot",
+              "name": "LoanBroker pseudo AccountRoot type",
+              "passed": true
+            },
+            {
+              "actual": "rSyntheticBrokerPseudo",
+              "expected": "rSyntheticBrokerPseudo",
+              "name": "LoanBroker pseudo account identity",
+              "passed": true
+            }
+          ],
+          "expected": true,
+          "name": "pseudo_account_captured",
+          "passed": true
+        }
+      ],
+      "step": "H",
+      "submission_hash_if_any": "synthetic-h-hash",
+      "submission_result": "tesSUCCESS",
+      "synthetic": true,
+      "validated_lookup_status": "VALIDATED",
+      "validated_result_if_any": "tesSUCCESS"
+    },
+    {
+      "classification": {
+        "expected_result": "tesSUCCESS",
+        "observed_result": "tesSUCCESS",
+        "reasons": [],
+        "state_assertion": "PASS",
+        "state_unchanged": null,
+        "status": "PASS"
+      },
+      "client_exception": null,
+      "close_time": 322,
+      "expected_result": "tesSUCCESS",
+      "ledger_after": {
+        "close_time": 322,
+        "closed": true,
+        "ledger_index": 18
+      },
+      "ledger_before": {
+        "close_time": 321,
+        "closed": true,
+        "ledger_index": 17
+      },
+      "ledger_index": 18,
+      "name": "E4 Vault/Broker relationship validation",
+      "post_state": {
+        "loan_broker": {
+          "Account": "rSyntheticBrokerPseudo",
+          "CoverAvailable": "0",
+          "CoverRateLiquidation": 25000,
+          "CoverRateMinimum": 10000,
+          "DebtMaximum": "50000",
+          "DebtTotal": "0",
+          "LedgerEntryType": "LoanBroker",
+          "ManagementFeeRate": 0,
+          "Owner": "rSyntheticOwner",
+          "VaultID": "SYNTHETIC-VAULT-2",
+          "index": "SYNTHETIC-BROKER-1"
+        },
+        "vault": {
+          "Account": "rSyntheticE4VaultPseudo",
+          "Asset": {
+            "currency": "74524C5553440000000000000000000000000000",
+            "issuer": "rSyntheticIssuer"
+          },
+          "AssetsAvailable": "0",
+          "AssetsTotal": "0",
+          "Flags": 0,
+          "LedgerEntryType": "Vault",
+          "Owner": "rSyntheticOwner",
+          "RedemptionDate": 310,
+          "ShareMPTID": "SYNTHETIC-SHARE-1",
+          "SubscriptionDate": 130,
+          "VaultKind": 1,
+          "WithdrawalPolicy": 1,
+          "index": "SYNTHETIC-VAULT-2"
+        }
+      },
+      "pre_state": {
+        "vault": {
+          "Account": "rSyntheticE4VaultPseudo",
+          "Asset": {
+            "currency": "74524C5553440000000000000000000000000000",
+            "issuer": "rSyntheticIssuer"
+          },
+          "AssetsAvailable": "0",
+          "AssetsTotal": "0",
+          "Flags": 0,
+          "LedgerEntryType": "Vault",
+          "Owner": "rSyntheticOwner",
+          "RedemptionDate": 310,
+          "ShareMPTID": "SYNTHETIC-SHARE-1",
+          "SubscriptionDate": 130,
+          "VaultKind": 1,
+          "WithdrawalPolicy": 1,
+          "index": "SYNTHETIC-VAULT-2"
+        }
+      },
+      "protected_state_unchanged": null,
+      "result_resolution": {
+        "authoritative_result": "tesSUCCESS",
+        "category": "ACCEPTED_VALIDATED_SUCCESS",
+        "client_exception": null,
+        "malformed_request": null,
+        "submission_hash_if_any": "synthetic-i-hash",
+        "submission_result": "tesSUCCESS",
+        "transport_or_server_failure": null,
+        "validated_lookup_status": "VALIDATED",
+        "validated_result_if_any": "tesSUCCESS"
+      },
+      "state_assertion": "PASS",
+      "state_assertions": [
+        {
+          "actual": [
+            {
+              "actual": "SYNTHETIC-VAULT-2",
+              "expected": "SYNTHETIC-VAULT-2",
+              "name": "LoanBroker VaultID",
+              "passed": true
+            },
+            {
+              "actual": "rSyntheticOwner",
+              "expected": "rSyntheticOwner",
+              "name": "LoanBroker Owner",
+              "passed": true
+            }
+          ],
+          "expected": true,
+          "name": "vault_broker_relationship",
+          "passed": true
+        },
+        {
+          "actual": [
+            {
+              "actual": "rSyntheticE4VaultPseudo",
+              "expected": true,
+              "name": "Vault pseudo account present",
+              "passed": true
+            },
+            {
+              "actual": "rSyntheticBrokerPseudo",
+              "expected": true,
+              "name": "LoanBroker pseudo account present",
+              "passed": true
+            },
+            {
+              "actual": {
+                "loan_broker": "rSyntheticBrokerPseudo",
+                "vault": "rSyntheticE4VaultPseudo"
+              },
+              "expected": true,
+              "name": "pseudo accounts distinct",
+              "passed": true
+            }
+          ],
+          "expected": true,
+          "name": "pseudo_accounts_present_and_distinct",
+          "passed": true
+        },
+        {
+          "actual": [
+            {
+              "actual": "SYNTHETIC-VAULT-2",
+              "expected": "SYNTHETIC-VAULT-2",
+              "name": "Vault index",
+              "passed": true
+            },
+            {
+              "actual": "rSyntheticOwner",
+              "expected": "rSyntheticOwner",
+              "name": "Vault Owner",
+              "passed": true
+            },
+            {
+              "actual": {
+                "currency": "74524C5553440000000000000000000000000000",
+                "issuer": "rSyntheticIssuer"
+              },
+              "expected": {
+                "currency": "74524C5553440000000000000000000000000000",
+                "issuer": "rSyntheticIssuer"
+              },
+              "name": "Vault Asset",
+              "passed": true
+            },
+            {
+              "actual": 1,
+              "expected": 1,
+              "name": "Vault VaultKind",
+              "passed": true
+            },
+            {
+              "actual": 130,
+              "expected": 130,
+              "name": "Vault SubscriptionDate",
+              "passed": true
+            },
+            {
+              "actual": 310,
+              "expected": 310,
+              "name": "Vault RedemptionDate",
+              "passed": true
+            },
+            {
+              "actual": 1,
+              "expected": 1,
+              "name": "Vault WithdrawalPolicy",
+              "passed": true
+            },
+            {
+              "actual": 0,
+              "expected": 0,
+              "name": "Vault Flags",
+              "passed": true
+            },
+            {
+              "actual": "SYNTHETIC-SHARE-1",
+              "expected": "SYNTHETIC-SHARE-1",
+              "name": "Vault ShareMPTID",
+              "passed": true
+            }
+          ],
+          "expected": true,
+          "name": "vault_configuration_protected",
+          "passed": true
+        }
+      ],
+      "step": "I",
+      "submission_hash_if_any": "synthetic-i-hash",
+      "submission_result": "tesSUCCESS",
+      "synthetic": true,
+      "validated_lookup_status": "VALIDATED",
+      "validated_result_if_any": "tesSUCCESS"
+    },
+    {
+      "classification": {
+        "expected_result": "tesSUCCESS",
+        "observed_result": "tesSUCCESS",
+        "reasons": [],
+        "state_assertion": "PASS",
+        "state_unchanged": null,
+        "status": "PASS"
+      },
+      "client_exception": null,
+      "close_time": 323,
+      "expected_result": "tesSUCCESS",
+      "ledger_after": {
+        "close_time": 323,
+        "closed": true,
+        "ledger_index": 19
+      },
+      "ledger_before": {
+        "close_time": 322,
+        "closed": true,
+        "ledger_index": 18
+      },
+      "ledger_index": 19,
+      "name": "E4 cover establishment",
+      "post_state": {
+        "broker_holding": "10",
+        "loan_broker": {
+          "Account": "rSyntheticBrokerPseudo",
+          "CoverAvailable": "10",
+          "CoverRateLiquidation": 25000,
+          "CoverRateMinimum": 10000,
+          "DebtMaximum": "50000",
+          "DebtTotal": "0",
+          "LedgerEntryType": "LoanBroker",
+          "ManagementFeeRate": 0,
+          "Owner": "rSyntheticOwner",
+          "VaultID": "SYNTHETIC-VAULT-2",
+          "index": "SYNTHETIC-BROKER-1"
+        },
+        "owner_balance": "90",
+        "unrelated_state": {
+          "borrower_balance": "0"
+        },
+        "vault": {
+          "Account": "rSyntheticE4VaultPseudo",
+          "Asset": {
+            "currency": "74524C5553440000000000000000000000000000",
+            "issuer": "rSyntheticIssuer"
+          },
+          "AssetsAvailable": "0",
+          "AssetsTotal": "0",
+          "Flags": 0,
+          "LedgerEntryType": "Vault",
+          "Owner": "rSyntheticOwner",
+          "RedemptionDate": 310,
+          "ShareMPTID": "SYNTHETIC-SHARE-1",
+          "SubscriptionDate": 130,
+          "VaultKind": 1,
+          "WithdrawalPolicy": 1,
+          "index": "SYNTHETIC-VAULT-2"
+        }
+      },
+      "pre_state": {
+        "broker_holding": "0",
+        "loan_broker": {
+          "Account": "rSyntheticBrokerPseudo",
+          "CoverAvailable": "0",
+          "CoverRateLiquidation": 25000,
+          "CoverRateMinimum": 10000,
+          "DebtMaximum": "50000",
+          "DebtTotal": "0",
+          "LedgerEntryType": "LoanBroker",
+          "ManagementFeeRate": 0,
+          "Owner": "rSyntheticOwner",
+          "VaultID": "SYNTHETIC-VAULT-2",
+          "index": "SYNTHETIC-BROKER-1"
+        },
+        "owner_balance": "100",
+        "unrelated_state": {
+          "borrower_balance": "0"
+        },
+        "vault": {
+          "Account": "rSyntheticE4VaultPseudo",
+          "Asset": {
+            "currency": "74524C5553440000000000000000000000000000",
+            "issuer": "rSyntheticIssuer"
+          },
+          "AssetsAvailable": "0",
+          "AssetsTotal": "0",
+          "Flags": 0,
+          "LedgerEntryType": "Vault",
+          "Owner": "rSyntheticOwner",
+          "RedemptionDate": 310,
+          "ShareMPTID": "SYNTHETIC-SHARE-1",
+          "SubscriptionDate": 130,
+          "VaultKind": 1,
+          "WithdrawalPolicy": 1,
+          "index": "SYNTHETIC-VAULT-2"
+        }
+      },
+      "protected_state_unchanged": null,
+      "result_resolution": {
+        "authoritative_result": "tesSUCCESS",
+        "category": "ACCEPTED_VALIDATED_SUCCESS",
+        "client_exception": null,
+        "malformed_request": null,
+        "submission_hash_if_any": "synthetic-j-hash",
+        "submission_result": "tesSUCCESS",
+        "transport_or_server_failure": null,
+        "validated_lookup_status": "VALIDATED",
+        "validated_result_if_any": "tesSUCCESS"
+      },
+      "state_assertion": "PASS",
+      "state_assertions": [
+        {
+          "actual": [
+            {
+              "actual": "SYNTHETIC-BROKER-1",
+              "expected": "SYNTHETIC-BROKER-1",
+              "name": "LoanBroker index",
+              "passed": true
+            },
+            {
+              "actual": "rSyntheticOwner",
+              "expected": "rSyntheticOwner",
+              "name": "LoanBroker Owner",
+              "passed": true
+            },
+            {
+              "actual": "SYNTHETIC-VAULT-2",
+              "expected": "SYNTHETIC-VAULT-2",
+              "name": "LoanBroker VaultID",
+              "passed": true
+            },
+            {
+              "actual": "rSyntheticBrokerPseudo",
+              "expected": "rSyntheticBrokerPseudo",
+              "name": "LoanBroker Account",
+              "passed": true
+            },
+            {
+              "actual": "50000",
+              "expected": "50000",
+              "name": "LoanBroker DebtMaximum",
+              "passed": true
+            },
+            {
+              "actual": 10000,
+              "expected": 10000,
+              "name": "LoanBroker CoverRateMinimum",
+              "passed": true
+            },
+            {
+              "actual": 25000,
+              "expected": 25000,
+              "name": "LoanBroker CoverRateLiquidation",
+              "passed": true
+            },
+            {
+              "actual": 0,
+              "expected": 0,
+              "name": "LoanBroker ManagementFeeRate",
+              "passed": true
+            },
+            {
+              "actual": "LoanBroker",
+              "expected": "LoanBroker",
+              "name": "LoanBroker LedgerEntryType",
+              "passed": true
+            },
+            {
+              "actual": "SYNTHETIC-BROKER-1",
+              "expected": "SYNTHETIC-BROKER-1",
+              "name": "LoanBroker index",
+              "passed": true
+            },
+            {
+              "actual": "rSyntheticOwner",
+              "expected": "rSyntheticOwner",
+              "name": "LoanBroker Owner",
+              "passed": true
+            },
+            {
+              "actual": "SYNTHETIC-VAULT-2",
+              "expected": "SYNTHETIC-VAULT-2",
+              "name": "LoanBroker VaultID",
+              "passed": true
+            },
+            {
+              "actual": "50000",
+              "expected": "50000",
+              "name": "LoanBroker DebtMaximum",
+              "passed": true
+            },
+            {
+              "actual": 10000,
+              "expected": 10000,
+              "name": "LoanBroker CoverRateMinimum",
+              "passed": true
+            },
+            {
+              "actual": 25000,
+              "expected": 25000,
+              "name": "LoanBroker CoverRateLiquidation",
+              "passed": true
+            },
+            {
+              "actual": "0",
+              "expected": "0",
+              "name": "LoanBroker DebtTotal",
+              "passed": true
+            },
+            {
+              "actual": "10",
+              "expected": "10",
+              "name": "LoanBroker CoverAvailable",
+              "passed": true
+            },
+            {
+              "actual": 0,
+              "expected": 0,
+              "name": "LoanBroker ManagementFeeRate",
+              "passed": true
+            },
+            {
+              "actual": "rSyntheticBrokerPseudo",
+              "expected": true,
+              "name": "LoanBroker pseudo Account present",
+              "passed": true
+            }
+          ],
+          "expected": true,
+          "name": "loan_broker_configuration_stable",
+          "passed": true
+        },
+        {
+          "actual": [
+            {
+              "actual": "SYNTHETIC-BROKER-1",
+              "expected": "SYNTHETIC-BROKER-1",
+              "name": "pre-state LoanBroker identity",
+              "passed": true
+            },
+            {
+              "actual": "rSyntheticOwner",
+              "expected": "rSyntheticOwner",
+              "name": "pre-state LoanBroker owner",
+              "passed": true
+            },
+            {
+              "actual": "SYNTHETIC-VAULT-2",
+              "expected": "SYNTHETIC-VAULT-2",
+              "name": "pre-state LoanBroker Vault relationship",
+              "passed": true
+            },
+            {
+              "actual": "SYNTHETIC-BROKER-1",
+              "expected": "SYNTHETIC-BROKER-1",
+              "name": "LoanBroker identity remains stable",
+              "passed": true
+            },
+            {
+              "actual": "rSyntheticOwner",
+              "expected": "rSyntheticOwner",
+              "name": "LoanBroker owner remains stable",
+              "passed": true
+            },
+            {
+              "actual": "SYNTHETIC-VAULT-2",
+              "expected": "SYNTHETIC-VAULT-2",
+              "name": "LoanBroker Vault relationship remains stable",
+              "passed": true
+            },
+            {
+              "actual": 10,
+              "expected": 10,
+              "name": "CoverAvailable delta",
+              "passed": true
+            },
+            {
+              "actual": -10,
+              "expected": -10,
+              "name": "cover owner balance delta",
+              "passed": true
+            }
+          ],
+          "expected": true,
+          "name": "cover_and_owner_balance_delta",
+          "passed": true
+        },
+        {
+          "actual": [
+            {
+              "actual": 10,
+              "expected": 10,
+              "name": "broker pseudo-account holding delta",
+              "passed": true
+            }
+          ],
+          "expected": true,
+          "name": "broker_holding_delta",
+          "passed": true
+        },
+        {
+          "actual": [
+            {
+              "actual": "0",
+              "expected": "0",
+              "name": "DebtTotal remains zero",
+              "passed": true
+            },
+            {
+              "actual": "SYNTHETIC-VAULT-2",
+              "expected": "SYNTHETIC-VAULT-2",
+              "name": "Vault index",
+              "passed": true
+            },
+            {
+              "actual": "rSyntheticOwner",
+              "expected": "rSyntheticOwner",
+              "name": "Vault Owner",
+              "passed": true
+            },
+            {
+              "actual": {
+                "currency": "74524C5553440000000000000000000000000000",
+                "issuer": "rSyntheticIssuer"
+              },
+              "expected": {
+                "currency": "74524C5553440000000000000000000000000000",
+                "issuer": "rSyntheticIssuer"
+              },
+              "name": "Vault Asset",
+              "passed": true
+            },
+            {
+              "actual": 1,
+              "expected": 1,
+              "name": "Vault VaultKind",
+              "passed": true
+            },
+            {
+              "actual": 130,
+              "expected": 130,
+              "name": "Vault SubscriptionDate",
+              "passed": true
+            },
+            {
+              "actual": 310,
+              "expected": 310,
+              "name": "Vault RedemptionDate",
+              "passed": true
+            },
+            {
+              "actual": 1,
+              "expected": 1,
+              "name": "Vault WithdrawalPolicy",
+              "passed": true
+            },
+            {
+              "actual": 0,
+              "expected": 0,
+              "name": "Vault Flags",
+              "passed": true
+            },
+            {
+              "actual": "SYNTHETIC-SHARE-1",
+              "expected": "SYNTHETIC-SHARE-1",
+              "name": "Vault ShareMPTID",
+              "passed": true
+            },
+            {
+              "actual": {
+                "borrower_balance": "0"
+              },
+              "expected": {
+                "borrower_balance": "0"
+              },
+              "name": "unrelated state",
+              "passed": true
+            }
+          ],
+          "expected": true,
+          "name": "debt_and_vault_protected",
+          "passed": true
+        }
+      ],
+      "step": "J",
+      "submission_hash_if_any": "synthetic-j-hash",
+      "submission_result": "tesSUCCESS",
+      "synthetic": true,
+      "validated_lookup_status": "VALIDATED",
+      "validated_result_if_any": "tesSUCCESS"
+    },
+    {
+      "classification": {
+        "expected_result": "tecNO_PERMISSION",
+        "observed_result": "tecNO_PERMISSION",
+        "reasons": [],
+        "state_assertion": "PASS",
+        "state_unchanged": true,
+        "status": "PASS"
+      },
+      "client_exception": null,
+      "close_time": 324,
+      "expected_result": "tecNO_PERMISSION",
+      "ledger_after": {
+        "close_time": 324,
+        "closed": true,
+        "ledger_index": 20
+      },
+      "ledger_before": {
+        "close_time": 323,
+        "closed": true,
+        "ledger_index": 19
+      },
+      "ledger_index": 20,
+      "name": "E4 negative broker operation",
+      "post_state": {
+        "non_owner_objects": [],
+        "protected": {
+          "non_owner_account_sequence": 4,
+          "non_owner_balance": "0",
+          "non_owner_objects": [],
+          "owner_account_sequence": 9,
+          "owner_balance": "90",
+          "owner_objects": [
+            {
+              "Account": "rSyntheticE4VaultPseudo",
+              "Asset": {
+                "currency": "74524C5553440000000000000000000000000000",
+                "issuer": "rSyntheticIssuer"
+              },
+              "AssetsAvailable": "0",
+              "AssetsTotal": "0",
+              "Flags": 0,
+              "LedgerEntryType": "Vault",
+              "Owner": "rSyntheticOwner",
+              "RedemptionDate": 310,
+              "ShareMPTID": "SYNTHETIC-SHARE-1",
+              "SubscriptionDate": 130,
+              "VaultKind": 1,
+              "WithdrawalPolicy": 1,
+              "index": "SYNTHETIC-VAULT-2"
+            },
+            {
+              "Account": "rSyntheticOwner",
+              "Flags": 0,
+              "LedgerEntryType": "MPToken",
+              "MPTAmount": "0",
+              "MPTokenIssuanceID": "SYNTHETIC-SHARE-1",
+              "index": "SYNTHETIC-HOLDER-rSyntheticOwner"
+            },
+            {
+              "Account": "rSyntheticBrokerPseudo",
+              "CoverAvailable": "0",
+              "CoverRateLiquidation": 25000,
+              "CoverRateMinimum": 10000,
+              "DebtMaximum": "50000",
+              "DebtTotal": "0",
+              "LedgerEntryType": "LoanBroker",
+              "ManagementFeeRate": 0,
+              "Owner": "rSyntheticOwner",
+              "VaultID": "SYNTHETIC-VAULT-2",
+              "index": "SYNTHETIC-BROKER-1"
+            }
+          ],
+          "vault": {
+            "Account": "rSyntheticE4VaultPseudo",
+            "Asset": {
+              "currency": "74524C5553440000000000000000000000000000",
+              "issuer": "rSyntheticIssuer"
+            },
+            "AssetsAvailable": "0",
+            "AssetsTotal": "0",
+            "Flags": 0,
+            "LedgerEntryType": "Vault",
+            "Owner": "rSyntheticOwner",
+            "RedemptionDate": 310,
+            "ShareMPTID": "SYNTHETIC-SHARE-1",
+            "SubscriptionDate": 130,
+            "VaultKind": 1,
+            "WithdrawalPolicy": 1,
+            "index": "SYNTHETIC-VAULT-2"
+          }
+        }
+      },
+      "pre_state": {
+        "non_owner_objects": [],
+        "protected": {
+          "non_owner_account_sequence": 4,
+          "non_owner_balance": "0",
+          "non_owner_objects": [],
+          "owner_account_sequence": 9,
+          "owner_balance": "90",
+          "owner_objects": [
+            {
+              "Account": "rSyntheticE4VaultPseudo",
+              "Asset": {
+                "currency": "74524C5553440000000000000000000000000000",
+                "issuer": "rSyntheticIssuer"
+              },
+              "AssetsAvailable": "0",
+              "AssetsTotal": "0",
+              "Flags": 0,
+              "LedgerEntryType": "Vault",
+              "Owner": "rSyntheticOwner",
+              "RedemptionDate": 310,
+              "ShareMPTID": "SYNTHETIC-SHARE-1",
+              "SubscriptionDate": 130,
+              "VaultKind": 1,
+              "WithdrawalPolicy": 1,
+              "index": "SYNTHETIC-VAULT-2"
+            },
+            {
+              "Account": "rSyntheticOwner",
+              "Flags": 0,
+              "LedgerEntryType": "MPToken",
+              "MPTAmount": "0",
+              "MPTokenIssuanceID": "SYNTHETIC-SHARE-1",
+              "index": "SYNTHETIC-HOLDER-rSyntheticOwner"
+            },
+            {
+              "Account": "rSyntheticBrokerPseudo",
+              "CoverAvailable": "0",
+              "CoverRateLiquidation": 25000,
+              "CoverRateMinimum": 10000,
+              "DebtMaximum": "50000",
+              "DebtTotal": "0",
+              "LedgerEntryType": "LoanBroker",
+              "ManagementFeeRate": 0,
+              "Owner": "rSyntheticOwner",
+              "VaultID": "SYNTHETIC-VAULT-2",
+              "index": "SYNTHETIC-BROKER-1"
+            }
+          ],
+          "vault": {
+            "Account": "rSyntheticE4VaultPseudo",
+            "Asset": {
+              "currency": "74524C5553440000000000000000000000000000",
+              "issuer": "rSyntheticIssuer"
+            },
+            "AssetsAvailable": "0",
+            "AssetsTotal": "0",
+            "Flags": 0,
+            "LedgerEntryType": "Vault",
+            "Owner": "rSyntheticOwner",
+            "RedemptionDate": 310,
+            "ShareMPTID": "SYNTHETIC-SHARE-1",
+            "SubscriptionDate": 130,
+            "VaultKind": 1,
+            "WithdrawalPolicy": 1,
+            "index": "SYNTHETIC-VAULT-2"
+          }
+        }
+      },
+      "protected_state_unchanged": true,
+      "result_resolution": {
+        "authoritative_result": "tecNO_PERMISSION",
+        "category": "SUBMISSION_DETERMINISTIC_FAILURE",
+        "client_exception": null,
+        "malformed_request": null,
+        "submission_hash_if_any": "synthetic-k-hash",
+        "submission_result": "tecNO_PERMISSION",
+        "transport_or_server_failure": null,
+        "validated_lookup_status": "NOT_IN_VALIDATED_LEDGER",
+        "validated_result_if_any": null
+      },
+      "state_assertion": "PASS",
+      "state_assertions": [
+        {
+          "actual": [
+            {
+              "actual": 0,
+              "expected": 0,
+              "name": "matching non-owner LoanBroker count",
+              "passed": true
+            }
+          ],
+          "expected": true,
+          "name": "matching_loan_broker_absent",
+          "passed": true
+        },
+        {
+          "actual": [
+            {
+              "actual": {
+                "non_owner_account_sequence": 4,
+                "non_owner_balance": "0",
+                "non_owner_objects": [],
+                "owner_account_sequence": 9,
+                "owner_balance": "90",
+                "owner_objects": [
+                  {
+                    "Account": "rSyntheticE4VaultPseudo",
+                    "Asset": {
+                      "currency": "74524C5553440000000000000000000000000000",
+                      "issuer": "rSyntheticIssuer"
+                    },
+                    "AssetsAvailable": "0",
+                    "AssetsTotal": "0",
+                    "Flags": 0,
+                    "LedgerEntryType": "Vault",
+                    "Owner": "rSyntheticOwner",
+                    "RedemptionDate": 310,
+                    "ShareMPTID": "SYNTHETIC-SHARE-1",
+                    "SubscriptionDate": 130,
+                    "VaultKind": 1,
+                    "WithdrawalPolicy": 1,
+                    "index": "SYNTHETIC-VAULT-2"
+                  },
+                  {
+                    "Account": "rSyntheticOwner",
+                    "Flags": 0,
+                    "LedgerEntryType": "MPToken",
+                    "MPTAmount": "0",
+                    "MPTokenIssuanceID": "SYNTHETIC-SHARE-1",
+                    "index": "SYNTHETIC-HOLDER-rSyntheticOwner"
+                  },
+                  {
+                    "Account": "rSyntheticBrokerPseudo",
+                    "CoverAvailable": "0",
+                    "CoverRateLiquidation": 25000,
+                    "CoverRateMinimum": 10000,
+                    "DebtMaximum": "50000",
+                    "DebtTotal": "0",
+                    "LedgerEntryType": "LoanBroker",
+                    "ManagementFeeRate": 0,
+                    "Owner": "rSyntheticOwner",
+                    "VaultID": "SYNTHETIC-VAULT-2",
+                    "index": "SYNTHETIC-BROKER-1"
+                  }
+                ],
+                "vault": {
+                  "Account": "rSyntheticE4VaultPseudo",
+                  "Asset": {
+                    "currency": "74524C5553440000000000000000000000000000",
+                    "issuer": "rSyntheticIssuer"
+                  },
+                  "AssetsAvailable": "0",
+                  "AssetsTotal": "0",
+                  "Flags": 0,
+                  "LedgerEntryType": "Vault",
+                  "Owner": "rSyntheticOwner",
+                  "RedemptionDate": 310,
+                  "ShareMPTID": "SYNTHETIC-SHARE-1",
+                  "SubscriptionDate": 130,
+                  "VaultKind": 1,
+                  "WithdrawalPolicy": 1,
+                  "index": "SYNTHETIC-VAULT-2"
+                }
+              },
+              "expected": {
+                "non_owner_account_sequence": 4,
+                "non_owner_balance": "0",
+                "non_owner_objects": [],
+                "owner_account_sequence": 9,
+                "owner_balance": "90",
+                "owner_objects": [
+                  {
+                    "Account": "rSyntheticE4VaultPseudo",
+                    "Asset": {
+                      "currency": "74524C5553440000000000000000000000000000",
+                      "issuer": "rSyntheticIssuer"
+                    },
+                    "AssetsAvailable": "0",
+                    "AssetsTotal": "0",
+                    "Flags": 0,
+                    "LedgerEntryType": "Vault",
+                    "Owner": "rSyntheticOwner",
+                    "RedemptionDate": 310,
+                    "ShareMPTID": "SYNTHETIC-SHARE-1",
+                    "SubscriptionDate": 130,
+                    "VaultKind": 1,
+                    "WithdrawalPolicy": 1,
+                    "index": "SYNTHETIC-VAULT-2"
+                  },
+                  {
+                    "Account": "rSyntheticOwner",
+                    "Flags": 0,
+                    "LedgerEntryType": "MPToken",
+                    "MPTAmount": "0",
+                    "MPTokenIssuanceID": "SYNTHETIC-SHARE-1",
+                    "index": "SYNTHETIC-HOLDER-rSyntheticOwner"
+                  },
+                  {
+                    "Account": "rSyntheticBrokerPseudo",
+                    "CoverAvailable": "0",
+                    "CoverRateLiquidation": 25000,
+                    "CoverRateMinimum": 10000,
+                    "DebtMaximum": "50000",
+                    "DebtTotal": "0",
+                    "LedgerEntryType": "LoanBroker",
+                    "ManagementFeeRate": 0,
+                    "Owner": "rSyntheticOwner",
+                    "VaultID": "SYNTHETIC-VAULT-2",
+                    "index": "SYNTHETIC-BROKER-1"
+                  }
+                ],
+                "vault": {
+                  "Account": "rSyntheticE4VaultPseudo",
+                  "Asset": {
+                    "currency": "74524C5553440000000000000000000000000000",
+                    "issuer": "rSyntheticIssuer"
+                  },
+                  "AssetsAvailable": "0",
+                  "AssetsTotal": "0",
+                  "Flags": 0,
+                  "LedgerEntryType": "Vault",
+                  "Owner": "rSyntheticOwner",
+                  "RedemptionDate": 310,
+                  "ShareMPTID": "SYNTHETIC-SHARE-1",
+                  "SubscriptionDate": 130,
+                  "VaultKind": 1,
+                  "WithdrawalPolicy": 1,
+                  "index": "SYNTHETIC-VAULT-2"
+                }
+              },
+              "name": "complete protected state",
+              "passed": true
+            }
+          ],
+          "expected": true,
+          "name": "complete_protected_state_unchanged",
+          "passed": true
+        }
+      ],
+      "step": "K",
+      "submission_hash_if_any": "synthetic-k-hash",
+      "submission_result": "tecNO_PERMISSION",
+      "synthetic": true,
+      "validated_lookup_status": "NOT_IN_VALIDATED_LEDGER",
+      "validated_result_if_any": null
+    }
+  ]
+}
