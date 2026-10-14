@@ -308,5 +308,214 @@
     ]
   },
   "verdict": "BLOCKED",
-  "verdict_reason": "Implementer evidence covers only the environment gate (E1). None of the architectural claims Credence needs has run evidence, so the evidence cannot answer whether the architecture works. Nothing was falsified. Source review finds the architecture LIKELY viable, with bounded plan corrections (PLAN-DIFF.md)."
+  "verdict_reason": "Implementer evidence covers only the environment gate (E1). None of the architectural claims Credence needs has run evidence, so the evidence cannot answer whether the architecture works. Nothing was falsified. Source review finds the architecture LIKELY viable, with bounded plan corrections (PLAN-DIFF.md).",
+  "checkpoint_1r_b": {
+    "scope": "Independent audit of implementer E3/E4 frozen-oracle run",
+    "implementer_commit": "44fb089f0cb4281608ab0b9a67e129147f349887",
+    "expectations_record_unchanged": {
+      "sha256": "4ee2eb94b161232474942c02f764f5b7f4d29485fedfd0f2de9c4a681dfd81ee",
+      "matches_phase_a": true
+    },
+    "frozen_oracle": {
+      "STATE-ASSERTIONS.md": "836b90b7db41b04a9fdefb78d340f030f798b7650b4945b89ba48990545b416a",
+      "scripts/harness.py": "098bc81f3358b8c68a235bf8d9c9101f209ff7074232fb9021f645a4b0efae7b",
+      "scripts/frozen_oracle.py": "bfa00b417de86518a1c9eab266c6fb138f9b3f677373e58c96a97175c300b2be",
+      "tests/test_state_assertions.py": "634880c33181da678d8dead2dac1e932c0dd6aafac44c862fa48259b7710b77c",
+      "tests/test_frozen_oracle_runner.py": "935e53b4c66f99e2332613d94bc00582f331bc3d86cf1f4835147bff9fc3e37e",
+      "unchanged_since": {
+        "oracle_helpers_H1_H12": "42845ca",
+        "bindings_B1_B12": "5369ff0"
+      },
+      "modified_by_live_run": false,
+      "order_executed": "ABCDEFGHIJK",
+      "retries_observed": 0,
+      "reviewer_conclusion": "FROZEN, with condition C1: run evidence carries no oracle/runner hash; binding rests on git history and timeline"
+    },
+    "phase_timing": {
+      "subscription_date": 845331900,
+      "redemption_date": 845332080,
+      "gap_s": 180,
+      "close_count": 226,
+      "close_time_delta_s": "1 on every close",
+      "investment_first_parent": {
+        "ledger": 43,
+        "close_time": 845331901
+      },
+      "redemption_first_parent": {
+        "ledger": 222,
+        "close_time": 845332080
+      },
+      "reviewer_conclusion": "B/C Subscription, D/E Investment, F/G Redemption; no off-by-one"
+    },
+    "steps": {
+      "A": {
+        "protocol_expectation": "EXPECTATIONS Q3: VaultKind=1 + dates; gap >= 180 s",
+        "implementer_evidence": {
+          "submission": "tesSUCCESS",
+          "hash": "2604E1A3D9901B3C3BEC9B47D48274C8B7FC71855A5F2503701E9B83A0FABEDB",
+          "validated": "tesSUCCESS",
+          "ledger": 13,
+          "close_time": 845331871
+        },
+        "reviewer_conclusion": "PASS: Vault B87C0BAC\u2026, owner = loan_broker actor, kind 1, dates as submitted, share issuance + owner MPToken created"
+      },
+      "B": {
+        "protocol_expectation": "Subscription: deposit allowed",
+        "implementer_evidence": {
+          "submission": "tesSUCCESS",
+          "hash": "CA6EFADF69D318E76B26D9CCCDCF439514FF9FD228C2E87F52AE0D041B1226BF",
+          "validated": "tesSUCCESS",
+          "ledger": 14,
+          "governing_clock": 845331871
+        },
+        "reviewer_conclusion": "PASS: assets 0->100000, lender 200000->100000, shares 0->100000000000"
+      },
+      "C": {
+        "protocol_expectation": "Subscription: withdraw allowed",
+        "implementer_evidence": {
+          "submission": "tesSUCCESS",
+          "hash": "949595F0526A7C2EB04ACF7C1B6610E74BC33283BB83C809CFA450837CB434DE",
+          "validated": "tesSUCCESS",
+          "ledger": 15,
+          "governing_clock": 845331872
+        },
+        "reviewer_conclusion": "PASS: assets 100000->99000, lender ->101000, shares ->99000000000"
+      },
+      "D": {
+        "protocol_expectation": "Investment: deposit tecEXPIRED",
+        "implementer_evidence": {
+          "submission": "tecEXPIRED",
+          "applied": false,
+          "hash": "98A0D90834D645D537CAB3EB720A7941B4192331A4228FF8CF4469DA1EC19339",
+          "validated": "NOT_IN_VALIDATED_LEDGER",
+          "governing_clock": 845331901
+        },
+        "reviewer_conclusion": "PASS: protected state byte-identical incl PreviousTxnID; LLS 63 expired"
+      },
+      "E": {
+        "protocol_expectation": "Investment: withdraw tecTOO_SOON",
+        "implementer_evidence": {
+          "submission": "tecTOO_SOON",
+          "applied": false,
+          "hash": "C4ADAF5DAFCE323936B4501F893F4AAC835E665A8DE6972D55018E45326AE27E",
+          "validated": "NOT_IN_VALIDATED_LEDGER",
+          "governing_clock": 845331902
+        },
+        "reviewer_conclusion": "PASS: protected state byte-identical; LLS 64 expired"
+      },
+      "F": {
+        "protocol_expectation": "Redemption: withdraw allowed",
+        "implementer_evidence": {
+          "submission": "tesSUCCESS",
+          "hash": "E506509E4934BFE38C4916AAEBAA3B654376FF6D645AF79A7E77C1D5BE357392",
+          "validated": "tesSUCCESS",
+          "ledger": 223,
+          "governing_clock": 845332080
+        },
+        "reviewer_conclusion": "PASS: evaluated exactly at RedemptionDate; assets ->98000, lender ->102000, shares ->98000000000"
+      },
+      "G": {
+        "protocol_expectation": "Redemption: deposit tecEXPIRED",
+        "implementer_evidence": {
+          "submission": "tecEXPIRED",
+          "applied": false,
+          "hash": "B741566B73EF408F6130B58CD7CAC8CDD9E4B95BBF3B4675ABB52A8B2B3EC8D1",
+          "validated": "NOT_IN_VALIDATED_LEDGER",
+          "governing_clock": 845332081
+        },
+        "reviewer_conclusion": "PASS: protected state byte-identical; LLS window open (243) but kept=false under fail_hard"
+      },
+      "H": {
+        "protocol_expectation": "LoanBrokerSet by vault owner creates LoanBroker + pseudo",
+        "implementer_evidence": {
+          "submission": "tesSUCCESS",
+          "hash": "9C168D6A83B4A264178833DB82C1B2D296F830F3B3AAA3CC1E3639D374DC5443",
+          "validated": "tesSUCCESS",
+          "ledger": 226
+        },
+        "reviewer_conclusion": "PASS: LoanBroker 220A5629\u2026, Owner = Vault Owner, VaultID D17C5E01\u2026, OwnerCount +2"
+      },
+      "I": {
+        "protocol_expectation": "VaultID/Owner relationship; distinct pseudo-accounts",
+        "implementer_evidence": {
+          "inherits": "H"
+        },
+        "reviewer_conclusion": "PASS: rUWkezfE\u2026 (vault pseudo) != rJaqTJQW\u2026 (broker pseudo)"
+      },
+      "J": {
+        "protocol_expectation": "LoanBrokerCoverDeposit by owner raises CoverAvailable",
+        "implementer_evidence": {
+          "submission": "tesSUCCESS",
+          "hash": "81F52D2D93BE04B7286E77CBAADD536D6500DEF6545DBA5369FB483B24ED2B15",
+          "validated": "tesSUCCESS",
+          "ledger": 227
+        },
+        "reviewer_conclusion": "PASS: owner 20000->10000, broker pseudo 0->10000, CoverAvailable 10000"
+      },
+      "K": {
+        "protocol_expectation": "Non-owner LoanBrokerSet tecNO_PERMISSION",
+        "implementer_evidence": {
+          "submission": "tecNO_PERMISSION",
+          "applied": false,
+          "hash": "109CA7FEACAD541D585F7624BCB903B31696DCC70CB6E227D3C3DACFA189279E",
+          "validated": "NOT_IN_VALIDATED_LEDGER"
+        },
+        "reviewer_conclusion": "PASS: owner/non-owner protected state byte-identical; no non-owner LoanBroker"
+      }
+    },
+    "e3": {
+      "implementer_result": "PASS",
+      "final_state": {
+        "AssetsTotal": "98000",
+        "AssetsAvailable": "98000",
+        "lender_tRLUSD": "102000",
+        "shares": "98000000000"
+      },
+      "loanset_present": false,
+      "reviewer_classification": "SUPPORTED"
+    },
+    "e4": {
+      "implementer_result": "PASS",
+      "reviewer_classification": "SUPPORTED",
+      "note": "broker attached to a fresh, unfunded vault in Subscription (C3)"
+    },
+    "cover": {
+      "OBSERVED": {
+        "CoverAvailable": "10000",
+        "broker_holding": "0->10000",
+        "owner_tRLUSD": "20000->10000",
+        "CoverRateMinimum": 10000,
+        "CoverRateLiquidation": 25000,
+        "DebtMaximum": "50000",
+        "DebtTotal": "0"
+      },
+      "DERIVED": "default cover = min(DebtTotal x CRM x CRL, DefaultAmount, CoverAvailable)",
+      "UNRESOLVED": [
+        "default",
+        "realized loss",
+        "liquidation",
+        "clawback",
+        "lender loss"
+      ],
+      "plan_first_loss_wording": "still requires correction"
+    },
+    "evidence_integrity": {
+      "manifest_1c_x_files": 34,
+      "hash_mismatches": 0,
+      "unlisted_files": 0,
+      "all_manifests_verified": 7,
+      "payload_files": 85,
+      "synthetic_in_live": false,
+      "secrets": "none (gitleaks tree + 12-commit history)"
+    },
+    "conditions": [
+      "C1 no in-evidence oracle/runner hash",
+      "C2 negatives submitted with fail_hard (not included); normal tec inclusion/fee not shown",
+      "C3 E4 broker on fresh unfunded Subscription-phase vault, not the phased E3 vault",
+      "C4 signatures/blobs stripped; tx hashes not recomputable"
+    ],
+    "false_positives_found": [],
+    "e5_e6": "NOT_TESTED",
+    "verdict": "PASS WITH CONDITIONS"
+  }
 }

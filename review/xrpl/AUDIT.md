@@ -161,3 +161,213 @@ the architectural claims (vault phases, broker and cover, 2-of-2 LoanSet composi
 broker counterparty signature, disbursement, LoanPay, redemption) has run evidence.
 The implementer's `RESULTS.json` `"overall": "PASS"` overstates this. Its own `README.md`
 and `REPORT.md` describe the scope correctly as E1 only.
+
+---
+
+# Checkpoint 1R-B: E3/E4 evidence audit (implementer commit `44fb089`)
+
+Read-only audit of `44fb089f0cb4281608ab0b9a67e129147f349887`. Nothing under `spike/xrpl/` was
+modified. No transaction was submitted, no `xrpld` was started, and E5/E6 were not audited.
+All checks below were recomputed by the reviewer from committed evidence (raw submit responses,
+validated `tx` responses with metadata, ledger snapshots, and the close log). The implementer's
+assertion fields and `REPORT.md` were not relied on.
+
+## R1. Independence record
+
+`review/xrpl/EXPECTATIONS.md` sha256 `4ee2eb94b161232474942c02f764f5b7f4d29485fedfd0f2de9c4a681dfd81ee`,
+identical to the Phase-A hash recorded at 2026-10-11T07:18:46Z. Its only commit is `89fa0a6`, and
+`git diff 89fa0a6 -- review/xrpl/EXPECTATIONS.md` is empty. Not edited.
+
+## R2. Implementer history (`d4eb874` to `44fb089`)
+
+| Commit | What it is | Protocol evidence? |
+| --- | --- | --- |
+| `9408965` | 1B: E1 regression stop | no |
+| `38d7c57` | 1B-R: Amendments ledger-entry validation fix, `start_ledger.sh` | E1 re-validation |
+| `b366efe` | 1C: harness stop during E3 (15 txs, run discarded as evidence) | historical |
+| `546e395` | 1C-R: harness and runner, partial E3/E4 | historical |
+| `42845ca` | 1C-H: **`STATE-ASSERTIONS.md` (A-K oracle) written**, harness hardened, H1-H12 | no (zero tx) |
+| `377d994` | 1C-F: stop; runner did not encode the full oracle | no (zero tx) |
+| `5369ff0` | 1C-B: oracle bound to runner (`frozen_oracle.py`, `oracle_fixture.py`, runner), B1-B12, synthetic dry run | no (synthetic only) |
+| `44fb089` | 1C-X: **live run**. Touches only `REPORT.md`, `RESULTS.json`, `evidence/checkpoint-1c-x/` | **yes** |
+
+Only `evidence/checkpoint-1c-x/` is final protocol evidence. Checkpoints 1C and 1C-R are harness
+development history and are not used below. The 1c-x ledger chain shares no ledger hash with 1c-r.
+
+## R3. Frozen-oracle audit
+
+Sha256 recomputed with `git show <commit>:<path>`:
+
+| File | 42845ca | 377d994 | 5369ff0 | 44fb089 |
+| --- | --- | --- | --- | --- |
+| `STATE-ASSERTIONS.md` | `836b90b7…416a` | same | same | same |
+| `scripts/harness.py` (semantic helpers) | `098bc81f…e7b` | same | same | same |
+| `tests/test_state_assertions.py` (H1-H12) | `634880c3…b77c` | same | same | same |
+| `scripts/frozen_oracle.py` (bindings, expected results, classification) | absent | absent | `bfa00b41…b2be` | same |
+| `tests/test_frozen_oracle_runner.py` (B1-B12) | absent | absent | `935e53b4…e37e` | same |
+| `scripts/oracle_fixture.py` | absent | absent | `d8c7af4e…11a7` | same |
+| `scripts/run_checkpoint_1c_r.py` | `c2787b13…ff67` | same | `f0f68971…693f` | same |
+
+- The oracle, H1-H12 and the semantic helpers have not changed since `42845ca`. The bindings,
+  expected results, classification semantics and B1-B12 were fixed at `5369ff0` and are unchanged
+  in `44fb089`. All hashes the REPORT claims match.
+- Timeline: `5369ff0` committed 22:22:00Z; the fresh server reported `uptime 5` at
+  22:24:23Z (`environment-start.json`); `44fb089` committed 22:28:44Z. The live run sits between
+  the frozen commit and the evidence commit.
+- Order: `oracle-a-k.json` records `A B C D E F G H I J K`, each exactly once. Included
+  transaction ledger indices increase monotonically (13, 14, 15, 223, 226, 227). The close log is
+  one unbroken hash chain from genesis ledger 2 to 228 (226 closes, all `success`).
+- Zero stops/retries in the final run: one ledger chain, each step once, every account's sequence
+  contiguous (D and E reuse lender sequence 7, which F then consumes; G and K hold the next unused
+  sequence). No duplicate submission of any step exists in the evidence.
+- 64 spike tests (H1-H12, B1-B12 and helpers) pass on the reviewer's export.
+- **Condition C1:** the run evidence carries no hash of the oracle or runner it executed. Binding
+  rests on git history plus the timeline above. An uncommitted, edited-then-reverted runner cannot
+  be excluded from the evidence alone. Nothing suggests one.
+
+## R4. E3 A-G (vault `B87C0BAC…5C1B`)
+
+Recomputed from validated metadata (`AffectedNodes`) and submit responses:
+
+| Step | Tx / acct seq | Submit | Validated | Ledger (close) | Governing clock* | Recomputed state effect |
+| --- | --- | --- | --- | --- | --- | --- |
+| A VaultCreate | `2604E1A3…` / owner 7 | tesSUCCESS | VALIDATED tesSUCCESS | 13 (845331871) | 845331870 | Created Vault: Owner = loan_broker actor `rHTUQ57n…`, Asset tRLUSD/issuer `rUQwCP6P…`, VaultKind 1, Sub 845331900, Red 845332080, policy 1, Flags 0. Created pseudo `rECkRrRX…`, MPTokenIssuance (Issuer = pseudo, AssetScale 6), owner MPToken for `ShareMPTID`, pseudo trust line. Owner OwnerCount 1→4, XRP −2,000,000 drops (VaultCreate fee) |
+| B deposit 100000 | `CA6EFADF…` / lender 5 | tesSUCCESS | VALIDATED | 14 (845331872) | 845331871 | lender line 200000→100000; pseudo line 0→100000; AssetsTotal and AssetsAvailable 0→100000 (Final); Outstanding 0→100000000000; lender MPToken created 100000000000 |
+| C withdraw 1000 | `949595F0…` / lender 6 | tesSUCCESS | VALIDATED | 15 (845331873) | 845331872 | Assets 100000→99000; lender 100000→101000; shares 100000000000→99000000000 (issuance and holder) |
+| D deposit 1 | `98A0D908…` / lender 7 | **tecEXPIRED**, applied=false, kept=false | NOT_IN_VALIDATED_LEDGER (LLS 63 < 228, cannot be included) | evaluated on open ledger over 43 | 845331901 | Protected set byte-identical pre/post, including `PreviousTxnID` of Vault, issuance and MPToken (`949595F0`, i.e. C) and lender sequence 7. No fee charged (lender XRP unchanged until F) |
+| E withdraw 1 | `C4ADAF5D…` / lender 7 | **tecTOO_SOON**, applied=false | NOT_IN_VALIDATED_LEDGER (LLS 64) | over 44 | 845331902 | identical, as D |
+| F withdraw 1000 | `E506509E…` / lender 7 | tesSUCCESS | VALIDATED | 223 (845332081) | **845332080 = RedemptionDate** | Assets 99000→98000; lender 101000→102000; shares 99000000000→98000000000 |
+| G deposit 1 | `B741566B…` / lender 8 | **tecEXPIRED**, applied=false | NOT_IN_VALIDATED_LEDGER (LLS 243, kept=false) | over 223 | 845332081 | Protected set identical, `PreviousTxnID` = F |
+
+\* Governing clock = close time of the parent ledger of the evaluating view (rippled
+`hasExpired` uses `parentCloseTime`; EXPECTATIONS Q4).
+
+- Negative results were not overwritten. Each record keeps `submission_result` and
+  `authoritative_result` equal to the engine result, with `validated_lookup_status` reported
+  separately. The post-negative `tx` lookups return `validated: false` with no metadata.
+- **Condition C2:** the negatives were submitted with `fail_hard`, so `tec` results were not
+  applied or kept. In a normal submission, rippled includes a `tec` result in a ledger and charges
+  the fee and sequence. The evidence shows the phase rejection, not that inclusion behaviour.
+- **Residual R-G/K:** G and K still had open `LastLedgerSequence` windows when evidence ended
+  (243 and 247, last ledger 228). Inclusion is ruled out by `kept=false` under `fail_hard`, not by
+  window expiry.
+
+## R5. Phase timing (independent reconstruction)
+
+- SubscriptionDate 845331900, RedemptionDate 845332080; gap 180 s = `kMinInvestmentPeriod`.
+- Every one of the 226 closes advanced close time by exactly **1 s** (each close sets
+  `max(round(wall clock), parent + 1 s)`). Ledger time was therefore driven by the close count.
+- Boundary ledgers: L41 845331899 and L42 845331900 (= Sub, still Subscription, inclusive); L43
+  845331901 (first Investment parent). L221 845332079 (Investment); L222 845332080 (= Red,
+  Redemption, inclusive).
+- B/C parents 845331871/845331872 ≤ Sub, so **Subscription**. D/E parents 845331901/845331902,
+  strictly after Sub and before Red, so **Investment**. F/G parents 845332080/845332081 ≥ Red, so
+  **Redemption**. F was evaluated exactly at the RedemptionDate boundary and D one second after the
+  SubscriptionDate boundary. These are the tightest possible boundary tests, and no off-by-one was
+  found.
+- Close count: 21 validation/absence closes + 28 (L15→L43) + 177 (L45→L222) = 226.
+- Conclusions use ledger close time only. Wall clock enters only through the 1 s-per-close rule.
+
+## R6. E3 final state
+
+Recomputed by chaining metadata deltas: AssetsTotal = AssetsAvailable = 0 + 100000 − 1000 − 1000
+= **98000**. Lender tRLUSD = 200000 − 100000 + 1000 + 1000 = **102000**. Shares: issuance
+`OutstandingAmount` = lender `MPTAmount` = **98000000000** (= 98000 × 10^6, AssetScale 6, share
+price 1). This matches the G-time protected snapshot and the K-time owner object set. **No
+LoanSet**: the only TransactionTypes in `checkpoint-1c-x` are Payment, AccountSet, TrustSet,
+VaultCreate, VaultDeposit, VaultWithdraw, LoanBrokerSet and LoanBrokerCoverDeposit.
+
+**E3 classification: SUPPORTED** for deposit/withdraw phase gating on a closed-ended tRLUSD vault.
+Scope limits: LoanSet phase gating is not tested; conditions C2 and C3 (R10) apply.
+
+## R7. E4 H-K (vault `D17C5E01…08CA`, LoanBroker `220A5629…AEC8`)
+
+- **Prerequisite:** a second closed-ended vault was created at L225 by the same owner
+  (Sub 845332112, Red 845332292). H, J and K ran while that vault was in **Subscription**
+  (parents 845332083..845332085). **Condition C3:** the broker was not attached to the E3 vault,
+  which was funded and had been through every phase. The E4 vault holds no deposits. Source has no
+  phase gate on `LoanBrokerSet` (EXPECTATIONS Q3), so this is a scope limit, not a defect.
+- **H** `9C168D6A…`, owner seq 9: tesSUCCESS, VALIDATED at L226. The created LoanBroker has
+  Owner = `rHTUQ57n…` (= Vault Owner), VaultID = `D17C5E01…`, pseudo Account `rJaqTJQW…`,
+  DebtMaximum 50000, CoverRateMinimum 10000, CoverRateLiquidation 25000, ManagementFeeRate 0
+  (default), Sequence 9. The broker pseudo AccountRoot and its tRLUSD line were created. Owner
+  OwnerCount 7→9 (+2, as the source says). The Vault object was not modified.
+- **I:** a semantic check that inherits H. LoanBroker.VaultID = Vault index; LoanBroker.Owner =
+  Vault.Owner; Vault pseudo `rUWkezfE…` and broker pseudo `rJaqTJQW…` are both present and
+  distinct (and distinct from the E3 vault pseudo `rECkRrRX…`).
+- **J** `81F52D2D…`, owner seq 10: tesSUCCESS, VALIDATED at L227. Owner line 20000→10000; broker
+  pseudo `rJaqTJQW…` line 0→10000 (the line created in H, so the cover went to the broker's pseudo,
+  not the vault's); LoanBroker FinalFields CoverAvailable 10000; DebtTotal absent (default 0);
+  rates and limits unchanged; `PreviousTxnID` = J.
+- **K** `109CA7FE…`, submitted by the borrower actor `rHCFQpcm…` seq 6: **tecNO_PERMISSION**,
+  applied=false, kept=false, NOT_IN_VALIDATED_LEDGER. The protected owner and non-owner object
+  sets, balances and sequences are byte-identical pre/post. No LoanBroker owned by the non-owner
+  exists. The source basis is `LoanBrokerSet` preclaim `account != vault Owner`.
+
+**E4 classification: SUPPORTED.**
+
+## R8. Cover state and classification
+
+| Item | Value | Basis | Class |
+| --- | --- | --- | --- |
+| CoverAvailable | 10000 | J FinalFields; K snapshot | OBSERVED |
+| Broker pseudo holding | 0 → 10000 | J RippleState `EC1F4301` | OBSERVED |
+| Owner tRLUSD | 20000 → 10000 | J RippleState `CB053536` | OBSERVED |
+| CoverRateMinimum | 10000 (10%) | H NewFields | OBSERVED |
+| CoverRateLiquidation | 25000 (25%) | H NewFields | OBSERVED |
+| DebtMaximum | 50000 | H NewFields | OBSERVED |
+| DebtTotal | 0 (default; field absent) | H/J | OBSERVED |
+| Default cover = min(DebtTotal × CRM × CRL, DefaultAmount, CoverAvailable) | n/a | source (`LoanManage.cpp` defaultLoan) | DERIVED |
+| Default, loss, liquidation, clawback, lender loss | not executed | none | UNRESOLVED |
+
+With these parameters the derived bound is 2.5% of DebtTotal (10% × 25%), capped by
+CoverAvailable. **The plan's sentence "Loss absorbed by Credence's first-loss cover before
+lenders lose anything" (line 249) still needs correction** (PLAN-DIFF P22).
+
+## R9. Evidence integrity
+
+- `checkpoint-1c-x/MANIFEST.json`: 34 files, every sha256 and byte count matches. No file is on
+  disk without being listed (only the manifest itself), and none is listed but missing. All 7
+  evidence manifests in the tree verify (85 payload files).
+- Every A-K record in `oracle-a-k.json` is byte-identical to its per-transaction file (I to its
+  own file). No live record has `synthetic: true`. The synthetic dry run is isolated in
+  `checkpoint-1c-b/` and labelled as such.
+- Secrets: gitleaks v8.21.2 with the repo config over the exported spike tree and the full branch
+  history (12 commits through `44fb089`) found nothing. Actor addresses are public; no seed or private key appears.
+- Signing material: `public_transaction` removes `SigningPubKey`, `TxnSignature`,
+  `CounterpartySignature` and blobs, but records the authorization mode, the multisign signer
+  accounts and presence flags. For E3/E4 (single-signed by the named account) this is enough;
+  the single-sign mode and `Account` field are recorded for every step. **Condition C4:** without
+  signatures or blobs, the transaction hashes cannot be recomputed from the canonical form, and
+  the standalone ledger is gone, so hash-to-content binding rests on the captured rippled responses.
+  This partly addresses the earlier finding S2. For E5/E6, per-signer public keys or signed blobs
+  should be retained.
+- Sufficiency: every conclusion in R4 to R8 was reproduced from raw metadata, snapshots and the
+  close log without using `REPORT.md` or the harness's assertion results.
+
+## R10. False-positive search (committed evidence only)
+
+| Hazard | Finding |
+| --- | --- |
+| Success without correct state | None. Every positive step's metadata deltas match the oracle predicates |
+| Stale pre/post state | None. All targeted post-state objects carry the step's own hash as `PreviousTxnID`; no pre-state object does |
+| Wrong vault/broker object | None. E3 consistently uses `B87C0BAC`; E4 consistently uses `D17C5E01`/`220A5629`; IDs match `CreatedNode` indices |
+| Wrong phase / off-by-one | None (R5) |
+| Auxiliary mistaken for target | None. Directory, pseudo-account and issuer threading nodes (e.g. issuer AccountRoot `60A778C1`, threading-only) are not used as targets |
+| Negative overwritten or misclassified | None (R4) |
+| Mutation during a negative | None. Byte-identical protected state, including `PreviousTxnID` |
+| Wrong owner / broker account | None. Vault Owner = LoanBroker Owner = `loan_broker` actor; K uses the borrower actor |
+| Cover into the wrong account | None. The credit went to broker pseudo `rJaqTJQW…`, not vault pseudo `rUWkezfE…` |
+| Fixture or synthetic evidence used as live | None. The setup snapshot is live (L12); the synthetic dry run is only in 1c-b |
+| Earlier run mixed in | None. Distinct genesis and zero shared ledger hashes with 1c-r |
+| Later retry mistaken for the first frozen run | None found. One chain, one record per step (with condition C1) |
+
+`"PreviousFields": {}` on the Vault (B) and LoanBroker (J) is native rippled output: the changed
+fields were default-zero, so they are recorded but omitted from JSON. It is not an evidence edit.
+
+## R11. Conclusion
+
+E3 and E4 are supported by the committed evidence as claimed. Conditions C1 to C4 are bounded
+scope and provenance limits; none falsifies a claim. **Verdict: PASS WITH CONDITIONS.** The
+plan's first-loss wording still needs correction, and the R4 notes on C2 should be recorded in
+any later report.
