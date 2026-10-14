@@ -1,3 +1,166 @@
+# Checkpoint 1C-H — XRPL state-assertion harness hardening
+
+## Outcome
+
+**Harness checkpoint: PASS. Protocol experiments remain frozen.**
+
+Checkpoint 1C-H began at clean commit
+`546e39523c0b211cde994fa31af6a9eed789220d`, retained checkpoint-0 ancestry
+and unchanged submodule gitlinks, and modified only `spike/xrpl/`.
+
+**ZERO new XRPL protocol transactions were submitted.** No ledger was started,
+queried, closed, advanced, or mutated. All work used committed evidence, pinned
+rippled 3.4.0 source, and synthetic test copies.
+
+## False-block reproduction
+
+The committed Checkpoint 1C-R record proves all parts of the diagnosis:
+
+- submission result: `tesSUCCESS`;
+- validated lookup status: `VALIDATED`;
+- validated metadata result: `tesSUCCESS`;
+- the post-state contains the expected closed-ended tRLUSD `Vault` at index
+  `8AF0F702407DF51DA7E5257C3E8DF57886226D751E119AC67EA7B07071995302`;
+- the post-state contains an owner `MPToken` whose `Account` is the submitted
+  Vault owner and whose `MPTokenIssuanceID` equals the Vault `ShareMPTID`;
+- the owner-object list grew from one object to three, a delta of two.
+
+The exact invalid path was the `create_closed_vault` callback in
+`scripts/run_checkpoint_1c_r.py`: it asserted `len(after["objects"]) -
+len(before["objects"]) == 1`. Pinned `VaultCreate.cpp` explicitly creates and
+authorizes an MPToken for the Vault owner. The committed validated metadata also
+shows the Vault, owner MPToken, share issuance, pseudo-account, asset holding,
+and directory effects. The old total-count expectation was therefore not a
+protocol invariant.
+
+H1 reproduces the old false assertion (`expected 1`, `actual 2`, FAIL) and then
+classifies the same committed evidence PASS with semantic assertions.
+
+## Semantic assertion model
+
+The harness now:
+
+- searches unordered collections by `LedgerEntryType`, index/protocol ID, and
+  explicit identity/relationship fields;
+- asserts Vault owner, asset, kind, dates, policy, flags, and share relationship;
+- asserts an owner MPToken by holder account plus the Vault `ShareMPTID`;
+- permits unrelated auxiliary objects unless pinned semantics forbid them;
+- normalizes omission only for protocol fields explicitly defaulted to zero;
+- requires validated success plus all semantic predicates for a positive PASS;
+- requires the exact negative result plus unchanged protected state for a
+  negative PASS; and
+- retains submission and lookup results separately so an unvalidated lookup
+  cannot erase an authoritative rejection.
+
+No global object-count or array-position assertion remains in the planned
+VaultCreate or LoanBroker creation paths.
+
+## Object-specific helpers
+
+`scripts/harness.py` now provides semantic helpers for:
+
+- Vault identity and closed-ended configuration;
+- MPToken holder/issuance identity and optional amount/flags;
+- RippleState endpoints, asset, and balance;
+- AccountRoot account identity and optional flags;
+- LoanBroker owner/Vault relationship, debt limits, cover rates, debt, and cover;
+- complete VaultCreate and LoanBroker creation transitions; and
+- cover establishment deltas on a known LoanBroker and owner balance.
+
+`scripts/run_checkpoint_1c_r.py` now references those helpers for the future
+VaultCreate, LoanBroker creation, and cover checks. The script was not executed
+during 1C-H.
+
+## H1-H12 results
+
+| Test | Result | Evidence established |
+| --- | --- | --- |
+| H1 real VaultCreate fixture accepted | PASS | Expected Vault and owner MPToken found semantically despite two-object delta. |
+| H2 missing Vault fails | PASS | Validated `tesSUCCESS` cannot override missing Vault state. |
+| H3 missing/wrong owner MPToken fails | PASS | Both required cases fail. |
+| H4 unrelated extra object allowed | PASS | Global count is not the oracle. |
+| H5 object order irrelevant | PASS | Reversed committed owner-object list passes. |
+| H6 wrong Vault owner fails | PASS | Owner relationship is required. |
+| H7 wrong Vault asset fails | PASS | tRLUSD currency/issuer identity is required. |
+| H8 success with wrong post-state fails | PASS | `tesSUCCESS` alone cannot pass. |
+| H9 committed `tecEXPIRED` still passes | PASS | Submission result survives the unvalidated lookup and protected state is equal. |
+| H10 negative with mutated state fails | PASS | Expected rejection alone is insufficient. |
+| H11 unrun statuses remain distinct | PASS | Serialization and aggregation preserve `NOT_ATTEMPTED` versus `NOT_APPLICABLE`. |
+| H12 manifest tamper detected | PASS | Untampered copy verifies; one-byte mutation is rejected. |
+
+The spike suite reports 35 passing test cases: H1-H12 (with both H3 cases), four
+additional object-helper tests, the earlier result-handling regressions, and
+amendment validation regressions.
+
+## Predeclared E3/E4 assertion audit
+
+`STATE-ASSERTIONS.md` defines the pre-state, result, validation status,
+post-state, semantic predicates, protected state, permitted auxiliaries, FAIL
+conditions, and BLOCKED conditions for all eleven required future steps A-K.
+
+The static audit removed or prevented:
+
+- global owner/ledger object counts;
+- list-order identity;
+- `tesSUCCESS`-only PASS;
+- negative-result overwrite;
+- comparison of unrelated auxiliary state; and
+- use of transaction-history, directory-position, order, or global-count fields
+  as stable identity.
+
+All required A-K object identities are derivable from committed evidence and
+pinned source. No assertion specification is marked unresolved.
+
+## Remaining harness risks
+
+- The hardened E3/E4 oracles have not yet been exercised by a new runtime run.
+- LoanBroker and cover helpers are source/synthetic-derived because E4 has never
+  run; they must still fail closed against the first authorized observation.
+- An ambiguous semantic match fails rather than choosing an object by order.
+- Only explicitly known default-zero fields are normalized when absent.
+- LoanSet and LoanPay helpers remain deliberately unimplemented.
+
+## Results state and recommendation
+
+- E1: **PASS/FROZEN**
+- E2: **PASS/FROZEN**
+- E3: **BLOCKED**
+- E4-E9: **NOT_ATTEMPTED**
+
+The harness is ready for a **separately authorized E3/E4 rerun**. This is not an
+authorization to resume E3 or execute E4-E9. E5 must not begin.
+
+Harness verdict: **PASS WITH CONDITIONS**. The conditions are that the future
+E3/E4 run is separately authorized, uses the predeclared oracle unchanged unless
+new evidence forces a fail-closed STOP, and does not treat the source/synthetic
+E4 helpers as runtime observations.
+
+## Checkpoint 1C-H gates
+
+- Spike-specific tests: PASS — 35 cases.
+- Repository unit tests: PASS — 17 cases.
+- Conformance tests: PASS — 4 cases.
+- Lint, formatting, and large-file check: PASS.
+- Strict typecheck: PASS over 25 source files.
+- Secrets scan: PASS.
+- JSON validation: PASS — 61 files.
+- Existing evidence manifests: PASS — Checkpoints 1B, 1B-R, 1C, and 1C-R.
+- Authorized-path check: PASS — only `spike/xrpl/` changed.
+- `review/xrpl/`, web, and custody: unchanged.
+- New transaction/evidence paths: none.
+- `git diff --check`: PASS.
+
+## Checkpoint 1C-H modified paths
+
+- `spike/xrpl/REPORT.md`
+- `spike/xrpl/RESULTS.json`
+- `spike/xrpl/STATE-ASSERTIONS.md`
+- `spike/xrpl/scripts/harness.py`
+- `spike/xrpl/scripts/run_checkpoint_1c_r.py`
+- `spike/xrpl/tests/test_state_assertions.py`
+
+---
+
 # Checkpoint 1C-R fail-closed report
 
 ## Outcome

@@ -1,8 +1,36 @@
 {
-  "schema_version": 5,
+  "schema_version": 6,
   "overall": "BLOCKED",
-  "scope": "Checkpoint 1C-R result-harness repair and E3-E4 recovery",
-  "start_commit": "b366efed4163b729adc4c1fb5d94d7947fdd0385",
+  "scope": "Checkpoint 1C-H harness hardening; protocol state remains frozen",
+  "start_commit": "546e39523c0b211cde994fa31af6a9eed789220d",
+  "harness_checkpoint": {
+    "name": "Checkpoint 1C-H",
+    "outcome": "PASS",
+    "new_xrpl_transactions_submitted": 0,
+    "false_block_reproduced": true,
+    "invalid_assertion": {
+      "name": "one owner object created",
+      "expected_delta": 1,
+      "observed_delta": 2,
+      "semantic_objects_observed": ["Vault", "owner MPToken"]
+    },
+    "semantic_assertion_specification": "STATE-ASSERTIONS.md",
+    "regression_tests": {
+      "H1": "PASS",
+      "H2": "PASS",
+      "H3": "PASS",
+      "H4": "PASS",
+      "H5": "PASS",
+      "H6": "PASS",
+      "H7": "PASS",
+      "H8": "PASS",
+      "H9": "PASS",
+      "H10": "PASS",
+      "H11": "PASS",
+      "H12": "PASS"
+    },
+    "separately_authorized_e3_e4_rerun_ready": true
+  },
   "stop": {
     "classification": "A. local configuration/harness assertion error",
     "output": "STOP: e3_create_closed_ended_vault: expected tesSUCCESS, observed tesSUCCESS; result or state assertion failed",
@@ -166,6 +194,7 @@
   },
   "e1_frozen": true,
   "e2_frozen": true,
+  "e3_e4_rerun_performed": false,
   "e5_may_begin": false,
   "minimum_next_experiment_performed": false
 }

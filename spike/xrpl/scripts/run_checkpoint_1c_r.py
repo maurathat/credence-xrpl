@@ -16,12 +16,15 @@ from amendment_validation import REQUIRED_AMENDMENTS, validate_feature_response
 from harness import (
     StateAssertion,
     classify_transaction,
+    cover_transition_assertions,
     create_manifest,
+    loan_broker_create_transition_assertions,
     predicate_assertion,
     public_transaction,
     resolve_transaction_result,
     sanitize_response,
     state_assertion,
+    vault_create_transition_assertions,
     write_json,
 )
 from xrpl.clients import JsonRpcClient
@@ -491,13 +494,17 @@ def create_closed_vault(
         wallet=owner,
         expected_result="tesSUCCESS",
         state=lambda: {"objects": account_objects(owner.address)},
-        assertions=lambda before, after: [
-            state_assertion(
-                "one owner object created",
-                len(after["objects"]) - len(before["objects"]),
-                1,
-            )
-        ],
+        assertions=lambda before, after: vault_create_transition_assertions(
+            before_objects=before["objects"],
+            after_objects=after["objects"],
+            vault_index=None,
+            owner=owner.address,
+            asset={"currency": TR_USD, "issuer": issuer.address},
+            vault_kind=1,
+            subscription_date=subscription,
+            redemption_date=redemption,
+            withdrawal_policy=1,
+        ),
     )
     meta = record["validated_transaction_response"]["meta"]
     vault_id = extract_created(meta, "Vault")
@@ -706,13 +713,16 @@ def run_e4(runner: Runner, actors: dict[str, Wallet]) -> dict[str, Any]:
         wallet=broker,
         expected_result="tesSUCCESS",
         state=lambda: {"objects": account_objects(broker.address)},
-        assertions=lambda before, after: [
-            state_assertion(
-                "LoanBroker creation adds one owner object",
-                len(after["objects"]) - len(before["objects"]),
-                1,
-            )
-        ],
+        assertions=lambda before, after: loan_broker_create_transition_assertions(
+            before_objects=before["objects"],
+            after_objects=after["objects"],
+            broker_index=None,
+            owner=broker.address,
+            vault_id=vault_id,
+            debt_maximum="50000",
+            cover_rate_minimum=10000,
+            cover_rate_liquidation=25000,
+        ),
     )
     broker_id = extract_created(
         broker_record["validated_transaction_response"]["meta"], "LoanBroker"
@@ -735,19 +745,16 @@ def run_e4(runner: Runner, actors: dict[str, Wallet]) -> dict[str, Any]:
         wallet=broker,
         expected_result="tesSUCCESS",
         state=cover_state,
-        assertions=lambda before, after: [
-            state_assertion(
-                "CoverAvailable delta",
-                numeric(after["loan_broker"], "CoverAvailable")
-                - numeric(before["loan_broker"], "CoverAvailable"),
-                10000,
-            ),
-            state_assertion(
-                "Loan Broker owner tRLUSD balance delta",
-                int(after["owner_tRLUSD_balance"]) - int(before["owner_tRLUSD_balance"]),
-                -10000,
-            ),
-        ],
+        assertions=lambda before, after: cover_transition_assertions(
+            before_broker=before["loan_broker"],
+            after_broker=after["loan_broker"],
+            broker_index=broker_id,
+            owner=broker.address,
+            vault_id=vault_id,
+            before_owner_balance=before["owner_tRLUSD_balance"],
+            after_owner_balance=after["owner_tRLUSD_balance"],
+            cover_delta=10000,
+        ),
     )
     final = cover_state()
     broker_node = final["loan_broker"] or {}
