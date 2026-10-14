@@ -1,3 +1,113 @@
+# Checkpoint 1C-F — frozen-oracle pre-runtime stop
+
+## Outcome
+
+**BLOCKED — the frozen A-K oracle is not fully executable by the committed
+runner without prohibited assertion development.**
+
+Checkpoint 1C-F began at clean commit
+`42845caf4801894fed5133f5bd33639bfe8cf422`, retained checkpoint-0 ancestry,
+and retained the custody and web gitlinks. The pre-runtime audit stopped before
+xrpld was started or queried.
+
+**ZERO XRPL protocol transactions were submitted.** No RPC call was made, no
+ledger was closed or advanced, and no fresh environment or prerequisite fixture
+was created.
+
+## Frozen-oracle integrity
+
+The following committed oracle files were read and hashed before the audit:
+
+| Frozen file | SHA-256 |
+| --- | --- |
+| `STATE-ASSERTIONS.md` | `836b90b7db41b04a9fdefb78d340f030f798b7650b4945b89ba48990545b416a` |
+| `scripts/harness.py` | `098bc81f3358b8c68a235bf8d9c9101f209ff7074232fb9021f645a4b0efae7b` |
+| `tests/test_state_assertions.py` | `634880c33181da678d8dead2dac1e932c0dd6aafac44c862fa48259b7710b77c` |
+
+None was modified. H1-H12 remain the committed Checkpoint 1C-H result; no test
+or assertion was changed in this checkpoint.
+
+## Exact stop
+
+```text
+STOP: the frozen A-K oracle is not fully executable by the committed runner without prohibited assertion development.
+```
+
+The checkpoint required every A-K semantic predicate to participate in the
+fail-closed runtime classification and prohibited adding assertions or changing
+the oracle. Static inspection found that `scripts/run_checkpoint_1c_r.py` does
+not encode the complete predeclared oracle:
+
+- A and H do not bind a unique created metadata index into their transition
+  assertions or prove the identified created object absent by index in pre-state.
+- B, C, and F classify only numeric deltas; their required phase, stable Vault
+  relationships, and protected unrelated state are not in the classified list.
+- D, E, and G omit the submitting AccountRoot sequence from protected state and
+  do not include phase in the classified negative assertion.
+- I is not a separately classified relationship step and does not assert that
+  the Vault and LoanBroker pseudo-account identities are present and distinct.
+- J omits the broker pseudo-account asset holding and the complete stable
+  rate/limit/debt comparison.
+- K omits the non-owner object set and an explicit semantic absence lookup for
+  the attempted LoanBroker identity.
+- The runner orders G before F and K before H; I is not separately recorded.
+
+Running that script could therefore produce PASS while required frozen
+predicates were unevaluated. Adding those missing checks would be oracle/harness
+development, which this checkpoint explicitly prohibits. The required response
+was to stop before runtime rather than weaken or silently supplement the oracle.
+
+## Classification and evidence
+
+This is **A — local harness/oracle implementation mismatch**. It is not an XRPL
+protocol result, an E1/E2 regression, or runtime evidence against any A-K
+expectation. The structured audit is in
+`evidence/checkpoint-1c-f/unexpected-result.json`; its SHA-256 manifest covers
+the fail-closed evidence.
+
+## Experiment state
+
+- E1: **PASS/FROZEN**
+- E2: **PASS/FROZEN**
+- E3: **BLOCKED**
+- E4-E9: **NOT_ATTEMPTED**
+
+E3 and E4 were not rerun. E5 and E6 must not begin.
+
+## Minimum next checkpoint — not performed
+
+A separately authorized harness-only checkpoint must bind every already
+predeclared A-K predicate to executable classification and add synthetic tests
+for those bindings without changing the predicate meanings. It must also
+produce an execution runner with a fresh evidence destination and the A-K
+sequence. Only after that frozen implementation passes review can another
+fresh-runtime E3/E4 rerun be authorized.
+
+That work was **not performed**.
+
+## Checkpoint 1C-F gates
+
+- Spike tests: PASS — 35 cases; H1-H12 remain unchanged and passing.
+- Repository unit tests: PASS — 17 cases.
+- Conformance tests: PASS — 4 cases.
+- Lint, formatting, and large-file check: PASS.
+- Strict typecheck: PASS over 25 source files.
+- Secrets scan: PASS.
+- JSON validation: PASS.
+- Evidence-manifest verification: PASS.
+- Frozen-oracle hash and diff check: PASS.
+- Authorized-path, submodule, and `review/xrpl/` checks: PASS.
+- `git diff --check`: PASS.
+
+## Checkpoint 1C-F modified paths
+
+- `spike/xrpl/REPORT.md`
+- `spike/xrpl/RESULTS.json`
+- `spike/xrpl/evidence/checkpoint-1c-f/MANIFEST.json`
+- `spike/xrpl/evidence/checkpoint-1c-f/unexpected-result.json`
+
+---
+
 # Checkpoint 1C-H — XRPL state-assertion harness hardening
 
 ## Outcome

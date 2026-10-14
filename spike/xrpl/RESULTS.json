@@ -1,8 +1,47 @@
 {
-  "schema_version": 6,
+  "schema_version": 7,
   "overall": "BLOCKED",
-  "scope": "Checkpoint 1C-H harness hardening; protocol state remains frozen",
-  "start_commit": "546e39523c0b211cde994fa31af6a9eed789220d",
+  "scope": "Checkpoint 1C-F frozen-oracle pre-runtime audit; E3/E4 were not rerun",
+  "start_commit": "42845caf4801894fed5133f5bd33639bfe8cf422",
+  "frozen_oracle_execution": {
+    "name": "Checkpoint 1C-F",
+    "outcome": "BLOCKED",
+    "classification": "A. local harness/oracle implementation mismatch",
+    "stop_phase": "pre-runtime frozen-oracle implementation audit",
+    "stop": "STOP: the frozen A-K oracle is not fully executable by the committed runner without prohibited assertion development.",
+    "environment_started": false,
+    "rpc_calls_made": 0,
+    "ledger_close_count": 0,
+    "new_xrpl_transactions_submitted": 0,
+    "frozen_oracle_unchanged": true,
+    "h1_through_h12_unchanged": true,
+    "gates": {
+      "spike_tests": "PASS (35)",
+      "repository_unit_tests": "PASS (17)",
+      "conformance_tests": "PASS (4)",
+      "lint_format_large_file": "PASS",
+      "strict_typecheck": "PASS (25 source files)",
+      "secrets_scan": "PASS",
+      "json_validation": "PASS",
+      "evidence_manifest_verification": "PASS",
+      "frozen_oracle_unchanged": "PASS",
+      "authorized_paths": "PASS",
+      "git_diff_check": "PASS"
+    },
+    "evidence_paths": [
+      "evidence/checkpoint-1c-f/unexpected-result.json",
+      "evidence/checkpoint-1c-f/MANIFEST.json"
+    ],
+    "blocking_gaps": [
+      "A/H do not bind unique created metadata indices into classified transition assertions or prove indexed pre-state absence.",
+      "B/C/F omit required phase, stable Vault relationships, and protected unrelated state from classification.",
+      "D/E/G omit relevant account sequence and phase from classified protected-state assertions.",
+      "I is not separately classified and does not assert distinct Vault and LoanBroker pseudo-account identities.",
+      "J omits broker pseudo-account holding and complete stable rate/limit/debt comparisons.",
+      "K omits the non-owner object set and explicit absence of the attempted LoanBroker identity.",
+      "The committed runner does not execute and record the predeclared A-K order."
+    ]
+  },
   "harness_checkpoint": {
     "name": "Checkpoint 1C-H",
     "outcome": "PASS",

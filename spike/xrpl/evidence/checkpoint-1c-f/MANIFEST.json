@@ -1,0 +1,11 @@
+{
+  "algorithm": "SHA-256",
+  "file_count": 1,
+  "files": [
+    {
+      "bytes": 3814,
+      "path": "unexpected-result.json",
+      "sha256": "1a3c4e8bfa6220efee06dac6a61b94d20900431afa58399c128abc47474bbc22"
+    }
+  ]
+}

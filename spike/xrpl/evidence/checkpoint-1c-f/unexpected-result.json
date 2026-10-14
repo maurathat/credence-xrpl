@@ -1,0 +1,83 @@
+{
+  "checkpoint": "1C-F",
+  "classification": "A. local harness/oracle implementation mismatch",
+  "environment_started": false,
+  "evidence_basis": [
+    "spike/xrpl/STATE-ASSERTIONS.md",
+    "spike/xrpl/scripts/run_checkpoint_1c_r.py",
+    "spike/xrpl/scripts/harness.py"
+  ],
+  "frozen_files": {
+    "spike/xrpl/STATE-ASSERTIONS.md": "836b90b7db41b04a9fdefb78d340f030f798b7650b4945b89ba48990545b416a",
+    "spike/xrpl/scripts/harness.py": "098bc81f3358b8c68a235bf8d9c9101f209ff7074232fb9021f645a4b0efae7b",
+    "spike/xrpl/tests/test_state_assertions.py": "634880c33181da678d8dead2dac1e932c0dd6aafac44c862fa48259b7710b77c"
+  },
+  "ledger_close_count": 0,
+  "mismatches": [
+    {
+      "oracle_steps": [
+        "A",
+        "H"
+      ],
+      "runner_behavior": "Creation callbacks pass a null created-object index, do not prove pre-state absence by created index, and extract the first matching metadata node without asserting exactly one created node of the required type.",
+      "required_oracle_behavior": "Bind the unique created metadata index to the semantic object and prove that identified object was absent from pre-state."
+    },
+    {
+      "oracle_steps": [
+        "B",
+        "C",
+        "F"
+      ],
+      "runner_behavior": "The classified assertion list checks only numeric asset, balance, and share deltas.",
+      "required_oracle_behavior": "Also assert the required phase and stable Vault owner, asset, kind, dates, policy, and share relationship, plus protected unrelated state."
+    },
+    {
+      "oracle_steps": [
+        "D",
+        "E",
+        "G"
+      ],
+      "runner_behavior": "The protected snapshot omits the relevant submitting AccountRoot sequence, and phase is observed outside the classified negative assertion.",
+      "required_oracle_behavior": "Assert the predeclared phase and equality of the complete protected set, including account sequence when the transaction is not included."
+    },
+    {
+      "oracle_steps": [
+        "I"
+      ],
+      "runner_behavior": "There is no separately classified relationship validation, and the Vault and LoanBroker pseudo-account identities are not asserted present and distinct.",
+      "required_oracle_behavior": "Validate the VaultID/Owner equalities and distinct pseudo-account identities immediately from H evidence without a new submission."
+    },
+    {
+      "oracle_steps": [
+        "J"
+      ],
+      "runner_behavior": "Cover classification omits the broker pseudo-account asset holding and does not compare every predeclared stable rate, limit, and debt field across pre/post state.",
+      "required_oracle_behavior": "Assert the exact owner, broker holding, CoverAvailable, stable configuration, and zero-debt transitions."
+    },
+    {
+      "oracle_steps": [
+        "K"
+      ],
+      "runner_behavior": "The protected snapshot omits the non-owner object set and an explicit semantic lookup proving absence of a newly created matching LoanBroker.",
+      "required_oracle_behavior": "Compare the complete protected owner/non-owner state and explicitly establish absence of the attempted LoanBroker identity."
+    },
+    {
+      "oracle_steps": [
+        "F",
+        "G",
+        "H",
+        "I",
+        "J",
+        "K"
+      ],
+      "runner_behavior": "The runner executes G before F and K before H, while I is not a separately recorded assertion step.",
+      "required_oracle_behavior": "Execute and record the predeclared A-K sequence."
+    }
+  ],
+  "outcome": "BLOCKED",
+  "protocol_transactions_submitted": 0,
+  "rpc_calls_made": 0,
+  "start_commit": "42845caf4801894fed5133f5bd33639bfe8cf422",
+  "stop": "STOP: the frozen A-K oracle is not fully executable by the committed runner without prohibited assertion development.",
+  "stop_phase": "pre-runtime frozen-oracle implementation audit"
+}
