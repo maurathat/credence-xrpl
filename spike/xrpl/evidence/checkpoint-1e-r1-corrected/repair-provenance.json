@@ -1,0 +1,14 @@
+{
+  "checkpoint": "1E-R1-CORRECTED",
+  "start_commit": "c0ff25cd6408e051206bb893b0b9d28ae3803a40",
+  "mode": "HARNESS_REPAIR_AND_OFFLINE_EVIDENCE_ADJUDICATION",
+  "new_xrpl_transactions": 0,
+  "sha256": {
+    "E6-ASSERTIONS.md": "b7a0b86e250bd30e1bd2968d706aa12bc9a4325ec0127fb2bcb6a06305f3def8",
+    "scripts/e6_oracle.py": "e9a9ae499a76d6996279841e41a4fcf7e24428700cdbcea92f7d1dc10f7e402b",
+    "scripts/run_checkpoint_1e.py": "82062341947ddd8b17f508d6e9d8bca6dae863c991001446bace33a52c724f5f",
+    "scripts/adjudicate_checkpoint_1e_r1.py": "fab2c20f795e8984346de62bdbd60ac6c2ba00ab5f0024a9a2ca6b0f9997e83d",
+    "tests/test_checkpoint_1e.py": "62fc387509da9bc52056e997e4becbc1cb4baf81af6c5266c6303a92e9ccd384",
+    "tests/test_checkpoint_1e_r1.py": "4d494d696bdf8c342ef1cbdabcd34502117192215f0d7ed206085c1252953d0a"
+  }
+}

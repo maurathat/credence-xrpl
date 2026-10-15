@@ -28,6 +28,7 @@ from e6_oracle import (
     loan_index,
     negative_state_assertions,
     positive_post_state_assertions,
+    project_positive_oracle_terms,
     public_signing_evidence,
     require_live_bindings,
 )
@@ -212,8 +213,25 @@ def public_actor(wallet: Wallet) -> dict[str, str]:
     return {"account": wallet.address, "public_key_hex": wallet.public_key}
 
 
-def terms_from(transaction: dict[str, Any]) -> dict[str, Any]:
+def signed_terms_from(transaction: dict[str, Any]) -> dict[str, Any]:
+    """Project only the LoanSet terms captured by public signing evidence."""
+
     return {field_name: transaction.get(field_name) for field_name in LOAN_TERM_FIELDS}
+
+
+def terms_from(
+    transaction: dict[str, Any],
+    *,
+    vault_id: str,
+    intended_borrower: str,
+) -> dict[str, Any]:
+    """Project and preflight the complete frozen positive-oracle input."""
+
+    return project_positive_oracle_terms(
+        transaction,
+        vault_id=vault_id,
+        intended_borrower=intended_borrower,
+    )
 
 
 def all_pass(checks: list[StateAssertion]) -> bool:
@@ -822,6 +840,12 @@ def execute_checkpoint(evidence_dir: Path) -> int:
         broker_owner=owner,
         borrower_signers=[research, policy],
     )
+    expected_signed_terms = signed_terms_from(positive_signed.to_xrpl())
+    expected_terms = terms_from(
+        finalized_body,
+        vault_id=fixture["vault_id"],
+        intended_borrower=borrower.address,
+    )
     bindings = {
         "amendments": sorted(REQUIRED_AMENDMENTS),
         "assertion_spec_hash": provenance["files"]["E6-ASSERTIONS.md"],
@@ -835,6 +859,7 @@ def execute_checkpoint(evidence_dir: Path) -> int:
         "loan_broker_id": fixture["loan_broker_id"],
         "network_id": NETWORK_ID,
         "pre_loan_sequence": pre_sequence,
+        "positive_oracle_terms": expected_terms,
         "research_bot_account": research.address,
         "rippled_source_commit": SOURCE_COMMIT,
         "rippled_version": server_info.get("build_version"),
@@ -862,7 +887,6 @@ def execute_checkpoint(evidence_dir: Path) -> int:
             ),
         },
     )
-    expected_terms = terms_from(positive_signed.to_xrpl())
     auth_checks = authorization_assertions(
         positive_auth,
         borrower_account=borrower.address,
@@ -872,7 +896,7 @@ def execute_checkpoint(evidence_dir: Path) -> int:
         },
         broker_owner_account=owner.address,
         broker_owner_public_key=owner.public_key,
-        expected_terms=expected_terms,
+        expected_terms=expected_signed_terms,
     )
     if not all_pass(auth_checks):
         runner.write(
@@ -902,7 +926,7 @@ def execute_checkpoint(evidence_dir: Path) -> int:
                 validated_result=observed,
                 before=before,
                 after=after,
-                terms={**expected_terms, "VaultID": fixture["vault_id"]},
+                terms=expected_terms,
                 expected_start_date=int((lookup or {}).get("date", -1)),
             ),
         ],

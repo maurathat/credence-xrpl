@@ -1,0 +1,537 @@
+{
+  "authorization_domains": {
+    "assertions": [
+      {
+        "actual": "rDSspc5iJQBQ1RnwirMw2RPZMxTN7RZvrs",
+        "expected": "rDSspc5iJQBQ1RnwirMw2RPZMxTN7RZvrs",
+        "name": "borrower transaction Account",
+        "passed": true
+      },
+      {
+        "actual": "",
+        "expected": "",
+        "name": "borrower multisign SigningPubKey",
+        "passed": true
+      },
+      {
+        "actual": null,
+        "expected": null,
+        "name": "borrower top-level TxnSignature absent",
+        "passed": true
+      },
+      {
+        "actual": {
+          "rH3nhvADSQYEiJKcyV2tU8b7oFCUpRJarR": "EDA128C24D2A00871AF7A62EF29106256DF71DE14F53719E75E419E0FC0BBD9B17",
+          "rhQGYpKkvMJBKFKZFdFxdBPbzHv8G6oQPj": "EDD1395142BCF3C0AEC4A00DBCDE1AF9FB6EC8943AEFBBCE7A0E4F9E3F77C27DDC"
+        },
+        "expected": {
+          "rH3nhvADSQYEiJKcyV2tU8b7oFCUpRJarR": "EDA128C24D2A00871AF7A62EF29106256DF71DE14F53719E75E419E0FC0BBD9B17",
+          "rhQGYpKkvMJBKFKZFdFxdBPbzHv8G6oQPj": "EDD1395142BCF3C0AEC4A00DBCDE1AF9FB6EC8943AEFBBCE7A0E4F9E3F77C27DDC"
+        },
+        "name": "borrower signer identities and keys",
+        "passed": true
+      },
+      {
+        "actual": "r3NQX7cTWbuxUc9c5XwMLLV1AwS4ZpjCrv",
+        "expected": "r3NQX7cTWbuxUc9c5XwMLLV1AwS4ZpjCrv",
+        "name": "broker Counterparty",
+        "passed": true
+      },
+      {
+        "actual": "ED5B51BA9D9F8B9D12A0491015382DB959E4EB358DB6A90E15772130D3B2FB94F3",
+        "expected": "ED5B51BA9D9F8B9D12A0491015382DB959E4EB358DB6A90E15772130D3B2FB94F3",
+        "name": "broker counterparty public key",
+        "passed": true
+      },
+      {
+        "actual": null,
+        "expected": null,
+        "name": "broker counterparty multisign absent",
+        "passed": true
+      },
+      {
+        "actual": [
+          "534D5400"
+        ],
+        "expected": [
+          "534D5400"
+        ],
+        "name": "borrower signing prefix",
+        "passed": true
+      },
+      {
+        "actual": "43505400",
+        "expected": "43505400",
+        "name": "broker signing prefix",
+        "passed": true
+      },
+      {
+        "actual": true,
+        "expected": true,
+        "name": "authorization domains use distinct prefixes",
+        "passed": true
+      },
+      {
+        "actual": {
+          "CloseInterestRate": 0,
+          "ClosePaymentFee": "0",
+          "Counterparty": "r3NQX7cTWbuxUc9c5XwMLLV1AwS4ZpjCrv",
+          "GracePeriod": 60,
+          "InterestRate": 0,
+          "LateInterestRate": 0,
+          "LatePaymentFee": "0",
+          "LoanBrokerID": "7BD631D30B6AAFC35F0A9F1A5E65746C519BB83A03660D3E18DF86061E178FE3",
+          "LoanOriginationFee": "0",
+          "LoanServiceFee": "0",
+          "OverpaymentFee": 0,
+          "OverpaymentInterestRate": 0,
+          "PaymentInterval": 60,
+          "PaymentTotal": 1,
+          "PrincipalRequested": "1000"
+        },
+        "expected": {
+          "CloseInterestRate": 0,
+          "ClosePaymentFee": "0",
+          "Counterparty": "r3NQX7cTWbuxUc9c5XwMLLV1AwS4ZpjCrv",
+          "GracePeriod": 60,
+          "InterestRate": 0,
+          "LateInterestRate": 0,
+          "LatePaymentFee": "0",
+          "LoanBrokerID": "7BD631D30B6AAFC35F0A9F1A5E65746C519BB83A03660D3E18DF86061E178FE3",
+          "LoanOriginationFee": "0",
+          "LoanServiceFee": "0",
+          "OverpaymentFee": 0,
+          "OverpaymentInterestRate": 0,
+          "PaymentInterval": 60,
+          "PaymentTotal": 1,
+          "PrincipalRequested": "1000"
+        },
+        "name": "exact signed loan terms",
+        "passed": true
+      },
+      {
+        "actual": "12005021000053592400000007201B0000006020370000003C20380000003C203C0000000120400000000020410000000020420000000020430000000020440000000050257BD631D30B6AAFC35F0A9F1A5E65746C519BB83A03660D3E18DF86061E178FE368400000000000002873008114885D99E9B741642077D2F380B6C6FABDFDD59282801A144F51ED1156295C2C5988CEDEFB79B3491BCE8895990000000000000000800000009A0000000000000000800000009B0000000000000000800000009C0000000000000000800000009E0DE0B6B3A7640000FFFFFFF1",
+        "expected": "12005021000053592400000007201B0000006020370000003C20380000003C203C0000000120400000000020410000000020420000000020430000000020440000000050257BD631D30B6AAFC35F0A9F1A5E65746C519BB83A03660D3E18DF86061E178FE368400000000000002873008114885D99E9B741642077D2F380B6C6FABDFDD59282801A144F51ED1156295C2C5988CEDEFB79B3491BCE8895990000000000000000800000009A0000000000000000800000009B0000000000000000800000009C0000000000000000800000009E0DE0B6B3A7640000FFFFFFF1",
+        "name": "borrower signer rhQGYpKkvMJBKFKZFdFxdBPbzHv8G6oQPj binds broker body",
+        "passed": true
+      },
+      {
+        "actual": "12005021000053592400000007201B0000006020370000003C20380000003C203C0000000120400000000020410000000020420000000020430000000020440000000050257BD631D30B6AAFC35F0A9F1A5E65746C519BB83A03660D3E18DF86061E178FE368400000000000002873008114885D99E9B741642077D2F380B6C6FABDFDD59282801A144F51ED1156295C2C5988CEDEFB79B3491BCE8895990000000000000000800000009A0000000000000000800000009B0000000000000000800000009C0000000000000000800000009E0DE0B6B3A7640000FFFFFFF1",
+        "expected": "12005021000053592400000007201B0000006020370000003C20380000003C203C0000000120400000000020410000000020420000000020430000000020440000000050257BD631D30B6AAFC35F0A9F1A5E65746C519BB83A03660D3E18DF86061E178FE368400000000000002873008114885D99E9B741642077D2F380B6C6FABDFDD59282801A144F51ED1156295C2C5988CEDEFB79B3491BCE8895990000000000000000800000009A0000000000000000800000009B0000000000000000800000009C0000000000000000800000009E0DE0B6B3A7640000FFFFFFF1",
+        "name": "borrower signer rH3nhvADSQYEiJKcyV2tU8b7oFCUpRJarR binds broker body",
+        "passed": true
+      },
+      {
+        "actual": true,
+        "expected": true,
+        "name": "borrower signer rhQGYpKkvMJBKFKZFdFxdBPbzHv8G6oQPj signature valid",
+        "passed": true
+      },
+      {
+        "actual": true,
+        "expected": true,
+        "name": "borrower signer rH3nhvADSQYEiJKcyV2tU8b7oFCUpRJarR signature valid",
+        "passed": true
+      },
+      {
+        "actual": true,
+        "expected": true,
+        "name": "broker counterparty signature valid",
+        "passed": true
+      }
+    ],
+    "classification": "SUPPORTED",
+    "loan_broker_pseudo_account": "rNaQinKzZTESptdv2qLU8p2iPvgwxUNhpu",
+    "pseudo_account_did_not_sign": true
+  },
+  "checkpoint": "1E-R1-CORRECTED",
+  "corrected_projection": {
+    "Account": "rDSspc5iJQBQ1RnwirMw2RPZMxTN7RZvrs",
+    "CloseInterestRate": 0,
+    "ClosePaymentFee": "0",
+    "Counterparty": "r3NQX7cTWbuxUc9c5XwMLLV1AwS4ZpjCrv",
+    "GracePeriod": 60,
+    "InterestRate": 0,
+    "LateInterestRate": 0,
+    "LatePaymentFee": "0",
+    "LoanBrokerID": "7BD631D30B6AAFC35F0A9F1A5E65746C519BB83A03660D3E18DF86061E178FE3",
+    "LoanOriginationFee": "0",
+    "LoanServiceFee": "0",
+    "OverpaymentFee": 0,
+    "OverpaymentInterestRate": 0,
+    "PaymentInterval": 60,
+    "PaymentTotal": 1,
+    "PrincipalRequested": "1000",
+    "VaultID": "F9EE05299355CB6D7D6D3893399CA05A170ECA473BAFF7DF6A96A0A6D7B572AA"
+  },
+  "diagnosis": {
+    "finalized_envelope_has_account": true,
+    "old_projection_fields": [
+      "CloseInterestRate",
+      "ClosePaymentFee",
+      "Counterparty",
+      "GracePeriod",
+      "InterestRate",
+      "LateInterestRate",
+      "LatePaymentFee",
+      "LoanBrokerID",
+      "LoanOriginationFee",
+      "LoanServiceFee",
+      "OverpaymentFee",
+      "OverpaymentInterestRate",
+      "PaymentInterval",
+      "PaymentTotal",
+      "PrincipalRequested",
+      "VaultID"
+    ],
+    "old_projection_has_account": false,
+    "reproduction": {
+      "exception_type": "KeyError",
+      "message": "'Account'"
+    },
+    "root_cause": "The runner projected LOAN_TERM_FIELDS plus VaultID into the positive oracle; LOAN_TERM_FIELDS excludes Account although the oracle consumes it."
+  },
+  "history": {
+    "finalized_envelope_account": "rDSspc5iJQBQ1RnwirMw2RPZMxTN7RZvrs",
+    "intended_borrower": "rDSspc5iJQBQ1RnwirMw2RPZMxTN7RZvrs",
+    "transaction_hash": "9D83105152990F291C2052431FC777717CE335A3BCC0CF9D6D2902EBBBA5BF93",
+    "validated_ledger_index": 77,
+    "validated_result": "tesSUCCESS"
+  },
+  "loan_pay_executed": false,
+  "mode": "OFFLINE_COMMITTED_EVIDENCE_ADJUDICATION",
+  "new_xrpl_transactions": 0,
+  "positive_post_state": {
+    "assertions": [
+      {
+        "actual": "tesSUCCESS",
+        "expected": "tesSUCCESS",
+        "name": "validated LoanSet result",
+        "passed": true
+      },
+      {
+        "actual": null,
+        "expected": null,
+        "name": "Loan absent before",
+        "passed": true
+      },
+      {
+        "actual": "Loan",
+        "expected": "Loan",
+        "name": "Loan LedgerEntryType",
+        "passed": true
+      },
+      {
+        "actual": "CA5463612F27C156FAEBBF001D233342E6458637837D83DBBD76998D30026ACB",
+        "expected": "CA5463612F27C156FAEBBF001D233342E6458637837D83DBBD76998D30026ACB",
+        "name": "Loan index",
+        "passed": true
+      },
+      {
+        "actual": "7BD631D30B6AAFC35F0A9F1A5E65746C519BB83A03660D3E18DF86061E178FE3",
+        "expected": "7BD631D30B6AAFC35F0A9F1A5E65746C519BB83A03660D3E18DF86061E178FE3",
+        "name": "Loan LoanBrokerID",
+        "passed": true
+      },
+      {
+        "actual": 1,
+        "expected": 1,
+        "name": "Loan LoanSequence",
+        "passed": true
+      },
+      {
+        "actual": "rDSspc5iJQBQ1RnwirMw2RPZMxTN7RZvrs",
+        "expected": "rDSspc5iJQBQ1RnwirMw2RPZMxTN7RZvrs",
+        "name": "Loan Borrower",
+        "passed": true
+      },
+      {
+        "actual": "1000",
+        "expected": "1000",
+        "name": "Loan principal",
+        "passed": true
+      },
+      {
+        "actual": 845357133,
+        "expected": 845357124,
+        "name": "Loan StartDate",
+        "passed": false
+      },
+      {
+        "actual": 60,
+        "expected": 60,
+        "name": "Loan PaymentInterval",
+        "passed": true
+      },
+      {
+        "actual": 1,
+        "expected": 1,
+        "name": "Loan PaymentRemaining",
+        "passed": true
+      },
+      {
+        "actual": 0,
+        "expected": 0,
+        "name": "Loan PreviousPaymentDueDate",
+        "passed": true
+      },
+      {
+        "actual": 845357193,
+        "expected": 845357184,
+        "name": "Loan NextPaymentDueDate",
+        "passed": false
+      },
+      {
+        "actual": "1000",
+        "expected": "1000",
+        "name": "Loan PeriodicPayment",
+        "passed": true
+      },
+      {
+        "actual": "1000",
+        "expected": "1000",
+        "name": "Loan TotalValueOutstanding",
+        "passed": true
+      },
+      {
+        "actual": "0",
+        "expected": "0",
+        "name": "Loan ManagementFeeOutstanding",
+        "passed": true
+      },
+      {
+        "actual": "r3NQX7cTWbuxUc9c5XwMLLV1AwS4ZpjCrv",
+        "expected": "r3NQX7cTWbuxUc9c5XwMLLV1AwS4ZpjCrv",
+        "name": "Loan Broker owner",
+        "passed": true
+      },
+      {
+        "actual": "F9EE05299355CB6D7D6D3893399CA05A170ECA473BAFF7DF6A96A0A6D7B572AA",
+        "expected": "F9EE05299355CB6D7D6D3893399CA05A170ECA473BAFF7DF6A96A0A6D7B572AA",
+        "name": "Loan Broker VaultID",
+        "passed": true
+      },
+      {
+        "actual": "F9EE05299355CB6D7D6D3893399CA05A170ECA473BAFF7DF6A96A0A6D7B572AA",
+        "expected": "F9EE05299355CB6D7D6D3893399CA05A170ECA473BAFF7DF6A96A0A6D7B572AA",
+        "name": "Vault identity",
+        "passed": true
+      },
+      {
+        "actual": 1,
+        "expected": 1,
+        "name": "cash-basis Vault LEVersion",
+        "passed": true
+      },
+      {
+        "actual": -1000,
+        "expected": -1000,
+        "name": "Vault AssetsAvailable delta",
+        "passed": true
+      },
+      {
+        "actual": "100000",
+        "expected": "100000",
+        "name": "cash-basis Vault AssetsTotal unchanged",
+        "passed": true
+      },
+      {
+        "actual": 1000,
+        "expected": 1000,
+        "name": "Loan Broker DebtTotal delta",
+        "passed": true
+      },
+      {
+        "actual": "10000",
+        "expected": "10000",
+        "name": "Loan Broker CoverAvailable unchanged",
+        "passed": true
+      },
+      {
+        "actual": 2,
+        "expected": 2,
+        "name": "Loan Broker LoanSequence increment",
+        "passed": true
+      },
+      {
+        "actual": 1,
+        "expected": 1,
+        "name": "Loan Broker OwnerCount increment",
+        "passed": true
+      },
+      {
+        "actual": 1,
+        "expected": 1,
+        "name": "borrower OwnerCount increment",
+        "passed": true
+      },
+      {
+        "actual": 1,
+        "expected": 1,
+        "name": "borrower transaction Sequence increment",
+        "passed": true
+      },
+      {
+        "actual": 1000,
+        "expected": 1000,
+        "name": "borrower tRLUSD disbursement",
+        "passed": true
+      },
+      {
+        "actual": 0,
+        "expected": 0,
+        "name": "Loan Broker owner origination fee",
+        "passed": true
+      },
+      {
+        "actual": -1000,
+        "expected": -1000,
+        "name": "Vault pseudo-account asset debit",
+        "passed": true
+      },
+      {
+        "actual": [
+          {
+            "Flags": 65536,
+            "LedgerEntryType": "SignerList",
+            "OwnerNode": "0",
+            "PreviousTxnID": "58313AEA0390CD431EDADFCDC8248BD057F2A9281222F3FB9B63932467198A65",
+            "PreviousTxnLgrSeq": 15,
+            "SignerEntries": [
+              {
+                "SignerEntry": {
+                  "Account": "rhQGYpKkvMJBKFKZFdFxdBPbzHv8G6oQPj",
+                  "SignerWeight": 1
+                }
+              },
+              {
+                "SignerEntry": {
+                  "Account": "rH3nhvADSQYEiJKcyV2tU8b7oFCUpRJarR",
+                  "SignerWeight": 1
+                }
+              }
+            ],
+            "SignerListID": 0,
+            "SignerQuorum": 2,
+            "index": "3922017BB51BAEDC83CAF36D15BF346A3BA625A90B467A7ED2AA093D3ADD2C1E"
+          }
+        ],
+        "expected": [
+          {
+            "Flags": 65536,
+            "LedgerEntryType": "SignerList",
+            "OwnerNode": "0",
+            "PreviousTxnID": "58313AEA0390CD431EDADFCDC8248BD057F2A9281222F3FB9B63932467198A65",
+            "PreviousTxnLgrSeq": 15,
+            "SignerEntries": [
+              {
+                "SignerEntry": {
+                  "Account": "rhQGYpKkvMJBKFKZFdFxdBPbzHv8G6oQPj",
+                  "SignerWeight": 1
+                }
+              },
+              {
+                "SignerEntry": {
+                  "Account": "rH3nhvADSQYEiJKcyV2tU8b7oFCUpRJarR",
+                  "SignerWeight": 1
+                }
+              }
+            ],
+            "SignerListID": 0,
+            "SignerQuorum": 2,
+            "index": "3922017BB51BAEDC83CAF36D15BF346A3BA625A90B467A7ED2AA093D3ADD2C1E"
+          }
+        ],
+        "name": "borrower SignerList unchanged",
+        "passed": true
+      },
+      {
+        "actual": "0",
+        "expected": "0",
+        "name": "Loan LoanOriginationFee",
+        "passed": true
+      },
+      {
+        "actual": "0",
+        "expected": "0",
+        "name": "Loan LoanServiceFee",
+        "passed": true
+      },
+      {
+        "actual": "0",
+        "expected": "0",
+        "name": "Loan LatePaymentFee",
+        "passed": true
+      },
+      {
+        "actual": "0",
+        "expected": "0",
+        "name": "Loan ClosePaymentFee",
+        "passed": true
+      },
+      {
+        "actual": 0,
+        "expected": 0,
+        "name": "Loan OverpaymentFee",
+        "passed": true
+      },
+      {
+        "actual": 0,
+        "expected": 0,
+        "name": "Loan InterestRate",
+        "passed": true
+      },
+      {
+        "actual": 0,
+        "expected": 0,
+        "name": "Loan LateInterestRate",
+        "passed": true
+      },
+      {
+        "actual": 0,
+        "expected": 0,
+        "name": "Loan CloseInterestRate",
+        "passed": true
+      },
+      {
+        "actual": 0,
+        "expected": 0,
+        "name": "Loan OverpaymentInterestRate",
+        "passed": true
+      },
+      {
+        "actual": 60,
+        "expected": 60,
+        "name": "Loan GracePeriod",
+        "passed": true
+      }
+    ],
+    "classification": "POSITIVE_CONTRADICTED",
+    "expected_start_date": 845357124,
+    "expected_start_date_source": "committed validated transaction date",
+    "failed_assertions": [
+      {
+        "actual": 845357133,
+        "expected": 845357124,
+        "name": "Loan StartDate",
+        "passed": false
+      },
+      {
+        "actual": 845357193,
+        "expected": 845357184,
+        "name": "Loan NextPaymentDueDate",
+        "passed": false
+      }
+    ]
+  },
+  "remaining_negative_cases_executed": false,
+  "result_state": {
+    "E1": "PASS/FROZEN",
+    "E2": "PASS/FROZEN",
+    "E3": "PASS/RETIRED within tested scope",
+    "E4": "PASS/RETIRED within tested scope",
+    "E5": "PASS",
+    "E6": "FAIL",
+    "E7-E9": "NOT_ATTEMPTED"
+  }
+}

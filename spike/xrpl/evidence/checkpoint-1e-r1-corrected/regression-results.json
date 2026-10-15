@@ -1,0 +1,19 @@
+{
+  "checkpoint": "1E-R1-CORRECTED",
+  "new_xrpl_transactions": 0,
+  "R1": "PASS — committed fixture reproduces KeyError through the old projection",
+  "R2": "PASS — committed finalized LoanSet contains Account",
+  "R3": "PASS — committed Account equals the intended borrower",
+  "R4": "PASS — corrected projection contains Account",
+  "R5": "PASS — missing Account fails projection preflight",
+  "R6": "PASS — wrong Account fails the semantic borrower assertion",
+  "R7": "PASS — corrected projection contains every field consumed by the oracle",
+  "R8": "PASS — removal of each required field fails preflight",
+  "R9": "PASS — economic terms match the first-live transaction",
+  "R10": "PASS — committed borrower and broker authorization evidence remains valid",
+  "R11": "PASS — hardened D12 rejects the old projection",
+  "R12": "PASS — hardened D12 accepts the corrected projection",
+  "pytest_cases": 28,
+  "D1_D12": "PASS",
+  "D1_D12_pytest_cases": 12
+}

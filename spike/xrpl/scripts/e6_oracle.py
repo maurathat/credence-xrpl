@@ -36,6 +36,12 @@ LOAN_TERM_FIELDS = (
     "GracePeriod",
 )
 
+POSITIVE_ORACLE_REQUIRED_FIELDS = (
+    "Account",
+    "VaultID",
+    *LOAN_TERM_FIELDS,
+)
+
 REQUIRED_LIVE_BINDINGS = frozenset(
     {
         "amendments",
@@ -50,6 +56,7 @@ REQUIRED_LIVE_BINDINGS = frozenset(
         "loan_broker_id",
         "network_id",
         "pre_loan_sequence",
+        "positive_oracle_terms",
         "research_bot_account",
         "rippled_source_commit",
         "rippled_version",
@@ -62,6 +69,10 @@ REQUIRED_LIVE_BINDINGS = frozenset(
 
 class E6BindingError(RuntimeError):
     """A live E6 path is missing one or more frozen provenance bindings."""
+
+
+class E6ProjectionError(RuntimeError):
+    """The runner-to-oracle terms projection is absent, incomplete, or inconsistent."""
 
 
 def sha512_half(data: bytes) -> str:
@@ -83,6 +94,69 @@ def loan_index(loan_broker_id: str, loan_sequence: int) -> str:
         raise ValueError("LoanBrokerID must be hexadecimal") from exc
     serialized = struct.pack(">H", LOAN_NAMESPACE) + broker_bytes + struct.pack(">I", loan_sequence)
     return sha512_half(serialized)
+
+
+def positive_oracle_projection_assertions(
+    projection: dict[str, Any],
+    *,
+    intended_borrower: str,
+) -> list[StateAssertion]:
+    """Require every field consumed by the frozen positive semantic oracle."""
+
+    missing = sorted(
+        field_name
+        for field_name in POSITIVE_ORACLE_REQUIRED_FIELDS
+        if field_name not in projection or projection[field_name] is None
+    )
+    return [
+        state_assertion("positive oracle projection required fields", missing, []),
+        state_assertion(
+            "positive oracle projection Account",
+            projection.get("Account"),
+            intended_borrower,
+        ),
+    ]
+
+
+def require_positive_oracle_projection(
+    projection: dict[str, Any],
+    *,
+    intended_borrower: str,
+) -> None:
+    """Fail before signing or submission if the positive oracle input is incomplete."""
+
+    checks = positive_oracle_projection_assertions(
+        projection,
+        intended_borrower=intended_borrower,
+    )
+    if not all(check.passed for check in checks):
+        failures = "; ".join(
+            f"{check.name}: actual={check.actual!r}, expected={check.expected!r}"
+            for check in checks
+            if not check.passed
+        )
+        raise E6ProjectionError(failures)
+
+
+def project_positive_oracle_terms(
+    finalized_envelope: dict[str, Any],
+    *,
+    vault_id: str,
+    intended_borrower: str,
+) -> dict[str, Any]:
+    """Build and validate the exact runner input consumed by the positive oracle."""
+
+    projection = {
+        field_name: finalized_envelope.get(field_name)
+        for field_name in POSITIVE_ORACLE_REQUIRED_FIELDS
+        if field_name != "VaultID"
+    }
+    projection["VaultID"] = vault_id
+    require_positive_oracle_projection(
+        projection,
+        intended_borrower=intended_borrower,
+    )
+    return projection
 
 
 def _signing_body(transaction: dict[str, Any]) -> dict[str, Any]:
@@ -415,12 +489,63 @@ def live_binding_assertions(bindings: dict[str, Any]) -> list[StateAssertion]:
         for name in REQUIRED_LIVE_BINDINGS
         if name not in bindings or bindings[name] in (None, "")
     )
-    return [state_assertion("required E6 live bindings", missing, [])]
+    checks = [state_assertion("required E6 live bindings", missing, [])]
+    envelope = bindings.get("exact_loan_set_body")
+    projection = bindings.get("positive_oracle_terms")
+    borrower = bindings.get("borrower_account")
+    if isinstance(projection, dict) and isinstance(borrower, str):
+        checks.extend(
+            positive_oracle_projection_assertions(
+                projection,
+                intended_borrower=borrower,
+            )
+        )
+    else:
+        checks.append(
+            predicate_assertion(
+                "positive oracle projection is bound",
+                False,
+                True,
+                type(projection).__name__,
+            )
+        )
+    if isinstance(envelope, dict) and isinstance(projection, dict):
+        expected_projection = {
+            field_name: (
+                bindings.get("vault_id") if field_name == "VaultID" else envelope.get(field_name)
+            )
+            for field_name in POSITIVE_ORACLE_REQUIRED_FIELDS
+        }
+        checks.append(
+            state_assertion(
+                "positive oracle projection bound to finalized envelope",
+                projection,
+                expected_projection,
+            )
+        )
+    else:
+        checks.append(
+            predicate_assertion(
+                "finalized envelope and positive oracle projection are mappings",
+                False,
+                True,
+                {
+                    "envelope": type(envelope).__name__,
+                    "projection": type(projection).__name__,
+                },
+            )
+        )
+    return checks
 
 
 def require_live_bindings(bindings: dict[str, Any]) -> None:
     """Fail closed before signing or submission when a frozen binding is absent."""
 
-    check = live_binding_assertions(bindings)[0]
-    if not check.passed:
-        raise E6BindingError(f"missing required E6 live bindings: {', '.join(check.actual)}")
+    checks = live_binding_assertions(bindings)
+    if not all(check.passed for check in checks):
+        failures = "; ".join(
+            f"{check.name}: actual={check.actual!r}, expected={check.expected!r}"
+            for check in checks
+            if not check.passed
+        )
+        raise E6BindingError(failures)

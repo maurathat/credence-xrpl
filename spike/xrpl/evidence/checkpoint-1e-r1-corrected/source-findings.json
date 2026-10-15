@@ -1,0 +1,21 @@
+{
+  "findings": [
+    {
+      "finding": "preclaim reads tx[sfAccount]; when Counterparty equals the Loan Broker owner, that Account is the borrower.",
+      "lines": "282-304",
+      "path": "src/libxrpl/tx/transactors/lending/LoanSet.cpp"
+    },
+    {
+      "finding": "Loan StartDate is the applying view header closeTime.",
+      "lines": "226-229,650",
+      "path": "src/libxrpl/tx/transactors/lending/LoanSet.cpp"
+    },
+    {
+      "finding": "transaction and counterparty signatures are checked by role.",
+      "lines": "249-280",
+      "path": "src/libxrpl/protocol/STTx.cpp"
+    }
+  ],
+  "rippled_version": "3.4.0",
+  "source_commit": "4a4fded2eba11427c48ce3f24d9c1aea5e7a9d17"
+}

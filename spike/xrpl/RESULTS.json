@@ -1,8 +1,118 @@
 {
-  "schema_version": 16,
-  "overall": "BLOCKED",
-  "scope": "Checkpoint 1E-LIVE-01 stopped after the positive LoanSet validated because the frozen semantic assertion call raised KeyError Account",
-  "start_commit": "b4498977d0e17f711bac2705cdbaf7c27db1d97f",
+  "schema_version": 17,
+  "overall": "FAIL",
+  "scope": "Checkpoint 1E-R1-CORRECTED repaired the terms projection and offline adjudication found the committed positive contradicted the frozen timing oracle",
+  "start_commit": "c0ff25cd6408e051206bb893b0b9d28ae3803a40",
+  "checkpoint_1e_r1_corrected": {
+    "outcome": "HARNESS_REPAIR_PASS_POSITIVE_ADJUDICATION_CONTRADICTED",
+    "start_commit": "c0ff25cd6408e051206bb893b0b9d28ae3803a40",
+    "mode": "HARNESS REPAIR + OFFLINE EVIDENCE ADJUDICATION",
+    "new_xrpl_transactions": 0,
+    "history": {
+      "transaction_hash": "9D83105152990F291C2052431FC777717CE335A3BCC0CF9D6D2902EBBBA5BF93",
+      "validated_result": "tesSUCCESS",
+      "validated_ledger_index": 77,
+      "finalized_envelope_had_account": true,
+      "signing_body_had_account": true
+    },
+    "root_cause": {
+      "missing_structure": "runner-to-oracle terms projection",
+      "finalized_envelope_defective": false,
+      "detail": "terms_from projected LOAN_TERM_FIELDS plus VaultID; LOAN_TERM_FIELDS omitted Account although positive_post_state_assertions consumed terms.Account",
+      "why_d1_d12_missed": "D6-D9 manually included Account and D12 checked only that exact_loan_set_body was nonempty"
+    },
+    "repair": {
+      "scope": "runner-to-oracle projection only",
+      "typed_consumed_field_set": true,
+      "account_required": true,
+      "account_must_equal_intended_borrower": true,
+      "every_consumed_field_required": true,
+      "projection_must_equal_finalized_envelope_projection": true,
+      "frozen_protocol_semantics_changed": false
+    },
+    "source_basis": {
+      "version": "3.4.0",
+      "commit": "4a4fded2eba11427c48ce3f24d9c1aea5e7a9d17",
+      "account_semantics": "LoanSet.cpp:282-304 reads tx[sfAccount] and uses Account as borrower when Counterparty equals LoanBroker.Owner"
+    },
+    "regressions": {
+      "R1": "PASS",
+      "R2": "PASS",
+      "R3": "PASS",
+      "R4": "PASS",
+      "R5": "PASS",
+      "R6": "PASS",
+      "R7": "PASS",
+      "R8": "PASS",
+      "R9": "PASS",
+      "R10": "PASS",
+      "R11": "PASS",
+      "R12": "PASS",
+      "pytest_cases": 28,
+      "D1-D12": "PASS (12)"
+    },
+    "positive_post_state_adjudication": {
+      "classification": "POSITIVE_CONTRADICTED",
+      "passed_assertions": 40,
+      "failed_assertions": [
+        {
+          "name": "Loan StartDate",
+          "expected": 845357124,
+          "actual": 845357133
+        },
+        {
+          "name": "Loan NextPaymentDueDate",
+          "expected": 845357184,
+          "actual": 845357193
+        }
+      ]
+    },
+    "positive_authorization_adjudication": {
+      "classification": "SUPPORTED",
+      "research_bot_present": true,
+      "credence_policy_present": true,
+      "borrower_master_key_absent": true,
+      "borrower_domain": "SMT-NUL / 534D5400",
+      "broker_owner_domain": "CPT-NUL / 43505400",
+      "loan_broker_pseudo_account_signed": false,
+      "same_serialized_body": true
+    },
+    "result_state": {
+      "E1": "PASS/FROZEN",
+      "E2": "PASS/FROZEN",
+      "E3": "PASS/RETIRED within tested scope",
+      "E4": "PASS/RETIRED within tested scope",
+      "E5": "PASS",
+      "E6": "FAIL",
+      "E7-E9": "NOT_ATTEMPTED"
+    },
+    "historical_evidence": {
+      "modified": false,
+      "first_live_manifest_sha256": "42129b0aad5fb7b6f9e641a600ad848f9d8ef47cae26d7beb3fe65559a81d9c8",
+      "manifest_verified": true
+    },
+    "evidence_manifest": {
+      "directory": "evidence/checkpoint-1e-r1-corrected",
+      "file_count": 5,
+      "bytes": 19768,
+      "verified": true
+    },
+    "gates": {
+      "r1_r12": "PASS (28 pytest cases)",
+      "d1_d12": "PASS (12)",
+      "all_spike_tests": "PASS (142)",
+      "repository_unit_tests": "PASS (17)",
+      "conformance_tests": "PASS (4)",
+      "lint_format_large_file": "PASS",
+      "strict_typecheck": "PASS (25 source files)",
+      "secrets_scan": "PASS",
+      "json_and_manifests": "PASS",
+      "historical_evidence_immutability": "PASS",
+      "authorized_paths": "PASS",
+      "git_diff_check": "PASS"
+    },
+    "remaining_negative_checkpoint_recommendation": "DO NOT EXECUTE N1-N6 until the frozen StartDate expectation contradiction is explicitly reviewed and dispositioned"
+  },
   "checkpoint_1e_live_01": {
     "outcome": "STOP/BLOCKED",
     "mode": "LIVE EXECUTION / FROZEN E6 ORACLE / FAIL CLOSED",

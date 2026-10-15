@@ -1,3 +1,138 @@
+# Checkpoint 1E-R1-CORRECTED — E6 terms projection repair and adjudication
+
+## Outcome
+
+**HARNESS REPAIR PASS; COMMITTED POSITIVE EVIDENCE CONTRADICTS THE FROZEN
+TIMING ORACLE; E6 FAIL.**
+
+This entirely offline checkpoint began at clean commit
+`c0ff25cd6408e051206bb893b0b9d28ae3803a40`, with checkpoint-0 ancestry and
+submodule gitlinks unchanged. It started no XRPL environment, made no RPC
+call, advanced no ledger, and submitted zero transactions.
+
+## Authoritative first-live history and root cause
+
+The committed first-live evidence remains authoritative. The finalized
+LoanSet and signing body both contained borrower Account
+`rDSspc5iJQBQ1RnwirMw2RPZMxTN7RZvrs`. Transaction
+`9D83105152990F291C2052431FC777717CE335A3BCC0CF9D6D2902EBBBA5BF93`
+was submitted and validated `tesSUCCESS` in ledger 77. Its pre-state,
+post-state, transaction blob, metadata, and public authorization evidence are
+unchanged.
+
+The `KeyError: 'Account'` was reproduced offline through the actual integration
+shape. The old runner's `terms_from()` projected `LOAN_TERM_FIELDS`, then added
+`VaultID`. `LOAN_TERM_FIELDS` excludes `Account`, while
+`positive_post_state_assertions()` reads `terms["Account"]` for the Loan
+borrower assertion. The incomplete structure was the runner-to-oracle terms
+dictionary—not the finalized envelope, signing body, or public evidence.
+
+D6-D9 missed this because their synthetic fixture manually supplied Account.
+The original D12 checked only that `exact_loan_set_body` was nonempty and did
+not inspect the runner-to-oracle projection.
+
+Pinned rippled 3.4.0 source commit
+`4a4fded2eba11427c48ce3f24d9c1aea5e7a9d17` reads `tx[sfAccount]` in
+`LoanSet.cpp:282`; when Counterparty equals the Loan Broker owner,
+`LoanSet.cpp:303` assigns that Account as the borrower.
+
+## Narrow repair and D12 hardening
+
+The repair separates the signing-evidence term projection from a typed,
+validated positive-oracle projection. The latter contains exactly Account,
+VaultID, and every `LOAN_TERM_FIELDS` member consumed by the frozen oracle. Its
+preflight rejects any absent or `None` field and rejects an Account that differs
+from the intended borrower.
+
+The positive oracle itself, finalized transaction, roles, economic terms,
+SMT-NUL/CPT-NUL constructions, signatures, expected engine results, state
+requirements, and N1-N6 semantics were not changed.
+
+Hardened D12 now requires the actual `positive_oracle_terms` binding, validates
+its complete consumed-field set and intended borrower, and requires it to equal
+the projection derived from the exact finalized envelope plus the bound Vault
+ID. It rejects the historical incomplete projection and accepts the corrected
+one. D1-D11 were not weakened.
+
+## Regression results
+
+R1-R12 all pass (28 pytest cases because R8 checks removal of every required
+field). R1 reproduces the historical KeyError; R2-R4 prove the committed and
+corrected Account flow; R5-R8 enforce projection completeness and identity;
+R9 preserves the exact economics; R10 revalidates both authorization domains;
+and R11-R12 exercise hardened D12. D1-D12 also pass unchanged in intent.
+
+## Offline positive adjudication
+
+With the corrected projection, the frozen positive oracle completed all
+assertions against committed evidence. The result is
+**POSITIVE_CONTRADICTED**:
+
+| Assertion | Expected from committed validated transaction date | Observed Loan |
+| --- | ---: | ---: |
+| `Loan StartDate` | `845357124` | `845357133` |
+| `Loan NextPaymentDueDate` | `845357184` | `845357193` |
+
+All other frozen positive semantic assertions passed. Pinned source states
+that Loan StartDate uses the applying view header `closeTime`; the committed
+runner supplied the validated transaction date as the external expected value.
+No reinterpretation or repair of that frozen timing expectation was performed.
+Under the checkpoint rule, the positive contradiction sets **E6 = FAIL**.
+
+## Offline authorization adjudication
+
+The committed authorization evidence is **SUPPORTED**. It independently
+revalidates ResearchBot and Credence policy borrower signatures, empty
+top-level `SigningPubKey`, absence of borrower master-key authorization,
+SMT-NUL borrower payloads, the Loan Broker owner's CPT-NUL
+`CounterpartySignature`, absence of the Loan Broker pseudo-account from both
+signing roles, distinct role prefixes, valid public signatures, and the same
+serialized finalized body in both domains.
+
+## Result state, evidence, and recommendation
+
+- E1/E2: **PASS/FROZEN**.
+- E3/E4: **PASS/RETIRED within tested scope**.
+- E5: **PASS**.
+- E6 positive authorization composition: **SUPPORTED**.
+- E6 positive frozen semantic oracle: **CONTRADICTED**.
+- E6 overall: **FAIL**.
+- N1-N6: **NOT EXECUTED in this checkpoint**.
+- E7-E9: **NOT ATTEMPTED**.
+
+The new offline evidence manifest covers 5 files and 19768 bytes. The
+historical first-live manifest hash remained
+`42129b0aad5fb7b6f9e641a600ad848f9d8ef47cae26d7beb3fe65559a81d9c8`
+before and after adjudication, and all historical manifests verify.
+
+A new checkpoint must **not** execute only the remaining E6 negatives yet.
+The StartDate/validated-transaction-date contradiction requires explicit
+review and disposition first. No E7/E8/E9 work or LoanPay is authorized.
+
+## Gates
+
+- R1-R12: **PASS** (28 pytest cases).
+- D1-D12: **PASS** (12).
+- All spike tests: **PASS** (142).
+- Repository unit tests: **PASS** (17).
+- Conformance tests: **PASS** (4).
+- Lint, formatting, large-file check, strict typecheck, secrets scan, JSON
+  validation, all evidence manifests, historical-evidence immutability,
+  authorized-path check, and `git diff --check`: **PASS**.
+
+## Checkpoint 1E-R1-CORRECTED modified paths
+
+- `spike/xrpl/scripts/e6_oracle.py`
+- `spike/xrpl/scripts/run_checkpoint_1e.py`
+- `spike/xrpl/scripts/adjudicate_checkpoint_1e_r1.py`
+- `spike/xrpl/tests/test_checkpoint_1e.py`
+- `spike/xrpl/tests/test_checkpoint_1e_r1.py`
+- `spike/xrpl/evidence/checkpoint-1e-r1-corrected/`
+- `spike/xrpl/REPORT.md`
+- `spike/xrpl/RESULTS.json`
+
+---
+
 # Checkpoint 1E-LIVE-01 — frozen E6 live execution
 
 ## Outcome

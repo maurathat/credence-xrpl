@@ -29,6 +29,7 @@ from e6_oracle import (  # noqa: E402
     loan_index,
     negative_state_assertions,
     positive_post_state_assertions,
+    project_positive_oracle_terms,
     public_signing_evidence,
     require_live_bindings,
 )
@@ -350,7 +351,30 @@ def test_d11_borrower_and_broker_authorization_are_independently_captured() -> N
 
 
 def test_d12_positive_execution_requires_every_frozen_binding() -> None:
+    transaction, wallets, _evidence = _signed_fixture()
+    finalized_envelope = {
+        key: value
+        for key, value in transaction.items()
+        if key not in {"CounterpartySignature", "Signers", "TxnSignature"}
+    }
+    vault_id = _vault_id()
+    projection = project_positive_oracle_terms(
+        finalized_envelope,
+        vault_id=vault_id,
+        intended_borrower=wallets["borrower"].address,
+    )
     complete = {name: f"bound:{name}" for name in REQUIRED_LIVE_BINDINGS}
+    complete.update(
+        {
+            "borrower_account": wallets["borrower"].address,
+            "exact_loan_set_body": finalized_envelope,
+            "positive_oracle_terms": projection,
+            "runner_hash": hashlib.sha256(
+                (SCRIPTS / "run_checkpoint_1e.py").read_bytes()
+            ).hexdigest(),
+            "vault_id": vault_id,
+        }
+    )
     assert _all_pass(live_binding_assertions(complete))
     require_live_bindings(complete)
     incomplete = dict(complete)
