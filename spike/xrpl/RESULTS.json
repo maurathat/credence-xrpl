@@ -1,8 +1,83 @@
 {
-  "schema_version": 12,
+  "schema_version": 13,
   "overall": "BLOCKED",
-  "scope": "Checkpoint 1D-X stopped during frozen-harness preflight before runtime",
+  "scope": "Checkpoint 1D-P evidence-destination plumbing passed; E5 remains blocked",
   "start_commit": "44fb089f0cb4281608ab0b9a67e129147f349887",
+  "checkpoint_1d_p": {
+    "outcome": "PASS",
+    "start_commit": "c522d2d2bad9b1d93bdd4c5d2244074b4042232e",
+    "mode": "HARNESS ONLY",
+    "root_cause": "The E5 runner hard-coded evidence/checkpoint-1d and could not target a distinct fresh-run directory.",
+    "repair": {
+      "explicit_destination_required": true,
+      "default_destination": null,
+      "authorized_root": "spike/xrpl/evidence",
+      "path_escape_rejected": true,
+      "path_traversal_rejected": true,
+      "nonempty_destination_reuse_rejected": true,
+      "manifest_uses_selected_destination": true,
+      "provenance_and_result_metadata_use_selected_destination": true
+    },
+    "regression_tests": {
+      "P1": "PASS",
+      "P2": "PASS",
+      "P3": "PASS",
+      "P4": "PASS",
+      "P5": "PASS",
+      "P6": "PASS",
+      "P7": "PASS",
+      "P8": "PASS",
+      "P9": "PASS",
+      "P10": "PASS",
+      "S1-S12": "PASS unchanged"
+    },
+    "provenance": {
+      "scripts/run_checkpoint_1d.py": "5fc315e0c646dc766ccae349d16b56039e9d54bc41925de2e2d94d85439d12c8",
+      "tests/test_checkpoint_1d_destination.py": "03d80614ff4f1ba201b1ce2a7db8fb50ced847f909b4427067e5ef925ab71c1a",
+      "E5-ASSERTIONS.md": "656921cacd310214b6ecce7088e21e84fcca44feaa3104b95cfb9f5f4bc92b92",
+      "scripts/e5_oracle.py": "8052459639081eca2baeb64402120ce00507f35eafcc595315f912016ae07bbf",
+      "tests/test_checkpoint_1d.py": "4a8eba0b49f8a30c50cc5eddfed7a7a8bdc51a29c5c4b241780738d6e0acc7d0"
+    },
+    "historical_evidence_unchanged": true,
+    "execution": {
+      "environment_started": false,
+      "xrpl_rpc_calls": 0,
+      "ledger_advances": 0,
+      "new_xrpl_transactions_submitted": 0
+    },
+    "result_state": {
+      "E1": "PASS/FROZEN",
+      "E2": "PASS/FROZEN",
+      "E3": "PASS/RETIRED within tested scope",
+      "E4": "PASS/RETIRED within tested scope",
+      "E5": "BLOCKED",
+      "E5-A": "NOT_ATTEMPTED",
+      "E5-B": "NOT_ATTEMPTED",
+      "E5-C": "NOT_ATTEMPTED",
+      "E5-D": "NOT_ATTEMPTED",
+      "E5-E": "NOT_ATTEMPTED",
+      "E6-E9": "NOT_ATTEMPTED"
+    },
+    "gates": {
+      "p1_p10": "PASS (10)",
+      "s1_s12_and_existing_e5": "PASS (28)",
+      "all_spike_tests": "PASS (102)",
+      "repository_unit_tests": "PASS (17)",
+      "conformance_tests": "PASS (4)",
+      "lint_format_large_file": "PASS",
+      "strict_typecheck": "PASS (25 source files)",
+      "secrets_scan": "PASS",
+      "json_validation": "PASS (116 files)",
+      "historical_manifest_verification": "PASS (9 manifests, 99 payload files)",
+      "historical_evidence_immutability": "PASS",
+      "authorized_paths_and_unchanged_review_submodules": "PASS",
+      "git_diff_check": "PASS"
+    },
+    "harness_verdict": "PASS",
+    "fresh_e5_execution_ready_with_unused_authorized_destination": true,
+    "current_checkpoint_1d_x_destination_reusable": false,
+    "e6_may_begin": false
+  },
   "checkpoint_1d_x": {
     "outcome": "BLOCKED",
     "classification": "A. local frozen-harness evidence-destination mismatch",

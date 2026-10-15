@@ -1,3 +1,105 @@
+# Checkpoint 1D-P — E5 evidence destination parameterization
+
+## Outcome
+
+**PASS — evidence-destination plumbing is explicit and fail-closed. E5 remains
+BLOCKED.**
+
+Checkpoint 1D-P began from clean commit
+`c522d2d2bad9b1d93bdd4c5d2244074b4042232e`, with checkpoint-0 ancestry and
+submodule gitlinks unchanged. No rippled environment was started, no XRPL RPC
+was called, no ledger was advanced, and **zero XRPL transactions were
+submitted**.
+
+## Root cause and repair
+
+The prior runner hard-coded `evidence/checkpoint-1d/`, so it could neither
+preserve that historical run nor create the required separate execution
+record. The runner now requires an explicit `--evidence-dir` argument and
+passes the resolved destination through the runner, provenance, result
+metadata, per-transaction records, STOP artifacts, and manifest generation.
+
+The resolver accepts only destinations below `spike/xrpl/evidence/`, rejects
+`..` traversal and resolved path escape, and refuses the evidence root itself.
+The preparation step accepts a new or empty selected directory and refuses any
+non-empty destination. There is no default checkpoint name and no overwrite
+mode.
+
+## P1-P10
+
+| Test | Result |
+| --- | --- |
+| P1 explicit `checkpoint-1d-x` destination in an isolated root | PASS |
+| P2 runner writes to the selected destination, not `checkpoint-1d` | PASS |
+| P3 historical `checkpoint-1d` tree remains byte-identical | PASS |
+| P4 missing explicit destination | PASS — rejected |
+| P5 destination outside evidence root | PASS — rejected |
+| P6 path traversal | PASS — rejected |
+| P7 non-empty authoritative destination reuse | PASS — rejected |
+| P8 manifest generated in selected destination | PASS |
+| P9 metadata references selected destination | PASS |
+| P10 S1-S12 and semantic files remain byte-identical | PASS |
+
+All S1-S12 tests pass unchanged. The full existing E5 test file is unchanged
+and all 28 tests pass.
+
+## Provenance and historical evidence
+
+The future live run will record these current components:
+
+| Component | SHA-256 |
+| --- | --- |
+| New runner | `5fc315e0c646dc766ccae349d16b56039e9d54bc41925de2e2d94d85439d12c8` |
+| Destination tests | `03d80614ff4f1ba201b1ce2a7db8fb50ced847f909b4427067e5ef925ab71c1a` |
+| Assertions | `656921cacd310214b6ecce7088e21e84fcca44feaa3104b95cfb9f5f4bc92b92` |
+| SignerList parser/oracle | `8052459639081eca2baeb64402120ce00507f35eafcc595315f912016ae07bbf` |
+| Existing E5 tests | `4a8eba0b49f8a30c50cc5eddfed7a7a8bdc51a29c5c4b241780738d6e0acc7d0` |
+
+The assertion, parser/oracle, and existing E5 test hashes are unchanged from
+1D-H/1D-X. No file under `spike/xrpl/evidence/` was modified, renamed, or
+moved.
+
+## Retained result state
+
+- E1/E2: **PASS/FROZEN**.
+- E3/E4: **PASS/RETIRED within tested scope**.
+- E5: **BLOCKED**; E5-A through E5-E remain **NOT ATTEMPTED**.
+- E6-E9: **NOT ATTEMPTED**.
+
+## Gates
+
+- P1-P10: **PASS** (10 tests).
+- S1-S12 and all existing E5 tests: **PASS** (28 tests).
+- All spike tests: **PASS** (102 tests).
+- Repository unit tests: **PASS** (17 tests).
+- Conformance tests: **PASS** (4 tests).
+- Lint, formatting, and large-file check: **PASS**.
+- Strict typecheck: **PASS** (25 source files).
+- Secrets scan: **PASS**.
+- JSON validation: **PASS** (116 files).
+- Historical evidence-manifest verification: **PASS** (9 manifests, 99 payload files).
+- Historical evidence immutability: **PASS**.
+- Authorized-path and unchanged review/submodule checks: **PASS**.
+- `git diff --check`: **PASS**.
+
+## Readiness
+
+The parameterized harness is ready to execute against a separately authorized,
+new or empty evidence destination. The current
+`evidence/checkpoint-1d-x/` directory contains the authoritative 1D-X STOP
+record, so P7 correctly refuses it. Therefore a fresh E5 execution may **not**
+begin under the existing exact destination instruction; an unused destination
+must first be explicitly authorized. E6 must not begin.
+
+## Checkpoint 1D-P modified paths
+
+- `spike/xrpl/scripts/run_checkpoint_1d.py`
+- `spike/xrpl/tests/test_checkpoint_1d_destination.py`
+- `spike/xrpl/REPORT.md`
+- `spike/xrpl/RESULTS.json`
+
+---
+
 # Checkpoint 1D-X — execute E5 borrower authorization
 
 ## Outcome
