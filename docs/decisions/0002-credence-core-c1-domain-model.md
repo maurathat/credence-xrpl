@@ -26,7 +26,7 @@
    - `DeliveryReceiptBody` is the receipt identity, and its digest is the chain and replay identity. It carries no signatures and no payment hash.
    - `SettlementRecord` carries the XRPL transaction hash.
    - A Tier 2 provider signs `ProviderAttestationBody`, which has exactly five members: request digest, profile digest, response digest, input tokens and output tokens. The gateway signs `DeliveryReceiptBody`. A Tier 1 receipt has no attestation digest, and a Tier 2 receipt must have one.
-10. **Null execution fields mean NOT ASSERTED.** This applies to `model_artifact_digest`, `tokenizer_digest`, `chat_template_digest`, `runtime`, `precision` and `quantization` (the two digests were added in C1A). Null is never a wildcard, and it never satisfies a procurement requirement for that field. A provider whose model name maps to public weights does not claim the artifact digest. `ExecutionProfile.model_identifier` is required.
+10. **Null execution fields mean NOT ASSERTED.** This applies to `model_artifact_digest`, `tokenizer_digest`, `chat_template_digest`, `runtime`, `precision` and `quantization` (the two digests were added in C1A). Null is never a wildcard, and it never satisfies a procurement constraint for that field. Since C2A, a procurement class may leave precision or quantization unconstrained (item 22), in which case it imposes no constraint. A provider whose model name maps to public weights does not claim the artifact digest. `ExecutionProfile.model_identifier` is required.
 11. **Procurement matching uses membership, not a ranking.**
     - `ServiceClass.model_family` matches `ProcurementClass.model_family`.
     - Precision and quantization match through `allowed_precisions` and `allowed_quantizations`. There is no precision ranking.
@@ -40,7 +40,7 @@
     - Application identifiers use ASCII `[A-Za-z0-9][A-Za-z0-9._:-]{0,127}`.
     - Country codes are ISO 3166-1 alpha-2 in shape. Membership in the assigned list is not checked.
     - Domain text must already be NFC. Each canonical object carries `object_type` and `schema_version: "1"`.
-    - Unordered collections are tuples given strictly ascending, so duplicates and alternative orders are refused rather than repaired. `allowed_*` sets are non-empty. `DecisionRecord.input_digests` is ordered.
+    - Unordered collections are tuples given strictly ascending, so duplicates and alternative orders are refused rather than repaired. `allowed_*` sets are non-empty (since C2A: when present; see item 22). `DecisionRecord.input_digests` is ordered.
 14. **Out of scope for C1:** policy rules, verification, signing, the reservation ledger, the repayment schedule, XRPL, inference, API and UI.
 
 ## Consequences
@@ -62,3 +62,11 @@
 ### C2 amendment to the C1A contract (2026-10-14)
 
 21. **`ReasonCode` gains two values.** `QUOTE_EXPIRED` (policy stage, placed immediately after `FACILITY_EXPIRED`) and `BILLED_AMOUNT_MISMATCH` (verifier stage, placed after `TOKEN_COUNT_EXCEEDS_QUOTE` and before `CHAIN_BROKEN`). This is an explicit, bounded amendment of the C1A contract; C1A was not otherwise changed. No object schema, member, nullability or other vocabulary changed, and every pre-existing vector is byte-identical. Two vectors were added (`decision_record-quote-expired` and `decision_record-billed-amount-mismatch`). Stage ownership and precedence are in decision 0003 and `contracts/POLICY-VERIFIER.md`.
+
+### C2A amendment: unconstrained procurement dimensions (2026-10-14)
+
+22. **`ProcurementClass.allowed_precisions` and `allowed_quantizations` become nullable.**
+    - Null means the buyer imposes no constraint on that dimension. A present set must still be non-empty: an empty set is refused, and null is the only unconstrained spelling.
+    - This is deliberately different from an `ExecutionProfile` null, which still means the provider did not assert the value.
+    - There is no "any" value, wildcard string, precision ranking or implicit provider assertion.
+    - No other member, object or vocabulary changed, and every pre-existing vector is byte-identical. Three vectors were added: `procurement_class-general-tier1`, `procurement_class-controlled-tier2` and `reject-empty-precision-set`.

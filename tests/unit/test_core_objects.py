@@ -290,6 +290,25 @@ def test_procurement_sets_are_non_empty(member: str) -> None:
     assert refused(PROCUREMENT, **{member: ()}) == ("EMPTY_SET", member)
 
 
+@pytest.mark.parametrize("member", ["allowed_precisions", "allowed_quantizations"])
+def test_precision_and_quantization_may_be_unconstrained(member: str) -> None:
+    unconstrained = replace(PROCUREMENT, **{member: None})
+    assert unconstrained.to_canonical()[member] is None
+    assert ProcurementClass.from_canonical(unconstrained.to_canonical()) == unconstrained
+    assert unconstrained.digest() != PROCUREMENT.digest()
+
+
+@pytest.mark.parametrize(
+    "member", ["allowed_jurisdictions", "allowed_data_residencies", "allowed_providers"]
+)
+def test_other_procurement_sets_may_not_be_null(member: str) -> None:
+    assert refused(PROCUREMENT, **{member: None}) == ("WRONG_TYPE", member)
+    assert parse_refused(ProcurementClass, {**PROCUREMENT.to_canonical(), member: None}) == (
+        "NOT_A_LIST",
+        member,
+    )
+
+
 def test_procurement_sets_have_one_spelling() -> None:
     a, b = ProviderId("provider-a"), ProviderId("provider-b")
     assert refused(PROCUREMENT, allowed_providers=(b, a)) == ("UNSORTED_SET", "allowed_providers")

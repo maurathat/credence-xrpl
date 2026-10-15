@@ -53,6 +53,9 @@ PROFILE_B = ExecutionProfile.from_canonical(_load("execution_profile-full"))
 PROCUREMENT = ProcurementClass.from_canonical(_load("procurement_class-basic"))
 RECEIPT_TIER2 = DeliveryReceiptBody.from_canonical(_load("delivery_receipt-tier2"))
 ATTESTATION = ProviderAttestationBody.from_canonical(_load("provider_attestation-basic"))
+PROFILE_A_STYLE = ExecutionProfile.from_canonical(_load("execution_profile-not-asserted"))
+GENERAL_TIER1 = ProcurementClass.from_canonical(_load("procurement_class-general-tier1"))
+CONTROLLED_TIER2 = ProcurementClass.from_canonical(_load("procurement_class-controlled-tier2"))
 
 NOW = Timestamp("2026-10-24T15:00:00Z")
 MAX_COST = 2458  # ceil(8192 * 150000 / 1e6) + ceil(2048 * 600000 / 1e6) = 1229 + 1229
@@ -273,3 +276,18 @@ def world_for_chain(length: int) -> list[VerifierWorld]:
         worlds.append(world)
         previous = world.wired().receipt.digest()
     return worlds
+
+
+def provider_a_policy_world(procurement: tuple[ProcurementClass, ...]) -> PolicyWorld:
+    """A Provider A-style purchase: Tier 1 service whose profile asserts no precision, no
+    quantization and no artifact digests, otherwise matching the base procurement requirements."""
+    service_a = replace(SERVICE_B, evidence_tier=EvidenceTier.WITNESSED)
+    quote_a = replace(QUOTE, quote_id=QuoteId("quote-a-0001"), provider_id=PROVIDER_A)
+    request_a = replace(REQUEST, provider_id=PROVIDER_A, quote_id=quote_a.quote_id)
+    return PolicyWorld(
+        request=request_a,
+        quote=quote_a,
+        service_class=service_a,
+        profile=PROFILE_A_STYLE,
+        procurement=procurement,
+    )

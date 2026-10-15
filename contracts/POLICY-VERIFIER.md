@@ -1,6 +1,6 @@
 # POLICY-VERIFIER
 
-Owner: Credence Core (Claude Code). Status: checkpoint C2. Only the owner edits this file. Other workstreams file a request in `contracts/requests/`.
+Owner: Credence Core (Claude Code). Status: checkpoint C2, amended in C2A (unconstrained precision and quantization). Only the owner edits this file. Other workstreams file a request in `contracts/requests/`.
 
 This contract describes the decision layer implemented in `credence/core/`:
 - the policy engine (`policy_engine.py`);
@@ -81,14 +81,24 @@ If none fires, the decision is accept.
 A service class, with its execution profile and the quoting provider, matches a procurement class structurally when every requirement holds:
 
 1. `model_family`: equal.
-2. `precision`: the profile's precision is asserted and in `allowed_precisions`. There is no ranking.
-3. `quantization`: the profile's quantization is asserted and in `allowed_quantizations`.
+2. `precision`: `allowed_precisions` is null (no buyer constraint), or the profile's precision is asserted and in it. There is no ranking.
+3. `quantization`: `allowed_quantizations` is null (no buyer constraint), or the profile's quantization is asserted and in it.
 4. `delivery_mode`: equal.
 5. `jurisdiction`: asserted and in `allowed_jurisdictions`.
 6. `data_residency`: non-empty and a subset of `allowed_data_residencies`. Overlap alone is not enough.
 7. `provider`: the quoting provider is in `allowed_providers`.
 
-A null or empty (not asserted) value never satisfies a requirement. Evidence tier is not part of the structural match; it is judged at `TIER_TOO_LOW`.
+For precision and quantization:
+
+| Procurement class | Profile | Result |
+| --- | --- | --- |
+| null (unconstrained) | null (not asserted) | match |
+| null (unconstrained) | asserted value | match |
+| constrained set | null (not asserted) | no match |
+| constrained set | value in the set | match |
+| constrained set | value not in the set | no match |
+
+Every other requirement is always constrained. A null or empty (not asserted) service or profile value never satisfies a constraint. There is no "any" value or wildcard string. Evidence tier is not part of the structural match; it is judged at `TIER_TOO_LOW`.
 
 ## Verifier input
 

@@ -1,6 +1,6 @@
 # CORE-OBJECTS
 
-Owner: Credence Core (Claude Code). Status: frozen at checkpoint C1A; `ReasonCode` amended in C2. Only the owner edits this file. Other workstreams file a request in `contracts/requests/`.
+Owner: Credence Core (Claude Code). Status: frozen at checkpoint C1A; `ReasonCode` amended in C2; `ProcurementClass` precision and quantization made nullable in C2A. Only the owner edits this file. Other workstreams file a request in `contracts/requests/`.
 
 This contract describes the canonical objects implemented in `credence/core/` (`primitives.py`, `objects.py`, `kessai.py`, `billing.py`). The code is authoritative. `tests/unit/test_core_contract.py` checks that every object type, member, type, nullability, vocabulary and refusal code listed here matches the code. The vectors in `vectors/c1/` are worked examples of every object.
 
@@ -53,7 +53,18 @@ Other types:
 
 ## Null semantics
 
-Null means NOT ASSERTED. It is never a wildcard and never automatically satisfies any requirement. In `credence.execution_profile` this applies to `model_artifact_digest`, `tokenizer_digest`, `chat_template_digest`, `runtime`, `precision` and `quantization`. `quantization: "none"` asserts no quantization; `null` asserts nothing. `adapter_digest` is null when there is no adapter. Matching rules that read these fields belong to a later checkpoint.
+The meaning of null depends on the object. The two meanings below are deliberately different.
+
+- **Provider-side fields: null means NOT ASSERTED.** A null here is never a wildcard and never satisfies any constraint.
+  - In `credence.execution_profile` this applies to `model_artifact_digest`, `tokenizer_digest`, `chat_template_digest`, `runtime`, `precision` and `quantization`.
+  - `quantization: "none"` asserts no quantization; `null` asserts nothing.
+  - `adapter_digest` is null when there is no adapter.
+- **Buyer-side fields: null means NO CONSTRAINT.** In `credence.procurement_class`, a null `allowed_precisions` or `allowed_quantizations` means the buyer imposes no constraint on that dimension (amended in C2A).
+  - It is not an "any" value, and there is no wildcard string.
+  - It never turns a provider's unasserted value into an assertion.
+  - No other procurement member may be null.
+
+How profiles are matched against procurement classes is in `contracts/POLICY-VERIFIER.md`.
 
 ## Closed vocabularies
 
@@ -125,13 +136,13 @@ Class `ServiceClass`. This is what a provider promises around one execution prof
 
 ### `credence.procurement_class`
 
-Class `ProcurementClass`. This is what a buyer accepts as a substitute. It does not claim that profiles are identical. There is no precision ranking.
+Class `ProcurementClass`. This is what a buyer accepts as a substitute. It does not claim that profiles are identical. There is no precision ranking. Only `allowed_precisions` and `allowed_quantizations` may be null.
 
 | Member | Type | Null | Meaning |
 | --- | --- | --- | --- |
 | `model_family` | `str` | no | |
-| `allowed_precisions` | `tuple[str, ...]` | no | Set, non-empty |
-| `allowed_quantizations` | `tuple[str, ...]` | no | Set, non-empty |
+| `allowed_precisions` | `tuple[str, ...]` | yes (unconstrained) | Set, non-empty when present; null means no buyer constraint |
+| `allowed_quantizations` | `tuple[str, ...]` | yes (unconstrained) | Set, non-empty when present; null means no buyer constraint |
 | `minimum_evidence_tier` | `EvidenceTier` | no | |
 | `delivery_mode` | `DeliveryMode` | no | |
 | `allowed_jurisdictions` | `tuple[CountryCode, ...]` | no | Set, non-empty |

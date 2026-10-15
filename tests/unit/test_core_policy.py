@@ -6,7 +6,17 @@ from dataclasses import replace
 from pathlib import Path
 
 import pytest
-from c2_world import MAX_COST, NOW, POLICY_BREAKERS, PROCUREMENT, PolicyWorld, headroom
+from c2_world import (
+    CONTROLLED_TIER2,
+    GENERAL_TIER1,
+    MAX_COST,
+    NOW,
+    POLICY_BREAKERS,
+    PROCUREMENT,
+    PolicyWorld,
+    headroom,
+    provider_a_policy_world,
+)
 
 from credence.core import policy_engine
 from credence.core.policy_engine import PolicyInputError, evaluate
@@ -15,6 +25,7 @@ from credence.core.primitives import (
     POLICY_REASON_CODES,
     DecisionOutcome,
     DecisionStage,
+    DeliveryMode,
     EvidenceTier,
     MicroTrlusd,
     Purpose,
@@ -257,3 +268,45 @@ def test_pure_modules_import_no_clock_storage_or_network(module: str) -> None:
             imported.add(node.module.split(".")[0])
     forbidden = {"time", "datetime", "sqlite3", "socket", "urllib", "http", "xrpl", "random"}
     assert not imported & forbidden
+
+
+# --- C2A: Provider A-style profile against general and controlled procurement ----------------
+
+
+def test_provider_a_style_profile_matches_the_general_tier1_class() -> None:
+    world = provider_a_policy_world((GENERAL_TIER1,))
+    assert world.profile.precision is None and world.profile.quantization is None
+    assert world.profile.model_artifact_digest is None
+    assert decide(world) is None
+
+
+def test_provider_a_style_profile_cannot_match_the_controlled_tier2_class() -> None:
+    assert decide(provider_a_policy_world((CONTROLLED_TIER2,))) is ReasonCode.PROFILE_NOT_ALLOWED
+
+
+def test_qualifying_tier2_local_profile_matches_the_controlled_class() -> None:
+    world = PolicyWorld(procurement=(CONTROLLED_TIER2,))
+    assert world.profile.precision == "BF16" and world.profile.quantization == "none"
+    assert decide(world) is None
+
+
+def test_facility_with_both_classes_admits_each_provider_through_its_class() -> None:
+    both = (GENERAL_TIER1, CONTROLLED_TIER2)
+    assert decide(provider_a_policy_world(both)) is None
+    assert decide(PolicyWorld(procurement=both)) is None
+
+
+def test_general_class_still_enforces_tier_and_other_constraints() -> None:
+    world = provider_a_policy_world((GENERAL_TIER1,))
+    tier2_facility = replace(world.facility, minimum_evidence_tier=EvidenceTier.BOUND_AND_SIGNED)
+    assert decide(replace(world, facility=tier2_facility)) is ReasonCode.TIER_TOO_LOW
+    other_family = replace(world.service_class, model_family="other-model-family")
+    assert decide(replace(world, service_class=other_family)) is ReasonCode.PROFILE_NOT_ALLOWED
+    batch = replace(world.service_class, delivery_mode=DeliveryMode.BATCH)
+    assert decide(replace(world, service_class=batch)) is ReasonCode.PROFILE_NOT_ALLOWED
+    no_jurisdiction = replace(world.service_class, jurisdiction=None)
+    assert decide(replace(world, service_class=no_jurisdiction)) is ReasonCode.PROFILE_NOT_ALLOWED
+    b_only = replace(world.facility, allowed_providers=(world.facility.allowed_providers[1],))
+    assert decide(replace(world, facility=b_only)) is ReasonCode.PROVIDER_NOT_ALLOWED
+    class_b_only = replace(GENERAL_TIER1, allowed_providers=(b_only.allowed_providers[0],))
+    assert decide(replace(world, procurement=(class_b_only,))) is ReasonCode.PROFILE_NOT_ALLOWED

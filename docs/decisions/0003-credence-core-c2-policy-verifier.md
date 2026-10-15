@@ -18,7 +18,7 @@
    - Tier 1 needs a valid gateway signature only, with no attestation or provider signature fact. Tier 2 also needs the attestation and a valid provider signature. Tier 3 is not supported.
 4. **No XRPL settlement in C2.** No payment is built or signed. `authorized_transaction_digest` and `authorized_transaction_digest_scheme` stay null.
 5. **Each stage owns its reason codes.** The policy engine emits only `POLICY_REASON_CODES` and the verifier only `VERIFIER_REASON_CODES`; the sets are disjoint and complete. `DecisionRecord` itself is not made to validate this. Two codes were added as a C1A amendment (decision 0002, item 21): `QUOTE_EXPIRED` and `BILLED_AMOUNT_MISMATCH`.
-6. **Profile vs tier.** `PROFILE_NOT_ALLOWED` means no allowed procurement class matches structurally. `TIER_TOO_LOW` means a structural match exists, but the service's tier is below the stricter of the facility's and that class's minimum, for every such class. Null or empty (not asserted) values match nothing, residency is a subset match, and there is no precision ranking.
+6. **Profile vs tier.** (Matching amended in C2A; see item 12.) `PROFILE_NOT_ALLOWED` means no allowed procurement class matches structurally. `TIER_TOO_LOW` means a structural match exists, but the service's tier is below the stricter of the facility's and that class's minimum, for every such class. Null or empty (not asserted) values match nothing, residency is a subset match, and there is no precision ranking.
 7. **Price and limit.** The pre-purchase maximum is the frozen billing formula at the quote's token caps. It is both the price checked against the request's maximum and the reservation amount. `OVER_LIMIT` compares drawn plus held plus that maximum against the limit; equality is allowed.
 8. **Binding.**
    - `BINDING_MISMATCH` covers: request digest, profile digest, provider, nonce, tier against the approved service class, and the Tier 2 attestation (its digest and five members).
@@ -33,4 +33,10 @@
 ## Consequences
 
 - **Drawn amount.** The settlement coordinator (C3) must add settled amounts to the facility's drawn amount when it settles a reservation, because headroom counts only live held reservations.
-- **Provider A and procurement.** A provider whose profile leaves precision or quantization null (not asserted) cannot satisfy any procurement class, since every allowed set is non-empty. This affects the plan's Provider A (Nebius, Tier 1). It qualifies only if its profile asserts these values.
+- **Provider A and procurement (resolved in C2A).** As of C2, a profile that leaves precision or quantization unasserted could not satisfy any procurement class. Since C2A, it can satisfy a class that leaves those dimensions unconstrained. It still cannot satisfy a class that constrains them. This is how the plan's Provider A (Tier 1) qualifies on a general Tier 1 facility.
+
+## Amendments
+
+### C2A (2026-10-14)
+
+12. **Unconstrained precision and quantization.** A null `allowed_precisions` or `allowed_quantizations` on the procurement class matches any profile value, asserted or not. A constrained set still requires an asserted, allowed value. Every other requirement (model family, delivery mode, jurisdiction, residency, provider allowlist) and the evidence tier floor are unchanged and always enforced. Precedence of the policy engine and the verifier is unchanged.

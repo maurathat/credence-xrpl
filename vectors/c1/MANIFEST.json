@@ -52,6 +52,14 @@
   "procurement_class-basic.json"
  ],
  [
+  "eabd9a3964d2326f13ab5e7c9cf584adfdf21e79cc921707df0ddb1a56ec4fbb",
+  "procurement_class-controlled-tier2.json"
+ ],
+ [
+  "541b551e527b0be5fcc1a76ec035761323a4b07f0af6f86e164c148ef1121ab5",
+  "procurement_class-general-tier1.json"
+ ],
+ [
   "354a06430c31b32222093c7fb2eb6dc394fc64c9fb11f34ba0509ab228e05120",
   "provider_attestation-basic.json"
  ],
@@ -90,6 +98,10 @@
  [
   "3d0f1ee7943a23c195b0f2f15fc9347a49af3e35de6254eb5722df1893bf0bac",
   "reject-empty-identifier.json"
+ ],
+ [
+  "e0cc607cc84f8daf6dabb1fd88e40cd164cbce5f42f89ef5a27bd4c8b1ab3af6",
+  "reject-empty-precision-set.json"
  ],
  [
   "21df5f108733ecea65154e66146b9bb7e6906a22e567c8a5c5fe2f64d06b078c",

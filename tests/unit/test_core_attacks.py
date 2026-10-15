@@ -13,6 +13,8 @@ from pathlib import Path
 
 import pytest
 from c2_world import (
+    CONTROLLED_TIER2,
+    GENERAL_TIER1,
     MAX_COST,
     NOW,
     OTHER_DIGEST,
@@ -20,6 +22,7 @@ from c2_world import (
     VERIFIER_BREAKERS,
     PolicyWorld,
     VerifierWorld,
+    provider_a_policy_world,
     tier1_world,
     world_for_chain,
 )
@@ -30,6 +33,7 @@ from credence.core.primitives import (
     POLICY_REASON_CODES,
     VERIFIER_REASON_CODES,
     DecisionStage,
+    EvidenceTier,
     ReasonCode,
 )
 from credence.core.reservation_ledger import ReservationLedger
@@ -163,6 +167,42 @@ ATTACKS = [
         "wrong quantization", "policy", _profile(quantization="Q4_K_M"), (R.PROFILE_NOT_ALLOWED,)
     ),
     Attack("precision not asserted", "policy", _profile(precision=None), (R.PROFILE_NOT_ALLOWED,)),
+    Attack(
+        "Provider A-style profile, general Tier 1 class",
+        "control",
+        lambda: policy(provider_a_policy_world((GENERAL_TIER1,))),
+        (None,),
+    ),
+    Attack(
+        "Provider A-style profile, controlled Tier 2 class",
+        "policy",
+        lambda: policy(provider_a_policy_world((CONTROLLED_TIER2,))),
+        (R.PROFILE_NOT_ALLOWED,),
+    ),
+    Attack(
+        "unconstrained precision does not admit another model family",
+        "policy",
+        lambda: policy(
+            replace(
+                provider_a_policy_world((GENERAL_TIER1,)),
+                service_class=replace(
+                    provider_a_policy_world((GENERAL_TIER1,)).service_class,
+                    model_family="other-model-family",
+                ),
+            )
+        ),
+        (R.PROFILE_NOT_ALLOWED,),
+    ),
+    Attack(
+        "unconstrained precision does not lower the tier floor",
+        "policy",
+        lambda: policy(
+            provider_a_policy_world(
+                (replace(GENERAL_TIER1, minimum_evidence_tier=EvidenceTier.BOUND_AND_SIGNED),)
+            )
+        ),
+        (R.TIER_TOO_LOW,),
+    ),
     Attack("tier too low", "policy", _policy_with(R.TIER_TOO_LOW), (R.TIER_TOO_LOW,)),
     Attack("price above max", "policy", _policy_with(R.PRICE_ABOVE_MAX), (R.PRICE_ABOVE_MAX,)),
     Attack("overspend", "policy", _policy_with(R.OVER_LIMIT), (R.OVER_LIMIT,)),

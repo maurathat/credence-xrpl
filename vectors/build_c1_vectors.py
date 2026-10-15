@@ -147,6 +147,19 @@ PROCUREMENT_CLASS = ProcurementClass(
     allowed_data_residencies=(CountryCode("DE"), CountryCode("FR"), CountryCode("US")),
     allowed_providers=(PROVIDER_A, PROVIDER_B),
 )
+# C2A: precision and quantization may be unconstrained (null) on the buyer side.
+PROCUREMENT_GENERAL_TIER1 = replace(
+    PROCUREMENT_CLASS,
+    allowed_precisions=None,
+    allowed_quantizations=None,
+    minimum_evidence_tier=EvidenceTier.WITNESSED,
+)
+PROCUREMENT_CONTROLLED_TIER2 = replace(
+    PROCUREMENT_CLASS,
+    allowed_precisions=("BF16",),
+    allowed_quantizations=("none",),
+    minimum_evidence_tier=EvidenceTier.BOUND_AND_SIGNED,
+)
 QUOTE = Quote(
     quote_id=QuoteId("quote-0001"),
     provider_id=PROVIDER_B,
@@ -312,6 +325,16 @@ OBJECT_VECTORS: list[tuple[str, str, CanonicalObject]] = [
         SERVICE_CLASS_NON_ASCII,
     ),
     ("procurement_class-basic", "All allowed_* sets in canonical order", PROCUREMENT_CLASS),
+    (
+        "procurement_class-general-tier1",
+        "General Tier 1: precision and quantization unconstrained (null = no buyer constraint)",
+        PROCUREMENT_GENERAL_TIER1,
+    ),
+    (
+        "procurement_class-controlled-tier2",
+        "Controlled Tier 2: precision BF16, quantization none",
+        PROCUREMENT_CONTROLLED_TIER2,
+    ),
     ("quote-basic", "Integer micro-tRLUSD prices per million tokens and token caps", QUOTE),
     ("quote-large-integers", "Largest admitted integer (2**53 - 1) and zero", QUOTE_LARGE),
     (
@@ -506,6 +529,12 @@ DOMAIN_REJECT_VECTORS: list[tuple[str, str, CanonicalObject, Callable[[dict[str,
         "Transaction digest must stay null in C1",
         DECISION_ACCEPT,
         setter("authorized_transaction_digest", "sha256:" + label_hex("tx")),
+    ),
+    (
+        "reject-empty-precision-set",
+        "An empty allowed_precisions set is invalid; null is the unconstrained spelling",
+        PROCUREMENT_CLASS,
+        setter("allowed_precisions", []),
     ),
     (
         "reject-purpose-not-inference",

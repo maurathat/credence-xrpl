@@ -151,6 +151,10 @@ def _vs(items: tuple[str | _Valued, ...]) -> list[JsonValue]:
     return [_sort_key(item) for item in items]
 
 
+def _vs_or_none(items: tuple[str, ...] | None) -> JsonValue:
+    return None if items is None else _vs(items)
+
+
 class CanonicalObject:
     """An object with an explicit canonical form, canonical bytes and a SHA-256 digest."""
 
@@ -322,7 +326,7 @@ class ExecutionProfile(CanonicalObject):
 
     Null in model_artifact_digest, tokenizer_digest, chat_template_digest, runtime, precision or
     quantization means NOT ASSERTED: it is never a wildcard and never satisfies a procurement
-    requirement. A provider whose model name merely maps
+    constraint (a dimension the procurement class leaves unconstrained imposes none). A provider whose model name merely maps
     to public weights must leave model_artifact_digest null. quantization "none" is an assertion
     (no quantization); null is not.
     """
@@ -478,13 +482,16 @@ class ServiceClass(CanonicalObject):
 class ProcurementClass(CanonicalObject):
     """What a buyer will accept as a substitute. It does not claim profiles are identical.
 
-    Every allowed_* set is non-empty. There is no precision ranking: precision and quantization
-    match by membership only, and a null (not asserted) provider value matches nothing.
+    Every allowed_* set that is present is non-empty. allowed_precisions and allowed_quantizations
+    may be null, meaning the buyer imposes no constraint on that dimension (unlike a null in an
+    execution profile, which means the provider did not assert the value). When constrained, they
+    match by membership only (no precision ranking), and an unasserted provider value matches
+    nothing. No other dimension may be unconstrained.
     """
 
     model_family: str
-    allowed_precisions: tuple[str, ...]
-    allowed_quantizations: tuple[str, ...]
+    allowed_precisions: tuple[str, ...] | None
+    allowed_quantizations: tuple[str, ...] | None
     minimum_evidence_tier: EvidenceTier
     delivery_mode: DeliveryMode
     allowed_jurisdictions: tuple[CountryCode, ...]
@@ -505,8 +512,10 @@ class ProcurementClass(CanonicalObject):
 
     def __post_init__(self) -> None:
         _text(self.model_family, "model_family")
-        _set(self.allowed_precisions, "allowed_precisions", _text, non_empty=True)
-        _set(self.allowed_quantizations, "allowed_quantizations", _text, non_empty=True)
+        if self.allowed_precisions is not None:
+            _set(self.allowed_precisions, "allowed_precisions", _text, non_empty=True)
+        if self.allowed_quantizations is not None:
+            _set(self.allowed_quantizations, "allowed_quantizations", _text, non_empty=True)
         _is(EvidenceTier)(self.minimum_evidence_tier, "minimum_evidence_tier")
         _is(DeliveryMode)(self.delivery_mode, "delivery_mode")
         _set(self.allowed_jurisdictions, "allowed_jurisdictions", _is(CountryCode), non_empty=True)
@@ -521,8 +530,8 @@ class ProcurementClass(CanonicalObject):
     def _canonical_members(self) -> dict[str, JsonValue]:
         return {
             "model_family": self.model_family,
-            "allowed_precisions": _vs(self.allowed_precisions),
-            "allowed_quantizations": _vs(self.allowed_quantizations),
+            "allowed_precisions": _vs_or_none(self.allowed_precisions),
+            "allowed_quantizations": _vs_or_none(self.allowed_quantizations),
             "minimum_evidence_tier": _e(self.minimum_evidence_tier),
             "delivery_mode": _e(self.delivery_mode),
             "allowed_jurisdictions": _vs(self.allowed_jurisdictions),
@@ -535,8 +544,8 @@ class ProcurementClass(CanonicalObject):
         m = _Members(value, cls.MEMBERS, object_type=cls.OBJECT_TYPE)
         return cls(
             model_family=m("model_family", _p_text),
-            allowed_precisions=m("allowed_precisions", _p_tuple(_p_text)),
-            allowed_quantizations=m("allowed_quantizations", _p_tuple(_p_text)),
+            allowed_precisions=m("allowed_precisions", _p_null(_p_tuple(_p_text))),
+            allowed_quantizations=m("allowed_quantizations", _p_null(_p_tuple(_p_text))),
             minimum_evidence_tier=m("minimum_evidence_tier", _p_enum(EvidenceTier)),
             delivery_mode=m("delivery_mode", _p_enum(DeliveryMode)),
             allowed_jurisdictions=m("allowed_jurisdictions", _p_tuple(_country)),

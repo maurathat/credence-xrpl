@@ -95,3 +95,65 @@ def test_required_tier_is_the_stricter() -> None:
     )
     assert meets_tier(SERVICE_B, EvidenceTier.BOUND_AND_SIGNED)
     assert not meets_tier(SERVICE_B, EvidenceTier.MEASURED)
+
+
+# --- C2A: unconstrained precision and quantization -------------------------------------------
+
+UNCONSTRAINED = replace(PROCUREMENT, allowed_precisions=None, allowed_quantizations=None)
+
+
+@pytest.mark.parametrize("dimension", ["precision", "quantization"])
+@pytest.mark.parametrize(
+    ("allowed", "asserted", "matches"),
+    [
+        (None, None, True),  # unconstrained + not asserted
+        (None, "BF16", True),  # unconstrained + asserted
+        (("BF16", "none"), None, False),  # constrained + not asserted
+        (("BF16", "none"), "BF16", True),  # constrained + allowed
+        (("BF16", "none"), "FP8", False),  # constrained + not allowed
+    ],
+)
+def test_matching_matrix(
+    dimension: str, allowed: tuple[str, ...] | None, asserted: str | None, matches: bool
+) -> None:
+    procurement = replace(PROCUREMENT, **{f"allowed_{dimension}s": allowed})
+    profile = replace(PROFILE_B, **{dimension: asserted})
+    failed = structural_failures(procurement, SERVICE_B, profile, PROVIDER_B)
+    assert (dimension not in failed) is matches
+    assert set(failed) <= {dimension}
+
+
+def test_unconstrained_class_matches_a_fully_unasserted_profile() -> None:
+    profile = replace(PROFILE_B, precision=None, quantization=None)
+    assert structural_failures(UNCONSTRAINED, SERVICE_B, profile, PROVIDER_B) == ()
+
+
+@pytest.mark.parametrize(
+    ("changes", "requirement"),
+    [
+        ({"model_family": "other"}, "model_family"),
+        ({"delivery_mode": DeliveryMode.BATCH}, "delivery_mode"),
+        ({"jurisdiction": CountryCode("FR")}, "jurisdiction"),
+        ({"jurisdiction": None}, "jurisdiction"),
+        ({"data_residency": ()}, "data_residency"),
+        ({"data_residency": (CountryCode("DE"), CountryCode("JP"))}, "data_residency"),
+    ],
+)
+def test_unconstrained_precision_does_not_weaken_other_requirements(
+    changes: dict[str, object], requirement: str
+) -> None:
+    profile = replace(PROFILE_B, precision=None, quantization=None)
+    service = replace(SERVICE_B, **changes)
+    assert structural_failures(UNCONSTRAINED, service, profile, PROVIDER_B) == (requirement,)
+
+
+def test_unconstrained_precision_does_not_weaken_the_provider_allowlist() -> None:
+    profile = replace(PROFILE_B, precision=None, quantization=None)
+    stranger = ProviderId("provider-z")
+    assert structural_failures(UNCONSTRAINED, SERVICE_B, profile, stranger) == ("provider",)
+
+
+def test_unconstrained_precision_does_not_weaken_the_tier_requirement() -> None:
+    strict = replace(UNCONSTRAINED, minimum_evidence_tier=EvidenceTier.MEASURED)
+    assert required_tier(EvidenceTier.WITNESSED, strict) is EvidenceTier.MEASURED
+    assert not meets_tier(SERVICE_B, required_tier(EvidenceTier.WITNESSED, strict))

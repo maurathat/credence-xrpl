@@ -1,0 +1,36 @@
+{
+  "id": "reject-empty-precision-set",
+  "description": "An empty allowed_precisions set is invalid; null is the unconstrained spelling",
+  "entry": "objects.ProcurementClass.from_canonical",
+  "input": {
+    "object_type": "credence.procurement_class",
+    "schema_version": "1",
+    "model_family": "example-model-8b",
+    "allowed_precisions": [],
+    "allowed_quantizations": [
+      "Q8_0",
+      "none"
+    ],
+    "minimum_evidence_tier": 1,
+    "delivery_mode": "interactive",
+    "allowed_jurisdictions": [
+      "DE",
+      "US"
+    ],
+    "allowed_data_residencies": [
+      "DE",
+      "FR",
+      "US"
+    ],
+    "allowed_providers": [
+      "provider-a",
+      "provider-b"
+    ]
+  },
+  "expected": {
+    "reject": {
+      "reason": "EMPTY_SET",
+      "field": "allowed_precisions"
+    }
+  }
+}

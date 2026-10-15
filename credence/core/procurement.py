@@ -5,14 +5,16 @@ policy engine can tell PROFILE_NOT_ALLOWED from TIER_TOO_LOW.
 
 Rules (contracts/POLICY-VERIFIER.md):
 - model_family: equal.
-- precision, quantization: the profile's value is asserted (not null) and in the allowed set.
-  There is no precision ranking.
+- precision, quantization: if the procurement class leaves the dimension null, the buyer imposes
+  no constraint and any profile value, asserted or not, matches. Otherwise the profile's value
+  must be asserted (not null) and in the allowed set. There is no precision ranking.
 - delivery_mode: equal.
 - jurisdiction: asserted (not null) and in allowed_jurisdictions.
 - data residency: the service's residency set is non-empty and every member is allowed (subset);
   overlap alone is not enough.
 - provider: the quoting provider is in allowed_providers.
-A null or empty (not asserted) value never satisfies a requirement.
+A null or empty (not asserted) service or profile value never satisfies a constraint that is
+present. Only precision and quantization can be left unconstrained by the buyer.
 
 Owner: Credence Core.
 """
@@ -31,6 +33,13 @@ REQUIREMENTS = (
 )
 
 
+def _permits(allowed: tuple[str, ...] | None, asserted: str | None) -> bool:
+    """Null allowed set: no constraint. Otherwise the value must be asserted and allowed."""
+    if allowed is None:
+        return True
+    return asserted is not None and asserted in allowed
+
+
 def structural_failures(
     procurement: ProcurementClass,
     service_class: ServiceClass,
@@ -41,10 +50,8 @@ def structural_failures(
     residency = service_class.data_residency
     passed = {
         "model_family": service_class.model_family == procurement.model_family,
-        "precision": profile.precision is not None
-        and profile.precision in procurement.allowed_precisions,
-        "quantization": profile.quantization is not None
-        and profile.quantization in procurement.allowed_quantizations,
+        "precision": _permits(procurement.allowed_precisions, profile.precision),
+        "quantization": _permits(procurement.allowed_quantizations, profile.quantization),
         "delivery_mode": service_class.delivery_mode is procurement.delivery_mode,
         "jurisdiction": service_class.jurisdiction is not None
         and service_class.jurisdiction in procurement.allowed_jurisdictions,
