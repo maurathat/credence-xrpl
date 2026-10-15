@@ -1,0 +1,11 @@
+{
+  "files": {
+    "E5-ASSERTIONS.md": "656921cacd310214b6ecce7088e21e84fcca44feaa3104b95cfb9f5f4bc92b92",
+    "scripts/e5_oracle.py": "5154948e19e39a350529c79d9acee2234720b6285180feaa489bb930be455e3b",
+    "scripts/run_checkpoint_1d.py": "1ba520457c1b538c97e71394fb62791d5ea89d88016564a24665a96bf9fcd503",
+    "tests/test_checkpoint_1d.py": "007ae32bf186093d82e8fce12031809fbd04977cb5adaeed5a9ee5ffd66faee8"
+  },
+  "git_commit_at_run_start": "44fb089f0cb4281608ab0b9a67e129147f349887",
+  "independent_audit_commit": "593eb79694e86238af44785bf8d63e9a3e8086c9",
+  "independent_audit_verdict": "PASS WITH CONDITIONS"
+}

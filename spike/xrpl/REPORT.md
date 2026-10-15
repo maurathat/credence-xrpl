@@ -1,3 +1,123 @@
+# Checkpoint 1D — E5 borrower authorization
+
+## Outcome
+
+**BLOCKED — fail-closed during the SignerList setup assertion, before E5-A.**
+
+Checkpoint 1D began from clean commit
+`44fb089f0cb4281608ab0b9a67e129147f349887`, with checkpoint-0 ancestry
+and submodule gitlinks unchanged. The independent E3/E4 audit commit was
+`593eb79694e86238af44785bf8d63e9a3e8086c9`, verdict **PASS WITH
+CONDITIONS**.
+
+The live runner executed once. It submitted four setup funding Payments and
+one borrower `SignerListSet`. The first frozen SignerList post-state assertion
+failed, so no E5-A through E5-E operation was submitted or evaluated. No
+`LoanSet`, `LoanPay`, `LoanManage`, or other lending transaction was submitted.
+
+## Run provenance
+
+The runner recorded the start commit and these pre-run hashes inside the live
+evidence:
+
+| File | SHA-256 |
+| --- | --- |
+| `E5-ASSERTIONS.md` | `656921cacd310214b6ecce7088e21e84fcca44feaa3104b95cfb9f5f4bc92b92` |
+| `scripts/e5_oracle.py` | `5154948e19e39a350529c79d9acee2234720b6285180feaa489bb930be455e3b` |
+| `scripts/run_checkpoint_1d.py` | `1ba520457c1b538c97e71394fb62791d5ea89d88016564a24665a96bf9fcd503` |
+| `tests/test_checkpoint_1d.py` | `007ae32bf186093d82e8fce12031809fbd04977cb5adaeed5a9ee5ffd66faee8` |
+
+Those files remain byte-identical after STOP. The 15 synthetic E5 oracle tests
+and all 79 spike tests passed before the live run.
+
+## Fresh runtime
+
+The committed mechanism recreated the dedicated volume and started pinned
+xrpld 3.4.0, source commit
+`4a4fded2eba11427c48ce3f24d9c1aea5e7a9d17`, on network ID `21337`.
+The fresh ledger began at index 2 / close time `845339350`. Both the `feature`
+RPC and the validated Amendments ledger object contained the eight required
+amendments, and the frozen cross-check passed.
+
+## SignerList STOP
+
+`SignerListSet` transaction
+`A55D6968F643284A7148D16B45E0DBE0F4D7DB0E8E45EBB4EB51D6FF56603D4C`
+returned `tesSUCCESS` and validated as `tesSUCCESS` at ledger 7 / close time
+`845339355`. The borrower sequence advanced by one, no `RegularKey` was
+present, and the master-key-disabled flag was clear.
+
+The frozen harness read `result.signer_lists`, observed an empty list, and
+failed its count, quorum, and entry assertions. The same captured validated
+response places the installed signer list under
+`result.account_data.signer_lists`. That nested object has `SignerQuorum = 2`
+and exactly the ResearchBot and Credence policy accounts at weight 1 each.
+
+This is classified **A — local harness response-shape assertion error**. It is
+not a protocol contradiction, but the checkpoint rule requires STOP because
+the runner/oracle would have to change to continue. No correction or retry was
+performed.
+
+## E5 status
+
+- E5-A ResearchBot alone: **NOT ATTEMPTED**.
+- E5-B Credence alone: **NOT ATTEMPTED**.
+- E5-C ResearchBot + Credence: **NOT ATTEMPTED**.
+- E5-D owner master key: **NOT ATTEMPTED**.
+- E5-E regular-key absence: **NOT ATTEMPTED as an E5 conclusion**. Setup
+  evidence showed no `RegularKey`, but E5 stopped before the predeclared final
+  read.
+
+E5 verdict: **BLOCKED**. E1 and E2 remain **PASS/FROZEN**; E3 and E4 remain
+**PASS/RETIRED within tested scope**; E6-E9 remain **NOT ATTEMPTED**.
+
+## Evidence
+
+`evidence/checkpoint-1d/MANIFEST.json` verifies 13 payload files totaling
+116077 bytes. The evidence includes run provenance, fresh environment and
+amendment state, public actor identities and public keys, five setup transaction
+records, five ledger closes, the exact unexpected result, and its protected
+manifest. The security scan found no seed or private-key material.
+
+## Gates
+
+- E5 synthetic oracle tests: **PASS** (15 tests).
+- All spike tests: **PASS** (79 tests).
+- Repository unit tests: **PASS** (17 tests).
+- Conformance tests: **PASS** (4 tests).
+- Lint, formatting, and large-file check: **PASS** (71 formatted files checked).
+- Strict typecheck: **PASS** (25 source files).
+- Secrets scan: **PASS**.
+- JSON validation: **PASS** (114 files).
+- Evidence-manifest verification: **PASS** (8 manifests, 98 payload files).
+- E5 assertion/oracle/runner/test immutability after live execution: **PASS**.
+- Authorized-path check: **PASS**.
+- `git diff --check`: **PASS**.
+
+## Recommendation
+
+**E6 must not begin.** The minimum next checkpoint is a separately authorized,
+harness-only correction that reads the validated SignerList from the pinned
+3.4.0 response shape, with a regression fixture for the captured response.
+Only after that correction is frozen may a fresh E5-only rerun be considered.
+Neither action was performed here.
+
+The permitted fail-closed artifacts are committed after all required gates
+pass. The prescribed success-only commit message is not used because E5 did
+not complete.
+
+## Checkpoint 1D modified paths
+
+- `spike/xrpl/E5-ASSERTIONS.md`
+- `spike/xrpl/scripts/e5_oracle.py`
+- `spike/xrpl/scripts/run_checkpoint_1d.py`
+- `spike/xrpl/tests/test_checkpoint_1d.py`
+- `spike/xrpl/REPORT.md`
+- `spike/xrpl/RESULTS.json`
+- `spike/xrpl/evidence/checkpoint-1d/`
+
+---
+
 # Checkpoint 1C-X — execute frozen E3/E4 oracle
 
 ## Outcome

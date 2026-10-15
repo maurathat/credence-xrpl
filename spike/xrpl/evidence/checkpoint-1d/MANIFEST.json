@@ -1,0 +1,71 @@
+{
+  "algorithm": "SHA-256",
+  "file_count": 13,
+  "files": [
+    {
+      "bytes": 697,
+      "path": "actors-public.json",
+      "sha256": "f225115c90794be2d5cb5ab191d0d45c2ea5fb66b0c4fa3146bc29c3c186f7dc"
+    },
+    {
+      "bytes": 1074,
+      "path": "amendments-ledger-entry.json",
+      "sha256": "e99d3f2fb921c198314e469d0593a66a755b6a52c0fd44f25802abeb4fc838a6"
+    },
+    {
+      "bytes": 8636,
+      "path": "environment-start.json",
+      "sha256": "bc7deac8166a2182c501de7ada04fcfede06fd0ed2901f391c79637168b858ca"
+    },
+    {
+      "bytes": 37097,
+      "path": "experiment-summary.json",
+      "sha256": "d80109d6aebc69b6f581cb225eac3e36512e8bd58e03a919d11a895a74693538"
+    },
+    {
+      "bytes": 19677,
+      "path": "feature-raw.json",
+      "sha256": "69e43df7637a7be0b1a1b02d18c1b89c5517ddc849e341ccc05a920800b07844"
+    },
+    {
+      "bytes": 2775,
+      "path": "ledger-closes.json",
+      "sha256": "1f4653a92b88a30bb2cb41e50021b5bc4d9e09aa16a5cd4d9a84597b890e4307"
+    },
+    {
+      "bytes": 617,
+      "path": "provenance.json",
+      "sha256": "7849fdc3193a3ef9e6fd15ccab9c4adbc56d1773f322cbec7dcf61077483eb00"
+    },
+    {
+      "bytes": 6031,
+      "path": "transactions/01-fund_borrower.json",
+      "sha256": "ef49c1d8ff2beefd387e0a13a4bd8dc0bddfb53af588f67f8f4e9a5ef9306b6b"
+    },
+    {
+      "bytes": 6192,
+      "path": "transactions/02-fund_research_bot_signer.json",
+      "sha256": "12bc53612c334291070307e2ae8b373654b41d6d50586a60b50b1d39a7ee62af"
+    },
+    {
+      "bytes": 6205,
+      "path": "transactions/03-fund_credence_policy_signer.json",
+      "sha256": "9bcf0c61da25ee5de5038463f2c40fba1d0d09d26b983524347aac25dd5f50c3"
+    },
+    {
+      "bytes": 6190,
+      "path": "transactions/04-fund_payment_recipient.json",
+      "sha256": "fd6bc1b7a22416ca2f95e57e9c8a7b5cb46b839b4f51f3367ddd16ff4675a0ed"
+    },
+    {
+      "bytes": 10443,
+      "path": "transactions/05-borrower_set_2_of_2_signer_list.json",
+      "sha256": "66d04684f6ddb9cc47cebd6cfc5d368dfe91bdd2fb86d005b9d563f4cf11cf12"
+    },
+    {
+      "bytes": 10443,
+      "path": "unexpected-result.json",
+      "sha256": "66d04684f6ddb9cc47cebd6cfc5d368dfe91bdd2fb86d005b9d563f4cf11cf12"
+    }
+  ]
+}

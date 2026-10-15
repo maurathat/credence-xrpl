@@ -1,0 +1,173 @@
+{
+  "after_state": {
+    "account": {
+      "Account": "rJ7E6Scb5J9PQHCLwDH3qCisquZo3fAige",
+      "Balance": "1000000000",
+      "Flags": 0,
+      "LedgerEntryType": "AccountRoot",
+      "OwnerCount": 0,
+      "PreviousTxnID": "BCFC5589C9F63C68D90EE59D930DDC51E0009360AB4C390989E3B78921DD7A1D",
+      "PreviousTxnLgrSeq": 6,
+      "Sequence": 6,
+      "index": "F7C1E19FE9259611AF938E57A1BD95473A7BF4E93CB0EFF36ABEAF16A20C39CF"
+    }
+  },
+  "before_state": {
+    "account": null
+  },
+  "classification": {
+    "expected_result": "tesSUCCESS",
+    "observed_result": "tesSUCCESS",
+    "reasons": [],
+    "state_assertion": "PASS",
+    "state_unchanged": null,
+    "status": "PASS"
+  },
+  "expected_result": "tesSUCCESS",
+  "experiment": "SETUP",
+  "label": "fund_payment_recipient",
+  "ledger_after": {
+    "close_time": 845339354,
+    "closed": true,
+    "ledger_hash": "E81D0EFC8B6F5FF7AE4A0C0FF9075766CCBF042FB921CB3A2EF0042CFA5CB84D",
+    "ledger_index": 6
+  },
+  "ledger_before": {
+    "close_time": 845339353,
+    "closed": true,
+    "ledger_hash": "D7ADB7B98E53FD67421083C50AE0E41DCB0516418BD59F6669F0DF4C80B22882",
+    "ledger_index": 5
+  },
+  "public_signing_evidence": {
+    "account": "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh",
+    "account_sequence": 4,
+    "mode": "master_single_sign",
+    "signed_transaction_blob": "12000021000053592400000004201B0000001961400000003B9ACA0068400000000000000A73210330E7FC9D56BB25D6893BA3F317AE5BCF33B3291BD63DB32654A313222F7FD02074473045022100DFAE056328FD4ADD93A52EB2E6F74934F4984238BC5DA68C77B70CC9023037D0022002C10CDB0FD6D8F17B8E6966B39EDBD6A325854ED75FFC34FA1FA272C3EF787E8114B5F762798A53D543A014CAF8B297CFF8F2F937E88314BFA1A35105C8A0BA7917E5A4FB8B9C72FE4157AD",
+    "signers": [],
+    "signers_array_present": false,
+    "top_level_signing_public_key": "0330E7FC9D56BB25D6893BA3F317AE5BCF33B3291BD63DB32654A313222F7FD020",
+    "top_level_transaction_signature_present": true,
+    "top_level_txn_signature_hex": "3045022100DFAE056328FD4ADD93A52EB2E6F74934F4984238BC5DA68C77B70CC9023037D0022002C10CDB0FD6D8F17B8E6966B39EDBD6A325854ED75FFC34FA1FA272C3EF787E",
+    "transaction_fields": {
+      "Account": "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh",
+      "Amount": "1000000000",
+      "Destination": "rJ7E6Scb5J9PQHCLwDH3qCisquZo3fAige",
+      "Fee": "10",
+      "LastLedgerSequence": 25,
+      "NetworkID": 21337,
+      "Sequence": 4,
+      "TransactionType": "Payment"
+    },
+    "transaction_hash": "BCFC5589C9F63C68D90EE59D930DDC51E0009360AB4C390989E3B78921DD7A1D"
+  },
+  "relevant_state_unchanged": false,
+  "result_resolution": {
+    "authoritative_result": "tesSUCCESS",
+    "category": "ACCEPTED_VALIDATED_SUCCESS",
+    "client_exception": null,
+    "malformed_request": null,
+    "submission_hash_if_any": "BCFC5589C9F63C68D90EE59D930DDC51E0009360AB4C390989E3B78921DD7A1D",
+    "submission_result": "tesSUCCESS",
+    "transport_or_server_failure": null,
+    "validated_lookup_status": "VALIDATED",
+    "validated_result_if_any": "tesSUCCESS"
+  },
+  "state_assertions": [
+    {
+      "actual": "rJ7E6Scb5J9PQHCLwDH3qCisquZo3fAige",
+      "expected": "rJ7E6Scb5J9PQHCLwDH3qCisquZo3fAige",
+      "name": "payment_recipient AccountRoot identity",
+      "passed": true
+    },
+    {
+      "actual": "1000000000",
+      "expected": "1000000000",
+      "name": "payment_recipient initial XRP balance",
+      "passed": true
+    }
+  ],
+  "submission_hash_if_any": "BCFC5589C9F63C68D90EE59D930DDC51E0009360AB4C390989E3B78921DD7A1D",
+  "submission_response": {
+    "accepted": true,
+    "account_sequence_available": 5,
+    "account_sequence_next": 5,
+    "applied": true,
+    "broadcast": true,
+    "engine_result": "tesSUCCESS",
+    "engine_result_code": 0,
+    "engine_result_message": "The transaction was applied. Only final in a validated ledger.",
+    "kept": true,
+    "open_ledger_cost": "10",
+    "queued": false,
+    "tx_json": {
+      "Account": "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh",
+      "Amount": "1000000000",
+      "Destination": "rJ7E6Scb5J9PQHCLwDH3qCisquZo3fAige",
+      "Fee": "10",
+      "LastLedgerSequence": 25,
+      "NetworkID": 21337,
+      "Sequence": 4,
+      "TransactionType": "Payment",
+      "hash": "BCFC5589C9F63C68D90EE59D930DDC51E0009360AB4C390989E3B78921DD7A1D"
+    },
+    "validated_ledger_index": 5
+  },
+  "submission_result": "tesSUCCESS",
+  "validated_lookup_status": "VALIDATED",
+  "validated_result_if_any": "tesSUCCESS",
+  "validated_transaction_response": {
+    "Account": "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh",
+    "Amount": "1000000000",
+    "DeliverMax": "1000000000",
+    "Destination": "rJ7E6Scb5J9PQHCLwDH3qCisquZo3fAige",
+    "Fee": "10",
+    "LastLedgerSequence": 25,
+    "NetworkID": 21337,
+    "Sequence": 4,
+    "TransactionType": "Payment",
+    "ctid": "C000000600005359",
+    "date": 845339354,
+    "hash": "BCFC5589C9F63C68D90EE59D930DDC51E0009360AB4C390989E3B78921DD7A1D",
+    "inLedger": 6,
+    "ledger_index": 6,
+    "meta": {
+      "AffectedNodes": [
+        {
+          "ModifiedNode": {
+            "FinalFields": {
+              "Account": "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh",
+              "Balance": "99999995999999960",
+              "Flags": 0,
+              "OwnerCount": 0,
+              "Sequence": 5
+            },
+            "LedgerEntryType": "AccountRoot",
+            "LedgerIndex": "2B6AC232AA4C4BE41BF49D2459FA4A0347E1B543A4C92FCEE0821C0201E2E9A8",
+            "PreviousFields": {
+              "Balance": "99999996999999970",
+              "Sequence": 4
+            },
+            "PreviousTxnID": "04E62721F975BB6746FC7F86D3AF7E63FAD45B21D78D3C62F16B7B897F53E917",
+            "PreviousTxnLgrSeq": 5
+          }
+        },
+        {
+          "CreatedNode": {
+            "LedgerEntryType": "AccountRoot",
+            "LedgerIndex": "F7C1E19FE9259611AF938E57A1BD95473A7BF4E93CB0EFF36ABEAF16A20C39CF",
+            "NewFields": {
+              "Account": "rJ7E6Scb5J9PQHCLwDH3qCisquZo3fAige",
+              "Balance": "1000000000",
+              "Sequence": 6
+            }
+          }
+        }
+      ],
+      "TransactionIndex": 0,
+      "TransactionResult": "tesSUCCESS",
+      "delivered_amount": "1000000000"
+    },
+    "status": "success",
+    "validated": true
+  }
+}

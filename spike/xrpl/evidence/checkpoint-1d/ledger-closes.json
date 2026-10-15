@@ -1,0 +1,97 @@
+[
+  {
+    "after": {
+      "close_time": 845339351,
+      "closed": true,
+      "ledger_hash": "DD9351F845B85B3CE6706F4F9063716663662535F53D3B7EB10B4B3D9EED6A9C",
+      "ledger_index": 3
+    },
+    "before": {
+      "close_time": 845339350,
+      "closed": true,
+      "ledger_hash": "2100D1B4F2E3E1AE478615363C175CE931A3161B866A026C26338C1B03EFF031",
+      "ledger_index": 2
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 4,
+      "status": "success"
+    },
+    "reason": "validate fund_borrower or establish absence"
+  },
+  {
+    "after": {
+      "close_time": 845339352,
+      "closed": true,
+      "ledger_hash": "D6C60C4CA279A09597CF04F8031C7165EB250706DCCAB143DC89E8D19A80AF1A",
+      "ledger_index": 4
+    },
+    "before": {
+      "close_time": 845339351,
+      "closed": true,
+      "ledger_hash": "DD9351F845B85B3CE6706F4F9063716663662535F53D3B7EB10B4B3D9EED6A9C",
+      "ledger_index": 3
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 5,
+      "status": "success"
+    },
+    "reason": "validate fund_research_bot_signer or establish absence"
+  },
+  {
+    "after": {
+      "close_time": 845339353,
+      "closed": true,
+      "ledger_hash": "D7ADB7B98E53FD67421083C50AE0E41DCB0516418BD59F6669F0DF4C80B22882",
+      "ledger_index": 5
+    },
+    "before": {
+      "close_time": 845339352,
+      "closed": true,
+      "ledger_hash": "D6C60C4CA279A09597CF04F8031C7165EB250706DCCAB143DC89E8D19A80AF1A",
+      "ledger_index": 4
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 6,
+      "status": "success"
+    },
+    "reason": "validate fund_credence_policy_signer or establish absence"
+  },
+  {
+    "after": {
+      "close_time": 845339354,
+      "closed": true,
+      "ledger_hash": "E81D0EFC8B6F5FF7AE4A0C0FF9075766CCBF042FB921CB3A2EF0042CFA5CB84D",
+      "ledger_index": 6
+    },
+    "before": {
+      "close_time": 845339353,
+      "closed": true,
+      "ledger_hash": "D7ADB7B98E53FD67421083C50AE0E41DCB0516418BD59F6669F0DF4C80B22882",
+      "ledger_index": 5
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 7,
+      "status": "success"
+    },
+    "reason": "validate fund_payment_recipient or establish absence"
+  },
+  {
+    "after": {
+      "close_time": 845339355,
+      "closed": true,
+      "ledger_hash": "4D9E7E9BD1F86B2935950A47CDD59278F84D72670B5E8B7FF289319579B900A8",
+      "ledger_index": 7
+    },
+    "before": {
+      "close_time": 845339354,
+      "closed": true,
+      "ledger_hash": "E81D0EFC8B6F5FF7AE4A0C0FF9075766CCBF042FB921CB3A2EF0042CFA5CB84D",
+      "ledger_index": 6
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 8,
+      "status": "success"
+    },
+    "reason": "validate borrower_set_2_of_2_signer_list or establish absence"
+  }
+]

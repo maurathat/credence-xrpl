@@ -1,8 +1,68 @@
 {
-  "schema_version": 9,
-  "overall": "PASS",
-  "scope": "Checkpoint 1C-X live execution of the frozen E3/E4 A-K oracle",
-  "start_commit": "5369ff0fe61b0d64faebc95b72d41e6a6938c6ae",
+  "schema_version": 10,
+  "overall": "BLOCKED",
+  "scope": "Checkpoint 1D E5 borrower authorization; fail-closed before E5-A",
+  "start_commit": "44fb089f0cb4281608ab0b9a67e129147f349887",
+  "checkpoint_1d": {
+    "outcome": "BLOCKED",
+    "classification": "A. local harness response-shape assertion error",
+    "runner_executions": 1,
+    "first_failure": "borrower_set_2_of_2_signer_list",
+    "failure_detail": "SignerListSet validated tesSUCCESS, but the frozen harness read result.signer_lists while pinned xrpld returned the installed list under result.account_data.signer_lists.",
+    "e5_steps_attempted": [],
+    "setup_transactions_submitted": 5,
+    "ledger_close_count": 5,
+    "lending_transactions_submitted": 0,
+    "fresh_environment": {
+      "xrpld_version": "3.4.0",
+      "source_commit": "4a4fded2eba11427c48ce3f24d9c1aea5e7a9d17",
+      "network_id": 21337,
+      "initial_ledger_index": 2,
+      "initial_close_time": 845339350,
+      "frozen_e1_invariants": "PASS"
+    },
+    "provenance": {
+      "E5-ASSERTIONS.md": "656921cacd310214b6ecce7088e21e84fcca44feaa3104b95cfb9f5f4bc92b92",
+      "scripts/e5_oracle.py": "5154948e19e39a350529c79d9acee2234720b6285180feaa489bb930be455e3b",
+      "scripts/run_checkpoint_1d.py": "1ba520457c1b538c97e71394fb62791d5ea89d88016564a24665a96bf9fcd503",
+      "tests/test_checkpoint_1d.py": "007ae32bf186093d82e8fce12031809fbd04977cb5adaeed5a9ee5ffd66faee8",
+      "independent_audit_commit": "593eb79694e86238af44785bf8d63e9a3e8086c9",
+      "independent_audit_verdict": "PASS WITH CONDITIONS"
+    },
+    "signer_list_setup": {
+      "transaction_hash": "A55D6968F643284A7148D16B45E0DBE0F4D7DB0E8E45EBB4EB51D6FF56603D4C",
+      "submission_result": "tesSUCCESS",
+      "validated_result": "tesSUCCESS",
+      "ledger_index": 7,
+      "close_time": 845339355,
+      "installed_signer_quorum": 2,
+      "installed_weights": [1, 1],
+      "regular_key_present": false,
+      "master_key_disabled": false,
+      "frozen_assertion_status": "FAIL"
+    },
+    "evidence_manifest": {
+      "file_count": 13,
+      "bytes": 116077,
+      "verified": true
+    },
+    "gates": {
+      "e5_synthetic_oracle_tests": "PASS (15)",
+      "all_spike_tests": "PASS (79)",
+      "repository_unit_tests": "PASS (17)",
+      "conformance_tests": "PASS (4)",
+      "lint_format_large_file": "PASS (71 formatted files checked)",
+      "strict_typecheck": "PASS (25 source files)",
+      "secrets_scan": "PASS",
+      "json_validation": "PASS (114 files)",
+      "evidence_manifest_verification": "PASS (8 manifests, 98 payload files)",
+      "e5_frozen_file_immutability": "PASS",
+      "authorized_paths": "PASS",
+      "git_diff_check": "PASS"
+    },
+    "minimum_next_checkpoint": "Separately authorized harness-only response-shape correction and regression, followed by a separately authorized fresh E5-only rerun.",
+    "minimum_next_checkpoint_performed": false
+  },
   "live_execution": {
     "name": "Checkpoint 1C-X",
     "outcome": "PASS",
@@ -339,12 +399,46 @@
     },
     "E5": {
       "claim": "Borrower 2-of-2 ordinary Payment authorization.",
-      "outcome": "NOT_ATTEMPTED",
-      "evidence_paths": ["REPORT.md"],
-      "transaction_hashes": [],
-      "ledger_indices": [],
-      "state_assertions": [],
-      "unresolved_subclaims": ["Outside Checkpoint 1C-X scope."]
+      "outcome": "BLOCKED",
+      "evidence_paths": [
+        "evidence/checkpoint-1d/transactions/05-borrower_set_2_of_2_signer_list.json",
+        "evidence/checkpoint-1d/unexpected-result.json",
+        "evidence/checkpoint-1d/MANIFEST.json"
+      ],
+      "transaction_hashes": [
+        "A55D6968F643284A7148D16B45E0DBE0F4D7DB0E8E45EBB4EB51D6FF56603D4C"
+      ],
+      "ledger_indices": [7],
+      "state_assertions": [
+        {
+          "name": "SignerListSet submission and validation equal tesSUCCESS",
+          "passed": true
+        },
+        {
+          "name": "runner finds one SignerList at the frozen result.signer_lists path",
+          "passed": false,
+          "expected": 1,
+          "actual": 0
+        },
+        {
+          "name": "captured pinned response contains the installed SignerList under account_data.signer_lists",
+          "passed": true
+        }
+      ],
+      "step_results": {
+        "E5-A": "NOT_ATTEMPTED",
+        "E5-B": "NOT_ATTEMPTED",
+        "E5-C": "NOT_ATTEMPTED",
+        "E5-D": "NOT_ATTEMPTED",
+        "E5-E": "NOT_ATTEMPTED"
+      },
+      "unresolved_subclaims": [
+        "ResearchBot-only authorization was not submitted.",
+        "Credence-only authorization was not submitted.",
+        "Two-of-two authorization was not submitted.",
+        "Owner-master authorization was not submitted.",
+        "The predeclared E5-E final-state read was not reached."
+      ]
     },
     "E6": {
       "claim": "LoanSet composition.",
@@ -353,7 +447,7 @@
       "transaction_hashes": [],
       "ledger_indices": [],
       "state_assertions": [],
-      "unresolved_subclaims": ["Outside Checkpoint 1C-X scope."]
+      "unresolved_subclaims": ["Outside Checkpoint 1D scope; E5 is blocked."]
     },
     "E7": {
       "claim": "Loan disbursement.",
@@ -362,7 +456,7 @@
       "transaction_hashes": [],
       "ledger_indices": [],
       "state_assertions": [],
-      "unresolved_subclaims": ["Outside Checkpoint 1C-X scope."]
+      "unresolved_subclaims": ["Outside Checkpoint 1D scope; E5 is blocked."]
     },
     "E8": {
       "claim": "LoanPay.",
@@ -371,7 +465,7 @@
       "transaction_hashes": [],
       "ledger_indices": [],
       "state_assertions": [],
-      "unresolved_subclaims": ["Outside Checkpoint 1C-X scope."]
+      "unresolved_subclaims": ["Outside Checkpoint 1D scope; E5 is blocked."]
     },
     "E9": {
       "claim": "Full loan lifecycle.",
@@ -380,13 +474,15 @@
       "transaction_hashes": [],
       "ledger_indices": [],
       "state_assertions": [],
-      "unresolved_subclaims": ["Outside Checkpoint 1C-X scope."]
+      "unresolved_subclaims": ["Outside Checkpoint 1D scope; E5 is blocked."]
     }
   },
   "e1_frozen": true,
   "e2_frozen": true,
   "e3_e4_rerun_performed": true,
   "e5_may_begin": false,
-  "e5_gate_status": "E3/E4 protocol gate passed; independent bounded evidence audit pending.",
+  "e5_gate_status": "BLOCKED at the SignerList post-state assertion before E5-A.",
+  "e6_may_begin": false,
+  "checkpoint_1d_next_experiment_performed": false,
   "minimum_next_experiment_performed": true
 }
