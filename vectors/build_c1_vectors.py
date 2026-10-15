@@ -271,6 +271,14 @@ DECISION_VERIFIER_REJECT = DecisionRecord(
     engine_version=EngineVersion("credence-core-0.0.0"),
     decided_at=Timestamp("2026-10-24T15:00:04Z"),
 )
+DECISION_QUOTE_EXPIRED = replace(
+    DECISION_REJECT,
+    reason_code=ReasonCode.QUOTE_EXPIRED,
+    decided_at=Timestamp("2026-10-24T15:05:01Z"),
+)
+DECISION_BILLED_AMOUNT = replace(
+    DECISION_VERIFIER_REJECT, reason_code=ReasonCode.BILLED_AMOUNT_MISMATCH
+)
 SETTLEMENT = SettlementRecord(
     receipt_digest=RECEIPT_TIER2.digest(),
     decision_record_digest=DECISION_VERIFIER_ACCEPT.digest(),
@@ -333,6 +341,16 @@ OBJECT_VECTORS: list[tuple[str, str, CanonicalObject]] = [
         "decision_record-verifier-reject",
         "Verifier-stage reject with its reason code",
         DECISION_VERIFIER_REJECT,
+    ),
+    (
+        "decision_record-quote-expired",
+        "Policy-stage reject with QUOTE_EXPIRED (C2 amendment)",
+        DECISION_QUOTE_EXPIRED,
+    ),
+    (
+        "decision_record-billed-amount-mismatch",
+        "Verifier-stage reject with BILLED_AMOUNT_MISMATCH (C2 amendment)",
+        DECISION_BILLED_AMOUNT,
     ),
     ("signed_object-basic", "Signature wrapper outside the signed body", SIGNED),
 ]

@@ -240,12 +240,14 @@ def test_exact_serialized_spellings(enum_type: type[Enum], spellings: dict[str, 
     assert {m.name: m.value for m in enum_type} == spellings
 
 
-def test_reason_codes_are_exactly_the_build_plan_codes() -> None:
+def test_reason_codes_are_the_build_plan_codes_plus_the_c2_amendment() -> None:
+    """The plan's 17 codes plus QUOTE_EXPIRED and BILLED_AMOUNT_MISMATCH (C2 amendment)."""
     assert [m.value for m in ReasonCode] == [
         "SIG_INVALID",
         "KEY_REVOKED",
         "FACILITY_NOT_ACTIVE",
         "FACILITY_EXPIRED",
+        "QUOTE_EXPIRED",
         "PURPOSE_MISMATCH",
         "PROVIDER_NOT_ALLOWED",
         "PROFILE_NOT_ALLOWED",
@@ -257,6 +259,7 @@ def test_reason_codes_are_exactly_the_build_plan_codes() -> None:
         "BINDING_MISMATCH",
         "RESPONSE_DIGEST_MISMATCH",
         "TOKEN_COUNT_EXCEEDS_QUOTE",
+        "BILLED_AMOUNT_MISMATCH",
         "CHAIN_BROKEN",
         "REPLAYED_RECEIPT",
     ]

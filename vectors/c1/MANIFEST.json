@@ -4,6 +4,14 @@
   "decision_record-accept.json"
  ],
  [
+  "75eb3031d0cb3fbdd08ea28960b31a4362819f1842184d1955fabaeed534dda7",
+  "decision_record-billed-amount-mismatch.json"
+ ],
+ [
+  "46cac530c587d73eb9cc6f4bb360ba5e3a03f415d64d7aa10aed0364cd677677",
+  "decision_record-quote-expired.json"
+ ],
+ [
   "845ae727e036329926e2fa3d0bb37a988fb1788a0132599dccbb593d50b8c2dd",
   "decision_record-reject.json"
  ],

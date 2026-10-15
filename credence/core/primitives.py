@@ -12,7 +12,7 @@ from __future__ import annotations
 import re
 import unicodedata
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from enum import Enum
 from typing import Self
 
@@ -228,6 +228,12 @@ class Timestamp:
     def to_datetime(self) -> datetime:
         return datetime.strptime(self.value, _TIMESTAMP_FORMAT).replace(tzinfo=UTC)
 
+    def plus_seconds(self, seconds: int) -> Timestamp:
+        """This instant moved by a whole (possibly negative) number of seconds, same spelling."""
+        offset = strict_int(seconds, "seconds", minimum=-MAX_SAFE_INTEGER)
+        moved = self.to_datetime() + timedelta(seconds=offset)
+        return Timestamp(moved.strftime(_TIMESTAMP_FORMAT))
+
 
 # --- application identifiers ---------------------------------------------------------------
 
@@ -330,12 +336,17 @@ class DecisionStage(Enum):
 
 
 class ReasonCode(Enum):
-    """Policy engine and verifier reason codes, spelled exactly as in the build plan."""
+    """Policy engine and verifier reason codes.
+
+    The build plan's codes, plus QUOTE_EXPIRED and BILLED_AMOUNT_MISMATCH added by the C2 amendment
+    to the C1A contract. Declaration order is each engine's precedence order.
+    """
 
     SIG_INVALID = "SIG_INVALID"
     KEY_REVOKED = "KEY_REVOKED"
     FACILITY_NOT_ACTIVE = "FACILITY_NOT_ACTIVE"
     FACILITY_EXPIRED = "FACILITY_EXPIRED"
+    QUOTE_EXPIRED = "QUOTE_EXPIRED"
     PURPOSE_MISMATCH = "PURPOSE_MISMATCH"
     PROVIDER_NOT_ALLOWED = "PROVIDER_NOT_ALLOWED"
     PROFILE_NOT_ALLOWED = "PROFILE_NOT_ALLOWED"
@@ -347,8 +358,35 @@ class ReasonCode(Enum):
     BINDING_MISMATCH = "BINDING_MISMATCH"
     RESPONSE_DIGEST_MISMATCH = "RESPONSE_DIGEST_MISMATCH"
     TOKEN_COUNT_EXCEEDS_QUOTE = "TOKEN_COUNT_EXCEEDS_QUOTE"
+    BILLED_AMOUNT_MISMATCH = "BILLED_AMOUNT_MISMATCH"
     CHAIN_BROKEN = "CHAIN_BROKEN"
     REPLAYED_RECEIPT = "REPLAYED_RECEIPT"
+
+
+# Stage ownership: each engine may emit only its own codes, in this precedence order.
+POLICY_REASON_CODES: tuple[ReasonCode, ...] = (
+    ReasonCode.SIG_INVALID,
+    ReasonCode.KEY_REVOKED,
+    ReasonCode.FACILITY_NOT_ACTIVE,
+    ReasonCode.FACILITY_EXPIRED,
+    ReasonCode.QUOTE_EXPIRED,
+    ReasonCode.PURPOSE_MISMATCH,
+    ReasonCode.PROVIDER_NOT_ALLOWED,
+    ReasonCode.PROFILE_NOT_ALLOWED,
+    ReasonCode.TIER_TOO_LOW,
+    ReasonCode.PRICE_ABOVE_MAX,
+    ReasonCode.OVER_LIMIT,
+    ReasonCode.NONCE_REUSED,
+)
+VERIFIER_REASON_CODES: tuple[ReasonCode, ...] = (
+    ReasonCode.RECEIPT_SIG_INVALID,
+    ReasonCode.BINDING_MISMATCH,
+    ReasonCode.RESPONSE_DIGEST_MISMATCH,
+    ReasonCode.TOKEN_COUNT_EXCEEDS_QUOTE,
+    ReasonCode.BILLED_AMOUNT_MISMATCH,
+    ReasonCode.CHAIN_BROKEN,
+    ReasonCode.REPLAYED_RECEIPT,
+)
 
 
 def parse_enum[E: Enum](enum_type: type[E], value: object, field: str) -> E:

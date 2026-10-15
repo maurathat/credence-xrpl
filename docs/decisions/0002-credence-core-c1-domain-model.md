@@ -58,3 +58,7 @@
 18. **The generic `EvidenceTier` keeps all four values (0 to 3).** Only `DeliveryReceiptBody` restricts itself to Tier 1 or Tier 2, as a launch restriction.
 19. **`temperature_milli` is unchanged.** It records the actual execution/request temperature. Allowed temperature ranges belong to later service/procurement constraints and are not modelled.
 20. **The contract is published and checked.** `contracts/CORE-OBJECTS.md` describes the implemented schemas and is checked by `tests/unit/test_core_contract.py`. Vectors regenerate deterministically, and `tests/conformance/test_core_c1_vectors.py` requires the committed files to equal a fresh regeneration.
+
+### C2 amendment to the C1A contract (2026-10-14)
+
+21. **`ReasonCode` gains two values.** `QUOTE_EXPIRED` (policy stage, placed immediately after `FACILITY_EXPIRED`) and `BILLED_AMOUNT_MISMATCH` (verifier stage, placed after `TOKEN_COUNT_EXCEEDS_QUOTE` and before `CHAIN_BROKEN`). This is an explicit, bounded amendment of the C1A contract; C1A was not otherwise changed. No object schema, member, nullability or other vocabulary changed, and every pre-existing vector is byte-identical. Two vectors were added (`decision_record-quote-expired` and `decision_record-billed-amount-mismatch`). Stage ownership and precedence are in decision 0003 and `contracts/POLICY-VERIFIER.md`.

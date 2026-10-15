@@ -1,6 +1,6 @@
 # CORE-OBJECTS
 
-Owner: Credence Core (Claude Code). Status: frozen at checkpoint C1A. Only the owner edits this file. Other workstreams file a request in `contracts/requests/`.
+Owner: Credence Core (Claude Code). Status: frozen at checkpoint C1A; `ReasonCode` amended in C2. Only the owner edits this file. Other workstreams file a request in `contracts/requests/`.
 
 This contract describes the canonical objects implemented in `credence/core/` (`primitives.py`, `objects.py`, `kessai.py`, `billing.py`). The code is authoritative. `tests/unit/test_core_contract.py` checks that every object type, member, type, nullability, vocabulary and refusal code listed here matches the code. The vectors in `vectors/c1/` are worked examples of every object.
 
@@ -69,7 +69,9 @@ Null means NOT ASSERTED. It is never a wildcard and never automatically satisfie
 | `ResidencyRegion` | `"EU"`, `"US"` |
 | `DecisionOutcome` | `"accept"`, `"reject"` |
 | `DecisionStage` | `"policy"`, `"verifier"` |
-| `ReasonCode` | `"SIG_INVALID"`, `"KEY_REVOKED"`, `"FACILITY_NOT_ACTIVE"`, `"FACILITY_EXPIRED"`, `"PURPOSE_MISMATCH"`, `"PROVIDER_NOT_ALLOWED"`, `"PROFILE_NOT_ALLOWED"`, `"TIER_TOO_LOW"`, `"PRICE_ABOVE_MAX"`, `"OVER_LIMIT"`, `"NONCE_REUSED"`, `"RECEIPT_SIG_INVALID"`, `"BINDING_MISMATCH"`, `"RESPONSE_DIGEST_MISMATCH"`, `"TOKEN_COUNT_EXCEEDS_QUOTE"`, `"CHAIN_BROKEN"`, `"REPLAYED_RECEIPT"` |
+| `ReasonCode` | `"SIG_INVALID"`, `"KEY_REVOKED"`, `"FACILITY_NOT_ACTIVE"`, `"FACILITY_EXPIRED"`, `"QUOTE_EXPIRED"`, `"PURPOSE_MISMATCH"`, `"PROVIDER_NOT_ALLOWED"`, `"PROFILE_NOT_ALLOWED"`, `"TIER_TOO_LOW"`, `"PRICE_ABOVE_MAX"`, `"OVER_LIMIT"`, `"NONCE_REUSED"`, `"RECEIPT_SIG_INVALID"`, `"BINDING_MISMATCH"`, `"RESPONSE_DIGEST_MISMATCH"`, `"TOKEN_COUNT_EXCEEDS_QUOTE"`, `"BILLED_AMOUNT_MISMATCH"`, `"CHAIN_BROKEN"`, `"REPLAYED_RECEIPT"` |
+
+`ReasonCode` was amended in C2: `QUOTE_EXPIRED` and `BILLED_AMOUNT_MISMATCH` were added (decision 0002, amendment C2). No object schema changed. Which stage may emit which code, and in what order, is in `contracts/POLICY-VERIFIER.md`.
 
 A value must match exactly, including its JSON type: `true` is not `1`, and `"1"` is not `1`. `EvidenceTier` keeps all four values; only `credence.delivery_receipt` restricts its own tier.
 
