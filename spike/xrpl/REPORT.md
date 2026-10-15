@@ -1,3 +1,138 @@
+# Checkpoint 1D-LIVE-01 — execute E5 borrower authorization
+
+## Outcome
+
+**PASS — E5 borrower authorization completed against the unchanged frozen
+harness.**
+
+Checkpoint 1D-LIVE-01 began from clean commit
+`1fd2351e25a7145de84e4689cc0656bd0dcde883`, with checkpoint-0 ancestry and
+submodule gitlinks unchanged. All 38 P1-P10 and existing E5 harness tests passed
+before the live run. The parameterized runner was invoked exactly once, wrote
+only to `evidence/checkpoint-1d-live-01/`, and completed without STOP or retry.
+
+## Frozen provenance
+
+| Component | SHA-256 |
+| --- | --- |
+| `E5-ASSERTIONS.md` | `656921cacd310214b6ecce7088e21e84fcca44feaa3104b95cfb9f5f4bc92b92` |
+| `scripts/e5_oracle.py` | `8052459639081eca2baeb64402120ce00507f35eafcc595315f912016ae07bbf` |
+| `scripts/run_checkpoint_1d.py` | `5fc315e0c646dc766ccae349d16b56039e9d54bc41925de2e2d94d85439d12c8` |
+| `tests/test_checkpoint_1d.py` | `4a8eba0b49f8a30c50cc5eddfed7a7a8bdc51a29c5c4b241780738d6e0acc7d0` |
+| `tests/test_checkpoint_1d_destination.py` | `03d80614ff4f1ba201b1ce2a7db8fb50ced847f909b4427067e5ef925ab71c1a` |
+
+All hashes are embedded in the live provenance and remained byte-identical
+after execution.
+
+## Fresh runtime and SignerList setup
+
+The proven mechanism recreated the dedicated volume and started pinned rippled
+3.4.0, source commit `4a4fded2eba11427c48ce3f24d9c1aea5e7a9d17`,
+on network ID `21337`. The fresh validated ledger began at index 2 / close time
+`845348010`. The feature and validated Amendments representations agreed on all
+eight required amendments.
+
+Four setup funding Payments succeeded. Borrower `SignerListSet` transaction
+`674B84F0E51C216C55C0FB5E9FE989EE48942325CE76F647B608B19D9A38FFEB`
+returned and validated `tesSUCCESS` at ledger 7 / close time `845348024`.
+The repaired API-v1 parser observed exactly one list:
+
+- `SignerQuorum = 2`;
+- ResearchBot `rLYaNUeEtpXexaf8Lm5W5gAh7tNcjccDAr`, weight 1;
+- Credence policy signer `r4hEaHn2JPyGkmuyf2S4qHxe9295SiLG3N`, weight 1.
+
+No `RegularKey` was present, and the master-key-disabled flag was clear.
+
+## E5 results
+
+| Step | Authorization | Authoritative result | State result | Verdict |
+| --- | --- | --- | --- | --- |
+| E5-A | ResearchBot only | `tefBAD_QUORUM` | recipient/borrower unchanged | PASS |
+| E5-B | Credence only | `tefBAD_QUORUM` | recipient/borrower unchanged | PASS |
+| E5-C | ResearchBot + Credence multisign | validated `tesSUCCESS` | recipient +1000; borrower -1030; sequence +1 | PASS |
+| E5-D | borrower master key only | validated `tesSUCCESS` | recipient +2000; borrower -2010; sequence +1 | PASS |
+| E5-E | final AccountRoot read | no transaction | final assertions passed | PASS |
+
+E5-A transaction
+`6E775571BDB287CACAD6D9C6736AAED13AB4ADFEF18EB825FE9BDB80D64A6597`
+was not included in the validated ledger. Its evidence contains only the
+ResearchBot signer, empty top-level `SigningPubKey`, no top-level signature,
+and unchanged protected state.
+
+E5-B transaction
+`F41B1CEB422F1FB51856EAF73A4B5BA9E7DB741F7503B8F48BE38A9F4753A599`
+was not included in the validated ledger. Its evidence contains only the
+Credence policy signer and the same protected-state guarantees.
+
+E5-C transaction
+`79486BFBB25376825E9567300FEB6D539D0BF84BB5824BC30A784C42E9F640A1`
+validated at ledger 10. Both signer identities, public keys, and signatures are
+present; the top-level signing key is empty and no master-key signature is
+present.
+
+E5-D transaction
+`AAFFA8627561E65E5A366F158B8363F238A708759F8DA6A81C4CE717C543434D`
+validated at ledger 11. It contains the borrower's public master key and
+top-level signature and has no `Signers` array.
+
+E5-E passed with AccountRoot flags `0` and the exact conclusion: **No
+RegularKey is configured in the tested borrower state.** The
+master-key-disabled flag remains clear, and the 2-of-2 SignerList remains
+unchanged.
+
+## Public evidence, manifest, and scope
+
+The live artifacts retain actor account IDs and public keys, signing mode,
+`SigningPubKey`, `Signers`, public transaction signatures, signed blobs,
+transaction hashes, submission results, validated lookups where applicable,
+ledger indices, and protected before/after state. The secrets scan found no
+seed or private-key material.
+
+The runner submitted nine transactions: four setup funding Payments, one
+`SignerListSet`, and E5-A through E5-D. It made nine scripted closes. E5-E was a
+read-only final assertion. No vault, Loan Broker, `LoanSet`, `LoanPay`, or other
+lending transaction was submitted.
+
+`evidence/checkpoint-1d-live-01/MANIFEST.json` verifies 19 payload files totaling
+339157 bytes.
+
+## Result state
+
+- E1/E2: **PASS/FROZEN**.
+- E3/E4: **PASS/RETIRED within tested scope**.
+- E5: **PASS**.
+- E6-E9: **NOT ATTEMPTED**.
+
+## Gates
+
+- P1-P10: **PASS** (10 tests).
+- S1-S12 and all existing E5 tests: **PASS** (28 tests).
+- All spike tests: **PASS** (102 tests).
+- Repository unit tests: **PASS** (17 tests).
+- Conformance tests: **PASS** (4 tests).
+- Lint, formatting, and large-file check: **PASS**.
+- Strict typecheck: **PASS** (25 source files).
+- Secrets scan: **PASS**.
+- JSON validation: **PASS** (136 files).
+- Evidence-manifest verification: **PASS** (10 manifests, 118 payload files).
+- Historical evidence immutability: **PASS**.
+- Frozen provenance immutability: **PASS**.
+- Authorized-path and unchanged review/submodule checks: **PASS**.
+- `git diff --check`: **PASS**.
+
+## Recommendation
+
+E5's borrower-authorization gate is complete. E6 may begin only under a
+separate explicit authorization; it was not executed here.
+
+## Checkpoint 1D-LIVE-01 modified paths
+
+- `spike/xrpl/REPORT.md`
+- `spike/xrpl/RESULTS.json`
+- `spike/xrpl/evidence/checkpoint-1d-live-01/`
+
+---
+
 # Checkpoint 1D-P — E5 evidence destination parameterization
 
 ## Outcome

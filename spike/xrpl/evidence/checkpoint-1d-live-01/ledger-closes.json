@@ -1,0 +1,173 @@
+[
+  {
+    "after": {
+      "close_time": 845348020,
+      "closed": true,
+      "ledger_hash": "A41E54A2BAA6720BEB9C312FF71F12E898ACA771F60DA837F3C1FD653E2CB391",
+      "ledger_index": 3
+    },
+    "before": {
+      "close_time": 845348010,
+      "closed": true,
+      "ledger_hash": "A4AFE86EAD43549583C98B4F23FB4FA724A569044B1F213C2B2B581BF6DCCD0C",
+      "ledger_index": 2
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 4,
+      "status": "success"
+    },
+    "reason": "validate fund_borrower or establish absence"
+  },
+  {
+    "after": {
+      "close_time": 845348021,
+      "closed": true,
+      "ledger_hash": "C05ACC2CE8A5ABDE3CF0F925C5433CA152419A12A52933499354AD289B405605",
+      "ledger_index": 4
+    },
+    "before": {
+      "close_time": 845348020,
+      "closed": true,
+      "ledger_hash": "A41E54A2BAA6720BEB9C312FF71F12E898ACA771F60DA837F3C1FD653E2CB391",
+      "ledger_index": 3
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 5,
+      "status": "success"
+    },
+    "reason": "validate fund_research_bot_signer or establish absence"
+  },
+  {
+    "after": {
+      "close_time": 845348022,
+      "closed": true,
+      "ledger_hash": "E7C57C43D76B657AA9F3690F384FC47CFCB477288B971E22697FECCFF1E30715",
+      "ledger_index": 5
+    },
+    "before": {
+      "close_time": 845348021,
+      "closed": true,
+      "ledger_hash": "C05ACC2CE8A5ABDE3CF0F925C5433CA152419A12A52933499354AD289B405605",
+      "ledger_index": 4
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 6,
+      "status": "success"
+    },
+    "reason": "validate fund_credence_policy_signer or establish absence"
+  },
+  {
+    "after": {
+      "close_time": 845348023,
+      "closed": true,
+      "ledger_hash": "5BD56B589724CC2FE30421434B6AE8D38F49E5BFAE3D10FFBE396351CC80647F",
+      "ledger_index": 6
+    },
+    "before": {
+      "close_time": 845348022,
+      "closed": true,
+      "ledger_hash": "E7C57C43D76B657AA9F3690F384FC47CFCB477288B971E22697FECCFF1E30715",
+      "ledger_index": 5
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 7,
+      "status": "success"
+    },
+    "reason": "validate fund_payment_recipient or establish absence"
+  },
+  {
+    "after": {
+      "close_time": 845348024,
+      "closed": true,
+      "ledger_hash": "754BE083FAF128555186A9DBF8DBF39F56E151085FA9F42E809A370888002C92",
+      "ledger_index": 7
+    },
+    "before": {
+      "close_time": 845348023,
+      "closed": true,
+      "ledger_hash": "5BD56B589724CC2FE30421434B6AE8D38F49E5BFAE3D10FFBE396351CC80647F",
+      "ledger_index": 6
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 8,
+      "status": "success"
+    },
+    "reason": "validate borrower_set_2_of_2_signer_list or establish absence"
+  },
+  {
+    "after": {
+      "close_time": 845348025,
+      "closed": true,
+      "ledger_hash": "2E3B00D2027A22FD24BF4283C74A39A25EB301C889CF99F950F67D0B855E427A",
+      "ledger_index": 8
+    },
+    "before": {
+      "close_time": 845348024,
+      "closed": true,
+      "ledger_hash": "754BE083FAF128555186A9DBF8DBF39F56E151085FA9F42E809A370888002C92",
+      "ledger_index": 7
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 9,
+      "status": "success"
+    },
+    "reason": "validate research_bot_alone_rejected or establish absence"
+  },
+  {
+    "after": {
+      "close_time": 845348026,
+      "closed": true,
+      "ledger_hash": "9A7B628D0713662B06B73B412A1C58B697E8CEAFCD0B968AF05EF32E6F7EDD5F",
+      "ledger_index": 9
+    },
+    "before": {
+      "close_time": 845348025,
+      "closed": true,
+      "ledger_hash": "2E3B00D2027A22FD24BF4283C74A39A25EB301C889CF99F950F67D0B855E427A",
+      "ledger_index": 8
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 10,
+      "status": "success"
+    },
+    "reason": "validate credence_policy_alone_rejected or establish absence"
+  },
+  {
+    "after": {
+      "close_time": 845348027,
+      "closed": true,
+      "ledger_hash": "B06F0096BCFD0D6FE89DF5F7A47AEE02A2684945E860B0B997F43FD85D327E17",
+      "ledger_index": 10
+    },
+    "before": {
+      "close_time": 845348026,
+      "closed": true,
+      "ledger_hash": "9A7B628D0713662B06B73B412A1C58B697E8CEAFCD0B968AF05EF32E6F7EDD5F",
+      "ledger_index": 9
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 11,
+      "status": "success"
+    },
+    "reason": "validate research_bot_and_credence_multisign_payment or establish absence"
+  },
+  {
+    "after": {
+      "close_time": 845348028,
+      "closed": true,
+      "ledger_hash": "677DC59AE54ACDD635E7ED60EB75BD1385013C71408F3C430510AD0A352E1C5E",
+      "ledger_index": 11
+    },
+    "before": {
+      "close_time": 845348027,
+      "closed": true,
+      "ledger_hash": "B06F0096BCFD0D6FE89DF5F7A47AEE02A2684945E860B0B997F43FD85D327E17",
+      "ledger_index": 10
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 12,
+      "status": "success"
+    },
+    "reason": "validate owner_master_key_payment or establish absence"
+  }
+]

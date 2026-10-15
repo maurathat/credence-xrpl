@@ -1,0 +1,17 @@
+{
+  "evidence_directory": "evidence/checkpoint-1d-live-01",
+  "files": {
+    "E5-ASSERTIONS.md": "656921cacd310214b6ecce7088e21e84fcca44feaa3104b95cfb9f5f4bc92b92",
+    "scripts/e5_oracle.py": "8052459639081eca2baeb64402120ce00507f35eafcc595315f912016ae07bbf",
+    "scripts/run_checkpoint_1d.py": "5fc315e0c646dc766ccae349d16b56039e9d54bc41925de2e2d94d85439d12c8",
+    "tests/test_checkpoint_1d.py": "4a8eba0b49f8a30c50cc5eddfed7a7a8bdc51a29c5c4b241780738d6e0acc7d0",
+    "tests/test_checkpoint_1d_destination.py": "03d80614ff4f1ba201b1ce2a7db8fb50ced847f909b4427067e5ef925ab71c1a"
+  },
+  "git_commit_at_run_start": "1fd2351e25a7145de84e4689cc0656bd0dcde883",
+  "independent_audit_commit": "593eb79694e86238af44785bf8d63e9a3e8086c9",
+  "independent_audit_verdict": "PASS WITH CONDITIONS",
+  "signer_list_parser_binding": {
+    "path": "scripts/e5_oracle.py",
+    "sha256": "8052459639081eca2baeb64402120ce00507f35eafcc595315f912016ae07bbf"
+  }
+}

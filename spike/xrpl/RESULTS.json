@@ -1,8 +1,122 @@
 {
-  "schema_version": 13,
-  "overall": "BLOCKED",
-  "scope": "Checkpoint 1D-P evidence-destination plumbing passed; E5 remains blocked",
-  "start_commit": "44fb089f0cb4281608ab0b9a67e129147f349887",
+  "schema_version": 14,
+  "overall": "PASS",
+  "scope": "Checkpoint 1D-LIVE-01 completed E5 borrower authorization",
+  "start_commit": "1fd2351e25a7145de84e4689cc0656bd0dcde883",
+  "checkpoint_1d_live_01": {
+    "outcome": "PASS",
+    "start_commit": "1fd2351e25a7145de84e4689cc0656bd0dcde883",
+    "runner_executions": 1,
+    "evidence_directory": "evidence/checkpoint-1d-live-01",
+    "fresh_environment": {
+      "xrpld_version": "3.4.0",
+      "source_commit": "4a4fded2eba11427c48ce3f24d9c1aea5e7a9d17",
+      "network_id": 21337,
+      "initial_ledger_index": 2,
+      "initial_close_time": 845348010,
+      "frozen_e1_invariants": "PASS"
+    },
+    "provenance": {
+      "E5-ASSERTIONS.md": "656921cacd310214b6ecce7088e21e84fcca44feaa3104b95cfb9f5f4bc92b92",
+      "scripts/e5_oracle.py": "8052459639081eca2baeb64402120ce00507f35eafcc595315f912016ae07bbf",
+      "scripts/run_checkpoint_1d.py": "5fc315e0c646dc766ccae349d16b56039e9d54bc41925de2e2d94d85439d12c8",
+      "tests/test_checkpoint_1d.py": "4a8eba0b49f8a30c50cc5eddfed7a7a8bdc51a29c5c4b241780738d6e0acc7d0",
+      "tests/test_checkpoint_1d_destination.py": "03d80614ff4f1ba201b1ce2a7db8fb50ced847f909b4427067e5ef925ab71c1a",
+      "unchanged_after_execution": true
+    },
+    "signer_list_setup": {
+      "transaction_hash": "674B84F0E51C216C55C0FB5E9FE989EE48942325CE76F647B608B19D9A38FFEB",
+      "submission_result": "tesSUCCESS",
+      "validated_result": "tesSUCCESS",
+      "ledger_index": 7,
+      "close_time": 845348024,
+      "signer_quorum": 2,
+      "research_bot_weight": 1,
+      "credence_policy_weight": 1,
+      "regular_key_present": false,
+      "master_key_disabled": false
+    },
+    "steps": {
+      "E5-A": {
+        "outcome": "PASS",
+        "authorization": "ResearchBot only",
+        "result": "tefBAD_QUORUM",
+        "transaction_hash": "6E775571BDB287CACAD6D9C6736AAED13AB4ADFEF18EB825FE9BDB80D64A6597",
+        "validated_lookup": "NOT_IN_VALIDATED_LEDGER",
+        "protected_state_unchanged": true
+      },
+      "E5-B": {
+        "outcome": "PASS",
+        "authorization": "Credence policy signer only",
+        "result": "tefBAD_QUORUM",
+        "transaction_hash": "F41B1CEB422F1FB51856EAF73A4B5BA9E7DB741F7503B8F48BE38A9F4753A599",
+        "validated_lookup": "NOT_IN_VALIDATED_LEDGER",
+        "protected_state_unchanged": true
+      },
+      "E5-C": {
+        "outcome": "PASS",
+        "authorization": "ResearchBot plus Credence policy signer",
+        "result": "tesSUCCESS",
+        "transaction_hash": "79486BFBB25376825E9567300FEB6D539D0BF84BB5824BC30A784C42E9F640A1",
+        "validated_result": "tesSUCCESS",
+        "ledger_index": 10,
+        "recipient_balance_delta": 1000,
+        "borrower_balance_delta": -1030,
+        "borrower_sequence_delta": 1
+      },
+      "E5-D": {
+        "outcome": "PASS",
+        "authorization": "borrower master key only",
+        "result": "tesSUCCESS",
+        "transaction_hash": "AAFFA8627561E65E5A366F158B8363F238A708759F8DA6A81C4CE717C543434D",
+        "validated_result": "tesSUCCESS",
+        "ledger_index": 11,
+        "recipient_balance_delta": 2000,
+        "borrower_balance_delta": -2010,
+        "borrower_sequence_delta": 1
+      },
+      "E5-E": {
+        "outcome": "PASS",
+        "regular_key_present": false,
+        "master_key_disabled": false,
+        "claim": "No RegularKey is configured in the tested borrower state."
+      }
+    },
+    "public_signer_evidence_retained": true,
+    "transaction_count": 9,
+    "ledger_close_count": 9,
+    "lending_transactions_submitted": 0,
+    "evidence_manifest": {
+      "file_count": 19,
+      "bytes": 339157,
+      "verified": true
+    },
+    "result_state": {
+      "E1": "PASS/FROZEN",
+      "E2": "PASS/FROZEN",
+      "E3": "PASS/RETIRED within tested scope",
+      "E4": "PASS/RETIRED within tested scope",
+      "E5": "PASS",
+      "E6-E9": "NOT_ATTEMPTED"
+    },
+    "gates": {
+      "p1_p10": "PASS (10)",
+      "s1_s12_and_existing_e5": "PASS (28)",
+      "all_spike_tests": "PASS (102)",
+      "repository_unit_tests": "PASS (17)",
+      "conformance_tests": "PASS (4)",
+      "lint_format_large_file": "PASS",
+      "strict_typecheck": "PASS (25 source files)",
+      "secrets_scan": "PASS",
+      "json_validation": "PASS (136 files)",
+      "evidence_manifest_verification": "PASS (10 manifests, 118 payload files)",
+      "historical_evidence_immutability": "PASS",
+      "frozen_provenance_immutability": "PASS",
+      "authorized_paths_and_unchanged_review_submodules": "PASS",
+      "git_diff_check": "PASS"
+    },
+    "e6_may_begin_with_separate_authorization": true
+  },
   "checkpoint_1d_p": {
     "outcome": "PASS",
     "start_commit": "c522d2d2bad9b1d93bdd4c5d2244074b4042232e",

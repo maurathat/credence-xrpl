@@ -1,0 +1,544 @@
+{
+  "after_state": {
+    "borrower_account": {
+      "Account": "rM1rjNgK8xDx6gjCMko754mMMC8SZw9n7t",
+      "Balance": "999999990",
+      "Flags": 0,
+      "LedgerEntryType": "AccountRoot",
+      "OwnerCount": 1,
+      "PreviousTxnID": "674B84F0E51C216C55C0FB5E9FE989EE48942325CE76F647B608B19D9A38FFEB",
+      "PreviousTxnLgrSeq": 7,
+      "Sequence": 4,
+      "index": "CD362FE73D612C448CD3EBD9847D2AA1D85FFF9F636F32F12AE31FD71BC046D9",
+      "signer_lists": [
+        {
+          "Flags": 65536,
+          "LedgerEntryType": "SignerList",
+          "OwnerNode": "0",
+          "PreviousTxnID": "674B84F0E51C216C55C0FB5E9FE989EE48942325CE76F647B608B19D9A38FFEB",
+          "PreviousTxnLgrSeq": 7,
+          "SignerEntries": [
+            {
+              "SignerEntry": {
+                "Account": "rLYaNUeEtpXexaf8Lm5W5gAh7tNcjccDAr",
+                "SignerWeight": 1
+              }
+            },
+            {
+              "SignerEntry": {
+                "Account": "r4hEaHn2JPyGkmuyf2S4qHxe9295SiLG3N",
+                "SignerWeight": 1
+              }
+            }
+          ],
+          "SignerListID": 0,
+          "SignerQuorum": 2,
+          "index": "BBD2711EB49D0B9C17923AE54A25D2E9C3D60DFE21417807B32958D70C39F8B2"
+        }
+      ]
+    },
+    "recipient_account": {
+      "Account": "rQHSPVauX6Kt7BZ1oJPrY6179uySuJJH9W",
+      "Balance": "1000000000",
+      "Flags": 0,
+      "LedgerEntryType": "AccountRoot",
+      "OwnerCount": 0,
+      "PreviousTxnID": "9EF11EEAB985003AB2760E162F05C0C37B9CF436818E6BB8D050BCEFFC6B39F3",
+      "PreviousTxnLgrSeq": 6,
+      "Sequence": 6,
+      "index": "4B4623C9B85AE6ADEC9F3D9B87831612EB181C1258D1B0BC8DD30880BF7CAD86"
+    },
+    "signer_lists": [
+      {
+        "Flags": 65536,
+        "LedgerEntryType": "SignerList",
+        "OwnerNode": "0",
+        "PreviousTxnID": "674B84F0E51C216C55C0FB5E9FE989EE48942325CE76F647B608B19D9A38FFEB",
+        "PreviousTxnLgrSeq": 7,
+        "SignerEntries": [
+          {
+            "SignerEntry": {
+              "Account": "rLYaNUeEtpXexaf8Lm5W5gAh7tNcjccDAr",
+              "SignerWeight": 1
+            }
+          },
+          {
+            "SignerEntry": {
+              "Account": "r4hEaHn2JPyGkmuyf2S4qHxe9295SiLG3N",
+              "SignerWeight": 1
+            }
+          }
+        ],
+        "SignerListID": 0,
+        "SignerQuorum": 2,
+        "index": "BBD2711EB49D0B9C17923AE54A25D2E9C3D60DFE21417807B32958D70C39F8B2"
+      }
+    ]
+  },
+  "before_state": {
+    "borrower_account": {
+      "Account": "rM1rjNgK8xDx6gjCMko754mMMC8SZw9n7t",
+      "Balance": "999999990",
+      "Flags": 0,
+      "LedgerEntryType": "AccountRoot",
+      "OwnerCount": 1,
+      "PreviousTxnID": "674B84F0E51C216C55C0FB5E9FE989EE48942325CE76F647B608B19D9A38FFEB",
+      "PreviousTxnLgrSeq": 7,
+      "Sequence": 4,
+      "index": "CD362FE73D612C448CD3EBD9847D2AA1D85FFF9F636F32F12AE31FD71BC046D9",
+      "signer_lists": [
+        {
+          "Flags": 65536,
+          "LedgerEntryType": "SignerList",
+          "OwnerNode": "0",
+          "PreviousTxnID": "674B84F0E51C216C55C0FB5E9FE989EE48942325CE76F647B608B19D9A38FFEB",
+          "PreviousTxnLgrSeq": 7,
+          "SignerEntries": [
+            {
+              "SignerEntry": {
+                "Account": "rLYaNUeEtpXexaf8Lm5W5gAh7tNcjccDAr",
+                "SignerWeight": 1
+              }
+            },
+            {
+              "SignerEntry": {
+                "Account": "r4hEaHn2JPyGkmuyf2S4qHxe9295SiLG3N",
+                "SignerWeight": 1
+              }
+            }
+          ],
+          "SignerListID": 0,
+          "SignerQuorum": 2,
+          "index": "BBD2711EB49D0B9C17923AE54A25D2E9C3D60DFE21417807B32958D70C39F8B2"
+        }
+      ]
+    },
+    "recipient_account": {
+      "Account": "rQHSPVauX6Kt7BZ1oJPrY6179uySuJJH9W",
+      "Balance": "1000000000",
+      "Flags": 0,
+      "LedgerEntryType": "AccountRoot",
+      "OwnerCount": 0,
+      "PreviousTxnID": "9EF11EEAB985003AB2760E162F05C0C37B9CF436818E6BB8D050BCEFFC6B39F3",
+      "PreviousTxnLgrSeq": 6,
+      "Sequence": 6,
+      "index": "4B4623C9B85AE6ADEC9F3D9B87831612EB181C1258D1B0BC8DD30880BF7CAD86"
+    },
+    "signer_lists": [
+      {
+        "Flags": 65536,
+        "LedgerEntryType": "SignerList",
+        "OwnerNode": "0",
+        "PreviousTxnID": "674B84F0E51C216C55C0FB5E9FE989EE48942325CE76F647B608B19D9A38FFEB",
+        "PreviousTxnLgrSeq": 7,
+        "SignerEntries": [
+          {
+            "SignerEntry": {
+              "Account": "rLYaNUeEtpXexaf8Lm5W5gAh7tNcjccDAr",
+              "SignerWeight": 1
+            }
+          },
+          {
+            "SignerEntry": {
+              "Account": "r4hEaHn2JPyGkmuyf2S4qHxe9295SiLG3N",
+              "SignerWeight": 1
+            }
+          }
+        ],
+        "SignerListID": 0,
+        "SignerQuorum": 2,
+        "index": "BBD2711EB49D0B9C17923AE54A25D2E9C3D60DFE21417807B32958D70C39F8B2"
+      }
+    ]
+  },
+  "classification": {
+    "expected_result": "tefBAD_QUORUM",
+    "observed_result": "tefBAD_QUORUM",
+    "reasons": [],
+    "state_assertion": "PASS",
+    "state_unchanged": true,
+    "status": "PASS"
+  },
+  "expected_result": "tefBAD_QUORUM",
+  "experiment": "E5-A",
+  "label": "research_bot_alone_rejected",
+  "ledger_after": {
+    "close_time": 845348025,
+    "closed": true,
+    "ledger_hash": "2E3B00D2027A22FD24BF4283C74A39A25EB301C889CF99F950F67D0B855E427A",
+    "ledger_index": 8
+  },
+  "ledger_before": {
+    "close_time": 845348024,
+    "closed": true,
+    "ledger_hash": "754BE083FAF128555186A9DBF8DBF39F56E151085FA9F42E809A370888002C92",
+    "ledger_index": 7
+  },
+  "public_signing_evidence": {
+    "account": "rM1rjNgK8xDx6gjCMko754mMMC8SZw9n7t",
+    "account_sequence": 4,
+    "mode": "multisign",
+    "signed_transaction_blob": "12000021000053592400000004201B0000001B6140000000000003E868400000000000001473008114E4D7EBF0893C24CBC81BF82A926B3BC5536815D58314FF66BDB03922D192C362CE89AA7230FD3FB5E9CDF3E0107321ED3730AA92280D931196137CEE4B5DAC6CE9DACA0EC3EC7F8ADE19EF1C1E1C7B957440FF0F494BCA491D2592CE2D7708DDA5D6218E227FD59723E6FF69B25BD08CEA8233C5DE608E66AC7559AD814591A7B0A356FFDD812E74EAFB27A319C5CB81C30C8114D64BA6033DCBE8EC2C870096471F85FD5DE95E26E1F1",
+    "signers": [
+      {
+        "account": "rLYaNUeEtpXexaf8Lm5W5gAh7tNcjccDAr",
+        "public_key_hex": "ED3730AA92280D931196137CEE4B5DAC6CE9DACA0EC3EC7F8ADE19EF1C1E1C7B95",
+        "txn_signature_hex": "FF0F494BCA491D2592CE2D7708DDA5D6218E227FD59723E6FF69B25BD08CEA8233C5DE608E66AC7559AD814591A7B0A356FFDD812E74EAFB27A319C5CB81C30C"
+      }
+    ],
+    "signers_array_present": true,
+    "top_level_signing_public_key": "",
+    "top_level_transaction_signature_present": false,
+    "top_level_txn_signature_hex": null,
+    "transaction_fields": {
+      "Account": "rM1rjNgK8xDx6gjCMko754mMMC8SZw9n7t",
+      "Amount": "1000",
+      "Destination": "rQHSPVauX6Kt7BZ1oJPrY6179uySuJJH9W",
+      "Fee": "20",
+      "LastLedgerSequence": 27,
+      "NetworkID": 21337,
+      "Sequence": 4,
+      "TransactionType": "Payment"
+    },
+    "transaction_hash": "6E775571BDB287CACAD6D9C6736AAED13AB4ADFEF18EB825FE9BDB80D64A6597"
+  },
+  "relevant_state_unchanged": true,
+  "result_resolution": {
+    "authoritative_result": "tefBAD_QUORUM",
+    "category": "SUBMISSION_DETERMINISTIC_FAILURE",
+    "client_exception": null,
+    "malformed_request": null,
+    "submission_hash_if_any": "6E775571BDB287CACAD6D9C6736AAED13AB4ADFEF18EB825FE9BDB80D64A6597",
+    "submission_result": "tefBAD_QUORUM",
+    "transport_or_server_failure": null,
+    "validated_lookup_status": "NOT_IN_VALIDATED_LEDGER",
+    "validated_result_if_any": null
+  },
+  "state_assertions": [
+    {
+      "actual": {
+        "borrower_account": {
+          "Account": "rM1rjNgK8xDx6gjCMko754mMMC8SZw9n7t",
+          "Balance": "999999990",
+          "Flags": 0,
+          "LedgerEntryType": "AccountRoot",
+          "OwnerCount": 1,
+          "PreviousTxnID": "674B84F0E51C216C55C0FB5E9FE989EE48942325CE76F647B608B19D9A38FFEB",
+          "PreviousTxnLgrSeq": 7,
+          "Sequence": 4,
+          "index": "CD362FE73D612C448CD3EBD9847D2AA1D85FFF9F636F32F12AE31FD71BC046D9",
+          "signer_lists": [
+            {
+              "Flags": 65536,
+              "LedgerEntryType": "SignerList",
+              "OwnerNode": "0",
+              "PreviousTxnID": "674B84F0E51C216C55C0FB5E9FE989EE48942325CE76F647B608B19D9A38FFEB",
+              "PreviousTxnLgrSeq": 7,
+              "SignerEntries": [
+                {
+                  "SignerEntry": {
+                    "Account": "rLYaNUeEtpXexaf8Lm5W5gAh7tNcjccDAr",
+                    "SignerWeight": 1
+                  }
+                },
+                {
+                  "SignerEntry": {
+                    "Account": "r4hEaHn2JPyGkmuyf2S4qHxe9295SiLG3N",
+                    "SignerWeight": 1
+                  }
+                }
+              ],
+              "SignerListID": 0,
+              "SignerQuorum": 2,
+              "index": "BBD2711EB49D0B9C17923AE54A25D2E9C3D60DFE21417807B32958D70C39F8B2"
+            }
+          ]
+        },
+        "recipient_account": {
+          "Account": "rQHSPVauX6Kt7BZ1oJPrY6179uySuJJH9W",
+          "Balance": "1000000000",
+          "Flags": 0,
+          "LedgerEntryType": "AccountRoot",
+          "OwnerCount": 0,
+          "PreviousTxnID": "9EF11EEAB985003AB2760E162F05C0C37B9CF436818E6BB8D050BCEFFC6B39F3",
+          "PreviousTxnLgrSeq": 6,
+          "Sequence": 6,
+          "index": "4B4623C9B85AE6ADEC9F3D9B87831612EB181C1258D1B0BC8DD30880BF7CAD86"
+        },
+        "signer_lists": [
+          {
+            "Flags": 65536,
+            "LedgerEntryType": "SignerList",
+            "OwnerNode": "0",
+            "PreviousTxnID": "674B84F0E51C216C55C0FB5E9FE989EE48942325CE76F647B608B19D9A38FFEB",
+            "PreviousTxnLgrSeq": 7,
+            "SignerEntries": [
+              {
+                "SignerEntry": {
+                  "Account": "rLYaNUeEtpXexaf8Lm5W5gAh7tNcjccDAr",
+                  "SignerWeight": 1
+                }
+              },
+              {
+                "SignerEntry": {
+                  "Account": "r4hEaHn2JPyGkmuyf2S4qHxe9295SiLG3N",
+                  "SignerWeight": 1
+                }
+              }
+            ],
+            "SignerListID": 0,
+            "SignerQuorum": 2,
+            "index": "BBD2711EB49D0B9C17923AE54A25D2E9C3D60DFE21417807B32958D70C39F8B2"
+          }
+        ]
+      },
+      "expected": {
+        "borrower_account": {
+          "Account": "rM1rjNgK8xDx6gjCMko754mMMC8SZw9n7t",
+          "Balance": "999999990",
+          "Flags": 0,
+          "LedgerEntryType": "AccountRoot",
+          "OwnerCount": 1,
+          "PreviousTxnID": "674B84F0E51C216C55C0FB5E9FE989EE48942325CE76F647B608B19D9A38FFEB",
+          "PreviousTxnLgrSeq": 7,
+          "Sequence": 4,
+          "index": "CD362FE73D612C448CD3EBD9847D2AA1D85FFF9F636F32F12AE31FD71BC046D9",
+          "signer_lists": [
+            {
+              "Flags": 65536,
+              "LedgerEntryType": "SignerList",
+              "OwnerNode": "0",
+              "PreviousTxnID": "674B84F0E51C216C55C0FB5E9FE989EE48942325CE76F647B608B19D9A38FFEB",
+              "PreviousTxnLgrSeq": 7,
+              "SignerEntries": [
+                {
+                  "SignerEntry": {
+                    "Account": "rLYaNUeEtpXexaf8Lm5W5gAh7tNcjccDAr",
+                    "SignerWeight": 1
+                  }
+                },
+                {
+                  "SignerEntry": {
+                    "Account": "r4hEaHn2JPyGkmuyf2S4qHxe9295SiLG3N",
+                    "SignerWeight": 1
+                  }
+                }
+              ],
+              "SignerListID": 0,
+              "SignerQuorum": 2,
+              "index": "BBD2711EB49D0B9C17923AE54A25D2E9C3D60DFE21417807B32958D70C39F8B2"
+            }
+          ]
+        },
+        "recipient_account": {
+          "Account": "rQHSPVauX6Kt7BZ1oJPrY6179uySuJJH9W",
+          "Balance": "1000000000",
+          "Flags": 0,
+          "LedgerEntryType": "AccountRoot",
+          "OwnerCount": 0,
+          "PreviousTxnID": "9EF11EEAB985003AB2760E162F05C0C37B9CF436818E6BB8D050BCEFFC6B39F3",
+          "PreviousTxnLgrSeq": 6,
+          "Sequence": 6,
+          "index": "4B4623C9B85AE6ADEC9F3D9B87831612EB181C1258D1B0BC8DD30880BF7CAD86"
+        },
+        "signer_lists": [
+          {
+            "Flags": 65536,
+            "LedgerEntryType": "SignerList",
+            "OwnerNode": "0",
+            "PreviousTxnID": "674B84F0E51C216C55C0FB5E9FE989EE48942325CE76F647B608B19D9A38FFEB",
+            "PreviousTxnLgrSeq": 7,
+            "SignerEntries": [
+              {
+                "SignerEntry": {
+                  "Account": "rLYaNUeEtpXexaf8Lm5W5gAh7tNcjccDAr",
+                  "SignerWeight": 1
+                }
+              },
+              {
+                "SignerEntry": {
+                  "Account": "r4hEaHn2JPyGkmuyf2S4qHxe9295SiLG3N",
+                  "SignerWeight": 1
+                }
+              }
+            ],
+            "SignerListID": 0,
+            "SignerQuorum": 2,
+            "index": "BBD2711EB49D0B9C17923AE54A25D2E9C3D60DFE21417807B32958D70C39F8B2"
+          }
+        ]
+      },
+      "name": "negative protected state",
+      "passed": true
+    },
+    {
+      "actual": 4,
+      "expected": 4,
+      "name": "negative borrower sequence",
+      "passed": true
+    },
+    {
+      "actual": "1000000000",
+      "expected": "1000000000",
+      "name": "negative recipient balance",
+      "passed": true
+    },
+    {
+      "actual": 1,
+      "expected": 1,
+      "name": "borrower SignerList count",
+      "passed": true
+    },
+    {
+      "actual": 2,
+      "expected": 2,
+      "name": "borrower SignerQuorum",
+      "passed": true
+    },
+    {
+      "actual": {
+        "r4hEaHn2JPyGkmuyf2S4qHxe9295SiLG3N": 1,
+        "rLYaNUeEtpXexaf8Lm5W5gAh7tNcjccDAr": 1
+      },
+      "expected": {
+        "r4hEaHn2JPyGkmuyf2S4qHxe9295SiLG3N": 1,
+        "rLYaNUeEtpXexaf8Lm5W5gAh7tNcjccDAr": 1
+      },
+      "name": "borrower signer entries",
+      "passed": true
+    },
+    {
+      "actual": false,
+      "expected": false,
+      "name": "no RegularKey configured",
+      "passed": true
+    },
+    {
+      "actual": 0,
+      "expected": 0,
+      "name": "borrower master key remains enabled",
+      "passed": true
+    },
+    {
+      "actual": "rM1rjNgK8xDx6gjCMko754mMMC8SZw9n7t",
+      "expected": "rM1rjNgK8xDx6gjCMko754mMMC8SZw9n7t",
+      "name": "authorization account",
+      "passed": true
+    },
+    {
+      "actual": "multisign",
+      "expected": "multisign",
+      "name": "authorization mode",
+      "passed": true
+    },
+    {
+      "actual": {
+        "rLYaNUeEtpXexaf8Lm5W5gAh7tNcjccDAr": "ED3730AA92280D931196137CEE4B5DAC6CE9DACA0EC3EC7F8ADE19EF1C1E1C7B95"
+      },
+      "expected": {
+        "rLYaNUeEtpXexaf8Lm5W5gAh7tNcjccDAr": "ED3730AA92280D931196137CEE4B5DAC6CE9DACA0EC3EC7F8ADE19EF1C1E1C7B95"
+      },
+      "name": "authorization signer identities and keys",
+      "passed": true
+    },
+    {
+      "actual": true,
+      "expected": true,
+      "name": "signed transaction blob retained",
+      "passed": true
+    },
+    {
+      "actual": "6E775571BDB287CACAD6D9C6736AAED13AB4ADFEF18EB825FE9BDB80D64A6597",
+      "expected": true,
+      "name": "transaction hash retained",
+      "passed": true
+    },
+    {
+      "actual": "",
+      "expected": "",
+      "name": "multisign top-level SigningPubKey",
+      "passed": true
+    },
+    {
+      "actual": false,
+      "expected": false,
+      "name": "multisign top-level TxnSignature absent",
+      "passed": true
+    },
+    {
+      "actual": true,
+      "expected": true,
+      "name": "multisign Signers present",
+      "passed": true
+    },
+    {
+      "actual": true,
+      "expected": true,
+      "name": "rLYaNUeEtpXexaf8Lm5W5gAh7tNcjccDAr public key retained",
+      "passed": true
+    },
+    {
+      "actual": true,
+      "expected": true,
+      "name": "rLYaNUeEtpXexaf8Lm5W5gAh7tNcjccDAr signature retained",
+      "passed": true
+    }
+  ],
+  "submission_hash_if_any": "6E775571BDB287CACAD6D9C6736AAED13AB4ADFEF18EB825FE9BDB80D64A6597",
+  "submission_response": {
+    "accepted": false,
+    "account_sequence_available": 4,
+    "account_sequence_next": 4,
+    "applied": false,
+    "broadcast": false,
+    "engine_result": "tefBAD_QUORUM",
+    "engine_result_code": -185,
+    "engine_result_message": "Signatures provided do not meet the quorum.",
+    "kept": false,
+    "open_ledger_cost": "20",
+    "queued": false,
+    "tx_json": {
+      "Account": "rM1rjNgK8xDx6gjCMko754mMMC8SZw9n7t",
+      "Amount": "1000",
+      "Destination": "rQHSPVauX6Kt7BZ1oJPrY6179uySuJJH9W",
+      "Fee": "20",
+      "LastLedgerSequence": 27,
+      "NetworkID": 21337,
+      "Sequence": 4,
+      "Signers": [
+        {
+          "Signer": {
+            "Account": "rLYaNUeEtpXexaf8Lm5W5gAh7tNcjccDAr"
+          }
+        }
+      ],
+      "TransactionType": "Payment",
+      "hash": "6E775571BDB287CACAD6D9C6736AAED13AB4ADFEF18EB825FE9BDB80D64A6597"
+    },
+    "validated_ledger_index": 7
+  },
+  "submission_result": "tefBAD_QUORUM",
+  "validated_lookup_status": "NOT_IN_VALIDATED_LEDGER",
+  "validated_result_if_any": null,
+  "validated_transaction_response": {
+    "Account": "rM1rjNgK8xDx6gjCMko754mMMC8SZw9n7t",
+    "Amount": "1000",
+    "DeliverMax": "1000",
+    "Destination": "rQHSPVauX6Kt7BZ1oJPrY6179uySuJJH9W",
+    "Fee": "20",
+    "LastLedgerSequence": 27,
+    "NetworkID": 21337,
+    "Sequence": 4,
+    "Signers": [
+      {
+        "Signer": {
+          "Account": "rLYaNUeEtpXexaf8Lm5W5gAh7tNcjccDAr"
+        }
+      }
+    ],
+    "TransactionType": "Payment",
+    "hash": "6E775571BDB287CACAD6D9C6736AAED13AB4ADFEF18EB825FE9BDB80D64A6597",
+    "status": "success",
+    "validated": false
+  }
+}

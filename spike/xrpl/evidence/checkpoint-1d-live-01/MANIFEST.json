@@ -1,0 +1,101 @@
+{
+  "algorithm": "SHA-256",
+  "file_count": 19,
+  "files": [
+    {
+      "bytes": 697,
+      "path": "actors-public.json",
+      "sha256": "a6db4eadd3e9a9ac641a4b6628461137c51d8a9361324f64f6e4a5f5a945b3e5"
+    },
+    {
+      "bytes": 1074,
+      "path": "amendments-ledger-entry.json",
+      "sha256": "571ad1f3a67d50a596c7146e43f8ef186d149e8d65c774aecf14204a091c752e"
+    },
+    {
+      "bytes": 80844,
+      "path": "checkpoint-result.json",
+      "sha256": "03f33fec3e797356f62bb9425e60606416814cc7d4d6f77649d16df8918ac2e4"
+    },
+    {
+      "bytes": 3449,
+      "path": "e5-e-regular-key-absence.json",
+      "sha256": "b4e82489d59baceda4e7ecfabbdfbf51368d4254d66ffda9a5e7ecd52a6209ca"
+    },
+    {
+      "bytes": 9084,
+      "path": "environment-start.json",
+      "sha256": "0ad607768e13488bfcb25d7ef4ebd0d68bf90cb9dcb4903ef53ed0300477615c"
+    },
+    {
+      "bytes": 109232,
+      "path": "experiment-summary.json",
+      "sha256": "fc75e7d1ff2effe85cbcdd878051a86255cd02c90bac5bf00b4f350e72d3151a"
+    },
+    {
+      "bytes": 19677,
+      "path": "feature-raw.json",
+      "sha256": "69e43df7637a7be0b1a1b02d18c1b89c5517ddc849e341ccc05a920800b07844"
+    },
+    {
+      "bytes": 5029,
+      "path": "ledger-closes.json",
+      "sha256": "5d8d264a79ff58d3a731fd6d3df867b434bec6244d31e5a042a27ebbff4db1dc"
+    },
+    {
+      "bytes": 946,
+      "path": "provenance.json",
+      "sha256": "4c8622ff074a7d56cf3740082bbd7918da5351615f8884803db04b48b6a2831b"
+    },
+    {
+      "bytes": 6163,
+      "path": "signer-list-state.json",
+      "sha256": "6d8d278b08161ffd3c941ce51b74938286ebd3cab0b51c60229c48ceec6d69b7"
+    },
+    {
+      "bytes": 6027,
+      "path": "transactions/01-fund_borrower.json",
+      "sha256": "5d03d80530187c1140d4799ad4d9e4da821d40329929959938631514b753f46a"
+    },
+    {
+      "bytes": 6192,
+      "path": "transactions/02-fund_research_bot_signer.json",
+      "sha256": "a1c76981ac5b1ab1868a03c0cc3f5fe6d1989ad846453ee048a426338800dd26"
+    },
+    {
+      "bytes": 6201,
+      "path": "transactions/03-fund_credence_policy_signer.json",
+      "sha256": "972e83327bd3cad67d1989afa03aa175f5ce4ea11ef3624dcb9f8a909c85c5f6"
+    },
+    {
+      "bytes": 6190,
+      "path": "transactions/04-fund_payment_recipient.json",
+      "sha256": "8194637ede59bcdb19724e9f8b4c97186f6e22a27c282ad476930a2acb0a8ff5"
+    },
+    {
+      "bytes": 11230,
+      "path": "transactions/05-borrower_set_2_of_2_signer_list.json",
+      "sha256": "c22014b492a40d94275ba90dde2a564b2fd0ed688a01d18085f0599c0c735400"
+    },
+    {
+      "bytes": 17698,
+      "path": "transactions/06-research_bot_alone_rejected.json",
+      "sha256": "ddf9b50d8e3434018b879b347cf6ff76a264c842cc9fbaaf746409ede7a7147e"
+    },
+    {
+      "bytes": 17701,
+      "path": "transactions/07-credence_policy_alone_rejected.json",
+      "sha256": "0e2b01ca71d6e1c630d78fa832e676dba8f8b84d02fa85dc31b18d96abd26315"
+    },
+    {
+      "bytes": 16980,
+      "path": "transactions/08-research_bot_and_credence_multisign_payment.json",
+      "sha256": "5da49621a4276b91305501de439a8a4b7073ca6aa35d716a65a992c39c331223"
+    },
+    {
+      "bytes": 14743,
+      "path": "transactions/09-owner_master_key_payment.json",
+      "sha256": "95a050cadf160ff9b83b9415f167ba93f1008184583e9bbbd165674fb80290ce"
+    }
+  ]
+}

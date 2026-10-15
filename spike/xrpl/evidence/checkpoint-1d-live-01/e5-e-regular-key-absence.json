@@ -1,0 +1,120 @@
+{
+  "experiment": "E5-E",
+  "precise_claim": "No regular key is configured in the tested borrower state.",
+  "result": "PASS",
+  "state_assertions": [
+    {
+      "actual": false,
+      "expected": false,
+      "name": "no RegularKey configured",
+      "passed": true
+    },
+    {
+      "actual": 0,
+      "expected": 0,
+      "name": "borrower master key remains enabled",
+      "passed": true
+    },
+    {
+      "actual": 1,
+      "expected": 1,
+      "name": "borrower SignerList count",
+      "passed": true
+    },
+    {
+      "actual": 2,
+      "expected": 2,
+      "name": "borrower SignerQuorum",
+      "passed": true
+    },
+    {
+      "actual": {
+        "r4hEaHn2JPyGkmuyf2S4qHxe9295SiLG3N": 1,
+        "rLYaNUeEtpXexaf8Lm5W5gAh7tNcjccDAr": 1
+      },
+      "expected": {
+        "r4hEaHn2JPyGkmuyf2S4qHxe9295SiLG3N": 1,
+        "rLYaNUeEtpXexaf8Lm5W5gAh7tNcjccDAr": 1
+      },
+      "name": "borrower signer entries",
+      "passed": true
+    }
+  ],
+  "transaction_submitted": false,
+  "validated_state": {
+    "borrower_account": {
+      "Account": "rM1rjNgK8xDx6gjCMko754mMMC8SZw9n7t",
+      "Balance": "999996950",
+      "Flags": 0,
+      "LedgerEntryType": "AccountRoot",
+      "OwnerCount": 1,
+      "PreviousTxnID": "AAFFA8627561E65E5A366F158B8363F238A708759F8DA6A81C4CE717C543434D",
+      "PreviousTxnLgrSeq": 11,
+      "Sequence": 6,
+      "index": "CD362FE73D612C448CD3EBD9847D2AA1D85FFF9F636F32F12AE31FD71BC046D9",
+      "signer_lists": [
+        {
+          "Flags": 65536,
+          "LedgerEntryType": "SignerList",
+          "OwnerNode": "0",
+          "PreviousTxnID": "674B84F0E51C216C55C0FB5E9FE989EE48942325CE76F647B608B19D9A38FFEB",
+          "PreviousTxnLgrSeq": 7,
+          "SignerEntries": [
+            {
+              "SignerEntry": {
+                "Account": "rLYaNUeEtpXexaf8Lm5W5gAh7tNcjccDAr",
+                "SignerWeight": 1
+              }
+            },
+            {
+              "SignerEntry": {
+                "Account": "r4hEaHn2JPyGkmuyf2S4qHxe9295SiLG3N",
+                "SignerWeight": 1
+              }
+            }
+          ],
+          "SignerListID": 0,
+          "SignerQuorum": 2,
+          "index": "BBD2711EB49D0B9C17923AE54A25D2E9C3D60DFE21417807B32958D70C39F8B2"
+        }
+      ]
+    },
+    "recipient_account": {
+      "Account": "rQHSPVauX6Kt7BZ1oJPrY6179uySuJJH9W",
+      "Balance": "1000003000",
+      "Flags": 0,
+      "LedgerEntryType": "AccountRoot",
+      "OwnerCount": 0,
+      "PreviousTxnID": "AAFFA8627561E65E5A366F158B8363F238A708759F8DA6A81C4CE717C543434D",
+      "PreviousTxnLgrSeq": 11,
+      "Sequence": 6,
+      "index": "4B4623C9B85AE6ADEC9F3D9B87831612EB181C1258D1B0BC8DD30880BF7CAD86"
+    },
+    "signer_lists": [
+      {
+        "Flags": 65536,
+        "LedgerEntryType": "SignerList",
+        "OwnerNode": "0",
+        "PreviousTxnID": "674B84F0E51C216C55C0FB5E9FE989EE48942325CE76F647B608B19D9A38FFEB",
+        "PreviousTxnLgrSeq": 7,
+        "SignerEntries": [
+          {
+            "SignerEntry": {
+              "Account": "rLYaNUeEtpXexaf8Lm5W5gAh7tNcjccDAr",
+              "SignerWeight": 1
+            }
+          },
+          {
+            "SignerEntry": {
+              "Account": "r4hEaHn2JPyGkmuyf2S4qHxe9295SiLG3N",
+              "SignerWeight": 1
+            }
+          }
+        ],
+        "SignerListID": 0,
+        "SignerQuorum": 2,
+        "index": "BBD2711EB49D0B9C17923AE54A25D2E9C3D60DFE21417807B32958D70C39F8B2"
+      }
+    ]
+  }
+}
