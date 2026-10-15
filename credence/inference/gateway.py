@@ -71,6 +71,7 @@ from credence.inference.provider import (
     AttestationCapability,
     InferenceProvider,
     ProviderAttestation,
+    ProviderExecutionError,
     ProviderRequest,
     ProviderResult,
     ProviderUnavailableError,
@@ -310,10 +311,9 @@ class Gateway:
             )
         except ProviderUnavailableError as exc:
             return failed(ProviderFailureKind.PROVIDER_UNAVAILABLE, str(exc))
-        except Exception as exc:  # any other failure inside the provider is an execution error
-            return failed(
-                ProviderFailureKind.PROVIDER_EXECUTION_ERROR, f"{type(exc).__name__}: {exc}"
-            )
+        except ProviderExecutionError as exc:
+            return failed(ProviderFailureKind.PROVIDER_EXECUTION_ERROR, str(exc))
+        # Any other exception is a programming error, not a provider outcome: it propagates.
         completed_at = self._clock()
 
         try:

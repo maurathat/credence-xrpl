@@ -1,15 +1,16 @@
 # INFERENCE-GATEWAY-CONTRACT
 
-Owner: Inference (Claude Code). Status: Inference Checkpoint 1. Only the owner edits this file. Other workstreams file a request in `contracts/requests/`.
+Owner: Inference (Claude Code). Status: Inference Checkpoint 2 (local Tier 2 provider added). Only the owner edits this file. Other workstreams file a request in `contracts/requests/`.
 
 This contract describes the in-process inference gateway in `credence/inference/`:
 - the gateway (`gateway.py`);
 - the provider boundary (`provider.py`);
 - payload digests and token-count source (`payload.py`);
 - the receipt chain and the settled-receipt fact (`receipt_state.py`);
-- the deterministic fake providers (`fake_providers.py`).
+- the deterministic fake providers (`fake_providers.py`);
+- the local Llama 3.1 8B Instruct Tier 2 provider (`local_llama.py`).
 
-The code is authoritative. `tests/unit/test_inference_contract.py` checks the lists and tables here against the code. `tests/unit/test_inference_gateway.py` runs every behaviour below through the real Core engines. The fixtures are in `contracts/fixtures/inference_c1/`.
+The code is authoritative. `tests/unit/test_inference_contract.py` checks the lists and tables here against the code. `tests/unit/test_inference_gateway.py` runs every behaviour below through the real Core engines. `tests/unit/test_inference_local_llama.py` covers the local provider without the model, and `tests/integration/test_local_llama.py` runs it with the real model. Fixtures and evidence are in `contracts/fixtures/` (see Fixtures and evidence).
 
 ## Claim boundaries
 
@@ -22,7 +23,7 @@ The code is authoritative. `tests/unit/test_inference_contract.py` checks the li
 - A Tier 1 provider signs nothing. Nothing at Tier 1 implies the provider signed or attested anything.
 - Tier 2 is a provider's signed statement. It is not a measurement: no GPU execution proof, no loaded-artifact measurement, no TEE measurement.
 - A model name alone verifies no weights. A profile field that is null is NOT ASSERTED, and the gateway never fills one in.
-- Checkpoint 1 runs only the fake providers below. No real provider is called.
+- The only real provider is the local Tier 2 provider (see Local Tier 2 provider). No remote provider is called.
 
 ## Core dependency
 
@@ -196,7 +197,7 @@ Provider failure kinds: `PROVIDER_UNAVAILABLE`, `PROVIDER_EXECUTION_ERROR`, `PRO
 
 What causes each provider failure:
 - `PROVIDER_UNAVAILABLE`: no provider connected for the request's provider ID, or the provider raised `ProviderUnavailableError`.
-- `PROVIDER_EXECUTION_ERROR`: the provider raised any other exception, including `ProviderExecutionError`.
+- `PROVIDER_EXECUTION_ERROR`: the provider raised `ProviderExecutionError`.
 - `PROVIDER_MALFORMED_RESPONSE`: any of the following:
   - the result is not a `ProviderResult`;
   - it names another provider;
@@ -205,6 +206,8 @@ What causes each provider failure:
   - a token count is missing;
   - the attestation does not match the provider's capability or is mistyped;
   - a receipt cannot be built from the result (for example a negative, bool or out-of-range count).
+
+Any other exception raised inside a provider is a programming error, not a provider outcome. The gateway does not catch it: it propagates to the caller, and the reservation already taken stays held. A future public API must translate it into an opaque internal error and must not expose its message or stack trace.
 
 What these codes are not:
 - They are not Core reason codes. No decision record is created for them.
@@ -224,17 +227,98 @@ These are deterministic and in process, with no network or credentials:
 - The Tier 1 fake does not model Nebius behaviour.
 - The Tier 2 fake runs no model and hashes no weights file.
 
-## Fixtures
+## Local Tier 2 provider
+
+`LocalLlamaProvider` (provider ID `local-llama-provider`) serves Llama 3.1 8B Instruct from a local Ollama runtime. It is the build plan's Provider B in process: the provider's signing key is held by the provider object, separate from the gateway key, but in the same process. A separate sidecar process is not implemented.
+
+### Artifact identity
+
+- **Model family.** The model family is Llama 3.1 8B Instruct (Meta). The local execution artifact is an Ollama library GGUF conversion of it, not Meta's original files.
+- **One file, one digest.** The artifact is the single GGUF file that the Ollama manifest for one library tag names as its one model layer. `model_artifact_digest` is SHA-256 of that file's exact bytes.
+- **Checked at bind time.** `bind_local_artifact` streams the file and refuses (`ArtifactBindingError`) unless all of these hold:
+  - its size and digest equal the manifest's content address;
+  - there is exactly one model layer;
+  - there is no adapter layer.
+- **Checked before every execution.** The provider re-reads the manifest. It refuses (`ProviderUnavailableError`) if the tag now names a different model or template file than was bound. The file is not re-hashed on each request.
+- **`model_identifier`** is `ollama:` followed by the tag.
+
+### Runtime, template and tokenizer
+
+| Profile member | Value |
+| --- | --- |
+| `runtime` | `ollama` and the version the runtime reports at bind time |
+| `chat_template_digest` | SHA-256 of the manifest's template file, checked against its content address; null if the manifest has no template layer |
+| `tokenizer_digest` | Null (NOT ASSERTED): the tokenizer is embedded in the GGUF file, so it has no separate bytes; the artifact digest covers the file it lives in |
+| `adapter_digest` | Null: no adapter (bind refuses one) |
+| `precision`, `quantization` | `F16` and `none` only when the file's GGUF `general.file_type` is 1 (mostly F16) and every tensor the runtime reports is F16 or F32; otherwise both null (NOT ASSERTED) |
+| `context_min_tokens` | The context window the provider configures (`num_ctx`) |
+| `sampling` | The temperature and fixed seed the provider sends on every request |
+
+The provider only talks to a loopback `http` address (`LoopbackOllamaTransport`). It calls `/api/chat` with one user message (the prompt), `stream` false, its configured temperature, seed and context window, and `num_predict` equal to the quote's `max_output_tokens`.
+
+### Token-count provenance
+
+- The counts are the runtime's own: `prompt_eval_count` (input, including cached prompt tokens) and `eval_count` (output).
+- The provider reports them and signs them in its attestation. The gateway copies them (`provider_reported`).
+- The runtime exposes no tokenizer endpoint, and the gateway runs no tokenizer, so nothing counts them independently.
+
+### Provider signature
+
+The provider signs every `credence.provider_attestation` through C3A `sign` with its own key. Its key ID is registered under the `provider` role with subject `local-llama-provider`. The key is generated at runtime and never written. Only public key IDs and signatures appear in committed evidence.
+
+### Claim boundary
+
+**Artifact binding is not execution measurement.** For the local provider, Credence may say:
+- the provider selected and configured this exact file, by digest;
+- it ran the request through the recorded runtime;
+- it returned these bytes;
+- it reports these token counts;
+- it signed the attestation.
+
+Credence must not say any of the following:
+- that these weights were resident in GPU memory;
+- that loaded state was measured;
+- that a TEE attested anything;
+- that there is physical-device execution proof;
+- that this is Tier 3.
+
+Nothing here says the local file is what any other provider runs. The only assertion shared with another provider is the model family.
+
+### Runtime failures
+
+| Runtime condition | Provider raises | Gateway outcome |
+| --- | --- | --- |
+| Runtime unreachable, model not found (HTTP 404), or the bound artifact changed or is gone | `ProviderUnavailableError` | `PROVIDER_UNAVAILABLE` |
+| Other HTTP error, timeout, a body that is not a JSON object, or a reply naming another model, not done, without content, or without valid counts | `ProviderExecutionError` | `PROVIDER_EXECUTION_ERROR` |
+
+## Fixtures and evidence
 
 `contracts/fixtures/inference_c1/` holds one complete Tier 1 delivery and one complete Tier 2 delivery, plus a `MANIFEST.json` of their SHA-256s:
 - each holds the synthetic prompt and response text, every canonical object, the TEST key registry (public key IDs only) and the expected digests;
 - `contracts/fixtures/build_inference_c1_fixtures.py` regenerates them byte-identically;
 - `tests/conformance/test_inference_c1_fixtures.py` re-verifies each one through Core alone.
 
+These are **deterministic protocol fixtures**.
+
+`contracts/fixtures/inference_c2/local-llama-tier2-observation.json` is **runtime-observation evidence** from one real local run:
+- **Not regenerable.** It carries wall-clock timestamps, runtime timings and a provider key generated for that run.
+- **Contents:**
+  - artifact provenance by content address;
+  - the bound profile;
+  - every canonical object;
+  - the public key registry;
+  - the synthetic prompt;
+  - the observed counts and timings;
+  - whether a repeat of the same prompt gave the same response digest.
+- **Left out:** the response text (only its digest is kept), model weights, private keys and machine paths.
+- **How it is checked:** `contracts/fixtures/record_local_llama_observation.py` writes it, and `tests/conformance/test_inference_c2_observation.py` re-verifies its digests, signatures and verifier decision through Core alone. Because the response text is not committed, the delivered-response digest in that check is the recorded one, not an independent one.
+
 ## Not in this contract
 
 - Quoting: there is no 402 step, and `gateway.quote` is not implemented.
-- Real providers: no Nebius calls (`provider_a.py` is a stub), and no local model or sidecar process (`provider_b_sidecar.py` is a stub).
+- Remote providers: no Nebius calls (`provider_a.py` is a stub).
+- A separate signing-sidecar process (`provider_b_sidecar.py` is a stub); the local provider signs in process.
+- Tier 3, or any measurement of loaded weights.
 - ResearchBot.
 - Settlement: no settlement, reservation release, disputes, XRPL payments, LoanSet or LoanPay.
 - Persistence: none for chain heads or settled receipts.

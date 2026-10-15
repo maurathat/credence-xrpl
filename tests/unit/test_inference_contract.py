@@ -110,3 +110,32 @@ def test_fake_provider_table() -> None:
 
 def test_tier_three_is_not_implemented() -> None:
     assert "| 3, Measured | Not implemented |" in section("Claim boundaries")
+
+
+def test_local_provider_section_matches_code() -> None:
+    from credence.inference import local_llama
+
+    text = section("Local Tier 2 provider")
+    assert f"provider ID `{local_llama.LOCAL_PROVIDER_ID.value}`" in text
+    runtime = section("Runtime, template and tokenizer")
+    assert local_llama.GGUF_FILE_TYPE_MOSTLY_F16 == 1
+    assert "`general.file_type` is 1 (mostly F16)" in runtime
+    assert local_llama.UNQUANTIZED_TENSOR_TYPES == {"F16", "F32"}
+    assert "every tensor the runtime reports is F16 or F32" in runtime
+    profile_rows = re.findall(
+        r"^\| `(\w+)`(?:, `(\w+)`)? \|", section("Runtime, template and tokenizer"), re.M
+    )
+    documented = {name for row in profile_rows for name in row if name}
+    from credence.core.objects import ExecutionProfile
+
+    assert documented == set(ExecutionProfile.MEMBERS) - {
+        "model_identifier",
+        "model_artifact_digest",
+    }
+    assert "**Artifact binding is not execution measurement.**" in section("Claim boundary")
+
+
+def test_unexpected_exceptions_are_documented_as_propagating() -> None:
+    text = section("Failure behaviour")
+    assert "- `PROVIDER_EXECUTION_ERROR`: the provider raised `ProviderExecutionError`." in text
+    assert "it propagates to the caller" in text

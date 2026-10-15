@@ -1,0 +1,300 @@
+{
+  "id": "local-llama-tier2-observation",
+  "kind": "runtime-observation",
+  "regenerable": false,
+  "description": "One real Tier 2 purchase: local Llama 3.1 8B Instruct (Ollama library F16 GGUF) through the real gateway and Core engines. Artifact binding is not execution measurement: no GPU-memory, TEE or Tier 3 claim.",
+  "environment": {
+    "machine": "arm64",
+    "os": "macOS 26.6.2",
+    "chip": "Apple M4 Pro",
+    "memory_bytes": 68719476736,
+    "runtime": "ollama 0.34.2"
+  },
+  "artifact": {
+    "upstream_model_family": "Llama 3.1 8B Instruct (Meta)",
+    "local_execution_artifact": "Ollama library GGUF conversion; not Meta's original files",
+    "source": "registry.ollama.ai/library/llama3.1:8b-instruct-fp16",
+    "manifest_sha256": "sha256:4aacac4194543ff7f70dab3f2ebc169c132d5319bb36f7a7e99c4ff525ebcc09",
+    "layers": [
+      {
+        "media_type": "application/vnd.ollama.image.model",
+        "digest": "sha256:09cd6813dc2e73d9db9345123ee1b3385bb7cee88a46f13dc37bc3d5e96ba3a4",
+        "size": 16068895872
+      },
+      {
+        "media_type": "application/vnd.ollama.image.template",
+        "digest": "sha256:948af2743fc78a328dcb3b0f5a31b3d75f415840fdb699e8b1235978392ecf85",
+        "size": 1481
+      },
+      {
+        "media_type": "application/vnd.ollama.image.license",
+        "digest": "sha256:0ba8f0e314b4264dfd19df045cde9d4c394a52474bf92ed6a3de22a4ca31a177",
+        "size": 12320
+      },
+      {
+        "media_type": "application/vnd.ollama.image.params",
+        "digest": "sha256:56bb8bd477a519ffa694fc449c2413c6f0e1d3b1c88fa7e3c9d88d3ae49d4dcb",
+        "size": 96
+      }
+    ],
+    "model_file_bytes": 16068895872,
+    "model_file_sha256": "sha256:09cd6813dc2e73d9db9345123ee1b3385bb7cee88a46f13dc37bc3d5e96ba3a4",
+    "chat_template_sha256": "sha256:948af2743fc78a328dcb3b0f5a31b3d75f415840fdb699e8b1235978392ecf85",
+    "gguf_general_file_type": 1,
+    "tensor_types": [
+      "F16",
+      "F32"
+    ],
+    "models_dir_is_outside_repository": true
+  },
+  "sampling": {
+    "temperature_milli": 0,
+    "seed": 42,
+    "context_tokens": 8192,
+    "max_output_tokens": 48
+  },
+  "registry": [
+    {
+      "key_id": "ed25519:2c23dc97e9f015345545d0fe338930146befb224aaf57740821a5e00449ddf31",
+      "role": "provider",
+      "subject": "local-llama-provider",
+      "status": "current"
+    },
+    {
+      "key_id": "ed25519:8eb04a6e6270b38255541f977baeb77f3d0b69c44011fb876ff2a32985acf4f1",
+      "role": "agent",
+      "subject": "r3Zdu6biBrNYcvs4zre45udj6WW18yoJst",
+      "status": "current"
+    },
+    {
+      "key_id": "ed25519:9f309c7b8e7fa1a43f79c7fbcaf10b60c98332debedc3d2f94d3f43c2f2fd08f",
+      "role": "gateway",
+      "subject": "credence-gateway",
+      "status": "current"
+    }
+  ],
+  "provider_key_id": "ed25519:2c23dc97e9f015345545d0fe338930146befb224aaf57740821a5e00449ddf31",
+  "provider_key_origin": "generated at runtime for this run; never written",
+  "prompt_text": "Synthetic Credence test prompt: reply with exactly the word OK and nothing else.",
+  "response_text": null,
+  "objects": {
+    "facility": {
+      "object_type": "credence.facility",
+      "schema_version": "1",
+      "facility_id": "facility-local-llama-tier2",
+      "borrower_account": "r3Zdu6biBrNYcvs4zre45udj6WW18yoJst",
+      "xrpl_loan_id": null,
+      "limit_micro_trlusd": 10000000,
+      "drawn_micro_trlusd": 0,
+      "term_seconds": 86400,
+      "maturity_at": "2026-12-31T00:00:00Z",
+      "spread_bps": 600,
+      "allowed_providers": [
+        "local-llama-provider"
+      ],
+      "allowed_procurement_classes": [
+        "sha256:fd7168a31bfb28ea47aeb74fc95733d66ec29ccca8d033991998ed8c9eb637e2"
+      ],
+      "minimum_evidence_tier": 2,
+      "purpose": "inference",
+      "owner_approval_digest": "sha256:bb683d1aa3bd40799f8ef19c0a9bb38307fd358db36724ee5a974a0eb7629254",
+      "status": "active"
+    },
+    "procurement_class": {
+      "object_type": "credence.procurement_class",
+      "schema_version": "1",
+      "model_family": "llama-3.1-8b-instruct",
+      "allowed_precisions": [
+        "F16"
+      ],
+      "allowed_quantizations": [
+        "none"
+      ],
+      "minimum_evidence_tier": 2,
+      "delivery_mode": "interactive",
+      "allowed_jurisdictions": [
+        "US"
+      ],
+      "allowed_data_residencies": [
+        "US"
+      ],
+      "allowed_providers": [
+        "local-llama-provider"
+      ]
+    },
+    "service_class": {
+      "object_type": "credence.service_class",
+      "schema_version": "1",
+      "execution_profile_digest": "sha256:94a8d3511721062d035e6374cc3a282309cbf3fd25d3ed42bcec6ab4c29662be",
+      "model_family": "llama-3.1-8b-instruct",
+      "delivery_mode": "interactive",
+      "service_tier": "base",
+      "jurisdiction": "US",
+      "data_residency": [
+        "US"
+      ],
+      "residency_region": null,
+      "evidence_tier": 2,
+      "latency_p95_ms": null,
+      "availability_bps": null
+    },
+    "execution_profile": {
+      "object_type": "credence.execution_profile",
+      "schema_version": "1",
+      "model_identifier": "ollama:llama3.1:8b-instruct-fp16",
+      "model_artifact_digest": "sha256:09cd6813dc2e73d9db9345123ee1b3385bb7cee88a46f13dc37bc3d5e96ba3a4",
+      "tokenizer_digest": null,
+      "adapter_digest": null,
+      "chat_template_digest": "sha256:948af2743fc78a328dcb3b0f5a31b3d75f415840fdb699e8b1235978392ecf85",
+      "runtime": "ollama 0.34.2",
+      "precision": "F16",
+      "quantization": "none",
+      "context_min_tokens": 8192,
+      "sampling": {
+        "temperature_milli": 0,
+        "seed_policy": "fixed",
+        "seed": 42
+      }
+    },
+    "quote": {
+      "object_type": "credence.quote",
+      "schema_version": "1",
+      "quote_id": "quote-local-llama-0001",
+      "provider_id": "local-llama-provider",
+      "service_class_digest": "sha256:843ae639441b61526b5c3ef99e572717d76190d5c498220265b3566e74350ce9",
+      "input_price_per_million_micro_trlusd": 100000,
+      "output_price_per_million_micro_trlusd": 400000,
+      "max_input_tokens": 4096,
+      "max_output_tokens": 48,
+      "valid_until": "2026-12-31T00:00:00Z"
+    },
+    "purchase_request": {
+      "object_type": "credence.purchase_request",
+      "schema_version": "1",
+      "facility_id": "facility-local-llama-tier2",
+      "provider_id": "local-llama-provider",
+      "quote_id": "quote-local-llama-0001",
+      "purpose": "inference",
+      "max_total_cost_micro_trlusd": 430,
+      "prompt_digest": "sha256:23c814aa36cf933e08ff29050955e584ced416d7b2485f3c36451f0b15360f51",
+      "nonce": "00000000000000000000000000000001",
+      "expires_at": "2026-12-31T00:00:00Z"
+    },
+    "purchase_request_signature": {
+      "object_type": "credence.signed_object",
+      "schema_version": "1",
+      "object_digest": "sha256:99ca25a10a9cdc83e71862ff87494db61f762ca9eefc93d97c7a31ff43444a74",
+      "key_id": "ed25519:8eb04a6e6270b38255541f977baeb77f3d0b69c44011fb876ff2a32985acf4f1",
+      "signature": "f47a641c40e6303a4fac47f0aeb6f96872ce288ebd874c185fb938b6f1ea478a632c49174ba222d80bc7a4dbb224af5ee59c707dad0ee6e93f713149ba688308"
+    },
+    "provider_attestation": {
+      "object_type": "credence.provider_attestation",
+      "schema_version": "1",
+      "purchase_request_digest": "sha256:99ca25a10a9cdc83e71862ff87494db61f762ca9eefc93d97c7a31ff43444a74",
+      "execution_profile_digest": "sha256:94a8d3511721062d035e6374cc3a282309cbf3fd25d3ed42bcec6ab4c29662be",
+      "response_digest": "sha256:565339bc4d33d72817b583024112eb7f5cdf3e5eef0252d6ec1b9c9a94e12bb3",
+      "input_token_count": 28,
+      "output_token_count": 2
+    },
+    "provider_attestation_signature": {
+      "object_type": "credence.signed_object",
+      "schema_version": "1",
+      "object_digest": "sha256:efe319f791b1ed6c206e7e3005e1bcbc319c5ad083cf6dcb7db48ab66c21e211",
+      "key_id": "ed25519:2c23dc97e9f015345545d0fe338930146befb224aaf57740821a5e00449ddf31",
+      "signature": "340a3dfd18c3ee9ee879405e7e727f37eb28ec572f7fa47103e4f9a247c58d08fc1192aabbd27e061edb72075ef14e55a8d9a3091681f7c9963b320b00969b0a"
+    },
+    "delivery_receipt": {
+      "object_type": "credence.delivery_receipt",
+      "schema_version": "1",
+      "purchase_request_digest": "sha256:99ca25a10a9cdc83e71862ff87494db61f762ca9eefc93d97c7a31ff43444a74",
+      "execution_profile_digest": "sha256:94a8d3511721062d035e6374cc3a282309cbf3fd25d3ed42bcec6ab4c29662be",
+      "provider_id": "local-llama-provider",
+      "response_digest": "sha256:565339bc4d33d72817b583024112eb7f5cdf3e5eef0252d6ec1b9c9a94e12bb3",
+      "input_token_count": 28,
+      "output_token_count": 2,
+      "price_micro_trlusd": 4,
+      "started_at": "2026-10-15T07:17:48Z",
+      "completed_at": "2026-10-15T07:17:48Z",
+      "nonce": "00000000000000000000000000000001",
+      "evidence_tier": 2,
+      "provider_attestation_digest": "sha256:efe319f791b1ed6c206e7e3005e1bcbc319c5ad083cf6dcb7db48ab66c21e211",
+      "previous_receipt_digest": null
+    },
+    "gateway_signature": {
+      "object_type": "credence.signed_object",
+      "schema_version": "1",
+      "object_digest": "sha256:c4d1298d1719d6b5043cf4ac966072ee46065baeb25e18697b4e03f3e4068cb3",
+      "key_id": "ed25519:9f309c7b8e7fa1a43f79c7fbcaf10b60c98332debedc3d2f94d3f43c2f2fd08f",
+      "signature": "7dc3f843cc4b7a42c0125716385578a5c45e4405410cae7719b7749578778d881ebe56e6930e668cb21ee84897d6eba54a14fbfff13f46e9eb711ae864a32a0e"
+    },
+    "reservation": {
+      "object_type": "credence.reservation",
+      "schema_version": "1",
+      "reservation_id": "reservation-99ca25a10a9cdc83e71862ff87494db6",
+      "facility_id": "facility-local-llama-tier2",
+      "quote_id": "quote-local-llama-0001",
+      "maximum_amount_micro_trlusd": 430,
+      "created_at": "2026-10-15T07:17:48Z",
+      "expires_at": "2026-10-15T07:27:48Z",
+      "status": "held"
+    },
+    "policy_decision": {
+      "object_type": "credence.decision_record",
+      "schema_version": "1",
+      "decision_stage": "policy",
+      "input_digests": [
+        "sha256:99ca25a10a9cdc83e71862ff87494db61f762ca9eefc93d97c7a31ff43444a74",
+        "sha256:fbd60a6e0758993dbd01081c6290282929a80746004312190461aec38f1137d5",
+        "sha256:df6c5755abb2abc7355f0d6524080ebc3d8f04b35410ed8851213951752f33fd",
+        "sha256:843ae639441b61526b5c3ef99e572717d76190d5c498220265b3566e74350ce9",
+        "sha256:94a8d3511721062d035e6374cc3a282309cbf3fd25d3ed42bcec6ab4c29662be",
+        "sha256:fd7168a31bfb28ea47aeb74fc95733d66ec29ccca8d033991998ed8c9eb637e2"
+      ],
+      "outcome": "accept",
+      "reason_code": null,
+      "engine_version": "credence-core-policy-c2",
+      "decided_at": "2026-10-15T07:17:48Z",
+      "authorized_transaction_digest": null,
+      "authorized_transaction_digest_scheme": null
+    },
+    "verifier_decision": {
+      "object_type": "credence.decision_record",
+      "schema_version": "1",
+      "decision_stage": "verifier",
+      "input_digests": [
+        "sha256:c4d1298d1719d6b5043cf4ac966072ee46065baeb25e18697b4e03f3e4068cb3",
+        "sha256:99ca25a10a9cdc83e71862ff87494db61f762ca9eefc93d97c7a31ff43444a74",
+        "sha256:df6c5755abb2abc7355f0d6524080ebc3d8f04b35410ed8851213951752f33fd",
+        "sha256:843ae639441b61526b5c3ef99e572717d76190d5c498220265b3566e74350ce9",
+        "sha256:94a8d3511721062d035e6374cc3a282309cbf3fd25d3ed42bcec6ab4c29662be",
+        "sha256:565339bc4d33d72817b583024112eb7f5cdf3e5eef0252d6ec1b9c9a94e12bb3",
+        "sha256:efe319f791b1ed6c206e7e3005e1bcbc319c5ad083cf6dcb7db48ab66c21e211"
+      ],
+      "outcome": "accept",
+      "reason_code": null,
+      "engine_version": "credence-core-verifier-c2",
+      "decided_at": "2026-10-15T07:17:48Z",
+      "authorized_transaction_digest": null,
+      "authorized_transaction_digest_scheme": null
+    }
+  },
+  "runtime_process": {
+    "server_started_with_bound_model_file": true,
+    "llama_server_version": "version: 0.4.1-dev (build 1, commit 391fac164)",
+    "how_observed": "process listing after the run; an observation, not a measurement"
+  },
+  "token_count_source": "provider_reported",
+  "runtime_timing_ns": {
+    "total_duration": 145031250,
+    "load_duration": 2040708,
+    "prompt_eval_duration": 78175000,
+    "eval_duration": 63372000
+  },
+  "observed": {
+    "outcome": "DeliveryVerified",
+    "receipt_digest": "sha256:c4d1298d1719d6b5043cf4ac966072ee46065baeb25e18697b4e03f3e4068cb3",
+    "provider_attestation_digest": "sha256:efe319f791b1ed6c206e7e3005e1bcbc319c5ad083cf6dcb7db48ab66c21e211",
+    "repeat_run_same_response_digest": true,
+    "repeat_run_same_token_counts": true
+  }
+}

@@ -45,7 +45,7 @@ from credence.core.primitives import (
     ReasonCode,
     ReservationStatus,
 )
-from credence.core.reservation_ledger import ReservationLedger
+from credence.core.reservation_ledger import ReservationLedger, reservation_id_for
 from credence.core.signatures import KeyRole, sign, verify_signed
 from credence.core.verifier import ProviderSignatureFact
 from credence.inference import gateway as gateway_module
@@ -567,7 +567,6 @@ def assert_operational_failure(
     [
         (ProviderUnavailableError("synthetic outage"), ProviderFailureKind.PROVIDER_UNAVAILABLE),
         (ProviderExecutionError("synthetic failure"), ProviderFailureKind.PROVIDER_EXECUTION_ERROR),
-        (RuntimeError("synthetic crash"), ProviderFailureKind.PROVIDER_EXECUTION_ERROR),
     ],
 )
 def test_provider_raises(tmp_path: Path, error: Exception, kind: ProviderFailureKind) -> None:
@@ -575,6 +574,16 @@ def test_provider_raises(tmp_path: Path, error: Exception, kind: ProviderFailure
     outcome = gateway.purchase(make_purchase(TIER1))
     assert_operational_failure(tmp_path, outcome, kind)
     assert gateway.chain.head(FACILITY_TIER1.facility_id) is None
+
+
+def test_unexpected_provider_exception_propagates(tmp_path: Path) -> None:
+    """A programming error inside a provider is not disguised as an execution failure."""
+    gateway = make_gateway(tmp_path, Raising(FAKE_TIER1_PROVIDER_ID, KeyError("synthetic bug")))
+    purchase = make_purchase(TIER1)
+    with pytest.raises(KeyError):
+        gateway.purchase(purchase)
+    held = ledger_at(tmp_path).get(reservation_id_for(purchase.request))
+    assert held.status is ReservationStatus.HELD  # the reservation stays held; C3B owns release
 
 
 def test_provider_not_connected(tmp_path: Path) -> None:
