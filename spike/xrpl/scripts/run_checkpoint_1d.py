@@ -23,6 +23,7 @@ from amendment_validation import (
 from e5_oracle import (
     authorization_assertions,
     negative_payment_assertions,
+    parse_account_info_signer_state,
     public_signing_evidence,
     regular_key_assertions,
     signer_list_assertions,
@@ -113,11 +114,9 @@ def authorization_state(borrower: str, recipient: str) -> dict[str, Any]:
         "account_info", account=borrower, ledger_index="validated", signer_lists=True
     )
     recipient_info = rpc_success("account_info", account=recipient, ledger_index="validated")
-    return {
-        "borrower_account": sanitize_response(borrower_info["account_data"]),
-        "signer_lists": sanitize_response(borrower_info.get("signer_lists", [])),
-        "recipient_account": sanitize_response(recipient_info["account_data"]),
-    }
+    signer_state = parse_account_info_signer_state(sanitize_response(borrower_info))
+    signer_state["recipient_account"] = sanitize_response(recipient_info["account_data"])
+    return signer_state
 
 
 def git_head() -> str:
@@ -280,6 +279,10 @@ def main() -> int:
             "scripts/e5_oracle.py": sha256_file(ORACLE_PATH),
             "scripts/run_checkpoint_1d.py": sha256_file(RUNNER_PATH),
             "tests/test_checkpoint_1d.py": sha256_file(TEST_PATH),
+        },
+        "signer_list_parser_binding": {
+            "path": "scripts/e5_oracle.py",
+            "sha256": sha256_file(ORACLE_PATH),
         },
         "independent_audit_commit": "593eb79694e86238af44785bf8d63e9a3e8086c9",
         "independent_audit_verdict": "PASS WITH CONDITIONS",

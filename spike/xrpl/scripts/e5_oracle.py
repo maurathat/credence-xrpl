@@ -10,6 +10,29 @@ from xrpl.core.binarycodec import encode
 LSF_DISABLE_MASTER = 0x00100000
 
 
+class SignerListResponseError(ValueError):
+    """The pinned account_info response cannot prove the expected SignerList state."""
+
+
+def parse_account_info_signer_state(result: dict[str, Any]) -> dict[str, Any]:
+    """Read the API-v1 SignerList location emitted by pinned rippled 3.4.0.
+
+    The Checkpoint 1D request did not select API v2. Pinned source places the
+    requested list under ``account_data.signer_lists`` for API v1. Deliberately
+    do not guess at the API-v2 top-level location.
+    """
+
+    account = result.get("account_data")
+    if not isinstance(account, dict):
+        raise SignerListResponseError("account_info result has no account_data object")
+    if "signer_lists" not in account:
+        raise SignerListResponseError("account_info account_data has no signer_lists member")
+    lists = account["signer_lists"]
+    if not isinstance(lists, list):
+        raise SignerListResponseError("account_data.signer_lists is not an array")
+    return {"borrower_account": account, "signer_lists": lists}
+
+
 def public_signing_evidence(transaction: dict[str, Any], tx_hash: str) -> dict[str, Any]:
     """Retain public signature material and a canonical signed blob, never private material."""
 
@@ -45,18 +68,25 @@ def public_signing_evidence(transaction: dict[str, Any], tx_hash: str) -> dict[s
     }
 
 
-def _signer_map(state: dict[str, Any]) -> dict[str, int]:
+def _signer_map(state: dict[str, Any]) -> dict[str, int] | None:
     lists = state.get("signer_lists", [])
-    if len(lists) != 1:
-        return {}
+    if not isinstance(lists, list) or len(lists) != 1 or not isinstance(lists[0], dict):
+        return None
     rows = lists[0].get("SignerEntries", [])
+    if not isinstance(rows, list):
+        return None
     result: dict[str, int] = {}
     for wrapper in rows:
+        if not isinstance(wrapper, dict):
+            return None
         entry = wrapper.get("SignerEntry", {})
+        if not isinstance(entry, dict):
+            return None
         account = entry.get("Account")
         weight = entry.get("SignerWeight")
-        if isinstance(account, str) and isinstance(weight, int):
-            result[account] = weight
+        if not isinstance(account, str) or not isinstance(weight, int) or account in result:
+            return None
+        result[account] = weight
     return result
 
 
@@ -67,7 +97,9 @@ def signer_list_assertions(
     policy_account: str,
 ) -> list[StateAssertion]:
     lists = state.get("signer_lists", [])
-    signer_list = lists[0] if len(lists) == 1 else {}
+    if not isinstance(lists, list):
+        lists = []
+    signer_list = lists[0] if len(lists) == 1 and isinstance(lists[0], dict) else {}
     return [
         state_assertion("borrower SignerList count", len(lists), 1),
         state_assertion("borrower SignerQuorum", signer_list.get("SignerQuorum"), 2),
@@ -77,6 +109,31 @@ def signer_list_assertions(
             {research_account: 1, policy_account: 1},
         ),
     ]
+
+
+def validate_expected_signer_list_response(
+    result: dict[str, Any],
+    *,
+    research_account: str,
+    policy_account: str,
+) -> dict[str, Any]:
+    """Parse and fail closed unless the response proves the exact 2-of-2 list."""
+
+    state = parse_account_info_signer_state(result)
+    failures = [
+        assertion.name
+        for assertion in signer_list_assertions(
+            state,
+            research_account=research_account,
+            policy_account=policy_account,
+        )
+        if not assertion.passed
+    ]
+    if failures:
+        raise SignerListResponseError(
+            "account_info SignerList validation failed: " + ", ".join(failures)
+        )
+    return state
 
 
 def regular_key_assertions(state: dict[str, Any]) -> list[StateAssertion]:

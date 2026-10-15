@@ -1,3 +1,111 @@
+# Checkpoint 1D-H — SignerList response-shape repair
+
+## Outcome
+
+**PASS — the narrow harness repair is complete. E5 remains BLOCKED.**
+
+Checkpoint 1D-H began from clean commit
+`2368e5c32f0be5f764edd56b0d8bd3cc6d810810`, with checkpoint-0 ancestry and
+submodule gitlinks unchanged. No rippled environment was started, no RPC call
+was made, no ledger was advanced, and **zero XRPL transactions were submitted**.
+
+## False-block reproduction and pinned response semantics
+
+The primary S1 fixture reads the committed Checkpoint 1D SignerListSet record.
+The legacy top-level `after_state.signer_lists` value is empty and reproduces
+the false BLOCK. The same record preserves the actual response content under
+`after_state.borrower_account.signer_lists`, corresponding to the original
+`result.account_data.signer_lists` path. It contains one list with quorum 2,
+ResearchBot weight 1, and Credence policy signer weight 1.
+
+Pinned rippled source commit
+`4a4fded2eba11427c48ce3f24d9c1aea5e7a9d17` establishes that unspecified
+network RPC versions use API version 1, and that `account_info` places requested
+SignerLists under `account_data.signer_lists` for API version 1. The source and
+its own API-version-1 tests are linked in `SIGNERLIST-REPAIR.md`.
+
+These remain setup observations. They do not establish E5-A through E5-E.
+
+## Exact repair
+
+The E5 state reader now consumes only the pinned API-version-1 location. The
+structural parser rejects missing/non-object `account_data`, missing
+`signer_lists`, and a non-array value. The semantic validator then requires
+exactly one list, quorum 2, and exactly the unique ResearchBot/Credence weight-1
+mapping. It rejects malformed, missing, extra, duplicate, or incorrectly
+weighted entries and treats entry ordering as non-semantic. It does not guess
+between response paths.
+
+## S1-S12 regression results
+
+| Test | Result |
+| --- | --- |
+| S1 committed Checkpoint 1D response | PASS |
+| S2 missing `account_data` | PASS — rejected |
+| S3 missing `signer_lists` | PASS — rejected |
+| S4 wrong quorum | PASS — rejected |
+| S5 missing ResearchBot | PASS — rejected |
+| S6 missing Credence signer | PASS — rejected |
+| S7 wrong signer weight | PASS — rejected |
+| S8 unexpected extra signer | PASS — rejected |
+| S9 reordered entries | PASS — accepted |
+| S10 duplicate signer identity | PASS — rejected |
+| S11 absent versus configured `RegularKey` | PASS — distinguished |
+| S12 clear versus set master-key-disabled flag | PASS — distinguished |
+
+## Signer-evidence and provenance audit
+
+The future E5-A through E5-D paths already retain public signer identities,
+top-level `SigningPubKey`, the `Signers` array, public signatures, signed blob,
+transaction hash, submission result, validated lookup where applicable, and
+before/after protected state. Existing D5-D14 tests exercise those capture and
+assertion paths. No required signer-evidence binding is missing.
+
+Future E5 provenance continues to hash the assertions, oracle, runner, and
+tests. It now also explicitly binds the SignerList parser to
+`scripts/e5_oracle.py` and records that component's SHA-256.
+
+## Retained result state
+
+- E1: **PASS/FROZEN**.
+- E2: **PASS/FROZEN**.
+- E3: **PASS/RETIRED within tested scope**.
+- E4: **PASS/RETIRED within tested scope**.
+- E5: **BLOCKED**; E5-A through E5-E remain **NOT ATTEMPTED**.
+- E6-E9: **NOT ATTEMPTED**.
+
+## Gates
+
+- S1-S12: **PASS**.
+- All Checkpoint 1D tests: **PASS** (28 tests).
+- All spike tests: **PASS** (92 tests).
+- Repository unit tests: **PASS** (17 tests).
+- Conformance tests: **PASS** (4 tests).
+- Lint, formatting, and large-file check: **PASS**.
+- Strict typecheck: **PASS** (25 source files).
+- Secrets scan: **PASS**.
+- JSON validation: **PASS** (114 files).
+- Evidence-manifest verification: **PASS** (8 manifests, 98 payload files).
+- Zero-transaction/static scope audit: **PASS**.
+- Authorized-path and unchanged review/submodule checks: **PASS**.
+- `git diff --check`: **PASS**.
+
+## Recommendation
+
+The harness is ready for a separately authorized fresh E5-only rerun. E5 has
+not been upgraded, and E6 must not begin.
+
+## Checkpoint 1D-H modified paths
+
+- `spike/xrpl/SIGNERLIST-REPAIR.md`
+- `spike/xrpl/scripts/e5_oracle.py`
+- `spike/xrpl/scripts/run_checkpoint_1d.py`
+- `spike/xrpl/tests/test_checkpoint_1d.py`
+- `spike/xrpl/REPORT.md`
+- `spike/xrpl/RESULTS.json`
+
+---
+
 # Checkpoint 1D — E5 borrower authorization
 
 ## Outcome

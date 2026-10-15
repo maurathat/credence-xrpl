@@ -2,25 +2,34 @@
 
 from __future__ import annotations
 
+import copy
+import json
 import sys
 from pathlib import Path
 from typing import Any
 
+import pytest
 from xrpl.core.binarycodec import decode
 from xrpl.models.transactions import Payment
 from xrpl.transaction import multisign, sign
 from xrpl.wallet import Wallet
 
 SCRIPTS = Path(__file__).resolve().parents[1] / "scripts"
+ROOT = SCRIPTS.parent
+CHECKPOINT_EVIDENCE = ROOT / "evidence" / "checkpoint-1d"
 sys.path.insert(0, str(SCRIPTS))
 
 from e5_oracle import (  # noqa: E402
+    LSF_DISABLE_MASTER,
+    SignerListResponseError,
     authorization_assertions,
     negative_payment_assertions,
+    parse_account_info_signer_state,
     public_signing_evidence,
     regular_key_assertions,
     signer_list_assertions,
     successful_payment_assertions,
+    validate_expected_signer_list_response,
 )
 
 
@@ -73,6 +82,24 @@ def signer_state(
 
 def wallets() -> tuple[Wallet, Wallet, Wallet, Wallet]:
     return Wallet.create(), Wallet.create(), Wallet.create(), Wallet.create()
+
+
+def committed_signer_fixture() -> tuple[dict[str, Any], dict[str, Any], dict[str, Any]]:
+    record = json.loads(
+        (CHECKPOINT_EVIDENCE / "transactions/05-borrower_set_2_of_2_signer_list.json").read_text()
+    )
+    actors = json.loads((CHECKPOINT_EVIDENCE / "actors-public.json").read_text())
+    account_info_result = {"account_data": copy.deepcopy(record["after_state"]["borrower_account"])}
+    return record, actors, account_info_result
+
+
+def validate_committed_fixture(result: dict[str, Any]) -> dict[str, Any]:
+    _record, actors, _result = committed_signer_fixture()
+    return validate_expected_signer_list_response(
+        result,
+        research_account=actors["research_bot_signer"]["account"],
+        policy_account=actors["credence_policy_signer"]["account"],
+    )
 
 
 def multisigned_payment(
@@ -256,3 +283,130 @@ def test_d15_checkpoint_scope_excludes_lending_transactions() -> None:
     assert "LoanSet(" not in source
     assert "LoanPay(" not in source
     assert "LoanManage(" not in source
+
+
+def test_s1_committed_response_reproduces_false_block_and_now_passes() -> None:
+    record, actors, result = committed_signer_fixture()
+    legacy_checks = signer_list_assertions(
+        record["after_state"],
+        research_account=actors["research_bot_signer"]["account"],
+        policy_account=actors["credence_policy_signer"]["account"],
+    )
+    assert record["after_state"]["signer_lists"] == []
+    assert not all(item.passed for item in legacy_checks)
+
+    state = validate_committed_fixture(result)
+    assert state["signer_lists"][0]["SignerQuorum"] == 2
+    assert all(
+        item.passed
+        for item in signer_list_assertions(
+            state,
+            research_account=actors["research_bot_signer"]["account"],
+            policy_account=actors["credence_policy_signer"]["account"],
+        )
+    )
+
+
+def test_s2_missing_account_data_fails() -> None:
+    _record, _actors, result = committed_signer_fixture()
+    with pytest.raises(SignerListResponseError, match="no account_data"):
+        validate_committed_fixture({"signer_lists": result["account_data"]["signer_lists"]})
+
+
+def test_s3_missing_signer_lists_fails() -> None:
+    _record, _actors, result = committed_signer_fixture()
+    top_level_lists = result["account_data"].pop("signer_lists")
+    result["signer_lists"] = top_level_lists
+    with pytest.raises(SignerListResponseError, match="no signer_lists"):
+        validate_committed_fixture(result)
+
+
+def test_s4_wrong_quorum_fails() -> None:
+    _record, _actors, result = committed_signer_fixture()
+    result["account_data"]["signer_lists"][0]["SignerQuorum"] = 1
+    with pytest.raises(SignerListResponseError, match="SignerQuorum"):
+        validate_committed_fixture(result)
+
+
+def test_s5_missing_research_bot_fails() -> None:
+    _record, actors, result = committed_signer_fixture()
+    entries = result["account_data"]["signer_lists"][0]["SignerEntries"]
+    entries[:] = [
+        row
+        for row in entries
+        if row["SignerEntry"]["Account"] != actors["research_bot_signer"]["account"]
+    ]
+    with pytest.raises(SignerListResponseError, match="signer entries"):
+        validate_committed_fixture(result)
+
+
+def test_s6_missing_credence_signer_fails() -> None:
+    _record, actors, result = committed_signer_fixture()
+    entries = result["account_data"]["signer_lists"][0]["SignerEntries"]
+    entries[:] = [
+        row
+        for row in entries
+        if row["SignerEntry"]["Account"] != actors["credence_policy_signer"]["account"]
+    ]
+    with pytest.raises(SignerListResponseError, match="signer entries"):
+        validate_committed_fixture(result)
+
+
+def test_s7_wrong_signer_weight_fails() -> None:
+    _record, _actors, result = committed_signer_fixture()
+    result["account_data"]["signer_lists"][0]["SignerEntries"][0]["SignerEntry"]["SignerWeight"] = 2
+    with pytest.raises(SignerListResponseError, match="signer entries"):
+        validate_committed_fixture(result)
+
+
+def test_s8_unexpected_extra_signer_fails() -> None:
+    _record, actors, result = committed_signer_fixture()
+    result["account_data"]["signer_lists"][0]["SignerEntries"].append(
+        {
+            "SignerEntry": {
+                "Account": actors["payment_recipient"]["account"],
+                "SignerWeight": 1,
+            }
+        }
+    )
+    with pytest.raises(SignerListResponseError, match="signer entries"):
+        validate_committed_fixture(result)
+
+
+def test_s9_reordered_signer_entries_pass() -> None:
+    _record, _actors, result = committed_signer_fixture()
+    result["account_data"]["signer_lists"][0]["SignerEntries"].reverse()
+    validate_committed_fixture(result)
+
+
+def test_s10_duplicate_signer_identity_fails() -> None:
+    _record, _actors, result = committed_signer_fixture()
+    entries = result["account_data"]["signer_lists"][0]["SignerEntries"]
+    entries[1] = copy.deepcopy(entries[0])
+    with pytest.raises(SignerListResponseError, match="signer entries"):
+        validate_committed_fixture(result)
+
+
+def test_s11_absent_regular_key_is_distinct_from_configured() -> None:
+    _record, actors, result = committed_signer_fixture()
+    state = parse_account_info_signer_state(result)
+    assert all(item.passed for item in regular_key_assertions(state))
+
+    state["borrower_account"]["RegularKey"] = actors["research_bot_signer"]["account"]
+    assert not all(item.passed for item in regular_key_assertions(state))
+
+
+def test_s12_clear_master_key_flag_is_distinct_from_set() -> None:
+    _record, _actors, result = committed_signer_fixture()
+    state = parse_account_info_signer_state(result)
+    assert all(item.passed for item in regular_key_assertions(state))
+
+    state["borrower_account"]["Flags"] |= LSF_DISABLE_MASTER
+    assert not all(item.passed for item in regular_key_assertions(state))
+
+
+def test_repaired_parser_is_bound_into_future_run_provenance() -> None:
+    source = (SCRIPTS / "run_checkpoint_1d.py").read_text()
+    assert '"signer_list_parser_binding"' in source
+    assert '"path": "scripts/e5_oracle.py"' in source
+    assert '"sha256": sha256_file(ORACLE_PATH)' in source
