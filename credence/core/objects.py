@@ -35,6 +35,7 @@ from credence.core.primitives import (
     MAX_SAFE_INTEGER,
     CountryCode,
     DecisionOutcome,
+    DecisionStage,
     DeliveryMode,
     DomainError,
     Ed25519Signature,
@@ -278,7 +279,9 @@ _timestamp = _p_wrapped(Timestamp)
 class SamplingPolicy:
     """Sampling terms of an execution profile. No floats: 700 milli means temperature 0.700.
 
-    `fixed` requires a seed; `provider` and `none` require seed null.
+    temperature_milli is the actual execution/request temperature, not an allowed range; ranges
+    belong to later service/procurement constraints. Null means not asserted. `fixed` requires a
+    seed; `provider` and `none` require seed null.
     """
 
     temperature_milli: int | None
@@ -317,17 +320,18 @@ class SamplingPolicy:
 class ExecutionProfile(CanonicalObject):
     """What inference is being bought: technical identity only, no price, no delivery terms.
 
-    Null in model_artifact_digest, runtime, precision or quantization means NOT ASSERTED: it is never
-    a wildcard and never satisfies a procurement requirement. A provider whose model name merely maps
+    Null in model_artifact_digest, tokenizer_digest, chat_template_digest, runtime, precision or
+    quantization means NOT ASSERTED: it is never a wildcard and never satisfies a procurement
+    requirement. A provider whose model name merely maps
     to public weights must leave model_artifact_digest null. quantization "none" is an assertion
     (no quantization); null is not.
     """
 
     model_identifier: str
     model_artifact_digest: Sha256Digest | None
-    tokenizer_digest: Sha256Digest
+    tokenizer_digest: Sha256Digest | None
     adapter_digest: Sha256Digest | None
-    chat_template_digest: Sha256Digest
+    chat_template_digest: Sha256Digest | None
     runtime: str | None
     precision: str | None
     quantization: str | None
@@ -351,9 +355,9 @@ class ExecutionProfile(CanonicalObject):
     def __post_init__(self) -> None:
         _text(self.model_identifier, "model_identifier")
         _optional(_is(Sha256Digest))(self.model_artifact_digest, "model_artifact_digest")
-        _is(Sha256Digest)(self.tokenizer_digest, "tokenizer_digest")
+        _optional(_is(Sha256Digest))(self.tokenizer_digest, "tokenizer_digest")
         _optional(_is(Sha256Digest))(self.adapter_digest, "adapter_digest")
-        _is(Sha256Digest)(self.chat_template_digest, "chat_template_digest")
+        _optional(_is(Sha256Digest))(self.chat_template_digest, "chat_template_digest")
         _optional(_text)(self.runtime, "runtime")
         _optional(_text)(self.precision, "precision")
         _optional(_text)(self.quantization, "quantization")
@@ -380,9 +384,9 @@ class ExecutionProfile(CanonicalObject):
         return cls(
             model_identifier=m("model_identifier", _p_text),
             model_artifact_digest=m("model_artifact_digest", _p_null(_digest)),
-            tokenizer_digest=m("tokenizer_digest", _digest),
+            tokenizer_digest=m("tokenizer_digest", _p_null(_digest)),
             adapter_digest=m("adapter_digest", _p_null(_digest)),
-            chat_template_digest=m("chat_template_digest", _digest),
+            chat_template_digest=m("chat_template_digest", _p_null(_digest)),
             runtime=m("runtime", _p_null(_p_text)),
             precision=m("precision", _p_null(_p_text)),
             quantization=m("quantization", _p_null(_p_text)),
@@ -718,12 +722,14 @@ class Facility(CanonicalObject):
 class PurchaseRequest(CanonicalObject):
     """The agent's request to buy under a quote. The prompt itself is never stored, only its digest.
 
-    The agent's signature is a SignedObject over this object's digest, not a member of it.
+    purpose is part of its identity; `inference` is the only value. The agent's signature is a
+    SignedObject over this object's digest, not a member of it.
     """
 
     facility_id: FacilityId
     provider_id: ProviderId
     quote_id: QuoteId
+    purpose: Purpose
     max_total_cost_micro_trlusd: MicroTrlusd
     prompt_digest: Sha256Digest
     nonce: Nonce
@@ -734,6 +740,7 @@ class PurchaseRequest(CanonicalObject):
         "facility_id",
         "provider_id",
         "quote_id",
+        "purpose",
         "max_total_cost_micro_trlusd",
         "prompt_digest",
         "nonce",
@@ -744,6 +751,7 @@ class PurchaseRequest(CanonicalObject):
         _is(FacilityId)(self.facility_id, "facility_id")
         _is(ProviderId)(self.provider_id, "provider_id")
         _is(QuoteId)(self.quote_id, "quote_id")
+        _is(Purpose)(self.purpose, "purpose")
         _is(MicroTrlusd)(self.max_total_cost_micro_trlusd, "max_total_cost_micro_trlusd")
         _is(Sha256Digest)(self.prompt_digest, "prompt_digest")
         _is(Nonce)(self.nonce, "nonce")
@@ -754,6 +762,7 @@ class PurchaseRequest(CanonicalObject):
             "facility_id": _v(self.facility_id),
             "provider_id": _v(self.provider_id),
             "quote_id": _v(self.quote_id),
+            "purpose": _e(self.purpose),
             "max_total_cost_micro_trlusd": self.max_total_cost_micro_trlusd.value,
             "prompt_digest": _v(self.prompt_digest),
             "nonce": _v(self.nonce),
@@ -767,6 +776,7 @@ class PurchaseRequest(CanonicalObject):
             facility_id=m("facility_id", _p_wrapped(FacilityId)),
             provider_id=m("provider_id", _provider),
             quote_id=m("quote_id", _p_wrapped(QuoteId)),
+            purpose=m("purpose", _p_enum(Purpose)),
             max_total_cost_micro_trlusd=m("max_total_cost_micro_trlusd", _p_money),
             prompt_digest=m("prompt_digest", _digest),
             nonce=m("nonce", _p_wrapped(Nonce)),
@@ -1042,11 +1052,12 @@ class SettlementRecord(CanonicalObject):
 class DecisionRecord(CanonicalObject):
     """An accept or reject decision with the digests of its inputs, in the order given.
 
-    accept carries no reason code; reject carries exactly one. The authorized-transaction fields
+    decision_stage (`policy` or `verifier`) is part of its identity. accept carries no reason code; reject carries exactly one. The authorized-transaction fields
     exist but must be null in C1: the transaction digest scheme is chosen at the XRPL
     authorization/settlement checkpoint, not here.
     """
 
+    decision_stage: DecisionStage
     input_digests: tuple[Sha256Digest, ...]
     outcome: DecisionOutcome
     reason_code: ReasonCode | None
@@ -1057,6 +1068,7 @@ class DecisionRecord(CanonicalObject):
 
     OBJECT_TYPE: ClassVar[str] = "credence.decision_record"
     MEMBERS: ClassVar[tuple[str, ...]] = (
+        "decision_stage",
         "input_digests",
         "outcome",
         "reason_code",
@@ -1067,6 +1079,7 @@ class DecisionRecord(CanonicalObject):
     )
 
     def __post_init__(self) -> None:
+        _is(DecisionStage)(self.decision_stage, "decision_stage")
         _ordered(self.input_digests, "input_digests", _is(Sha256Digest), non_empty=True)
         _is(DecisionOutcome)(self.outcome, "outcome")
         _optional(_is(ReasonCode))(self.reason_code, "reason_code")
@@ -1081,6 +1094,7 @@ class DecisionRecord(CanonicalObject):
 
     def _canonical_members(self) -> dict[str, JsonValue]:
         return {
+            "decision_stage": _e(self.decision_stage),
             "input_digests": _vs(self.input_digests),
             "outcome": _e(self.outcome),
             "reason_code": _e(self.reason_code),
@@ -1096,6 +1110,7 @@ class DecisionRecord(CanonicalObject):
         m("authorized_transaction_digest", _p_must_be_null)
         m("authorized_transaction_digest_scheme", _p_must_be_null)
         return cls(
+            decision_stage=m("decision_stage", _p_enum(DecisionStage)),
             input_digests=m("input_digests", _p_tuple(_digest)),
             outcome=m("outcome", _p_enum(DecisionOutcome)),
             reason_code=m("reason_code", _p_null(_p_enum(ReasonCode))),

@@ -6,6 +6,7 @@ digest against hashlib directly, so a frozen digest cannot drift from its own ca
 """
 
 import hashlib
+import importlib.util
 import json
 from pathlib import Path
 from typing import Any
@@ -40,6 +41,20 @@ def test_manifest_matches_files_exactly() -> None:
         assert hashlib.sha256((VECTORS / name).read_bytes()).hexdigest() == sha, name
 
 
+def test_regeneration_is_deterministic_and_matches_committed_files() -> None:
+    """Running the generator now reproduces every committed file byte for byte, twice."""
+    spec = importlib.util.spec_from_file_location(
+        "build_c1_vectors", VECTORS.parent / "build_c1_vectors.py"
+    )
+    assert spec is not None and spec.loader is not None
+    generator = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(generator)
+    first, second = generator.render(), generator.render()
+    assert first == second
+    on_disk = {p.name: p.read_text(encoding="ascii") for p in VECTORS.glob("*.json")}
+    assert first == on_disk
+
+
 def test_every_object_type_has_a_positive_vector() -> None:
     positive = {
         _class(v).__name__
@@ -62,6 +77,10 @@ def test_every_object_type_has_a_positive_vector() -> None:
         "execution_profile-not-asserted",
         "serializer-array-order",
         "decision_record-accept",
+        "decision_record-verifier-accept",
+        "purchase_request-basic",
+        "reject-purpose-not-inference",
+        "reject-decision-stage-unknown",
         "procurement_class-basic",
         "reject-unsorted-set",
         "reject-float-money",

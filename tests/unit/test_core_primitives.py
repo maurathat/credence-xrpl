@@ -10,6 +10,7 @@ from credence.core.primitives import (
     MICRO_TRLUSD_PER_TRLUSD,
     CountryCode,
     DecisionOutcome,
+    DecisionStage,
     DeliveryMode,
     DomainError,
     Ed25519Signature,
@@ -230,6 +231,7 @@ SPELLINGS: list[tuple[type[Enum], dict[str, object]]] = [
     (SeedPolicy, {"FIXED": "fixed", "PROVIDER": "provider", "NONE": "none"}),
     (ResidencyRegion, {"EU": "EU", "US": "US"}),
     (DecisionOutcome, {"ACCEPT": "accept", "REJECT": "reject"}),
+    (DecisionStage, {"POLICY": "policy", "VERIFIER": "verifier"}),
 ]
 
 

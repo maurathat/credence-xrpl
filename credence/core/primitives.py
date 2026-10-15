@@ -324,6 +324,11 @@ class DecisionOutcome(Enum):
     REJECT = "reject"
 
 
+class DecisionStage(Enum):
+    POLICY = "policy"
+    VERIFIER = "verifier"
+
+
 class ReasonCode(Enum):
     """Policy engine and verifier reason codes, spelled exactly as in the build plan."""
 

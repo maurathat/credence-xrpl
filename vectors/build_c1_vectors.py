@@ -46,6 +46,7 @@ from credence.core.primitives import (
     MAX_SAFE_INTEGER,
     CountryCode,
     DecisionOutcome,
+    DecisionStage,
     DeliveryMode,
     DomainError,
     Ed25519Signature,
@@ -103,9 +104,9 @@ PROFILE_B = ExecutionProfile(
 PROFILE_A = ExecutionProfile(
     model_identifier="example-model-8b-instruct",
     model_artifact_digest=None,
-    tokenizer_digest=digest("tokenizer"),
+    tokenizer_digest=None,
     adapter_digest=None,
-    chat_template_digest=digest("chat-template"),
+    chat_template_digest=None,
     runtime=None,
     precision=None,
     quantization=None,
@@ -193,6 +194,7 @@ PURCHASE_REQUEST = PurchaseRequest(
     facility_id=FacilityId("facility-0001"),
     provider_id=PROVIDER_B,
     quote_id=QuoteId("quote-0001"),
+    purpose=Purpose.INFERENCE,
     max_total_cost_micro_trlusd=MicroTrlusd(2_457_600),
     prompt_digest=digest("prompt"),
     nonce=Nonce(label_hex("nonce-0001")[:32]),
@@ -238,6 +240,7 @@ RECEIPT_TIER1 = replace(
     previous_receipt_digest=None,
 )
 DECISION_ACCEPT = DecisionRecord(
+    decision_stage=DecisionStage.POLICY,
     input_digests=(PURCHASE_REQUEST.digest(), QUOTE.digest(), FACILITY_ACTIVE.digest()),
     outcome=DecisionOutcome.ACCEPT,
     reason_code=None,
@@ -245,15 +248,32 @@ DECISION_ACCEPT = DecisionRecord(
     decided_at=Timestamp("2026-10-24T15:00:00Z"),
 )
 DECISION_REJECT = DecisionRecord(
+    decision_stage=DecisionStage.POLICY,
     input_digests=(PURCHASE_REQUEST.digest(), QUOTE.digest(), FACILITY_ACTIVE.digest()),
     outcome=DecisionOutcome.REJECT,
     reason_code=ReasonCode.OVER_LIMIT,
     engine_version=EngineVersion("credence-core-0.0.0"),
     decided_at=Timestamp("2026-10-24T15:00:00Z"),
 )
+DECISION_VERIFIER_ACCEPT = DecisionRecord(
+    decision_stage=DecisionStage.VERIFIER,
+    input_digests=(RECEIPT_TIER2.digest(), PURCHASE_REQUEST.digest(), ATTESTATION.digest()),
+    outcome=DecisionOutcome.ACCEPT,
+    reason_code=None,
+    engine_version=EngineVersion("credence-core-0.0.0"),
+    decided_at=Timestamp("2026-10-24T15:00:04Z"),
+)
+DECISION_VERIFIER_REJECT = DecisionRecord(
+    decision_stage=DecisionStage.VERIFIER,
+    input_digests=(RECEIPT_TIER2.digest(), PURCHASE_REQUEST.digest(), ATTESTATION.digest()),
+    outcome=DecisionOutcome.REJECT,
+    reason_code=ReasonCode.RESPONSE_DIGEST_MISMATCH,
+    engine_version=EngineVersion("credence-core-0.0.0"),
+    decided_at=Timestamp("2026-10-24T15:00:04Z"),
+)
 SETTLEMENT = SettlementRecord(
     receipt_digest=RECEIPT_TIER2.digest(),
-    decision_record_digest=DECISION_ACCEPT.digest(),
+    decision_record_digest=DECISION_VERIFIER_ACCEPT.digest(),
     xrpl_transaction_hash=XrplTransactionHash(label_hex("payment-transaction").upper()),
     settled_amount=MicroTrlusd(187),
     settlement_timestamp=Timestamp("2026-10-24T15:00:05Z"),
@@ -303,7 +323,17 @@ OBJECT_VECTORS: list[tuple[str, str, CanonicalObject]] = [
         "Ordered input digests, preserved as given; transaction digest fields null",
         DECISION_ACCEPT,
     ),
-    ("decision_record-reject", "Reject with its reason code", DECISION_REJECT),
+    ("decision_record-reject", "Policy-stage reject with its reason code", DECISION_REJECT),
+    (
+        "decision_record-verifier-accept",
+        "Verifier-stage accept; the settlement record vector points at it",
+        DECISION_VERIFIER_ACCEPT,
+    ),
+    (
+        "decision_record-verifier-reject",
+        "Verifier-stage reject with its reason code",
+        DECISION_VERIFIER_REJECT,
+    ),
     ("signed_object-basic", "Signature wrapper outside the signed body", SIGNED),
 ]
 
@@ -317,6 +347,13 @@ def mutate(obj: CanonicalObject, edit: Callable[[dict[str, Any]], None]) -> dict
 def setter(name: str, new: Any) -> Callable[[dict[str, Any]], None]:
     def edit(value: dict[str, Any]) -> None:
         value[name] = new
+
+    return edit
+
+
+def remover(name: str) -> Callable[[dict[str, Any]], None]:
+    def edit(value: dict[str, Any]) -> None:
+        del value[name]
 
     return edit
 
@@ -453,6 +490,24 @@ DOMAIN_REJECT_VECTORS: list[tuple[str, str, CanonicalObject, Callable[[dict[str,
         setter("authorized_transaction_digest", "sha256:" + label_hex("tx")),
     ),
     (
+        "reject-purpose-not-inference",
+        "Purchase purpose outside the closed vocabulary",
+        PURCHASE_REQUEST,
+        setter("purpose", "training"),
+    ),
+    (
+        "reject-purpose-missing",
+        "Purchase request without its purpose member",
+        PURCHASE_REQUEST,
+        remover("purpose"),
+    ),
+    (
+        "reject-decision-stage-unknown",
+        "Decision stage outside policy/verifier",
+        DECISION_ACCEPT,
+        setter("decision_stage", "settlement"),
+    ),
+    (
         "reject-wrong-object-type",
         "object_type of another class",
         QUOTE,
@@ -569,23 +624,35 @@ def build() -> list[dict[str, Any]]:
     return vectors
 
 
-def main() -> int:
+def render() -> dict[str, str]:
+    """Every file of vectors/c1 by name, as text. Pure: the same inputs always give the same text."""
     vectors = build()
     covered = {v["entry"].split(".")[1] for v in vectors if v["entry"].startswith("objects.")}
     missing = set(CLASSES) - covered
     if missing:
         raise SystemExit(f"no vector for {sorted(missing)}")
-    OUT.mkdir(exist_ok=True)
+    files: dict[str, str] = {}
     manifest: list[list[str]] = []
     for vector in vectors:
         text = json.dumps(vector, ensure_ascii=True, indent=2) + "\n"
         name = f"{vector['id']}.json"
-        (OUT / name).write_text(text, encoding="ascii")
+        files[name] = text
         manifest.append([hashlib.sha256(text.encode("ascii")).hexdigest(), name])
     # [sha256, file name] pairs, sorted by name: digest first, like a SHA256SUMS line.
     manifest.sort(key=lambda pair: pair[1])
-    (OUT / "MANIFEST.json").write_text(json.dumps(manifest, indent=1) + "\n", encoding="ascii")
-    print(f"wrote {len(vectors)} vectors to {OUT}")
+    files["MANIFEST.json"] = json.dumps(manifest, indent=1) + "\n"
+    return files
+
+
+def main() -> int:
+    files = render()
+    OUT.mkdir(exist_ok=True)
+    stale = sorted({p.name for p in OUT.glob("*.json")} - set(files))
+    if stale:
+        raise SystemExit(f"vectors/c1 has files the generator does not produce: {stale}")
+    for name, text in files.items():
+        (OUT / name).write_text(text, encoding="ascii")
+    print(f"wrote {len(files) - 1} vectors to {OUT}")
     return 0
 
 

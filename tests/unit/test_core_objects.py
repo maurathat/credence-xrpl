@@ -33,10 +33,12 @@ from credence.core.objects import (
 from credence.core.primitives import (
     CountryCode,
     DecisionOutcome,
+    DecisionStage,
     DomainError,
     EvidenceTier,
     MicroTrlusd,
     ProviderId,
+    Purpose,
     ReasonCode,
     SeedPolicy,
     Sha256Digest,
@@ -206,20 +208,51 @@ def test_sampling_policy_rules() -> None:
     assert exc.value.reason == "FLOAT_NOT_INTEGER"
 
 
+NOT_ASSERTABLE = (
+    "model_artifact_digest",
+    "tokenizer_digest",
+    "chat_template_digest",
+    "runtime",
+    "precision",
+    "quantization",
+)
+
+
 def test_execution_profile_not_asserted_fields_are_null_not_wildcards() -> None:
-    assert PROFILE_A.model_artifact_digest is None
-    assert (PROFILE_A.runtime, PROFILE_A.precision, PROFILE_A.quantization) == (None, None, None)
-    assert PROFILE_A.adapter_digest is None
     canonical = PROFILE_A.to_canonical()
-    assert canonical["precision"] is None and canonical["model_artifact_digest"] is None
+    for name in NOT_ASSERTABLE:
+        assert getattr(PROFILE_A, name) is None
+        assert canonical[name] is None
+    assert PROFILE_A.adapter_digest is None
     assert PROFILE.quantization == "none"  # an assertion of no quantization, unlike null
+
+
+@pytest.mark.parametrize("name", NOT_ASSERTABLE)
+def test_each_not_assertable_field_is_independently_nullable(name: str) -> None:
+    profile = replace(PROFILE, **{name: None})
+    assert profile.to_canonical()[name] is None
+    assert profile.digest() != PROFILE.digest()
+    assert ExecutionProfile.from_canonical(profile.to_canonical()) == profile
+
+
+def test_model_identifier_is_not_nullable() -> None:
+    assert refused(PROFILE, model_identifier=None) == ("NOT_A_STRING", "model_identifier")
+
+
+def test_temperature_milli_is_a_single_configuration_value() -> None:
+    assert PROFILE.sampling.temperature_milli == 700
+    assert PROFILE.to_canonical()["sampling"] == {
+        "temperature_milli": 700,
+        "seed_policy": "fixed",
+        "seed": 42,
+    }
 
 
 @pytest.mark.parametrize(
     ("changes", "expected"),
     [
-        ({"tokenizer_digest": None}, ("WRONG_TYPE", "tokenizer_digest")),
-        ({"chat_template_digest": None}, ("WRONG_TYPE", "chat_template_digest")),
+        ({"tokenizer_digest": "sha256:" + "0" * 64}, ("WRONG_TYPE", "tokenizer_digest")),
+        ({"chat_template_digest": ""}, ("WRONG_TYPE", "chat_template_digest")),
         ({"model_identifier": ""}, ("EMPTY_VALUE", "model_identifier")),
         ({"runtime": ""}, ("EMPTY_VALUE", "runtime")),
         ({"precision": "bf16-e\u0301"}, ("NOT_NFC", "precision")),
@@ -324,6 +357,45 @@ def test_receipt_identity_excludes_signatures_and_payment_hash() -> None:
         "output_token_count",
     }
     assert SETTLEMENT.receipt_digest == RECEIPT.digest()
+
+
+def test_purchase_request_purpose() -> None:
+    assert REQUEST.purpose is Purpose.INFERENCE
+    assert REQUEST.to_canonical()["purpose"] == "inference"
+    assert refused(REQUEST, purpose="inference") == ("WRONG_TYPE", "purpose")
+    value = REQUEST.to_canonical()
+    assert parse_refused(PurchaseRequest, {**value, "purpose": "training"}) == (
+        "INVALID_ENUM",
+        "purpose",
+    )
+    del value["purpose"]
+    assert parse_refused(PurchaseRequest, value) == ("MISSING_MEMBER", "purpose")
+
+
+def test_decision_stage() -> None:
+    assert ACCEPT.decision_stage is DecisionStage.POLICY
+    assert ACCEPT.to_canonical()["decision_stage"] == "policy"
+    verifier = replace(ACCEPT, decision_stage=DecisionStage.VERIFIER)
+    assert verifier.to_canonical()["decision_stage"] == "verifier"
+    assert verifier.digest() != ACCEPT.digest()
+    assert refused(ACCEPT, decision_stage="policy") == ("WRONG_TYPE", "decision_stage")
+    assert parse_refused(DecisionRecord, {**ACCEPT.to_canonical(), "decision_stage": "both"}) == (
+        "INVALID_ENUM",
+        "decision_stage",
+    )
+
+
+def test_generic_evidence_tier_keeps_all_four_values() -> None:
+    assert [(t.name, t.value) for t in EvidenceTier] == [
+        ("REQUESTED", 0),
+        ("WITNESSED", 1),
+        ("BOUND_AND_SIGNED", 2),
+        ("MEASURED", 3),
+    ]
+    for tier in EvidenceTier:
+        assert replace(SERVICE, evidence_tier=tier).evidence_tier is tier
+        assert replace(PROCUREMENT, minimum_evidence_tier=tier).minimum_evidence_tier is tier
+        assert replace(FACILITY, minimum_evidence_tier=tier).minimum_evidence_tier is tier
 
 
 def test_decision_record_rules() -> None:

@@ -1,18 +1,26 @@
 [
  [
-  "9809d174b0fc22446ac1be55f4d2dc0d1df2552769dba6c0f8ab2e31fc9775ae",
+  "b35f95ffbee232982e80259f9394112510f91e6c10900f4a2f5b73dd7f0041ca",
   "decision_record-accept.json"
  ],
  [
-  "f529c152471e0a74994f9527b05e0d47a8057c7426cb2807117262782ebf9af5",
+  "845ae727e036329926e2fa3d0bb37a988fb1788a0132599dccbb593d50b8c2dd",
   "decision_record-reject.json"
  ],
  [
-  "4a3aeddbcfcaeb47254146403ac6f426559754205c88b92ddc1bf0670de36d83",
+  "dabdfa2dfec91c3504ba85c0d496d6c841cd7b7f260480b29a93c794db5e5a4d",
+  "decision_record-verifier-accept.json"
+ ],
+ [
+  "7f0540ffcc0cf935db6890f9458abab91cf63e64dbc5164ec56c2c5a25aa85fa",
+  "decision_record-verifier-reject.json"
+ ],
+ [
+  "a6738fcc4b60973b5f8236ac091163c98fd83a89a309c52b99f37a7912ec9d34",
   "delivery_receipt-tier1.json"
  ],
  [
-  "d4672dedda7c8a2e71e1ebb2f1149969a2d5e8e6aaf793c3f0a38d43c8c66f61",
+  "db861827cbba962f561577f35c1183d3a3381d790c46b21bc7f960a770701a91",
   "delivery_receipt-tier2.json"
  ],
  [
@@ -20,7 +28,7 @@
   "execution_profile-full.json"
  ],
  [
-  "dbedde0abbc8101867141dacb954a699143063642c476b2ce071ff7d37ee8c5d",
+  "1ea402a7492c00531cb05e475570d15cf858712e2718c09ae84ce7bac3aace42",
   "execution_profile-not-asserted.json"
  ],
  [
@@ -36,11 +44,11 @@
   "procurement_class-basic.json"
  ],
  [
-  "d2ad8d4430032033735b31ee8a84d6b5150e44e72af543e25d60d767b3047388",
+  "354a06430c31b32222093c7fb2eb6dc394fc64c9fb11f34ba0509ab228e05120",
   "provider_attestation-basic.json"
  ],
  [
-  "2f9bb42a79484c2098eb7c61c9b42c644a6926c893aa1e3477c4bc6a76629949",
+  "6d04bdb83ebcc16293205dab9aed2abbb737b143a0f4ebc29dd11bfb3ac8f0a0",
   "purchase_request-basic.json"
  ],
  [
@@ -52,12 +60,16 @@
   "quote-large-integers.json"
  ],
  [
-  "6033e63eb0234a497ee376e22ca453e69a90b6552c98163ead34a8f1675c3027",
+  "f98fcb12eab0a2c9b706806666977cfe5b62758685ae3a4f284cb6e19c6ccd42",
   "reject-authorized-transaction-digest.json"
  ],
  [
   "1eb7dc7f128a8875ad136904e7ed452651c3a343fcbe0f1b483625b72f589fea",
   "reject-bool-as-integer.json"
+ ],
+ [
+  "b6d8996588a37c175e349a4191c90239cc5b765a9bdc76647f3cc3fa489ec57a",
+  "reject-decision-stage-unknown.json"
  ],
  [
   "71478d287536f91433998cb2290baa039aed5ab3ef5bbcaefd41b497522d14f9",
@@ -92,7 +104,7 @@
   "reject-negative-money.json"
  ],
  [
-  "3d11e8b5ed7de63864e26ca222fb42e9c9c18ae7b31715a82c81dc4fd1f7a41f",
+  "abe145efc3ac7ad39cb2d869b7b9bddac0fc9b680acfc31aa9b8733be5b04762",
   "reject-negative-token-count.json"
  ],
  [
@@ -102,6 +114,14 @@
  [
   "2541100dcbc1d8830136179f30740e22acd974c5ef6eb28e77a3ca1aadd55bc8",
   "reject-out-of-range-integer.json"
+ ],
+ [
+  "8ee166cf905177348ca16dcedf8f1b2864e3c9a52f7d1fc7076890c28387fa1c",
+  "reject-purpose-missing.json"
+ ],
+ [
+  "bfd9a855897672e67a8bc5fcc437b03256adfceb7660b3e7786295e1d617a635",
+  "reject-purpose-not-inference.json"
  ],
  [
   "756f7e694ace6b35edad4616e428eac121da6397c4c8ca8519dc7f614e553d1d",
@@ -116,7 +136,7 @@
   "reject-temperature-float.json"
  ],
  [
-  "78cb524a1c50274cd3c82757574a4d012fb2a9fea07bd0d3f4eead84b7ed9410",
+  "5b3ee20756934a208d0edcb97a88c9000d3d201335300b24db6e48c9341b2996",
   "reject-tier2-without-attestation.json"
  ],
  [
@@ -208,7 +228,7 @@
   "serializer-reject-python-float.json"
  ],
  [
-  "f1520e5c0f035d1bcd224a480b33494065699a1e6037d98ef338cda27b746cfe",
+  "d979146a16b7bb80e56488392fcd8387231ebfbc052d271be3de9816487d472b",
   "service_class-non-ascii-text.json"
  ],
  [
@@ -216,11 +236,11 @@
   "service_class-tier2.json"
  ],
  [
-  "deb3c20ee3bb198c9c6e336d614656a3125acf18a58e49c75b1c237209129fce",
+  "bdd67c5a1bea72a196551c881c9cd44644eab9abf494e90b8505100473fb8026",
   "settlement_record-basic.json"
  ],
  [
-  "b52ece99f0e8d2cc54b73fc9c1e2ee6bf104abba10fe486e4e5763d1064b62df",
+  "abe5f48252b509451ba866a70168eeb1e70c28097a19b1294e6a2fbbae81022d",
   "signed_object-basic.json"
  ]
 ]

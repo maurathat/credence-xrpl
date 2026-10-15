@@ -5,7 +5,7 @@
   "input": {
     "object_type": "credence.provider_attestation",
     "schema_version": "1",
-    "purchase_request_digest": "sha256:487c7cace64986be0f81ae5230c4e8ec36ade5e7214ba4855a489d604c01b1f5",
+    "purchase_request_digest": "sha256:c7a1f5ed7721def14b6694768a56f49db671bf04bccbfbce94b453913751610e",
     "execution_profile_digest": "sha256:b723cff7709f87551bcd56378b18f580e41232e1a3681b7e43f9f4a3c11877ca",
     "response_digest": "sha256:385e2def99d4d4bd056310a0c3153ba0ad30c2e05a16e3727f30f9617d95d41d",
     "input_token_count": 1234,

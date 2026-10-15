@@ -1,0 +1,27 @@
+{
+  "id": "reject-decision-stage-unknown",
+  "description": "Decision stage outside policy/verifier",
+  "entry": "objects.DecisionRecord.from_canonical",
+  "input": {
+    "object_type": "credence.decision_record",
+    "schema_version": "1",
+    "decision_stage": "settlement",
+    "input_digests": [
+      "sha256:c7a1f5ed7721def14b6694768a56f49db671bf04bccbfbce94b453913751610e",
+      "sha256:2f6534691763a043f16eb3cd233c017a3ccc0f3d2fd8a544bd7b6f7a8ea18a0a",
+      "sha256:7dfa73622b3e73881246ce5582160b3a545b029b4b8ba3c9d24d779a3b5c2a7d"
+    ],
+    "outcome": "accept",
+    "reason_code": null,
+    "engine_version": "credence-core-0.0.0",
+    "decided_at": "2026-10-24T15:00:00Z",
+    "authorized_transaction_digest": null,
+    "authorized_transaction_digest_scheme": null
+  },
+  "expected": {
+    "reject": {
+      "reason": "INVALID_ENUM",
+      "field": "decision_stage"
+    }
+  }
+}
