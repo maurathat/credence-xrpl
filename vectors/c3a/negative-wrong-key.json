@@ -1,0 +1,65 @@
+{
+  "id": "negative-wrong-key",
+  "description": "Valid signature presented under another registered agent key",
+  "test_key_label": "agent-working-key",
+  "registry": [
+    {
+      "key_id": "ed25519:2e7c8754267f9ebe50f4ddba9be8d9820fdccef79381a8e0aec6efbc0838081f",
+      "role": "agent",
+      "subject": "raLnyR4PTuc5SgXGHqYA894a4eoKqoFwu",
+      "status": "current"
+    },
+    {
+      "key_id": "ed25519:593e9e02447ff87c821edc98eb00a786629b814a713d6a2e1114c56cde1167c7",
+      "role": "agent",
+      "subject": "raLnyR4PTuc5SgXGHqYA894a4eoKqoFwu",
+      "status": "revoked"
+    },
+    {
+      "key_id": "ed25519:8ab6d928cab3f7670d2c8d049fc4b4f17277b3a70bb0f01a7812c06aada6602e",
+      "role": "gateway",
+      "subject": "credence-gateway",
+      "status": "current"
+    },
+    {
+      "key_id": "ed25519:6a84829e41219614463367aa8a450690eb76e165fc4f124ec4e3ab9f14254c85",
+      "role": "provider",
+      "subject": "provider-a",
+      "status": "current"
+    },
+    {
+      "key_id": "ed25519:2f77f908e050bf2cd4f55912532db7b1d51792056beeb173fe87720d23ee8a77",
+      "role": "provider",
+      "subject": "provider-b",
+      "status": "current"
+    }
+  ],
+  "role": "agent",
+  "subject": "raLnyR4PTuc5SgXGHqYA894a4eoKqoFwu",
+  "object": {
+    "object_type": "credence.purchase_request",
+    "schema_version": "1",
+    "facility_id": "facility-0001",
+    "provider_id": "provider-b",
+    "quote_id": "quote-0001",
+    "purpose": "inference",
+    "max_total_cost_micro_trlusd": 2457600,
+    "prompt_digest": "sha256:d88112e3606342dd9ef0b33b363607c6fd45a852b9f9707690a9cb740e75cbd4",
+    "nonce": "3e213eda2eaaeb8adbea9d57453ccd5f",
+    "expires_at": "2026-10-24T15:04:00Z"
+  },
+  "signed_object": {
+    "object_type": "credence.signed_object",
+    "schema_version": "1",
+    "object_digest": "sha256:c7a1f5ed7721def14b6694768a56f49db671bf04bccbfbce94b453913751610e",
+    "key_id": "ed25519:593e9e02447ff87c821edc98eb00a786629b814a713d6a2e1114c56cde1167c7",
+    "signature": "1f305bd1525a18942cabc1820e2dfc717760d4a5e7dbec29dd9a354f250fc65d535ae17a3b6b565cd21a2f0b1d49ea8ef1e2e1065e3ca556c66bb7679dd8bc0a"
+  },
+  "expected": {
+    "object_digest": "sha256:c7a1f5ed7721def14b6694768a56f49db671bf04bccbfbce94b453913751610e",
+    "message_hex": "0000001563726564656e63652f7369676e61747572652f76310000001963726564656e63652e70757263686173655f726571756573740000000131000000477368613235363a63376131663565643737323164656631346236363934373638613536663439646236373162663034626363626662636539346234353339313337353136313065",
+    "signature_valid": false,
+    "key_current": false,
+    "failure": "BAD_SIGNATURE"
+  }
+}

@@ -279,7 +279,7 @@ Class `DecisionRecord`. An `accept` has a null `reason_code`. A `reject` has exa
 
 ### `credence.signed_object`
 
-Class `SignedObject`. This is the signature wrapper. A signature is never a member of the body it signs. C1A neither creates nor verifies signatures.
+Class `SignedObject`. This is the signature wrapper. A signature is never a member of the body it signs. Signing and verification (C3A) are specified in `contracts/SIGNATURES.md`; the object itself is unchanged.
 
 | Member | Type | Null | Meaning |
 | --- | --- | --- | --- |
@@ -289,7 +289,7 @@ Class `SignedObject`. This is the signature wrapper. A signature is never a memb
 
 ## Signatures, receipts and settlement
 
-These describe the intended model. In C1A they are carried in the types and not checked cryptographically.
+These describe the model. The objects carry it; since C3A, signatures are created and verified as specified in `contracts/SIGNATURES.md`.
 
 - **Signature wrappers.** Unsigned bodies carry identity. A signature is a separate `credence.signed_object` over the body's digest.
 - **Who signs which body.** The agent signs a `credence.purchase_request`. A Tier 2 provider signs a `credence.provider_attestation`. The gateway signs a `credence.delivery_receipt`.

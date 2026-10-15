@@ -1,0 +1,70 @@
+{
+  "id": "negative-cross-type-replay",
+  "description": "Provider attestation signature replayed as the gateway's receipt signature",
+  "test_key_label": "provider-b",
+  "registry": [
+    {
+      "key_id": "ed25519:2e7c8754267f9ebe50f4ddba9be8d9820fdccef79381a8e0aec6efbc0838081f",
+      "role": "agent",
+      "subject": "raLnyR4PTuc5SgXGHqYA894a4eoKqoFwu",
+      "status": "current"
+    },
+    {
+      "key_id": "ed25519:593e9e02447ff87c821edc98eb00a786629b814a713d6a2e1114c56cde1167c7",
+      "role": "agent",
+      "subject": "raLnyR4PTuc5SgXGHqYA894a4eoKqoFwu",
+      "status": "revoked"
+    },
+    {
+      "key_id": "ed25519:8ab6d928cab3f7670d2c8d049fc4b4f17277b3a70bb0f01a7812c06aada6602e",
+      "role": "gateway",
+      "subject": "credence-gateway",
+      "status": "current"
+    },
+    {
+      "key_id": "ed25519:6a84829e41219614463367aa8a450690eb76e165fc4f124ec4e3ab9f14254c85",
+      "role": "provider",
+      "subject": "provider-a",
+      "status": "current"
+    },
+    {
+      "key_id": "ed25519:2f77f908e050bf2cd4f55912532db7b1d51792056beeb173fe87720d23ee8a77",
+      "role": "provider",
+      "subject": "provider-b",
+      "status": "current"
+    }
+  ],
+  "role": "gateway",
+  "subject": null,
+  "object": {
+    "object_type": "credence.delivery_receipt",
+    "schema_version": "1",
+    "purchase_request_digest": "sha256:c7a1f5ed7721def14b6694768a56f49db671bf04bccbfbce94b453913751610e",
+    "execution_profile_digest": "sha256:b723cff7709f87551bcd56378b18f580e41232e1a3681b7e43f9f4a3c11877ca",
+    "provider_id": "provider-b",
+    "response_digest": "sha256:385e2def99d4d4bd056310a0c3153ba0ad30c2e05a16e3727f30f9617d95d41d",
+    "input_token_count": 1234,
+    "output_token_count": 1,
+    "price_micro_trlusd": 187,
+    "started_at": "2026-10-24T15:00:01Z",
+    "completed_at": "2026-10-24T15:00:03Z",
+    "nonce": "3e213eda2eaaeb8adbea9d57453ccd5f",
+    "evidence_tier": 2,
+    "provider_attestation_digest": "sha256:133cec7f2a2bb3f0fa86eb60195627560b3457dd74127f97b688cbef7ea7e951",
+    "previous_receipt_digest": "sha256:b3915b7066784de3d6f9a86339d399352b6d7c68ce3287132677602eb66d09ea"
+  },
+  "signed_object": {
+    "object_type": "credence.signed_object",
+    "schema_version": "1",
+    "object_digest": "sha256:8e046306a66e7703f55d8cd20b61b51a090d18c3017a2a4f0b3dbb48a824ee70",
+    "key_id": "ed25519:2f77f908e050bf2cd4f55912532db7b1d51792056beeb173fe87720d23ee8a77",
+    "signature": "ff6817e1da78f0a2e22d1a5d2a858e009d34318ba5eb90f7d4a80acbfa5c5c698690e6c001027af6fcb029f4f66c2db57d73952b2a8d529cc2908bd1936f3b07"
+  },
+  "expected": {
+    "object_digest": "sha256:8e046306a66e7703f55d8cd20b61b51a090d18c3017a2a4f0b3dbb48a824ee70",
+    "message_hex": "0000001563726564656e63652f7369676e61747572652f76310000001963726564656e63652e64656c69766572795f726563656970740000000131000000477368613235363a38653034363330366136366537373033663535643863643230623631623531613039306431386333303137613261346630623364626234386138323465653730",
+    "signature_valid": false,
+    "key_current": false,
+    "failure": "WRONG_ROLE"
+  }
+}

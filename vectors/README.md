@@ -25,3 +25,12 @@ All values are synthetic and illustrative:
 - Digests are SHA-256 of labels.
 - Key IDs and signatures are derived from labels and verify nothing.
 - The XRPL account is the classic address of a fixed 20-byte pattern with no key behind it.
+
+## c3a/
+
+These are the Credence Core C3A signature vectors (`contracts/SIGNATURES.md`, decision 0004).
+
+- **Content.** Each vector holds the key registry, the signed object, the `credence.signed_object`, and the expected digest, message and verification result.
+- **Keys.** They are deterministic TEST keys (NOT FOR PRODUCTION). Each seed is SHA-256 of a public label, derived at run time; no key material is written.
+- **Regenerate:** `uv run python vectors/build_c3a_signature_vectors.py`.
+- **Check:** `tests/conformance/test_core_c3a_signature_vectors.py`. It requires byte-identical regeneration, rebuilds every message by hand, and re-verifies every signature with PyNaCl directly.

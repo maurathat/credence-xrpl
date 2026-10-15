@@ -1,0 +1,34 @@
+[
+ [
+  "2e79ddb21c40a6856561973edd1950af657482bd751103ed66acf7b840ec528e",
+  "delivery_receipt-gateway-signed.json"
+ ],
+ [
+  "94bb496f4bfa36a20c73173ecb496250d18516652fed9015742fcd2a2c4b9860",
+  "negative-altered-object.json"
+ ],
+ [
+  "3ad660ea4cd5b0cde1899691f7ba999911512a0d3bae6f6774cd4b502fbe6dfb",
+  "negative-cross-type-replay.json"
+ ],
+ [
+  "65a8f7c4f221a8afd9251576d85eb190ef756525e322fd49fb1ceb98f134ad65",
+  "negative-wrong-key.json"
+ ],
+ [
+  "3b893f3e20fc6e3819d405c12596b35f5da20b664700db8966a86d01490396a9",
+  "negative-wrong-provider.json"
+ ],
+ [
+  "b9d74ea1bdae4ebd04a1b3d79d14da37868c1a1c5693bb7850cf4a8852715e25",
+  "provider_attestation-signed.json"
+ ],
+ [
+  "d52f210dd245018190294fafbf925338cda1bbf7b0a6402c429f5eb28e2b1111",
+  "purchase_request-signed.json"
+ ],
+ [
+  "5c11e76dee97ebde8ab1058cf03401d08de8a46cc81dee1eb9aa1bad309b29d6",
+  "revoked-key-facts.json"
+ ]
+]

@@ -1,0 +1,62 @@
+{
+  "id": "negative-wrong-provider",
+  "description": "Attestation for provider-b signed by provider-a",
+  "test_key_label": "provider-a",
+  "registry": [
+    {
+      "key_id": "ed25519:2e7c8754267f9ebe50f4ddba9be8d9820fdccef79381a8e0aec6efbc0838081f",
+      "role": "agent",
+      "subject": "raLnyR4PTuc5SgXGHqYA894a4eoKqoFwu",
+      "status": "current"
+    },
+    {
+      "key_id": "ed25519:593e9e02447ff87c821edc98eb00a786629b814a713d6a2e1114c56cde1167c7",
+      "role": "agent",
+      "subject": "raLnyR4PTuc5SgXGHqYA894a4eoKqoFwu",
+      "status": "revoked"
+    },
+    {
+      "key_id": "ed25519:8ab6d928cab3f7670d2c8d049fc4b4f17277b3a70bb0f01a7812c06aada6602e",
+      "role": "gateway",
+      "subject": "credence-gateway",
+      "status": "current"
+    },
+    {
+      "key_id": "ed25519:6a84829e41219614463367aa8a450690eb76e165fc4f124ec4e3ab9f14254c85",
+      "role": "provider",
+      "subject": "provider-a",
+      "status": "current"
+    },
+    {
+      "key_id": "ed25519:2f77f908e050bf2cd4f55912532db7b1d51792056beeb173fe87720d23ee8a77",
+      "role": "provider",
+      "subject": "provider-b",
+      "status": "current"
+    }
+  ],
+  "role": "provider",
+  "subject": "provider-b",
+  "object": {
+    "object_type": "credence.provider_attestation",
+    "schema_version": "1",
+    "purchase_request_digest": "sha256:c7a1f5ed7721def14b6694768a56f49db671bf04bccbfbce94b453913751610e",
+    "execution_profile_digest": "sha256:b723cff7709f87551bcd56378b18f580e41232e1a3681b7e43f9f4a3c11877ca",
+    "response_digest": "sha256:385e2def99d4d4bd056310a0c3153ba0ad30c2e05a16e3727f30f9617d95d41d",
+    "input_token_count": 1234,
+    "output_token_count": 1
+  },
+  "signed_object": {
+    "object_type": "credence.signed_object",
+    "schema_version": "1",
+    "object_digest": "sha256:133cec7f2a2bb3f0fa86eb60195627560b3457dd74127f97b688cbef7ea7e951",
+    "key_id": "ed25519:6a84829e41219614463367aa8a450690eb76e165fc4f124ec4e3ab9f14254c85",
+    "signature": "c719f25e1321abc784710842af1d531ff3b167d9ff7517de2e768187c3d08be417b2778e6a366ac5c9323eb85328f6c4ce898f6e0c0f49a07db3e54a9ea22e0d"
+  },
+  "expected": {
+    "object_digest": "sha256:133cec7f2a2bb3f0fa86eb60195627560b3457dd74127f97b688cbef7ea7e951",
+    "message_hex": "0000001563726564656e63652f7369676e61747572652f76310000001d63726564656e63652e70726f76696465725f6174746573746174696f6e0000000131000000477368613235363a31333363656337663261326262336630666138366562363031393536323735363062333435376464373431323766393762363838636265663765613765393531",
+    "signature_valid": false,
+    "key_current": false,
+    "failure": "WRONG_SUBJECT"
+  }
+}

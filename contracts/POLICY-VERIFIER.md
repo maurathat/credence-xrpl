@@ -13,7 +13,7 @@ The code is authoritative. `tests/unit/test_core_policy_verifier_contract.py` ch
 ## Pure engines
 
 `policy_engine.evaluate` and `verifier.verify` are pure and deterministic. They read no database, XRPL, network or clock, and they do no cryptography.
-- **Inputs.** Everything arrives in the input record, including the evaluation time and the signature facts. A separate signature layer establishes those facts; C2 does not verify Ed25519.
+- **Inputs.** Everything arrives in the input record, including the evaluation time and the signature facts. The signature layer (`contracts/SIGNATURES.md`, C3A) establishes those facts; the engines themselves do no cryptography.
 - **Output.** Each returns a `credence.decision_record`:
   - `decision_stage` is the engine's stage;
   - `reason_code` is null on accept, otherwise one code from that stage;
