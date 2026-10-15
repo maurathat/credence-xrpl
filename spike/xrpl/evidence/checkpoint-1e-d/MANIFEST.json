@@ -1,0 +1,16 @@
+{
+  "algorithm": "SHA-256",
+  "file_count": 2,
+  "files": [
+    {
+      "bytes": 2998,
+      "path": "design-results.json",
+      "sha256": "41466d895cc3053ac1efbf1e04ecf5ae5475d5760345bfd128e1c6c7f044f04b"
+    },
+    {
+      "bytes": 3275,
+      "path": "source-findings.json",
+      "sha256": "432024ca020bbb7fd21ec222d0aa179356c45a367b7a3fd6b58daa2f858ca5dc"
+    }
+  ]
+}

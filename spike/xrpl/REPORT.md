@@ -1,3 +1,200 @@
+# Checkpoint 1E-D — freeze E6 LoanSet composition experiment
+
+## Outcome
+
+**PASS — the E6 authorization-composition experiment and semantic oracles are
+source-derived, predeclared, and covered by D1-D12. E6 remains NOT_ATTEMPTED.**
+
+Checkpoint 1E-D began from clean commit
+`9642530326cb38aabef3800d37fe3eeaf27dc2fc`, with checkpoint-0 ancestry and
+submodule gitlinks unchanged. It inspected the committed E5 authorization
+evidence, the E3/E4 Vault and Loan Broker evidence, and rippled 3.4.0 source
+commit `4a4fded2eba11427c48ce3f24d9c1aea5e7a9d17`.
+
+This checkpoint started no XRPL environment and submitted **zero XRPL
+transactions**. It did not create a Vault, Loan Broker, or SignerList and did
+not submit `LoanSet` or `LoanPay`.
+
+## Exact parties and authorization domains
+
+The frozen E6 form makes `LoanSet.Account` the borrower and explicitly sets
+`LoanSet.Counterparty` to `LoanBroker.Owner`. The Loan Broker ledger object and
+its pseudo-account have no signing key; the owner is the protocol counterparty
+whose signature is checked independently. With that field arrangement, pinned
+`LoanSet::preclaim` derives the borrower as `Account`.
+
+The borrower transaction domain uses the proven ResearchBot + Credence policy
+2-of-2 SignerList. Each signer signs `SMT-NUL` / `0x534D5400`, the canonical
+transaction signing-field serialization, and its signer AccountID suffix. The
+borrower master key is not used.
+
+The Loan Broker-owner domain uses a single signature inside
+`CounterpartySignature`. Under `fixCleanup3_4_0` it signs `CPT-NUL` /
+`0x43505400` plus the same canonical serialized transaction body.
+`CounterpartySignature`, the borrower `Signers` array, top-level
+`TxnSignature`, and `SponsorSignature` are excluded signing fields. The two
+containers can therefore coexist without changing each other's payload while
+the distinct prefixes prevent signature reuse between roles.
+
+The installed serialization implementation can reproduce both public payloads.
+The E6 oracle retains each prefix, full payload, SHA-512Half digest, serialized
+body, public identity/key/signature, signed blob, and transaction hash. D11
+proves synthetically that both domains have distinct prefixes and the identical
+body portion. Synthetic signing is not runtime protocol evidence.
+
+## Exact counterparty-bound body
+
+All envelope fields must be frozen before either domain signs: transaction
+type, borrower Account, Sequence, Fee, empty top-level `SigningPubKey`,
+LastLedgerSequence, NetworkID, LoanBrokerID, explicit Counterparty, and all
+present terms. `Data`, sponsorship, delegation, tickets, and LoanSet flags are
+omitted.
+
+The exact economic body uses 1000 integer micro-tRLUSD principal, zero
+origination/service/late/close/overpayment fees, zero interest/late/close/
+overpayment rates, one payment, a 60-second interval, and a 60-second grace
+period. N5 changes only `PrincipalRequested` from `1000` in broker-authorized
+body X to `1001` in submitted body Y. Pinned source makes this required field
+part of the signed body and uses it for disbursement, Loan principal, Vault
+assets, and Loan Broker debt.
+
+## fixCleanup3_4_0 conclusion
+
+Before the fix, role signatures shared the ordinary transaction prefixes and
+could be copied between roles. With the enabled fix, transaction,
+counterparty, and sponsor roles have distinct prefixes; pinned tests reject
+role-copying. This is the separation E6 requires. Source review found no
+requirement for borrower master-key signing and no conflict between borrower
+multisigning and broker-owner counterparty authorization.
+
+## Positive semantic oracle
+
+The frozen positive requires a fresh closed-ended cash-basis Vault in
+Investment, funded tRLUSD, a correctly owned/configured Loan Broker with cover,
+and the E5 borrower SignerList. Validated `tesSUCCESS` is necessary but
+insufficient.
+
+The expected Loan identity is SHA-512Half of namespace `L`, LoanBrokerID, and
+the pre-transaction LoanSequence. The exact object must be newly present at
+that identity with the borrower, broker, and all frozen terms. Its start and
+payment dates, principal, one-payment schedule, zero-fee/rate fields, periodic
+payment, total outstanding value, and management fee are asserted.
+
+For the fresh `LEVersion = 1` cash-basis Vault, the oracle requires:
+
+- borrower tRLUSD `+1000`, Vault pseudo-account tRLUSD `-1000`, broker-owner
+  tRLUSD unchanged;
+- Vault `AssetsAvailable -1000` and `AssetsTotal` unchanged;
+- Loan Broker `DebtTotal +1000`, `CoverAvailable` unchanged, LoanSequence `+1`,
+  and loan OwnerCount `+1`;
+- borrower OwnerCount `+1`, transaction Sequence `+1`, and unchanged semantic
+  2-of-2 SignerList; and
+- the Loan-to-Broker-to-Vault identity chain exactly matching the frozen IDs.
+
+No assertion uses a global object-count delta.
+
+## Frozen negatives and protected state
+
+| Case | Construction | Expected result |
+| --- | --- | --- |
+| N1 | valid broker authorization; ResearchBot borrower signer only | `tefBAD_QUORUM` |
+| N2 | valid broker authorization; Credence borrower signer only | `tefBAD_QUORUM` |
+| N3 | valid borrower 2-of-2; counterparty authorization absent | `temBAD_SIGNER` |
+| N4 | valid borrower 2-of-2; invalid broker signature | local `invalidTransaction` with counterparty invalid-signature reason |
+| N5 | broker signs X; principal alone changes in Y; borrower signs Y | local `invalidTransaction` with counterparty invalid-signature reason |
+| N6 | otherwise valid dual authorization during Subscription | validated `tecTOO_SOON` |
+
+N6 is cleanly orthogonal: the frozen one-payment schedule fits the minimum
+Investment interval, while pinned source checks phase before applying LoanSet.
+
+For every negative, the expected Loan identity remains absent and the Vault,
+Loan Broker, debt, cover, loan sequence, tRLUSD holdings, borrower SignerList,
+and relevant directory relationships remain unchanged. N1-N5 also preserve
+the complete borrower AccountRoot. N6 may consume its XRP fee and sequence as
+a validated `tec` result; those changes must match exactly and are excluded
+from the unchanged lending-state projection.
+
+## Result handling and live gate
+
+Submission, client/local-validation result, validated lookup, and transport
+failure remain distinct. Positives require validated semantic state; negatives
+require the exact failure plus protected state. A later lookup cannot erase an
+earlier authoritative result.
+
+The D12 harness gate raises unless every live binding is populated before a
+positive submission path proceeds,
+including git commit, assertion hash, runner hash, test hash, build/source,
+version, network, amendments, evidence destination, actors, exact body, Vault
+ID, Loan Broker ID, pre-loan sequence, and expected Loan index. The eventual
+live runner must be hashed after its envelope-building behavior is frozen and
+before any live E6 transaction.
+
+## D1-D12
+
+All 12 synthetic/source-derived design tests pass:
+
+- D1/D2 detect either missing borrower signer;
+- D3/D4 detect missing or cryptographically invalid broker authorization;
+- D5 proves the principal mutation invalidates broker authorization;
+- D6 rejects `tesSUCCESS` without the Loan/post-state;
+- D7-D9 detect wrong borrower, Vault, or broker relationships;
+- D10 detects any protected negative-state mutation;
+- D11 captures and separates both public authorization domains; and
+- D12 blocks execution with any missing frozen binding.
+
+The design artifacts have these SHA-256 values:
+
+| Artifact | SHA-256 |
+| --- | --- |
+| `E6-ASSERTIONS.md` | `b7a0b86e250bd30e1bd2968d706aa12bc9a4325ec0127fb2bcb6a06305f3def8` |
+| `scripts/e6_oracle.py` | `a97fcc75bb82007bc5f467cb172f93a87cc91d7747f6218f1c31629f2d75acb6` |
+| `tests/test_checkpoint_1e.py` | `8da5f71f63298b8b13e9ccb06f4ccb783fc00768209a1e3985ea4f2c57e98bd5` |
+
+## Remaining limits
+
+There is no unresolved source-level protocol ambiguity or architectural
+contradiction. There is also no live E6 engine or post-state observation: every
+E6 conclusion in this checkpoint is explicitly source-derived or synthetic.
+The live envelope values and live runner hash remain runtime bindings and must
+be frozen and recorded before a separately authorized execution.
+
+## Gates
+
+- D1-D12: **PASS** (12 tests).
+- All spike tests: **PASS** (114 tests).
+- Repository unit tests: **PASS** (17 tests).
+- Conformance tests: **PASS** (4 tests).
+- Lint, formatting, and large-file check: **PASS**.
+- Strict typecheck: **PASS** (25 source files).
+- Secrets scan: **PASS**.
+- JSON validation: **PASS** (139 files).
+- Evidence-manifest verification: **PASS** (11 manifests, 120 payloads).
+- Historical evidence immutability and authorized-path check: **PASS**.
+- `git diff --check`: **PASS**.
+
+## Result state and recommendation
+
+- E1/E2: **PASS/FROZEN**.
+- E3/E4: **PASS/RETIRED within tested scope**.
+- E5: **PASS**.
+- E6-E9: **NOT ATTEMPTED**.
+- Checkpoint 1E-D design: **PASS**.
+
+One separately authorized, frozen live E6 run may begin, provided D12 first
+passes with the live runner and complete envelope bound. This is not authority
+to execute E6. `LoanPay` remains prohibited.
+
+## Checkpoint 1E-D modified paths
+
+- `spike/xrpl/E6-ASSERTIONS.md`
+- `spike/xrpl/scripts/e6_oracle.py`
+- `spike/xrpl/tests/test_checkpoint_1e.py`
+- `spike/xrpl/evidence/checkpoint-1e-d/`
+- `spike/xrpl/REPORT.md`
+- `spike/xrpl/RESULTS.json`
+
+---
+
 # Checkpoint 1D-LIVE-01 — execute E5 borrower authorization
 
 ## Outcome

@@ -1,0 +1,69 @@
+{
+  "checkpoint": "1E-D",
+  "classification": "SOURCE_DERIVED_NOT_RUNTIME_EVIDENCE",
+  "pinned_source_commit": "4a4fded2eba11427c48ce3f24d9c1aea5e7a9d17",
+  "findings": [
+    {
+      "id": "A-D",
+      "path": "src/libxrpl/tx/transactors/lending/LoanSet.cpp",
+      "lines": "156-180,282-304",
+      "finding": "LoanSet first checks ordinary transaction authorization. When Counterparty is the LoanBroker Owner, Account is the borrower and the owner is the independently checked counter signer."
+    },
+    {
+      "id": "E-G",
+      "path": "src/libxrpl/protocol/Sign.cpp",
+      "lines": "46-98,132-147",
+      "finding": "After fixCleanup3_4_0, a single counterparty signature uses CPT (0x43505400) plus canonical signing-field serialization; borrower multisigning uses SMT (0x534D5400), the same body, and each signer AccountID suffix."
+    },
+    {
+      "id": "H-I",
+      "path": "include/xrpl/protocol/detail/sfields.macro",
+      "lines": "411-418",
+      "finding": "CounterpartySignature and Signers are kNotSigning, so the two signature containers do not enter either signing body and can coexist."
+    },
+    {
+      "id": "J",
+      "path": "include/xrpl/protocol/detail/transactions.macro",
+      "lines": "963-985",
+      "finding": "PrincipalRequested is a required LoanSet signing field. Changing it after broker authorization invalidates that authorization and changes disbursement, principal, Vault assets, and Loan Broker debt."
+    },
+    {
+      "id": "K",
+      "path": "src/libxrpl/protocol/Sign.cpp",
+      "lines": "46-73",
+      "finding": "fixCleanup3_4_0 replaces the shared legacy role prefix with distinct transaction, counterparty, and sponsor domains; E6 requires the fixed counterparty domain."
+    },
+    {
+      "id": "PHASE",
+      "path": "src/libxrpl/tx/transactors/lending/LoanSet.cpp",
+      "lines": "319-343",
+      "finding": "LendingProtocolV1_1 rejects Subscription with tecTOO_SOON and Redemption with tecEXPIRED and requires the Investment schedule to leave the redemption buffer."
+    },
+    {
+      "id": "POST_STATE",
+      "path": "src/libxrpl/tx/transactors/lending/LoanSet.cpp",
+      "lines": "466-724",
+      "finding": "Successful LoanSet disburses principal, creates the Loan from LoanBrokerID and pre-increment LoanSequence, updates cash-basis Vault availability, broker debt/owner count/sequence, and borrower ownership."
+    },
+    {
+      "id": "LOAN_IDENTITY",
+      "path": "src/libxrpl/protocol/Indexes.cpp",
+      "lines": "71-105,593-597",
+      "finding": "The Loan index is SHA-512Half over namespace L, LoanBrokerID, and LoanSequence."
+    },
+    {
+      "id": "CASH_BASIS",
+      "path": "src/libxrpl/ledger/helpers/LendingHelpers.cpp",
+      "lines": "251-271",
+      "finding": "A fresh LEVersion 1 Vault uses cash-basis origination: AssetsTotal is unchanged and DebtTotal increases by principal."
+    },
+    {
+      "id": "ROLE_REPLAY_FIX",
+      "path": "src/test/app/lending/LoanSecurity_test.cpp",
+      "lines": "1094-1154",
+      "finding": "Pinned tests demonstrate that fixCleanup3_4_0 rejects copying a valid counterparty signature into another authorization role."
+    }
+  ],
+  "architectural_contradiction": false,
+  "runtime_claim": "No E6 transaction was submitted by Checkpoint 1E-D."
+}

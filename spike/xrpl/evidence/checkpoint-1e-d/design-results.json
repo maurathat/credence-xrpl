@@ -1,0 +1,74 @@
+{
+  "checkpoint": "1E-D",
+  "mode": "DESIGN_HARNESS_ONLY",
+  "outcome": "PASS",
+  "start_commit": "9642530326cb38aabef3800d37fe3eeaf27dc2fc",
+  "pinned_rippled": {
+    "version": "3.4.0",
+    "source_commit": "4a4fded2eba11427c48ce3f24d9c1aea5e7a9d17"
+  },
+  "provenance": {
+    "assertion_spec_sha256": "b7a0b86e250bd30e1bd2968d706aa12bc9a4325ec0127fb2bcb6a06305f3def8",
+    "oracle_sha256": "a97fcc75bb82007bc5f467cb172f93a87cc91d7747f6218f1c31629f2d75acb6",
+    "tests_sha256": "8da5f71f63298b8b13e9ccb06f4ccb783fc00768209a1e3985ea4f2c57e98bd5"
+  },
+  "source_conclusions": {
+    "transaction_account": "borrower",
+    "borrower": "LoanSet.Account when Counterparty is LoanBroker.Owner",
+    "counterparty_authorizer": "LoanBroker.Owner",
+    "borrower_prefix": "SMT-NUL / 0x534D5400",
+    "broker_prefix": "CPT-NUL / 0x43505400",
+    "shared_canonical_body": true,
+    "independent_signature_containers": true,
+    "composition_supported_by_source": true,
+    "fix_cleanup_3_4_0_required_for_role_separation": true,
+    "n5_mutated_field": "PrincipalRequested"
+  },
+  "positive_oracle": {
+    "requires_validated_tesSUCCESS": true,
+    "requires_expected_loan_identity": true,
+    "requires_exact_loan_terms": true,
+    "requires_cash_basis_vault_transition": true,
+    "requires_broker_debt_cover_sequence_transition": true,
+    "requires_exact_disbursement": true,
+    "uses_global_object_count_delta": false
+  },
+  "negative_design": {
+    "N1": "ResearchBot alone -> tefBAD_QUORUM + protected state",
+    "N2": "Credence alone -> tefBAD_QUORUM + protected state",
+    "N3": "missing CounterpartySignature -> temBAD_SIGNER + protected state",
+    "N4": "invalid counterparty signature -> local invalidTransaction + protected state",
+    "N5": "PrincipalRequested changed after broker signature -> local invalidTransaction + protected state",
+    "N6": "Subscription phase -> validated tecTOO_SOON + unchanged lending state and exact fee/sequence semantics"
+  },
+  "design_tests": {
+    "D1": "PASS",
+    "D2": "PASS",
+    "D3": "PASS",
+    "D4": "PASS",
+    "D5": "PASS",
+    "D6": "PASS",
+    "D7": "PASS",
+    "D8": "PASS",
+    "D9": "PASS",
+    "D10": "PASS",
+    "D11": "PASS",
+    "D12": "PASS",
+    "count": 12,
+    "classification": "SYNTHETIC_AND_SOURCE_DERIVED_NOT_RUNTIME_PROTOCOL_EVIDENCE"
+  },
+  "transactions_submitted": 0,
+  "experiment_state": {
+    "E1": "PASS/FROZEN",
+    "E2": "PASS/FROZEN",
+    "E3": "PASS/RETIRED within tested scope",
+    "E4": "PASS/RETIRED within tested scope",
+    "E5": "PASS",
+    "E6-E9": "NOT_ATTEMPTED"
+  },
+  "remaining_ambiguities": [
+    "No live E6 engine result or post-state exists; all E6 conclusions in this checkpoint are source-derived or synthetic.",
+    "The eventual live runner must freeze and hash its fully autofilled envelope before either signature domain signs it."
+  ],
+  "recommendation": "A separately authorized single frozen live E6 run may begin after D12 verifies every live binding; E6 remains NOT_ATTEMPTED here."
+}

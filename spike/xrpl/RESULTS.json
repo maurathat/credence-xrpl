@@ -1,8 +1,112 @@
 {
-  "schema_version": 14,
+  "schema_version": 15,
   "overall": "PASS",
-  "scope": "Checkpoint 1D-LIVE-01 completed E5 borrower authorization",
-  "start_commit": "1fd2351e25a7145de84e4689cc0656bd0dcde883",
+  "scope": "Checkpoint 1E-D froze the E6 LoanSet composition design; E6 remains not attempted",
+  "start_commit": "9642530326cb38aabef3800d37fe3eeaf27dc2fc",
+  "checkpoint_1e_d": {
+    "outcome": "PASS",
+    "mode": "DESIGN_HARNESS_ONLY",
+    "start_commit": "9642530326cb38aabef3800d37fe3eeaf27dc2fc",
+    "transactions_submitted": 0,
+    "pinned_source": {
+      "rippled_version": "3.4.0",
+      "commit": "4a4fded2eba11427c48ce3f24d9c1aea5e7a9d17"
+    },
+    "provenance": {
+      "E6-ASSERTIONS.md": "b7a0b86e250bd30e1bd2968d706aa12bc9a4325ec0127fb2bcb6a06305f3def8",
+      "scripts/e6_oracle.py": "a97fcc75bb82007bc5f467cb172f93a87cc91d7747f6218f1c31629f2d75acb6",
+      "tests/test_checkpoint_1e.py": "8da5f71f63298b8b13e9ccb06f4ccb783fc00768209a1e3985ea4f2c57e98bd5"
+    },
+    "authorization_model": {
+      "transaction_account": "borrower",
+      "borrower_derivation": "Account when explicit Counterparty equals LoanBroker.Owner",
+      "loan_broker_counterparty": "LoanBroker.Owner",
+      "borrower_authorization": "ResearchBot plus Credence policy 2-of-2 multisign",
+      "borrower_prefix_hex": "534D5400",
+      "broker_authorization": "single signature in CounterpartySignature",
+      "broker_prefix_hex": "43505400",
+      "same_canonical_body": true,
+      "independent_signature_containers": true,
+      "borrower_master_key_used": false,
+      "owner_ledger_device_tested": false
+    },
+    "fix_cleanup_3_4_0": {
+      "required": true,
+      "conclusion": "distinct post-fix role prefixes permit composition and prevent cross-role signature copying"
+    },
+    "positive_case": {
+      "principal_micro_tRLUSD": 1000,
+      "payment_total": 1,
+      "payment_interval_seconds": 60,
+      "grace_period_seconds": 60,
+      "fees_and_rates": 0,
+      "requires_validated_tesSUCCESS": true,
+      "requires_semantic_post_state": true,
+      "loan_identity": "SHA-512Half(namespace L, LoanBrokerID, pre-transaction LoanSequence)",
+      "uses_global_object_count_delta": false
+    },
+    "negative_cases": {
+      "N1": "ResearchBot alone -> tefBAD_QUORUM and protected state",
+      "N2": "Credence alone -> tefBAD_QUORUM and protected state",
+      "N3": "missing broker authorization -> temBAD_SIGNER and protected state",
+      "N4": "invalid broker signature -> local invalidTransaction and protected state",
+      "N5": "PrincipalRequested changed from 1000 to 1001 after broker authorization -> local invalidTransaction and protected state",
+      "N6": "Subscription phase -> validated tecTOO_SOON and protected lending state"
+    },
+    "design_tests": {
+      "D1": "PASS",
+      "D2": "PASS",
+      "D3": "PASS",
+      "D4": "PASS",
+      "D5": "PASS",
+      "D6": "PASS",
+      "D7": "PASS",
+      "D8": "PASS",
+      "D9": "PASS",
+      "D10": "PASS",
+      "D11": "PASS",
+      "D12": "PASS",
+      "count": 12,
+      "evidence_classification": "SYNTHETIC_AND_SOURCE_DERIVED_NOT_RUNTIME_PROTOCOL_EVIDENCE"
+    },
+    "live_binding_gate": {
+      "runner_hash_required_before_execution": true,
+      "complete_autofilled_envelope_required_before_signing": true,
+      "positive_submission_blocked_on_missing_binding": true
+    },
+    "result_state": {
+      "E1": "PASS/FROZEN",
+      "E2": "PASS/FROZEN",
+      "E3": "PASS/RETIRED within tested scope",
+      "E4": "PASS/RETIRED within tested scope",
+      "E5": "PASS",
+      "E6-E9": "NOT_ATTEMPTED"
+    },
+    "evidence_manifest": {
+      "directory": "evidence/checkpoint-1e-d",
+      "file_count": 2,
+      "bytes": 6273,
+      "verified": true
+    },
+    "remaining_ambiguities": [
+      "No live E6 engine result or post-state exists; E6 conclusions are source-derived or synthetic.",
+      "The live runner hash and fully autofilled envelope are required live bindings, not observations from this design checkpoint."
+    ],
+    "gates": {
+      "d1_d12": "PASS (12)",
+      "all_spike_tests": "PASS (114)",
+      "repository_unit_tests": "PASS (17)",
+      "conformance_tests": "PASS (4)",
+      "lint_format_large_file": "PASS",
+      "strict_typecheck": "PASS (25 source files)",
+      "secrets_scan": "PASS",
+      "json_validation": "PASS (139 files)",
+      "evidence_manifest_verification": "PASS (11 manifests, 120 payload files)",
+      "authorized_paths": "PASS",
+      "git_diff_check": "PASS"
+    },
+    "recommendation": "One separately authorized frozen live E6 run may begin only after D12 binds the live runner and complete envelope."
+  },
   "checkpoint_1d_live_01": {
     "outcome": "PASS",
     "start_commit": "1fd2351e25a7145de84e4689cc0656bd0dcde883",
