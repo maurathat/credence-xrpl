@@ -1,0 +1,244 @@
+{
+  "id": "tier2-bound-and-signed-delivery",
+  "description": "Tier 2: controlled class, synthetic signing provider, provider-signed attestation and gateway-signed receipt",
+  "synthetic": true,
+  "registry": [
+    {
+      "key_id": "ed25519:8eb04a6e6270b38255541f977baeb77f3d0b69c44011fb876ff2a32985acf4f1",
+      "role": "agent",
+      "subject": "r3Zdu6biBrNYcvs4zre45udj6WW18yoJst",
+      "status": "current"
+    },
+    {
+      "key_id": "ed25519:9f309c7b8e7fa1a43f79c7fbcaf10b60c98332debedc3d2f94d3f43c2f2fd08f",
+      "role": "gateway",
+      "subject": "credence-gateway",
+      "status": "current"
+    },
+    {
+      "key_id": "ed25519:c4d3797509863831d29e2b3cda4dffd14ebdea6d1d925ac82da3d13cfc8b58ca",
+      "role": "provider",
+      "subject": "synthetic-signing-provider",
+      "status": "current"
+    },
+    {
+      "key_id": "ed25519:d1f20cd9cadcb99bc9f75c326f22fb50fc3cd1fbb72a1338f028bc7ab1637e08",
+      "role": "provider",
+      "subject": "synthetic-witnessed-provider",
+      "status": "current"
+    }
+  ],
+  "prompt_text": "Synthetic prompt 1: list three facts about the number 1.",
+  "response_text": "Synthetic response from synthetic-signing-provider to a 56-byte prompt.",
+  "objects": {
+    "facility": {
+      "object_type": "credence.facility",
+      "schema_version": "1",
+      "facility_id": "facility-synthetic-tier2",
+      "borrower_account": "r3Zdu6biBrNYcvs4zre45udj6WW18yoJst",
+      "xrpl_loan_id": null,
+      "limit_micro_trlusd": 10000000,
+      "drawn_micro_trlusd": 0,
+      "term_seconds": 86400,
+      "maturity_at": "2026-12-31T00:00:00Z",
+      "spread_bps": 600,
+      "allowed_providers": [
+        "synthetic-signing-provider",
+        "synthetic-witnessed-provider"
+      ],
+      "allowed_procurement_classes": [
+        "sha256:26cd4a8f28457b920c94c8aba8fef9fcd23d9bc6b3a07a7be68a6f54b8a87990"
+      ],
+      "minimum_evidence_tier": 2,
+      "purpose": "inference",
+      "owner_approval_digest": "sha256:24bdf663de91d592a212d618f524fe1ed9f9447665cce72d7d25f925061c5e48",
+      "status": "active"
+    },
+    "procurement_class": {
+      "object_type": "credence.procurement_class",
+      "schema_version": "1",
+      "model_family": "synthetic-model-8b",
+      "allowed_precisions": [
+        "BF16"
+      ],
+      "allowed_quantizations": [
+        "none"
+      ],
+      "minimum_evidence_tier": 2,
+      "delivery_mode": "interactive",
+      "allowed_jurisdictions": [
+        "US"
+      ],
+      "allowed_data_residencies": [
+        "US"
+      ],
+      "allowed_providers": [
+        "synthetic-signing-provider",
+        "synthetic-witnessed-provider"
+      ]
+    },
+    "service_class": {
+      "object_type": "credence.service_class",
+      "schema_version": "1",
+      "execution_profile_digest": "sha256:d899b5175d08fd5a4b4fb097796dc487705d5328ee7eeff7988219b9f8622738",
+      "model_family": "synthetic-model-8b",
+      "delivery_mode": "interactive",
+      "service_tier": "base",
+      "jurisdiction": "US",
+      "data_residency": [
+        "US"
+      ],
+      "residency_region": null,
+      "evidence_tier": 2,
+      "latency_p95_ms": null,
+      "availability_bps": null
+    },
+    "execution_profile": {
+      "object_type": "credence.execution_profile",
+      "schema_version": "1",
+      "model_identifier": "synthetic-model-8b-instruct",
+      "model_artifact_digest": "sha256:287644807dd098b22df87450cc97baf20e456e16e59efc5e5be9112f187ac86b",
+      "tokenizer_digest": "sha256:4443b51c90fd87db82abea80e401d421aeb3341baab2a1c7445f17738ee2f392",
+      "adapter_digest": null,
+      "chat_template_digest": "sha256:92b17a65efd9c96d7dc0e9c393bc506b24ce8e63159e46dda2955ca8b37fb3a5",
+      "runtime": "synthetic-runtime 0.0.0",
+      "precision": "BF16",
+      "quantization": "none",
+      "context_min_tokens": 32768,
+      "sampling": {
+        "temperature_milli": 0,
+        "seed_policy": "fixed",
+        "seed": 7
+      }
+    },
+    "quote": {
+      "object_type": "credence.quote",
+      "schema_version": "1",
+      "quote_id": "quote-synthetic-tier2-0001",
+      "provider_id": "synthetic-signing-provider",
+      "service_class_digest": "sha256:a8d20e62bbdd553bb8bebb9e7af90e080bd3c8e38b799a6ff24ffaf3126b0dbd",
+      "input_price_per_million_micro_trlusd": 150000,
+      "output_price_per_million_micro_trlusd": 600000,
+      "max_input_tokens": 4096,
+      "max_output_tokens": 1024,
+      "valid_until": "2026-12-31T00:00:00Z"
+    },
+    "purchase_request": {
+      "object_type": "credence.purchase_request",
+      "schema_version": "1",
+      "facility_id": "facility-synthetic-tier2",
+      "provider_id": "synthetic-signing-provider",
+      "quote_id": "quote-synthetic-tier2-0001",
+      "purpose": "inference",
+      "max_total_cost_micro_trlusd": 1230,
+      "prompt_digest": "sha256:de5489baab771f5fc2a02b38a422fc327b9ebf47e7530037cf0f9564afd52f1d",
+      "nonce": "00000000000000000000000000000001",
+      "expires_at": "2026-12-31T00:00:00Z"
+    },
+    "purchase_request_signature": {
+      "object_type": "credence.signed_object",
+      "schema_version": "1",
+      "object_digest": "sha256:7ed382747aec4c9bac7dcbd1b9a1e87896807d570bdfd6f7cee7a7bae30ae702",
+      "key_id": "ed25519:8eb04a6e6270b38255541f977baeb77f3d0b69c44011fb876ff2a32985acf4f1",
+      "signature": "9e6910f33f0ee62b01d0a8e39b35ffec05a9ee4c2edba2f49321898b2d3b2a7b3eb5d4dde9c30e6f6f5b0c0cc94a146e70dbf9678ae3e6399844b4aa426e5a06"
+    },
+    "provider_attestation": {
+      "object_type": "credence.provider_attestation",
+      "schema_version": "1",
+      "purchase_request_digest": "sha256:7ed382747aec4c9bac7dcbd1b9a1e87896807d570bdfd6f7cee7a7bae30ae702",
+      "execution_profile_digest": "sha256:d899b5175d08fd5a4b4fb097796dc487705d5328ee7eeff7988219b9f8622738",
+      "response_digest": "sha256:bd28cb70927aff54d43025e5f1bc1292f5f31c7ec1de646e0451c38461c774bb",
+      "input_token_count": 14,
+      "output_token_count": 18
+    },
+    "provider_attestation_signature": {
+      "object_type": "credence.signed_object",
+      "schema_version": "1",
+      "object_digest": "sha256:ab8528cba76238d7e0cc45b6a1c04313c87e471e6c88acffc330bdac2cbc03c1",
+      "key_id": "ed25519:c4d3797509863831d29e2b3cda4dffd14ebdea6d1d925ac82da3d13cfc8b58ca",
+      "signature": "4656b8b4e84f7f68500c8a7efc76be6ad8b44b9d2fb9aa6a22cc8a120f1cc0dc94a86c43f6d8c5375f35d6db501dbbcae2ea3a04d98fddd86994c5695f7b5307"
+    },
+    "delivery_receipt": {
+      "object_type": "credence.delivery_receipt",
+      "schema_version": "1",
+      "purchase_request_digest": "sha256:7ed382747aec4c9bac7dcbd1b9a1e87896807d570bdfd6f7cee7a7bae30ae702",
+      "execution_profile_digest": "sha256:d899b5175d08fd5a4b4fb097796dc487705d5328ee7eeff7988219b9f8622738",
+      "provider_id": "synthetic-signing-provider",
+      "response_digest": "sha256:bd28cb70927aff54d43025e5f1bc1292f5f31c7ec1de646e0451c38461c774bb",
+      "input_token_count": 14,
+      "output_token_count": 18,
+      "price_micro_trlusd": 14,
+      "started_at": "2026-10-24T15:00:01Z",
+      "completed_at": "2026-10-24T15:00:02Z",
+      "nonce": "00000000000000000000000000000001",
+      "evidence_tier": 2,
+      "provider_attestation_digest": "sha256:ab8528cba76238d7e0cc45b6a1c04313c87e471e6c88acffc330bdac2cbc03c1",
+      "previous_receipt_digest": null
+    },
+    "gateway_signature": {
+      "object_type": "credence.signed_object",
+      "schema_version": "1",
+      "object_digest": "sha256:5edbf98eef02f55ef4032439f44c4961bc0f87d549d4af8b52d311ddc300cc46",
+      "key_id": "ed25519:9f309c7b8e7fa1a43f79c7fbcaf10b60c98332debedc3d2f94d3f43c2f2fd08f",
+      "signature": "daaaa374b3f0dd0b2cc0bb31f629923a20ddc4a2975445eefd7cf723b73f550704d6af07693f2e55e434cb7cb04d194712b6af5f9aceb3936ff7c833ec74d306"
+    },
+    "reservation": {
+      "object_type": "credence.reservation",
+      "schema_version": "1",
+      "reservation_id": "reservation-7ed382747aec4c9bac7dcbd1b9a1e878",
+      "facility_id": "facility-synthetic-tier2",
+      "quote_id": "quote-synthetic-tier2-0001",
+      "maximum_amount_micro_trlusd": 1230,
+      "created_at": "2026-10-24T15:00:00Z",
+      "expires_at": "2026-10-24T15:10:00Z",
+      "status": "held"
+    },
+    "policy_decision": {
+      "object_type": "credence.decision_record",
+      "schema_version": "1",
+      "decision_stage": "policy",
+      "input_digests": [
+        "sha256:7ed382747aec4c9bac7dcbd1b9a1e87896807d570bdfd6f7cee7a7bae30ae702",
+        "sha256:1bd07674f0bb5a72c8231f40ba02835dd42bd211af566bcf8644166565dba6f0",
+        "sha256:c4e80f310893880d824d99da6d5e17ece865575da0721e048b1ce454a3def025",
+        "sha256:a8d20e62bbdd553bb8bebb9e7af90e080bd3c8e38b799a6ff24ffaf3126b0dbd",
+        "sha256:d899b5175d08fd5a4b4fb097796dc487705d5328ee7eeff7988219b9f8622738",
+        "sha256:26cd4a8f28457b920c94c8aba8fef9fcd23d9bc6b3a07a7be68a6f54b8a87990"
+      ],
+      "outcome": "accept",
+      "reason_code": null,
+      "engine_version": "credence-core-policy-c2",
+      "decided_at": "2026-10-24T15:00:00Z",
+      "authorized_transaction_digest": null,
+      "authorized_transaction_digest_scheme": null
+    },
+    "verifier_decision": {
+      "object_type": "credence.decision_record",
+      "schema_version": "1",
+      "decision_stage": "verifier",
+      "input_digests": [
+        "sha256:5edbf98eef02f55ef4032439f44c4961bc0f87d549d4af8b52d311ddc300cc46",
+        "sha256:7ed382747aec4c9bac7dcbd1b9a1e87896807d570bdfd6f7cee7a7bae30ae702",
+        "sha256:c4e80f310893880d824d99da6d5e17ece865575da0721e048b1ce454a3def025",
+        "sha256:a8d20e62bbdd553bb8bebb9e7af90e080bd3c8e38b799a6ff24ffaf3126b0dbd",
+        "sha256:d899b5175d08fd5a4b4fb097796dc487705d5328ee7eeff7988219b9f8622738",
+        "sha256:bd28cb70927aff54d43025e5f1bc1292f5f31c7ec1de646e0451c38461c774bb",
+        "sha256:ab8528cba76238d7e0cc45b6a1c04313c87e471e6c88acffc330bdac2cbc03c1"
+      ],
+      "outcome": "accept",
+      "reason_code": null,
+      "engine_version": "credence-core-verifier-c2",
+      "decided_at": "2026-10-24T15:00:03Z",
+      "authorized_transaction_digest": null,
+      "authorized_transaction_digest_scheme": null
+    }
+  },
+  "token_count_source": "provider_reported",
+  "expected": {
+    "outcome": "DeliveryVerified",
+    "prompt_digest": "sha256:de5489baab771f5fc2a02b38a422fc327b9ebf47e7530037cf0f9564afd52f1d",
+    "response_digest": "sha256:bd28cb70927aff54d43025e5f1bc1292f5f31c7ec1de646e0451c38461c774bb",
+    "receipt_digest": "sha256:5edbf98eef02f55ef4032439f44c4961bc0f87d549d4af8b52d311ddc300cc46",
+    "evidence_tier": 2
+  }
+}
