@@ -1,0 +1,29 @@
+{
+  "id": "reject-evidence-tier-out-of-range",
+  "description": "Evidence tier 4",
+  "entry": "objects.ServiceClass.from_canonical",
+  "input": {
+    "object_type": "credence.service_class",
+    "schema_version": "1",
+    "execution_profile_digest": "sha256:b723cff7709f87551bcd56378b18f580e41232e1a3681b7e43f9f4a3c11877ca",
+    "model_family": "example-model-8b",
+    "delivery_mode": "interactive",
+    "service_tier": "base",
+    "jurisdiction": "US",
+    "data_residency": [
+      "DE",
+      "FR",
+      "US"
+    ],
+    "residency_region": "US",
+    "evidence_tier": 4,
+    "latency_p95_ms": 1500,
+    "availability_bps": 9990
+  },
+  "expected": {
+    "reject": {
+      "reason": "INVALID_ENUM",
+      "field": "evidence_tier"
+    }
+  }
+}

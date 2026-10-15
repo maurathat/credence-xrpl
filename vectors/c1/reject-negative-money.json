@@ -1,0 +1,34 @@
+{
+  "id": "reject-negative-money",
+  "description": "Negative drawn amount",
+  "entry": "objects.Facility.from_canonical",
+  "input": {
+    "object_type": "credence.facility",
+    "schema_version": "1",
+    "facility_id": "facility-0001",
+    "borrower_account": "raLnyR4PTuc5SgXGHqYA894a4eoKqoFwu",
+    "xrpl_loan_id": "493E164ADBE971EACBBE46B974060B587E658FD7BC5C3D7BF9F282CF2E68A4A6",
+    "limit_micro_trlusd": 500000000,
+    "drawn_micro_trlusd": -1,
+    "term_seconds": 1800,
+    "maturity_at": "2026-10-24T15:30:00Z",
+    "spread_bps": 1200,
+    "allowed_providers": [
+      "provider-a",
+      "provider-b"
+    ],
+    "allowed_procurement_classes": [
+      "sha256:951dcb0f3a10ae099ef8e410e69bfdfec9aa39f7e4d460a9dcf66ea9f21d2ecc"
+    ],
+    "minimum_evidence_tier": 1,
+    "purpose": "inference",
+    "owner_approval_digest": "sha256:ebb6682ebd4336b6276001c8a0c88fe21fbd804d71ecbfda294f7efb1a040e8e",
+    "status": "active"
+  },
+  "expected": {
+    "reject": {
+      "reason": "NEGATIVE_VALUE",
+      "field": "drawn_micro_trlusd"
+    }
+  }
+}

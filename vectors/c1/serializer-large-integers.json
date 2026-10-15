@@ -1,0 +1,11 @@
+{
+  "id": "serializer-large-integers",
+  "description": "+/-(2**53 - 1) admitted",
+  "entry": "kessai.canonicalize_json_bytes",
+  "input_json_text": "{\"max\":9007199254740991,\"min\":-9007199254740991}",
+  "expected": {
+    "canonical_text": "{\"max\":9007199254740991,\"min\":-9007199254740991}",
+    "canonical_hex": "7b226d6178223a393030373139393235343734303939312c226d696e223a2d393030373139393235343734303939317d",
+    "digest": "sha256:63546eb60913dcb1cdd5118f7bf4885beed344af930c8a9d5f38fad243fd4819"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "id": "serializer-reject-lone-surrogate",
+  "description": "Lone surrogate refused",
+  "entry": "kessai.canonicalize_json_bytes",
+  "input_json_text": "{\"m\":\"\\ud800\"}",
+  "expected": {
+    "reject": {
+      "reason": "NON_SCALAR_UNICODE"
+    }
+  }
+}

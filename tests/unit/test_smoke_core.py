@@ -13,7 +13,6 @@ MODULES = [
     "credence.core.repayment_scheduler",
     "credence.core.underwriting",
     "credence.core.decision_records",
-    "credence.core.objects",
     "credence.core.store.store",
 ]
 

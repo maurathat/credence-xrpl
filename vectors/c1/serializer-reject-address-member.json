@@ -1,0 +1,11 @@
+{
+  "id": "serializer-reject-address-member",
+  "description": "Top-level address refused by the adapter",
+  "entry": "kessai.canonicalize_json_bytes",
+  "input_json_text": "{\"a\":1,\"address\":\"x\"}",
+  "expected": {
+    "reject": {
+      "reason": "ADDRESS_MEMBER_RESERVED"
+    }
+  }
+}

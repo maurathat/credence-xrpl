@@ -1,0 +1,11 @@
+{
+  "id": "serializer-non-ascii-key-order",
+  "description": "JCS orders member names by UTF-16 code units (U+1F600 sorts before U+FB01)",
+  "entry": "kessai.canonicalize_json_bytes",
+  "input_json_text": "{\"\\ufb01\":5,\"z\":1,\"\\u00e9\":2,\"a\":3,\"\\u65e5\":4,\"\\ud83d\\ude00\":6}",
+  "expected": {
+    "canonical_text": "{\"a\":3,\"z\":1,\"\u00e9\":2,\"\u65e5\":4,\"\ud83d\ude00\":6,\"\ufb01\":5}",
+    "canonical_hex": "7b2261223a332c227a223a312c22c3a9223a322c22e697a5223a342c22f09f9880223a362c22efac81223a357d",
+    "digest": "sha256:0549e77722df56dd6f1324afddc332c5855dd0241f0988cb242a634d4211d758"
+  }
+}

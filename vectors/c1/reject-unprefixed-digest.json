@@ -1,0 +1,23 @@
+{
+  "id": "reject-unprefixed-digest",
+  "description": "Digest without sha256: prefix",
+  "entry": "objects.Quote.from_canonical",
+  "input": {
+    "object_type": "credence.quote",
+    "schema_version": "1",
+    "quote_id": "quote-0001",
+    "provider_id": "provider-b",
+    "service_class_digest": "3ba43527c552084452c1c520458e8f096fb721e92c8682c878be0b4615eb6030",
+    "input_price_per_million_micro_trlusd": 150000,
+    "output_price_per_million_micro_trlusd": 600000,
+    "max_input_tokens": 8192,
+    "max_output_tokens": 2048,
+    "valid_until": "2026-10-24T15:05:00Z"
+  },
+  "expected": {
+    "reject": {
+      "reason": "MALFORMED_DIGEST",
+      "field": "service_class_digest"
+    }
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "id": "serializer-reencoded",
+  "description": "Whitespace, member order and \\u escapes do not matter",
+  "entry": "kessai.canonicalize_json_bytes",
+  "input_json_text": "{ \"b\" : [ 1 ,2 ] ,\n  \"a\" : \"\\u0041\" }",
+  "expected": {
+    "canonical_text": "{\"a\":\"A\",\"b\":[1,2]}",
+    "canonical_hex": "7b2261223a2241222c2262223a5b312c325d7d",
+    "digest": "sha256:b5910a41ce378d55b41fcf018f28a03005907515c85e2e828c391397c8212a34"
+  }
+}

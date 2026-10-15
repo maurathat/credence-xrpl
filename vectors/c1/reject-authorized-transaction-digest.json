@@ -1,0 +1,26 @@
+{
+  "id": "reject-authorized-transaction-digest",
+  "description": "Transaction digest must stay null in C1",
+  "entry": "objects.DecisionRecord.from_canonical",
+  "input": {
+    "object_type": "credence.decision_record",
+    "schema_version": "1",
+    "input_digests": [
+      "sha256:487c7cace64986be0f81ae5230c4e8ec36ade5e7214ba4855a489d604c01b1f5",
+      "sha256:2f6534691763a043f16eb3cd233c017a3ccc0f3d2fd8a544bd7b6f7a8ea18a0a",
+      "sha256:7dfa73622b3e73881246ce5582160b3a545b029b4b8ba3c9d24d779a3b5c2a7d"
+    ],
+    "outcome": "accept",
+    "reason_code": null,
+    "engine_version": "credence-core-0.0.0",
+    "decided_at": "2026-10-24T15:00:00Z",
+    "authorized_transaction_digest": "sha256:e2c07522e38e33b9177458760e69530f24cf98138339d5876f4dba22d21818c4",
+    "authorized_transaction_digest_scheme": null
+  },
+  "expected": {
+    "reject": {
+      "reason": "MUST_BE_NULL_IN_C1",
+      "field": "authorized_transaction_digest"
+    }
+  }
+}

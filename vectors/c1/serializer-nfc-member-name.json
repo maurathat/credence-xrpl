@@ -1,0 +1,11 @@
+{
+  "id": "serializer-nfc-member-name",
+  "description": "NFD member name folds to NFC",
+  "entry": "kessai.canonicalize_json_bytes",
+  "input_json_text": "{\"mode\\u0301le\":1}",
+  "expected": {
+    "canonical_text": "{\"mod\u00e9le\":1}",
+    "canonical_hex": "7b226d6f64c3a96c65223a317d",
+    "digest": "sha256:88057a43bc38794266db6a7ff7d677a0c32fc53dc9ee9cb8b2632653539ffdc3"
+  }
+}

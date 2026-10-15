@@ -1,0 +1,21 @@
+{
+  "id": "reservation-held",
+  "description": "Held reservation",
+  "entry": "objects.Reservation.from_canonical",
+  "input": {
+    "object_type": "credence.reservation",
+    "schema_version": "1",
+    "reservation_id": "reservation-0001",
+    "facility_id": "facility-0001",
+    "quote_id": "quote-0001",
+    "maximum_amount_micro_trlusd": 2457600,
+    "created_at": "2026-10-24T15:00:00Z",
+    "expires_at": "2026-10-24T15:10:00Z",
+    "status": "held"
+  },
+  "expected": {
+    "canonical_text": "{\"created_at\":\"2026-10-24T15:00:00Z\",\"expires_at\":\"2026-10-24T15:10:00Z\",\"facility_id\":\"facility-0001\",\"maximum_amount_micro_trlusd\":2457600,\"object_type\":\"credence.reservation\",\"quote_id\":\"quote-0001\",\"reservation_id\":\"reservation-0001\",\"schema_version\":\"1\",\"status\":\"held\"}",
+    "canonical_hex": "7b22637265617465645f6174223a22323032362d31302d32345431353a30303a30305a222c22657870697265735f6174223a22323032362d31302d32345431353a31303a30305a222c22666163696c6974795f6964223a22666163696c6974792d30303031222c226d6178696d756d5f616d6f756e745f6d6963726f5f74726c757364223a323435373630302c226f626a6563745f74797065223a2263726564656e63652e7265736572766174696f6e222c2271756f74655f6964223a2271756f74652d30303031222c227265736572766174696f6e5f6964223a227265736572766174696f6e2d30303031222c22736368656d615f76657273696f6e223a2231222c22737461747573223a2268656c64227d",
+    "digest": "sha256:00bd4efeb8050a5bcc06d88f3abcf53f7bd8d4fc2a4c050d49d1babfba846819"
+  }
+}

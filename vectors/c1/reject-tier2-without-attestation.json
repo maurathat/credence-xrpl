@@ -1,0 +1,28 @@
+{
+  "id": "reject-tier2-without-attestation",
+  "description": "Tier 2 receipt with no attestation digest",
+  "entry": "objects.DeliveryReceiptBody.from_canonical",
+  "input": {
+    "object_type": "credence.delivery_receipt",
+    "schema_version": "1",
+    "purchase_request_digest": "sha256:487c7cace64986be0f81ae5230c4e8ec36ade5e7214ba4855a489d604c01b1f5",
+    "execution_profile_digest": "sha256:b723cff7709f87551bcd56378b18f580e41232e1a3681b7e43f9f4a3c11877ca",
+    "provider_id": "provider-b",
+    "response_digest": "sha256:385e2def99d4d4bd056310a0c3153ba0ad30c2e05a16e3727f30f9617d95d41d",
+    "input_token_count": 1234,
+    "output_token_count": 1,
+    "price_micro_trlusd": 187,
+    "started_at": "2026-10-24T15:00:01Z",
+    "completed_at": "2026-10-24T15:00:03Z",
+    "nonce": "3e213eda2eaaeb8adbea9d57453ccd5f",
+    "evidence_tier": 2,
+    "provider_attestation_digest": null,
+    "previous_receipt_digest": "sha256:b3915b7066784de3d6f9a86339d399352b6d7c68ce3287132677602eb66d09ea"
+  },
+  "expected": {
+    "reject": {
+      "reason": "TIER_ATTESTATION_MISMATCH",
+      "field": "provider_attestation_digest"
+    }
+  }
+}

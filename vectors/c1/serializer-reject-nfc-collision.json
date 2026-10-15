@@ -1,0 +1,11 @@
+{
+  "id": "serializer-reject-nfc-collision",
+  "description": "Names equal after NFC refused",
+  "entry": "kessai.canonicalize_json_bytes",
+  "input_json_text": "{\"\\u00e9\":1,\"e\\u0301\":2}",
+  "expected": {
+    "reject": {
+      "reason": "NFC_NAME_COLLISION"
+    }
+  }
+}

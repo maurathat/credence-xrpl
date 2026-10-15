@@ -1,0 +1,11 @@
+{
+  "id": "serializer-array-order",
+  "description": "Array order is preserved",
+  "entry": "kessai.canonicalize_json_bytes",
+  "input_json_text": "{\"list\":[3,1,2,\"b\",\"a\"]}",
+  "expected": {
+    "canonical_text": "{\"list\":[3,1,2,\"b\",\"a\"]}",
+    "canonical_hex": "7b226c697374223a5b332c312c322c2262222c2261225d7d",
+    "digest": "sha256:443fd57d39401b4da1ed6521502894124d39677e68e29b027dca13e2a874d288"
+  }
+}

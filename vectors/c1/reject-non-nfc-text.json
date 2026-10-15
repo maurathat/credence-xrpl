@@ -1,0 +1,29 @@
+{
+  "id": "reject-non-nfc-text",
+  "description": "NFD text in a domain string",
+  "entry": "objects.ExecutionProfile.from_canonical",
+  "input": {
+    "object_type": "credence.execution_profile",
+    "schema_version": "1",
+    "model_identifier": "mode\u0301le",
+    "model_artifact_digest": "sha256:3bfd81ee8187f30f1226fd4cb5be51ae15e2a0b307c383a4efba718ebd6bd6e5",
+    "tokenizer_digest": "sha256:369e2175c3a6c438863eb06772b161fe0fcfab912146a7a8307ae370dadd7d0f",
+    "adapter_digest": "sha256:9b50edc7686823a94cca2b34ea937a9979ed6b9eb101ee51d94d8d4a6ecae852",
+    "chat_template_digest": "sha256:f24f944e56ffcef566c6db723618ce5811808e635a02aef5d88ebb0ec709956f",
+    "runtime": "llama.cpp b4500",
+    "precision": "BF16",
+    "quantization": "none",
+    "context_min_tokens": 32768,
+    "sampling": {
+      "temperature_milli": 700,
+      "seed_policy": "fixed",
+      "seed": 42
+    }
+  },
+  "expected": {
+    "reject": {
+      "reason": "NOT_NFC",
+      "field": "model_identifier"
+    }
+  }
+}

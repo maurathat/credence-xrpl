@@ -1,0 +1,13 @@
+{
+  "id": "serializer-reject-python-float",
+  "description": "A float value is refused before encoding",
+  "entry": "kessai.canonicalize",
+  "input": {
+    "m": 1.0
+  },
+  "expected": {
+    "reject": {
+      "reason": "FLOAT_NOT_ADMITTED"
+    }
+  }
+}

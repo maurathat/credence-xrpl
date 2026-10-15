@@ -1,0 +1,22 @@
+{
+  "id": "quote-basic",
+  "description": "Integer micro-tRLUSD prices per million tokens and token caps",
+  "entry": "objects.Quote.from_canonical",
+  "input": {
+    "object_type": "credence.quote",
+    "schema_version": "1",
+    "quote_id": "quote-0001",
+    "provider_id": "provider-b",
+    "service_class_digest": "sha256:adb469a711e49b44517cfecd38fffffd6a11e8039867d52b83f34f505f399daa",
+    "input_price_per_million_micro_trlusd": 150000,
+    "output_price_per_million_micro_trlusd": 600000,
+    "max_input_tokens": 8192,
+    "max_output_tokens": 2048,
+    "valid_until": "2026-10-24T15:05:00Z"
+  },
+  "expected": {
+    "canonical_text": "{\"input_price_per_million_micro_trlusd\":150000,\"max_input_tokens\":8192,\"max_output_tokens\":2048,\"object_type\":\"credence.quote\",\"output_price_per_million_micro_trlusd\":600000,\"provider_id\":\"provider-b\",\"quote_id\":\"quote-0001\",\"schema_version\":\"1\",\"service_class_digest\":\"sha256:adb469a711e49b44517cfecd38fffffd6a11e8039867d52b83f34f505f399daa\",\"valid_until\":\"2026-10-24T15:05:00Z\"}",
+    "canonical_hex": "7b22696e7075745f70726963655f7065725f6d696c6c696f6e5f6d6963726f5f74726c757364223a3135303030302c226d61785f696e7075745f746f6b656e73223a383139322c226d61785f6f75747075745f746f6b656e73223a323034382c226f626a6563745f74797065223a2263726564656e63652e71756f7465222c226f75747075745f70726963655f7065725f6d696c6c696f6e5f6d6963726f5f74726c757364223a3630303030302c2270726f76696465725f6964223a2270726f76696465722d62222c2271756f74655f6964223a2271756f74652d30303031222c22736368656d615f76657273696f6e223a2231222c22736572766963655f636c6173735f646967657374223a227368613235363a61646234363961373131653439623434353137636665636433386666666666643661313165383033393836376435326238336633346635303566333939646161222c2276616c69645f756e74696c223a22323032362d31302d32345431353a30353a30305a227d",
+    "digest": "sha256:2f6534691763a043f16eb3cd233c017a3ccc0f3d2fd8a544bd7b6f7a8ea18a0a"
+  }
+}

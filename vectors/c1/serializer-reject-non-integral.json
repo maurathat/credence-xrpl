@@ -1,0 +1,11 @@
+{
+  "id": "serializer-reject-non-integral",
+  "description": "1.5 refused",
+  "entry": "kessai.canonicalize_json_bytes",
+  "input_json_text": "{\"m\":1.5}",
+  "expected": {
+    "reject": {
+      "reason": "NUMBER_NOT_INTEGRAL"
+    }
+  }
+}

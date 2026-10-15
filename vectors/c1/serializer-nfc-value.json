@@ -1,0 +1,11 @@
+{
+  "id": "serializer-nfc-value",
+  "description": "NFD string value folds to NFC",
+  "entry": "kessai.canonicalize_json_bytes",
+  "input_json_text": "{\"text\":\"mode\\u0301le\"}",
+  "expected": {
+    "canonical_text": "{\"text\":\"mod\u00e9le\"}",
+    "canonical_hex": "7b2274657874223a226d6f64c3a96c65227d",
+    "digest": "sha256:9444ac21644ff6f511a830203e6701eb05561d4c90acf5c5e444a811f34abaaa"
+  }
+}

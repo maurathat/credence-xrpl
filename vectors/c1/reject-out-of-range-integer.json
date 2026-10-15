@@ -1,0 +1,23 @@
+{
+  "id": "reject-out-of-range-integer",
+  "description": "2**53 exceeds the admitted range",
+  "entry": "objects.Quote.from_canonical",
+  "input": {
+    "object_type": "credence.quote",
+    "schema_version": "1",
+    "quote_id": "quote-0001",
+    "provider_id": "provider-b",
+    "service_class_digest": "sha256:adb469a711e49b44517cfecd38fffffd6a11e8039867d52b83f34f505f399daa",
+    "input_price_per_million_micro_trlusd": 150000,
+    "output_price_per_million_micro_trlusd": 600000,
+    "max_input_tokens": 9007199254740992,
+    "max_output_tokens": 2048,
+    "valid_until": "2026-10-24T15:05:00Z"
+  },
+  "expected": {
+    "reject": {
+      "reason": "OUT_OF_RANGE",
+      "field": "max_input_tokens"
+    }
+  }
+}

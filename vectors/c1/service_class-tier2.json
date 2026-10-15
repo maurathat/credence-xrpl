@@ -1,0 +1,28 @@
+{
+  "id": "service_class-tier2",
+  "description": "Residency set given in canonical order",
+  "entry": "objects.ServiceClass.from_canonical",
+  "input": {
+    "object_type": "credence.service_class",
+    "schema_version": "1",
+    "execution_profile_digest": "sha256:b723cff7709f87551bcd56378b18f580e41232e1a3681b7e43f9f4a3c11877ca",
+    "model_family": "example-model-8b",
+    "delivery_mode": "interactive",
+    "service_tier": "base",
+    "jurisdiction": "US",
+    "data_residency": [
+      "DE",
+      "FR",
+      "US"
+    ],
+    "residency_region": "US",
+    "evidence_tier": 2,
+    "latency_p95_ms": 1500,
+    "availability_bps": 9990
+  },
+  "expected": {
+    "canonical_text": "{\"availability_bps\":9990,\"data_residency\":[\"DE\",\"FR\",\"US\"],\"delivery_mode\":\"interactive\",\"evidence_tier\":2,\"execution_profile_digest\":\"sha256:b723cff7709f87551bcd56378b18f580e41232e1a3681b7e43f9f4a3c11877ca\",\"jurisdiction\":\"US\",\"latency_p95_ms\":1500,\"model_family\":\"example-model-8b\",\"object_type\":\"credence.service_class\",\"residency_region\":\"US\",\"schema_version\":\"1\",\"service_tier\":\"base\"}",
+    "canonical_hex": "7b22617661696c6162696c6974795f627073223a393939302c22646174615f7265736964656e6379223a5b224445222c224652222c225553225d2c2264656c69766572795f6d6f6465223a22696e746572616374697665222c2265766964656e63655f74696572223a322c22657865637574696f6e5f70726f66696c655f646967657374223a227368613235363a62373233636666373730396638373535316263643536333738623138663538306534313233326531613336383162376534336639663461336331313837376361222c226a7572697364696374696f6e223a225553222c226c6174656e63795f7039355f6d73223a313530302c226d6f64656c5f66616d696c79223a226578616d706c652d6d6f64656c2d3862222c226f626a6563745f74797065223a2263726564656e63652e736572766963655f636c617373222c227265736964656e63795f726567696f6e223a225553222c22736368656d615f76657273696f6e223a2231222c22736572766963655f74696572223a2262617365227d",
+    "digest": "sha256:adb469a711e49b44517cfecd38fffffd6a11e8039867d52b83f34f505f399daa"
+  }
+}

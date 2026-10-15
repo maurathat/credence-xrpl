@@ -1,0 +1,39 @@
+{
+  "id": "reject-duplicate-provider",
+  "description": "Duplicate allowed provider",
+  "entry": "objects.ProcurementClass.from_canonical",
+  "input": {
+    "object_type": "credence.procurement_class",
+    "schema_version": "1",
+    "model_family": "example-model-8b",
+    "allowed_precisions": [
+      "BF16",
+      "FP16"
+    ],
+    "allowed_quantizations": [
+      "Q8_0",
+      "none"
+    ],
+    "minimum_evidence_tier": 1,
+    "delivery_mode": "interactive",
+    "allowed_jurisdictions": [
+      "DE",
+      "US"
+    ],
+    "allowed_data_residencies": [
+      "DE",
+      "FR",
+      "US"
+    ],
+    "allowed_providers": [
+      "provider-a",
+      "provider-a"
+    ]
+  },
+  "expected": {
+    "reject": {
+      "reason": "DUPLICATE_ENTRY",
+      "field": "allowed_providers"
+    }
+  }
+}

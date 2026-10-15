@@ -1,0 +1,11 @@
+{
+  "id": "serializer-reject-out-of-range",
+  "description": "2**53 refused",
+  "entry": "kessai.canonicalize_json_bytes",
+  "input_json_text": "{\"m\":9007199254740992}",
+  "expected": {
+    "reject": {
+      "reason": "NUMBER_OUT_OF_RANGE"
+    }
+  }
+}

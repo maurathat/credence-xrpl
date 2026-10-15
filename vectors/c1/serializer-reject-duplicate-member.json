@@ -1,0 +1,11 @@
+{
+  "id": "serializer-reject-duplicate-member",
+  "description": "Duplicate member refused",
+  "entry": "kessai.canonicalize_json_bytes",
+  "input_json_text": "{\"m\":1,\"m\":2}",
+  "expected": {
+    "reject": {
+      "reason": "DUPLICATE_MEMBER"
+    }
+  }
+}
