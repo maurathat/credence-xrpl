@@ -1,0 +1,51 @@
+{
+  "checkpoint": "1D-X",
+  "mode": "FAIL CLOSED / FROZEN E5 HARNESS / LIVE EXECUTION",
+  "status": "BLOCKED",
+  "stop_phase": "pre-runtime frozen-harness preflight",
+  "recorded_at_utc": "2026-10-15T02:39:24Z",
+  "start_commit": "f4a7dff1c9de14ff20861992c734990bac8866d9",
+  "classification": "A. local frozen-harness evidence-destination mismatch",
+  "stop": "STOP: the frozen E5 runner targets the existing checkpoint-1d evidence directory, but Checkpoint 1D-X requires new evidence under checkpoint-1d-x.",
+  "supporting_evidence": {
+    "required_evidence_directory": "spike/xrpl/evidence/checkpoint-1d-x",
+    "runner_evidence_directory": "spike/xrpl/evidence/checkpoint-1d",
+    "runner_path_binding": "scripts/run_checkpoint_1d.py:52",
+    "runner_existing_evidence_guard": "scripts/run_checkpoint_1d.py:263-264",
+    "existing_checkpoint_1d_directory_present": true,
+    "checkpoint_1d_x_directory_present_before_stop_record": false,
+    "frozen_components_unchanged": true,
+    "pre_live_harness_tests": "PASS (28)"
+  },
+  "provenance": {
+    "E5-ASSERTIONS.md": "656921cacd310214b6ecce7088e21e84fcca44feaa3104b95cfb9f5f4bc92b92",
+    "scripts/e5_oracle.py": "8052459639081eca2baeb64402120ce00507f35eafcc595315f912016ae07bbf",
+    "scripts/run_checkpoint_1d.py": "b158f8364c96cf6b296ad1b70b07c3301f609a6da7a21cd3c1975d1e3f5c0a5b",
+    "tests/test_checkpoint_1d.py": "4a8eba0b49f8a30c50cc5eddfed7a7a8bdc51a29c5c4b241780738d6e0acc7d0"
+  },
+  "execution": {
+    "runner_executions": 0,
+    "environment_started": false,
+    "xrpl_rpc_calls": 0,
+    "ledger_advances": 0,
+    "new_xrpl_transactions_submitted": 0,
+    "signer_list_set_submitted": false,
+    "e5_operations_submitted": [],
+    "lending_transactions_submitted": 0
+  },
+  "result_state": {
+    "E1": "PASS/FROZEN",
+    "E2": "PASS/FROZEN",
+    "E3": "PASS/RETIRED within tested scope",
+    "E4": "PASS/RETIRED within tested scope",
+    "E5": "BLOCKED",
+    "E5-A": "NOT_ATTEMPTED",
+    "E5-B": "NOT_ATTEMPTED",
+    "E5-C": "NOT_ATTEMPTED",
+    "E5-D": "NOT_ATTEMPTED",
+    "E5-E": "NOT_ATTEMPTED",
+    "E6-E9": "NOT_ATTEMPTED"
+  },
+  "minimum_next_checkpoint": "Separately authorize a harness-only evidence-destination repair and regression that binds a fresh execution to checkpoint-1d-x; then separately authorize a fresh E5-only run.",
+  "minimum_next_checkpoint_performed": false
+}

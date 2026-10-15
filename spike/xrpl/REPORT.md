@@ -1,3 +1,98 @@
+# Checkpoint 1D-X — execute E5 borrower authorization
+
+## Outcome
+
+**BLOCKED — fail-closed during the frozen-harness preflight, before runtime.**
+
+Checkpoint 1D-X began from clean commit
+`f4a7dff1c9de14ff20861992c734990bac8866d9`, with checkpoint-0 ancestry and
+submodule gitlinks unchanged. The 28 existing E5 harness tests, including
+S1-S12, passed before execution.
+
+The frozen runner binds `EVIDENCE` to `evidence/checkpoint-1d/`. That committed
+directory already exists, and the runner's retry guard stops whenever it
+exists. Checkpoint 1D-X instead requires all new live evidence under
+`evidence/checkpoint-1d-x/`. The frozen runner therefore cannot execute this
+checkpoint while satisfying both its own guard and the required evidence
+destination.
+
+Changing the path, moving or removing committed evidence, or routing the run
+through another directory would alter or work around the frozen harness. The
+checkpoint requires STOP in that situation, so no runtime was started and the
+runner was not invoked.
+
+## Frozen provenance
+
+| Frozen component | SHA-256 |
+| --- | --- |
+| `E5-ASSERTIONS.md` | `656921cacd310214b6ecce7088e21e84fcca44feaa3104b95cfb9f5f4bc92b92` |
+| `scripts/e5_oracle.py` | `8052459639081eca2baeb64402120ce00507f35eafcc595315f912016ae07bbf` |
+| `scripts/run_checkpoint_1d.py` | `b158f8364c96cf6b296ad1b70b07c3301f609a6da7a21cd3c1975d1e3f5c0a5b` |
+| `tests/test_checkpoint_1d.py` | `4a8eba0b49f8a30c50cc5eddfed7a7a8bdc51a29c5c4b241780738d6e0acc7d0` |
+
+All four hashes remained unchanged after STOP.
+
+## Execution status
+
+- Fresh pinned runtime: **NOT STARTED**.
+- Frozen E1 invariant verification: **NOT RUN in 1D-X**.
+- SignerListSet: **NOT SUBMITTED**.
+- Resulting 1D-X SignerList state: **NOT OBSERVED**.
+- E5-A ResearchBot alone: **NOT ATTEMPTED**.
+- E5-B Credence alone: **NOT ATTEMPTED**.
+- E5-C ResearchBot + Credence: **NOT ATTEMPTED**.
+- E5-D borrower master key: **NOT ATTEMPTED**.
+- E5-E final RegularKey/master-key-flag read: **NOT ATTEMPTED**.
+- Public signer evidence: **NOT PRODUCED** because no E5 transaction was
+  constructed or submitted.
+
+There were zero runner executions, zero XRPL RPC calls, zero ledger advances,
+and **zero new XRPL transactions**. No `LoanSet`, `LoanPay`, or other lending
+transaction was submitted.
+
+## Classification and retained result state
+
+Classification: **A — local frozen-harness evidence-destination mismatch**.
+This is not a protocol or authorization result.
+
+- E1/E2: **PASS/FROZEN**.
+- E3/E4: **PASS/RETIRED within tested scope**.
+- E5: **BLOCKED**; E5-A through E5-E remain **NOT ATTEMPTED**.
+- E6-E9: **NOT ATTEMPTED**.
+
+## Evidence and gates
+
+`evidence/checkpoint-1d-x/MANIFEST.json` verifies the single fail-closed payload.
+
+- Pre-live E5 harness tests including S1-S12: **PASS** (28 tests).
+- All spike tests: **PASS** (92 tests).
+- Repository unit tests: **PASS** (17 tests).
+- Conformance tests: **PASS** (4 tests).
+- Lint, formatting, and large-file check: **PASS**.
+- Strict typecheck: **PASS** (25 source files).
+- Secrets scan: **PASS**.
+- JSON validation: **PASS** (116 files).
+- Evidence-manifest verification: **PASS** (9 manifests, 99 payload files).
+- Frozen provenance immutability: **PASS**.
+- Authorized-path and unchanged review/submodule checks: **PASS**.
+- `git diff --check`: **PASS**.
+
+## Recommendation
+
+**E6 must not begin.** The minimum next checkpoint is a separately authorized,
+harness-only evidence-destination repair and regression that binds the frozen
+E5 execution to `checkpoint-1d-x/`. Only after that repair is frozen may a
+separately authorized fresh E5-only run be considered. Neither action was
+performed here.
+
+## Checkpoint 1D-X modified paths
+
+- `spike/xrpl/REPORT.md`
+- `spike/xrpl/RESULTS.json`
+- `spike/xrpl/evidence/checkpoint-1d-x/`
+
+---
+
 # Checkpoint 1D-H — SignerList response-shape repair
 
 ## Outcome

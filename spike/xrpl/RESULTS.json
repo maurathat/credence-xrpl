@@ -1,8 +1,75 @@
 {
-  "schema_version": 11,
+  "schema_version": 12,
   "overall": "BLOCKED",
-  "scope": "Checkpoint 1D-H harness repair complete; E5 remains blocked",
+  "scope": "Checkpoint 1D-X stopped during frozen-harness preflight before runtime",
   "start_commit": "44fb089f0cb4281608ab0b9a67e129147f349887",
+  "checkpoint_1d_x": {
+    "outcome": "BLOCKED",
+    "classification": "A. local frozen-harness evidence-destination mismatch",
+    "start_commit": "f4a7dff1c9de14ff20861992c734990bac8866d9",
+    "stop_phase": "pre-runtime frozen-harness preflight",
+    "failure_detail": "The frozen runner targets the existing checkpoint-1d evidence directory and refuses to run when it exists, while Checkpoint 1D-X requires new evidence under checkpoint-1d-x.",
+    "provenance": {
+      "E5-ASSERTIONS.md": "656921cacd310214b6ecce7088e21e84fcca44feaa3104b95cfb9f5f4bc92b92",
+      "scripts/e5_oracle.py": "8052459639081eca2baeb64402120ce00507f35eafcc595315f912016ae07bbf",
+      "scripts/run_checkpoint_1d.py": "b158f8364c96cf6b296ad1b70b07c3301f609a6da7a21cd3c1975d1e3f5c0a5b",
+      "tests/test_checkpoint_1d.py": "4a8eba0b49f8a30c50cc5eddfed7a7a8bdc51a29c5c4b241780738d6e0acc7d0",
+      "unchanged_after_stop": true
+    },
+    "evidence_destination": {
+      "required": "evidence/checkpoint-1d-x",
+      "frozen_runner_target": "evidence/checkpoint-1d",
+      "existing_evidence_guard_triggered_by_preflight": true,
+      "guard_executed": false
+    },
+    "execution": {
+      "runner_executions": 0,
+      "environment_started": false,
+      "xrpl_rpc_calls": 0,
+      "ledger_advances": 0,
+      "new_xrpl_transactions_submitted": 0,
+      "signer_list_set_submitted": false,
+      "e5_operations_submitted": [],
+      "lending_transactions_submitted": 0
+    },
+    "result_state": {
+      "E1": "PASS/FROZEN",
+      "E2": "PASS/FROZEN",
+      "E3": "PASS/RETIRED within tested scope",
+      "E4": "PASS/RETIRED within tested scope",
+      "E5": "BLOCKED",
+      "E5-A": "NOT_ATTEMPTED",
+      "E5-B": "NOT_ATTEMPTED",
+      "E5-C": "NOT_ATTEMPTED",
+      "E5-D": "NOT_ATTEMPTED",
+      "E5-E": "NOT_ATTEMPTED",
+      "E6-E9": "NOT_ATTEMPTED"
+    },
+    "evidence_manifest": {
+      "path": "evidence/checkpoint-1d-x/MANIFEST.json",
+      "file_count": 1,
+      "bytes": 2356,
+      "verified": true
+    },
+    "gates": {
+      "pre_live_e5_harness_tests": "PASS (28)",
+      "s1_s12": "PASS",
+      "all_spike_tests": "PASS (92)",
+      "repository_unit_tests": "PASS (17)",
+      "conformance_tests": "PASS (4)",
+      "lint_format_large_file": "PASS",
+      "strict_typecheck": "PASS (25 source files)",
+      "secrets_scan": "PASS",
+      "json_validation": "PASS (116 files)",
+      "evidence_manifest_verification": "PASS (9 manifests, 99 payload files)",
+      "frozen_provenance_immutability": "PASS",
+      "authorized_paths_and_unchanged_review_submodules": "PASS",
+      "git_diff_check": "PASS"
+    },
+    "minimum_next_checkpoint": "Separately authorized harness-only evidence-destination repair and regression, followed by a separately authorized fresh E5-only run.",
+    "minimum_next_checkpoint_performed": false,
+    "e6_may_begin": false
+  },
   "checkpoint_1d_h": {
     "outcome": "PASS",
     "start_commit": "2368e5c32f0be5f764edd56b0d8bd3cc6d810810",
