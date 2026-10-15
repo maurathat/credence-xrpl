@@ -1,0 +1,97 @@
+{
+  "fixture": {
+    "loan_broker_id": "7BD631D30B6AAFC35F0A9F1A5E65746C519BB83A03660D3E18DF86061E178FE3",
+    "redemption_date": 845357422,
+    "subscription_date": 845357122,
+    "vault_account": "rU3YNEVNupsHjNyjPcGcWE3UEWJXywBioi",
+    "vault_id": "F9EE05299355CB6D7D6D3893399CA05A170ECA473BAFF7DF6A96A0A6D7B572AA"
+  },
+  "investment_entry": {
+    "close_time": 845357123,
+    "closed": true,
+    "ledger_hash": "64E49FF0623A55DC3B476C27BC1A607F140B67AA8B2854765C5FFCD0E1707F63",
+    "ledger_index": 76,
+    "phase": "Investment"
+  },
+  "state": {
+    "borrower_account": {
+      "Account": "rDSspc5iJQBQ1RnwirMw2RPZMxTN7RZvrs",
+      "Balance": "999999980",
+      "OwnerCount": 2,
+      "Sequence": 7
+    },
+    "borrower_balance": "0",
+    "broker_owner_balance": "10000",
+    "loan": null,
+    "loan_broker": {
+      "Account": "rNaQinKzZTESptdv2qLU8p2iPvgwxUNhpu",
+      "CoverAvailable": "10000",
+      "CoverRateLiquidation": 25000,
+      "CoverRateMinimum": 10000,
+      "DebtMaximum": "50000",
+      "Flags": 0,
+      "LedgerEntryType": "LoanBroker",
+      "LoanSequence": 1,
+      "Owner": "r3NQX7cTWbuxUc9c5XwMLLV1AwS4ZpjCrv",
+      "OwnerNode": "0",
+      "PreviousTxnID": "34751086218A423D4BE3B8B65885701EE3FA57420A3470E24801E7A8609E73C5",
+      "PreviousTxnLgrSeq": 19,
+      "Sequence": 10,
+      "VaultID": "F9EE05299355CB6D7D6D3893399CA05A170ECA473BAFF7DF6A96A0A6D7B572AA",
+      "VaultNode": "0",
+      "index": "7BD631D30B6AAFC35F0A9F1A5E65746C519BB83A03660D3E18DF86061E178FE3"
+    },
+    "regular_key": null,
+    "signer_lists": [
+      {
+        "Flags": 65536,
+        "LedgerEntryType": "SignerList",
+        "OwnerNode": "0",
+        "PreviousTxnID": "58313AEA0390CD431EDADFCDC8248BD057F2A9281222F3FB9B63932467198A65",
+        "PreviousTxnLgrSeq": 15,
+        "SignerEntries": [
+          {
+            "SignerEntry": {
+              "Account": "rhQGYpKkvMJBKFKZFdFxdBPbzHv8G6oQPj",
+              "SignerWeight": 1
+            }
+          },
+          {
+            "SignerEntry": {
+              "Account": "rH3nhvADSQYEiJKcyV2tU8b7oFCUpRJarR",
+              "SignerWeight": 1
+            }
+          }
+        ],
+        "SignerListID": 0,
+        "SignerQuorum": 2,
+        "index": "3922017BB51BAEDC83CAF36D15BF346A3BA625A90B467A7ED2AA093D3ADD2C1E"
+      }
+    ],
+    "vault": {
+      "Account": "rU3YNEVNupsHjNyjPcGcWE3UEWJXywBioi",
+      "Asset": {
+        "currency": "74524C5553440000000000000000000000000000",
+        "issuer": "rUPF3NTibwVAVSdrcRHjMQXtZZPU2v18y5"
+      },
+      "AssetsAvailable": "100000",
+      "AssetsTotal": "100000",
+      "Flags": 0,
+      "LEVersion": 1,
+      "LedgerEntryType": "Vault",
+      "Owner": "r3NQX7cTWbuxUc9c5XwMLLV1AwS4ZpjCrv",
+      "OwnerNode": "0",
+      "PreviousTxnID": "B2F09ACA3ACF7EFCF378632C49B1BE2E912AECF8AD89E261D9AF5F5E88FC08EB",
+      "PreviousTxnLgrSeq": 17,
+      "RedemptionDate": 845357422,
+      "Scale": 6,
+      "Sequence": 9,
+      "ShareMPTID": "000000017A165D1164DB8BADBDFA2CB2D202A01CF643F4E4",
+      "SubscriptionDate": 845357122,
+      "VaultKind": 1,
+      "WithdrawalPolicy": 1,
+      "index": "F9EE05299355CB6D7D6D3893399CA05A170ECA473BAFF7DF6A96A0A6D7B572AA"
+    },
+    "vault_pseudo_balance": "100000"
+  }
+}

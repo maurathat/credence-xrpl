@@ -1,0 +1,156 @@
+{
+  "algorithm": "SHA-256",
+  "file_count": 30,
+  "files": [
+    {
+      "bytes": 1004,
+      "path": "actors-public.json",
+      "sha256": "43aae1784944b0c693f5eeee1b51924c9eb492ab87a72fded9d37288b65141fa"
+    },
+    {
+      "bytes": 1074,
+      "path": "amendments-ledger-entry.json",
+      "sha256": "eaab2ac89bdc8d62874d56ddafe55519b6dc5e1ce9c16655b3ff54a2a47d8d95"
+    },
+    {
+      "bytes": 2276,
+      "path": "d12-live-bindings.json",
+      "sha256": "32028713d27ec8ce481080c9e19dffc9548fa425ea820fd115c828fd4694e422"
+    },
+    {
+      "bytes": 7966,
+      "path": "environment-start.json",
+      "sha256": "8f04c37e1efaee70c7111bf8367c7a6e21c1f30fe1ebdf106d459f2e2ea7ab56"
+    },
+    {
+      "bytes": 109875,
+      "path": "experiment-summary.json",
+      "sha256": "20565564088bae139b96f0fcabce353fe3f3d3031207129a6bbe6f4258f8a874"
+    },
+    {
+      "bytes": 19677,
+      "path": "feature-raw.json",
+      "sha256": "69e43df7637a7be0b1a1b02d18c1b89c5517ddc849e341ccc05a920800b07844"
+    },
+    {
+      "bytes": 11427,
+      "path": "investment-entry.json",
+      "sha256": "dce3a830efe564939321c9cbaec5a57319f9b5f4a23ff8322c8e527aaecf8d62"
+    },
+    {
+      "bytes": 40883,
+      "path": "ledger-closes.json",
+      "sha256": "2fd1ea4a02e01b764080f578ba7a938d90a0d8baf7adc694e8d2c93979d21d05"
+    },
+    {
+      "bytes": 6281,
+      "path": "positive-observation.json",
+      "sha256": "ffd6ac9b961feea93133ae88748419a964160bf20414d3b540b7737590cd240e"
+    },
+    {
+      "bytes": 3215,
+      "path": "prerequisite-state.json",
+      "sha256": "8305c434de20ce04e9470ff15e90d03e796542e01869492c72fc7cfe119a191b"
+    },
+    {
+      "bytes": 936,
+      "path": "provenance.json",
+      "sha256": "923bc1ea25d3d54373db68f06b657a42f07ffe780a472d33b921ef60b900acfc"
+    },
+    {
+      "bytes": 1040,
+      "path": "runtime-build-provenance.json",
+      "sha256": "a9fcba6e295fa4b00e0e49f54ef400a9bb9ac8e165957e0c10e4e649a50f3223"
+    },
+    {
+      "bytes": 3657,
+      "path": "transactions/01-fund_issuer.json",
+      "sha256": "570f450ff8509ab420ba619cbee72102d28cf71633f0298f2298d4165aa880ba"
+    },
+    {
+      "bytes": 3789,
+      "path": "transactions/02-fund_lender.json",
+      "sha256": "02d82210c48315332ffa8acb62e4b2f50f780252287a5e80e2956725589d081d"
+    },
+    {
+      "bytes": 3793,
+      "path": "transactions/03-fund_borrower.json",
+      "sha256": "5d0f3b25c1dee9228f5c099c771778adb48e3b92472b668c5f17d5940a58cfc0"
+    },
+    {
+      "bytes": 3801,
+      "path": "transactions/04-fund_research_bot.json",
+      "sha256": "0536f1f4a045600694e62420a8c9a6d170551ea2caede3d04c9daffcbbebb754"
+    },
+    {
+      "bytes": 3807,
+      "path": "transactions/05-fund_credence_policy.json",
+      "sha256": "7d2163112ef772a748ac6dcd4a811f37bcab52f091e966d57b34a8a95948d66b"
+    },
+    {
+      "bytes": 3801,
+      "path": "transactions/06-fund_broker_owner.json",
+      "sha256": "11a006fbc781ad28dd9dcfd056393ff402980844f5a14fed7fbabb0538044374"
+    },
+    {
+      "bytes": 3521,
+      "path": "transactions/07-issuer_enable_default_ripple.json",
+      "sha256": "2a001729b816eb22ebc09abd7835e755e5bf121014f7227c5752cc3bf39fe141"
+    },
+    {
+      "bytes": 5446,
+      "path": "transactions/08-lender_trust_tRLUSD.json",
+      "sha256": "6ddbfd1c6eb583e907f96c58a6a69e490227d2f79536ceab5b1e55aad6f6e8a1"
+    },
+    {
+      "bytes": 5482,
+      "path": "transactions/09-borrower_trust_tRLUSD.json",
+      "sha256": "5c8a464ee249f139871576d05ef4157f35b91a51ad0461120981389c1a29cef3"
+    },
+    {
+      "bytes": 5489,
+      "path": "transactions/10-broker_owner_trust_tRLUSD.json",
+      "sha256": "11ea3ff5aa212273b8ce1cd393036fcc9aeca74b8acac3efee9d905ff923d3de"
+    },
+    {
+      "bytes": 5009,
+      "path": "transactions/11-issue_tRLUSD_to_lender.json",
+      "sha256": "dc3ce418fc46108a0a9c37e9ee49f96a60cc762c07e6cf2cfaf99aa97860ee0e"
+    },
+    {
+      "bytes": 5012,
+      "path": "transactions/12-issue_tRLUSD_to_broker_owner.json",
+      "sha256": "9317a8e7c1ff4ad08a25d79df21006ec587a845ac8d1f7e572eb878f7b64d541"
+    },
+    {
+      "bytes": 7747,
+      "path": "transactions/13-borrower_set_2_of_2_signer_list.json",
+      "sha256": "1f2658664c56d24b229a12d8a28adf52622c05347428427487219b66931b38eb"
+    },
+    {
+      "bytes": 11216,
+      "path": "transactions/14-positive_create_closed_vault.json",
+      "sha256": "f7949354f158577bfde19c5337f12e18f18f2f46dd9bb30029eab7d9db2663a5"
+    },
+    {
+      "bytes": 10878,
+      "path": "transactions/15-positive_deposit_vault_assets.json",
+      "sha256": "d2f143cc5d1b24fa427cf55fc0680524264f3552652adb992bb914a52cf4f130"
+    },
+    {
+      "bytes": 12537,
+      "path": "transactions/16-positive_create_loan_broker.json",
+      "sha256": "3a5d2c57a84d1c32b060623e3175217dc16bdc67027b146b2ca52e0a3f236722"
+    },
+    {
+      "bytes": 8506,
+      "path": "transactions/17-positive_deposit_first_loss_cover.json",
+      "sha256": "4b7ca504c6af4b565c7026ea0cf17615795cfb142a9e420a86f07aba389bc6e4"
+    },
+    {
+      "bytes": 1390,
+      "path": "unexpected-result.json",
+      "sha256": "bb4aef5ba08b990d88ea47cbd867a8108eefc4bfecc99dc99425758d4fbba183"
+    }
+  ]
+}

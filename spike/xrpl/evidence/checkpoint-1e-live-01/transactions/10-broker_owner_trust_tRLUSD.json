@@ -1,0 +1,172 @@
+{
+  "after_state": {
+    "line": {
+      "account": "rUPF3NTibwVAVSdrcRHjMQXtZZPU2v18y5",
+      "balance": "0",
+      "currency": "74524C5553440000000000000000000000000000",
+      "limit": "1000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0
+    }
+  },
+  "before_state": {
+    "line": null
+  },
+  "classification": {
+    "status": "PASS"
+  },
+  "expected_result": "tesSUCCESS",
+  "experiment": "SETUP",
+  "label": "broker_owner_trust_tRLUSD",
+  "public_transaction": {
+    "Account": "r3NQX7cTWbuxUc9c5XwMLLV1AwS4ZpjCrv",
+    "Fee": "10",
+    "LastLedgerSequence": 31,
+    "LimitAmount": {
+      "currency": "74524C5553440000000000000000000000000000",
+      "issuer": "rUPF3NTibwVAVSdrcRHjMQXtZZPU2v18y5",
+      "value": "1000000"
+    },
+    "NetworkID": 21337,
+    "Sequence": 8,
+    "TransactionType": "TrustSet"
+  },
+  "state_assertions": [
+    {
+      "actual": "1000000",
+      "expected": "1000000",
+      "name": "broker_owner tRLUSD trust limit",
+      "passed": true
+    }
+  ],
+  "submission_response": {
+    "accepted": true,
+    "account_sequence_available": 9,
+    "account_sequence_next": 9,
+    "applied": true,
+    "broadcast": true,
+    "engine_result": "tesSUCCESS",
+    "engine_result_code": 0,
+    "engine_result_message": "The transaction was applied. Only final in a validated ledger.",
+    "kept": true,
+    "open_ledger_cost": "10",
+    "queued": false,
+    "status": "success",
+    "tx_json": {
+      "Account": "r3NQX7cTWbuxUc9c5XwMLLV1AwS4ZpjCrv",
+      "Fee": "10",
+      "LastLedgerSequence": 31,
+      "LimitAmount": {
+        "currency": "74524C5553440000000000000000000000000000",
+        "issuer": "rUPF3NTibwVAVSdrcRHjMQXtZZPU2v18y5",
+        "value": "1000000"
+      },
+      "NetworkID": 21337,
+      "Sequence": 8,
+      "TransactionType": "TrustSet",
+      "hash": "4C0B6D746DF1B042416ECB8C01D4BF2BAE4703D2B3F6F0DE709C103949020186"
+    },
+    "validated_ledger_index": 11
+  },
+  "validated_result": "tesSUCCESS",
+  "validated_transaction_response": {
+    "Account": "r3NQX7cTWbuxUc9c5XwMLLV1AwS4ZpjCrv",
+    "Fee": "10",
+    "LastLedgerSequence": 31,
+    "LimitAmount": {
+      "currency": "74524C5553440000000000000000000000000000",
+      "issuer": "rUPF3NTibwVAVSdrcRHjMQXtZZPU2v18y5",
+      "value": "1000000"
+    },
+    "NetworkID": 21337,
+    "Sequence": 8,
+    "TransactionType": "TrustSet",
+    "ctid": "C000000C00005359",
+    "date": 845357059,
+    "hash": "4C0B6D746DF1B042416ECB8C01D4BF2BAE4703D2B3F6F0DE709C103949020186",
+    "inLedger": 12,
+    "ledger_index": 12,
+    "meta": {
+      "AffectedNodes": [
+        {
+          "ModifiedNode": {
+            "LedgerEntryType": "AccountRoot",
+            "LedgerIndex": "259118F04EE63B628C00530DE260D25F11A39B421616858C381C3782DF9C6BEB",
+            "PreviousTxnID": "098CD375E22B344705C74ED295A6D7B13AE13556AEC65B31E74F7F54B590AEE6",
+            "PreviousTxnLgrSeq": 11
+          }
+        },
+        {
+          "CreatedNode": {
+            "LedgerEntryType": "DirectoryNode",
+            "LedgerIndex": "309871795A29A625181343CC630C46F7E8EC786C06BBD09712DAA494B98E89E9",
+            "NewFields": {
+              "Owner": "r3NQX7cTWbuxUc9c5XwMLLV1AwS4ZpjCrv",
+              "RootIndex": "309871795A29A625181343CC630C46F7E8EC786C06BBD09712DAA494B98E89E9"
+            }
+          }
+        },
+        {
+          "CreatedNode": {
+            "LedgerEntryType": "RippleState",
+            "LedgerIndex": "6BFAEB0606C59C1A63CDEF4C8759610D66937B7939D5FF891A29CAD3631F74A1",
+            "NewFields": {
+              "Balance": {
+                "currency": "74524C5553440000000000000000000000000000",
+                "issuer": "rrrrrrrrrrrrrrrrrrrrBZbvji",
+                "value": "0"
+              },
+              "Flags": 65536,
+              "HighLimit": {
+                "currency": "74524C5553440000000000000000000000000000",
+                "issuer": "rUPF3NTibwVAVSdrcRHjMQXtZZPU2v18y5",
+                "value": "0"
+              },
+              "LowLimit": {
+                "currency": "74524C5553440000000000000000000000000000",
+                "issuer": "r3NQX7cTWbuxUc9c5XwMLLV1AwS4ZpjCrv",
+                "value": "1000000"
+              }
+            }
+          }
+        },
+        {
+          "ModifiedNode": {
+            "FinalFields": {
+              "Flags": 0,
+              "Owner": "rUPF3NTibwVAVSdrcRHjMQXtZZPU2v18y5",
+              "RootIndex": "DE079EEC2028DFB091F7A1EDE0FBE0F5271E0CA647708A0E9520973B68A05767"
+            },
+            "LedgerEntryType": "DirectoryNode",
+            "LedgerIndex": "DE079EEC2028DFB091F7A1EDE0FBE0F5271E0CA647708A0E9520973B68A05767"
+          }
+        },
+        {
+          "ModifiedNode": {
+            "FinalFields": {
+              "Account": "r3NQX7cTWbuxUc9c5XwMLLV1AwS4ZpjCrv",
+              "Balance": "999999990",
+              "Flags": 0,
+              "OwnerCount": 1,
+              "Sequence": 9
+            },
+            "LedgerEntryType": "AccountRoot",
+            "LedgerIndex": "F7E75903736822058746C4F0F7D730B7D0B8DB256E7DF4FCCFD0C1C2A2B4FAD2",
+            "PreviousFields": {
+              "Balance": "1000000000",
+              "OwnerCount": 0,
+              "Sequence": 8
+            },
+            "PreviousTxnID": "BF7030AE987F32BA98D74413EBC0CFA20F75DEF5E3CE55DFEFB76F28C6EAE5D9",
+            "PreviousTxnLgrSeq": 8
+          }
+        }
+      ],
+      "TransactionIndex": 0,
+      "TransactionResult": "tesSUCCESS"
+    },
+    "status": "success",
+    "validated": true
+  }
+}

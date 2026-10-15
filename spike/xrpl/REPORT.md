@@ -1,3 +1,142 @@
+# Checkpoint 1E-LIVE-01 — frozen E6 live execution
+
+## Outcome
+
+**STOP / BLOCKED — the positive LoanSet validated `tesSUCCESS`, but the frozen
+runner crashed while constructing the semantic post-state assertions. E6 is
+not classified PASS.**
+
+The run began exactly at clean commit
+`b4498977d0e17f711bac2705cdbaf7c27db1d97f`, descended from checkpoint-0,
+with unchanged submodule gitlinks. D1-D12 passed 12/12 before the fresh ledger
+started. The runner was invoked once. It was not changed or retried after live
+execution began.
+
+## Frozen provenance and D12
+
+| Artifact | SHA-256 |
+| --- | --- |
+| `E6-ASSERTIONS.md` | `b7a0b86e250bd30e1bd2968d706aa12bc9a4325ec0127fb2bcb6a06305f3def8` |
+| `scripts/e6_oracle.py` | `a97fcc75bb82007bc5f467cb172f93a87cc91d7747f6218f1c31629f2d75acb6` |
+| `scripts/run_checkpoint_1e.py` | `bd9607d7258c96229c483cc57e45c2ff3aec81a50287e9a936ede813a8e20b42` |
+| `tests/test_checkpoint_1e.py` | `8da5f71f63298b8b13e9ccb06f4ccb783fc00768209a1e3985ea4f2c57e98bd5` |
+| xrpl-py binary codec entry point | `7f85b5979191587b70c706e5fab84d2ab1b43f338f5c9563920249c0bb6ae209` |
+| xrpl-py keypair implementation | `cbbf8a4720afe6bb2ea4f70ce5abc9383e53e38d64a170f01a55a17a51b080cd` |
+| xrpl-py transaction implementation | `00d99ebf6eba59f0e32c830da4faee9d18768ab9df7fb08c80b8a7bdcf532f33` |
+
+The runtime was pinned `xrpld 3.4.0`, source commit
+`4a4fded2eba11427c48ce3f24d9c1aea5e7a9d17`, build branch `HEAD`, in image
+digest `sha256:8cb9cb9e02b5f92d1c8c8721b439e7568acf5da657e54b3f8bb5b8daad32dca9`.
+It used the checked-in standalone configuration on network ID 21337 and a
+newly recreated data volume. The `feature` and validated Amendments ledger
+representations agreed on all eight required amendments.
+
+D12 then passed against the actual runner hash, fresh actors, exact Vault and
+Loan Broker IDs, pre-LoanSequence 1, expected Loan index, evidence destination,
+and the complete autofilled envelope. The exact body fixed Fee 40, Sequence 7,
+LastLedgerSequence 96, NetworkID 21337, empty top-level `SigningPubKey`, and
+the frozen LoanSet terms before either authorization domain signed.
+
+## Fresh prerequisite state and finalized terms
+
+The run recreated a public tRLUSD issuer/state, borrower, ResearchBot signer,
+Credence policy signer, Vault/Loan Broker owner, cash-basis closed-ended Vault,
+100000 micro-tRLUSD Vault deposit, Loan Broker, 10000 micro-tRLUSD cover, and
+the borrower quorum-2 SignerList. The Vault entered Investment before LoanSet.
+This was prerequisite setup and did not reopen E1-E5.
+
+The submitted body requested 1000 integer micro-tRLUSD, one 60-second payment,
+a 60-second grace period, and zero for every frozen fee and rate. It named
+Loan Broker `7BD631D3…8FE3`, its owner as Counterparty, and expected Loan index
+`CA546361…6ACB`.
+
+## Authorization-domain observation
+
+The validated transaction used the borrower ResearchBot + Credence policy
+2-of-2 SignerList with empty top-level `SigningPubKey` and no top-level
+`TxnSignature`. Both borrower contributions used `SMT-NUL` / `0x534D5400`
+and their respective AccountID suffixes. The borrower master key was not used.
+
+The Loan Broker owner supplied the single `CounterpartySignature` using
+`CPT-NUL` / `0x43505400`. Public keys, signatures, payload digests, suffixes,
+the common serialized body, final signed blob, and transaction hash are in
+`positive-observation.json`. The two role prefixes are distinct and both
+domains bind the same serialized finalized body. N5 was not reached, so this
+run did not observe altered terms invalidating broker authorization.
+
+## Positive observation and STOP
+
+Transaction `9D83105152990F291C2052431FC777717CE335A3BCC0CF9D6D2902EBBBA5BF93`
+validated `tesSUCCESS` in ledger 77. A read-only recovery after STOP observed:
+
+- the expected Loan at `CA546361…6ACB`, borrower and Loan Broker identities,
+  principal 1000, one remaining payment, interval/grace 60, and periodic and
+  total outstanding values 1000;
+- borrower tRLUSD `+1000`, Sequence `+1`, OwnerCount `+1`, and unchanged
+  2-of-2 SignerList;
+- Vault `AssetsAvailable -1000`, `AssetsTotal` unchanged, and pseudo-account
+  tRLUSD `-1000`; and
+- Loan Broker `DebtTotal +1000`, LoanSequence `+1`, OwnerCount `+1`, and
+  CoverAvailable unchanged.
+
+These are retained observations, not a completed positive oracle verdict. The
+frozen runner called `positive_post_state_assertions` with `LOAN_TERM_FIELDS`
+plus `VaultID`; that mapping omitted `Account`, which the oracle accesses at
+`e6_oracle.py:305`. Python raised `KeyError: 'Account'` before the assertion
+list or classification record could be produced. This is a frozen
+runner/oracle integration defect. Per the no-repair/no-retry rule, execution
+stopped immediately.
+
+## Case results
+
+| Case | Result |
+| --- | --- |
+| Positive | validated `tesSUCCESS`; semantic classification **BLOCKED** by frozen harness defect |
+| N1 | NOT ATTEMPTED |
+| N2 | NOT ATTEMPTED |
+| N3 | NOT ATTEMPTED |
+| N4 | NOT ATTEMPTED |
+| N5 | NOT ATTEMPTED |
+| N6 | NOT ATTEMPTED, not deferred by protocol preconditions |
+
+No `LoanPay` was submitted. E7-E9 were not executed.
+
+## Evidence, gates, and result state
+
+The evidence manifest covers 30 files and 310535 bytes and verifies with
+SHA-256. Historical evidence and the frozen 1E-D artifacts are unchanged.
+
+- D1-D12: **PASS** (12/12 before live start).
+- All spike tests: **PASS** (114).
+- Repository unit tests: **PASS** (17).
+- Conformance tests: **PASS** (4).
+- Lint, formatting, large-file check, and strict typecheck: **PASS**.
+- Secrets scan: **PASS**.
+- JSON validation, all evidence manifests, frozen provenance, historical
+  evidence immutability, authorized-path check, and `git diff --check`:
+  **PASS**.
+
+Result state: E1/E2 remain **PASS/FROZEN**; E3/E4 remain **PASS/RETIRED within
+tested scope**; E5 remains **PASS**; E6 is **BLOCKED**; E7-E9 are
+**NOT_ATTEMPTED**.
+
+The Credence XRPL authorization architecture must not yet be treated as
+validated because the required positive semantic oracle did not complete and
+the bounded negatives did not run. E7/E8/E9 must not begin. The minimum next
+work is a separately authorized harness-only correction that includes
+`Account` in the oracle terms mapping, plus a regression proving the exact
+runner/oracle contract. Any live rerun must be separately authorized and use a
+fresh evidence destination. That work was not performed here.
+
+## Checkpoint 1E-LIVE-01 modified paths
+
+- `spike/xrpl/scripts/run_checkpoint_1e.py`
+- `spike/xrpl/evidence/checkpoint-1e-live-01/`
+- `spike/xrpl/REPORT.md`
+- `spike/xrpl/RESULTS.json`
+
+---
+
 # Checkpoint 1E-D — freeze E6 LoanSet composition experiment
 
 ## Outcome

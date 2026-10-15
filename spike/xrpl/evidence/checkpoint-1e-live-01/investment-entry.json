@@ -1,0 +1,408 @@
+[
+  {
+    "close_time": 845357066,
+    "closed": true,
+    "ledger_hash": "310F67567EA16F2D3D1BEEDC6612CB1727E238AEED10FAA967FB0805674D2EA8",
+    "ledger_index": 19,
+    "phase": "Subscription"
+  },
+  {
+    "close_time": 845357067,
+    "closed": true,
+    "ledger_hash": "824404C487A1241B6CBA6937E909960E16C7DC3505246ABA1F59CA52CFD8985A",
+    "ledger_index": 20,
+    "phase": "Subscription"
+  },
+  {
+    "close_time": 845357068,
+    "closed": true,
+    "ledger_hash": "8A4D8AB7EC7E45B69EF5FD783CBD0D165041D68800C61996A62E980BF1108D00",
+    "ledger_index": 21,
+    "phase": "Subscription"
+  },
+  {
+    "close_time": 845357069,
+    "closed": true,
+    "ledger_hash": "76ECFC304B5712FE74D3A197FABE960DE2E472B664F6CE6E3ADF727ACAD7488D",
+    "ledger_index": 22,
+    "phase": "Subscription"
+  },
+  {
+    "close_time": 845357070,
+    "closed": true,
+    "ledger_hash": "40BFF5D7A391D02EEA3F4D5396A760AFB8E602308370036F87B810E25C95987F",
+    "ledger_index": 23,
+    "phase": "Subscription"
+  },
+  {
+    "close_time": 845357071,
+    "closed": true,
+    "ledger_hash": "9AD0743C9F54A594C0A303975A05A1E7533D4C074982A70ADF49F5ADEA724DFD",
+    "ledger_index": 24,
+    "phase": "Subscription"
+  },
+  {
+    "close_time": 845357072,
+    "closed": true,
+    "ledger_hash": "80818E82EAE69BD9B7504D668D0C3249FE0907B7EC208FC708FE126063705BBA",
+    "ledger_index": 25,
+    "phase": "Subscription"
+  },
+  {
+    "close_time": 845357073,
+    "closed": true,
+    "ledger_hash": "03DCEE9F4D070693B100388D39FAF5D0DC824C8C70EDC5239E4476F800BDBC57",
+    "ledger_index": 26,
+    "phase": "Subscription"
+  },
+  {
+    "close_time": 845357074,
+    "closed": true,
+    "ledger_hash": "8A1257A3676BFE89E3156890A900FB5115CF3D702B8857E31C17EE831D379A7F",
+    "ledger_index": 27,
+    "phase": "Subscription"
+  },
+  {
+    "close_time": 845357075,
+    "closed": true,
+    "ledger_hash": "6EE3FDA04ECDCCD5F412E141D23338030BEA2C0157A4808A0B9143E001FECF79",
+    "ledger_index": 28,
+    "phase": "Subscription"
+  },
+  {
+    "close_time": 845357076,
+    "closed": true,
+    "ledger_hash": "31AD2270FB06ED2C178B73F5F2D555C0E30616E23012946C995B8A244F6F2DEE",
+    "ledger_index": 29,
+    "phase": "Subscription"
+  },
+  {
+    "close_time": 845357077,
+    "closed": true,
+    "ledger_hash": "BAADEE0349C76110066688527E99C0C200C703EC808251974A23628D54937E37",
+    "ledger_index": 30,
+    "phase": "Subscription"
+  },
+  {
+    "close_time": 845357078,
+    "closed": true,
+    "ledger_hash": "C2340FC25D710DAEDC18C937858116058188F9AD295FB0F28A34FF8A6E61EC6D",
+    "ledger_index": 31,
+    "phase": "Subscription"
+  },
+  {
+    "close_time": 845357079,
+    "closed": true,
+    "ledger_hash": "D75632EF878C4D00786BE928415729F77246AE59940B96AACA59DA7FCA4093FE",
+    "ledger_index": 32,
+    "phase": "Subscription"
+  },
+  {
+    "close_time": 845357080,
+    "closed": true,
+    "ledger_hash": "B3DAB6AE537BD485D1B3F06602518A7BA56CADE8434DBE54438ACA3D3F8E1E7D",
+    "ledger_index": 33,
+    "phase": "Subscription"
+  },
+  {
+    "close_time": 845357081,
+    "closed": true,
+    "ledger_hash": "87684C3C3FF03F0333B04A66A604EFD0D1DAF6B9BD5A12200D9FAACC68765142",
+    "ledger_index": 34,
+    "phase": "Subscription"
+  },
+  {
+    "close_time": 845357082,
+    "closed": true,
+    "ledger_hash": "05D1C0CD7F3F0D892ED62C8F7404A601B71EE67A5579FCF848D0562139F6162C",
+    "ledger_index": 35,
+    "phase": "Subscription"
+  },
+  {
+    "close_time": 845357083,
+    "closed": true,
+    "ledger_hash": "1BD56D916EABD01212D28DF697935B1D94A59AC1ACC18398C6EB914B79AB9746",
+    "ledger_index": 36,
+    "phase": "Subscription"
+  },
+  {
+    "close_time": 845357084,
+    "closed": true,
+    "ledger_hash": "33DD034ADA2546DD052500ADCC02713B97BB4C8A2B735852153E98F2B22956AB",
+    "ledger_index": 37,
+    "phase": "Subscription"
+  },
+  {
+    "close_time": 845357085,
+    "closed": true,
+    "ledger_hash": "3EFFB7E9EC6B654B2B58164B35C334A07161AFDFA3AEF013EA6760D724787B3C",
+    "ledger_index": 38,
+    "phase": "Subscription"
+  },
+  {
+    "close_time": 845357086,
+    "closed": true,
+    "ledger_hash": "4B6F1B13D6291A38D50FFEF6CB830B44DA6E99FA9306709A0175A326CCCEB5F1",
+    "ledger_index": 39,
+    "phase": "Subscription"
+  },
+  {
+    "close_time": 845357087,
+    "closed": true,
+    "ledger_hash": "14D7DA0CFBC176AA3559A854078411DA9392FB76EB4EDFB84D704E1C18C5DCD2",
+    "ledger_index": 40,
+    "phase": "Subscription"
+  },
+  {
+    "close_time": 845357088,
+    "closed": true,
+    "ledger_hash": "FC494913AAAC49E848526E7179F44B63CD226E48076D8C2EAA6C7D64A9E606E4",
+    "ledger_index": 41,
+    "phase": "Subscription"
+  },
+  {
+    "close_time": 845357089,
+    "closed": true,
+    "ledger_hash": "9263D07107CD6A2431FE3E98D738DABAB70310DCE2C973B9A417F704E66A14DD",
+    "ledger_index": 42,
+    "phase": "Subscription"
+  },
+  {
+    "close_time": 845357090,
+    "closed": true,
+    "ledger_hash": "2A93A97E21DFE858E8395F67AD3C93AD14D79314CA6CEF806AC5225090C9BA01",
+    "ledger_index": 43,
+    "phase": "Subscription"
+  },
+  {
+    "close_time": 845357091,
+    "closed": true,
+    "ledger_hash": "58F6A0928257872E4F082A0CBB2E692AEFF2301C6F1C904ED66FEED4289FCAF3",
+    "ledger_index": 44,
+    "phase": "Subscription"
+  },
+  {
+    "close_time": 845357092,
+    "closed": true,
+    "ledger_hash": "86E60173A4F909995E9903592CE451DB72B9F630A26105FED955D85D52D45AD7",
+    "ledger_index": 45,
+    "phase": "Subscription"
+  },
+  {
+    "close_time": 845357093,
+    "closed": true,
+    "ledger_hash": "F3C6AC45313EFDA699755748BADBEA44C2A00C7C80FA6B859990ACF6C2290C7E",
+    "ledger_index": 46,
+    "phase": "Subscription"
+  },
+  {
+    "close_time": 845357094,
+    "closed": true,
+    "ledger_hash": "D903FA458961B508D77468C9A09AC6E0DCDD436847E1416E9AAEA067D8A6E5C6",
+    "ledger_index": 47,
+    "phase": "Subscription"
+  },
+  {
+    "close_time": 845357095,
+    "closed": true,
+    "ledger_hash": "1BC357A857FFA331663F4C833537E5EA4B5C125DC720EA32589142DF9E4CE824",
+    "ledger_index": 48,
+    "phase": "Subscription"
+  },
+  {
+    "close_time": 845357096,
+    "closed": true,
+    "ledger_hash": "DA1686BBF50A582E83EFE0FDA6BC4A6F6502D6D60EA9560ABA89372230EA919E",
+    "ledger_index": 49,
+    "phase": "Subscription"
+  },
+  {
+    "close_time": 845357097,
+    "closed": true,
+    "ledger_hash": "C82612DFECDD8015FA97F5C374909F71C7CD3D3ADBD4F43A15AF58C337FC896D",
+    "ledger_index": 50,
+    "phase": "Subscription"
+  },
+  {
+    "close_time": 845357098,
+    "closed": true,
+    "ledger_hash": "1EA06B6E17010D55AA67AA17F48C9997723E4BCF3955967A939FA96F9D5E1B6D",
+    "ledger_index": 51,
+    "phase": "Subscription"
+  },
+  {
+    "close_time": 845357099,
+    "closed": true,
+    "ledger_hash": "715BDCD27AD1C49CD00E5B0087F729F83E2C5ECE01638ADAB2F388D3FBB15880",
+    "ledger_index": 52,
+    "phase": "Subscription"
+  },
+  {
+    "close_time": 845357100,
+    "closed": true,
+    "ledger_hash": "948925347C51159B20CF89B236804FC98954945579299A21988E30671C82CA50",
+    "ledger_index": 53,
+    "phase": "Subscription"
+  },
+  {
+    "close_time": 845357101,
+    "closed": true,
+    "ledger_hash": "677D9429B358F4B882D35240EA33E0856F5358D305112F368FC425C1DAABB105",
+    "ledger_index": 54,
+    "phase": "Subscription"
+  },
+  {
+    "close_time": 845357102,
+    "closed": true,
+    "ledger_hash": "217D9EFF1C91246AD0A6D5B8C7341445AA4696C6C524EFFFFFA31BB68C1BB756",
+    "ledger_index": 55,
+    "phase": "Subscription"
+  },
+  {
+    "close_time": 845357103,
+    "closed": true,
+    "ledger_hash": "F4FB67277A4F1290E6FDC70CD9498306BD0A6FE60279EED4001B837E50C88103",
+    "ledger_index": 56,
+    "phase": "Subscription"
+  },
+  {
+    "close_time": 845357104,
+    "closed": true,
+    "ledger_hash": "AA905E6BCD58493508E5BB1038CD7D8249295174E15C8135E2B9F73572773C1E",
+    "ledger_index": 57,
+    "phase": "Subscription"
+  },
+  {
+    "close_time": 845357105,
+    "closed": true,
+    "ledger_hash": "16E01ABC931D23FD38A854F9668FB111A446F3501149A06F82C56EF03A5BB648",
+    "ledger_index": 58,
+    "phase": "Subscription"
+  },
+  {
+    "close_time": 845357106,
+    "closed": true,
+    "ledger_hash": "35CFB265E44081CEC442D56957D23C00E34507172420C0C98164FB18F923CF4E",
+    "ledger_index": 59,
+    "phase": "Subscription"
+  },
+  {
+    "close_time": 845357107,
+    "closed": true,
+    "ledger_hash": "51139C31D4A0173B4DA9593A019F8D009B2D608604571D59E98075239EEA82E2",
+    "ledger_index": 60,
+    "phase": "Subscription"
+  },
+  {
+    "close_time": 845357108,
+    "closed": true,
+    "ledger_hash": "5B5C648CD348C5A5E81BF288DC764B5C2D20C42A0CA20B033893865887C8CF93",
+    "ledger_index": 61,
+    "phase": "Subscription"
+  },
+  {
+    "close_time": 845357109,
+    "closed": true,
+    "ledger_hash": "721DC1B6FF1B08457D091A123DE189B0736392A8A49FF08AA1A3B199022CFE04",
+    "ledger_index": 62,
+    "phase": "Subscription"
+  },
+  {
+    "close_time": 845357110,
+    "closed": true,
+    "ledger_hash": "D7485A0C9A9B957921C83152B42060701A016F7DAEBAA3B8269C34ADE710F88C",
+    "ledger_index": 63,
+    "phase": "Subscription"
+  },
+  {
+    "close_time": 845357111,
+    "closed": true,
+    "ledger_hash": "BB53035BBDFCFD895D4F02D4559368FA511A016C2CC8DA028B8A906F54F2C5A7",
+    "ledger_index": 64,
+    "phase": "Subscription"
+  },
+  {
+    "close_time": 845357112,
+    "closed": true,
+    "ledger_hash": "4CFFA70F80C8216D8F98DED7E3C5F52DA91123A21C69DE2C216B7C0F6723D924",
+    "ledger_index": 65,
+    "phase": "Subscription"
+  },
+  {
+    "close_time": 845357113,
+    "closed": true,
+    "ledger_hash": "00A23E2E6C75666FFDB70E66B56761B329A63AEFCAB6BB0A48966F52BC4E684A",
+    "ledger_index": 66,
+    "phase": "Subscription"
+  },
+  {
+    "close_time": 845357114,
+    "closed": true,
+    "ledger_hash": "A6C1C18FC96616692E32BC7CBD7FEAA7BD9B1EE42FFD010984D34901B6276F47",
+    "ledger_index": 67,
+    "phase": "Subscription"
+  },
+  {
+    "close_time": 845357115,
+    "closed": true,
+    "ledger_hash": "10B27A5647BC1902111C86AF45D61F8C9EA191797F85AD3098E080659AC1B004",
+    "ledger_index": 68,
+    "phase": "Subscription"
+  },
+  {
+    "close_time": 845357116,
+    "closed": true,
+    "ledger_hash": "7A4427769155A7C18029881024EE6CF93BA5E0C01E1D2D2997BE29554FD83944",
+    "ledger_index": 69,
+    "phase": "Subscription"
+  },
+  {
+    "close_time": 845357117,
+    "closed": true,
+    "ledger_hash": "103EE8890FA589275F359B65D36652D5B6F071C290EFBEF9879302AD3357DEA7",
+    "ledger_index": 70,
+    "phase": "Subscription"
+  },
+  {
+    "close_time": 845357118,
+    "closed": true,
+    "ledger_hash": "019B5824F6707DC6CA1DC28BEB6943C9072B18F9A767D38767F161625A66AD97",
+    "ledger_index": 71,
+    "phase": "Subscription"
+  },
+  {
+    "close_time": 845357119,
+    "closed": true,
+    "ledger_hash": "52071498510D978FB0CE75449D248B2A36C2D260D6A236CFD30D909AFDF617F0",
+    "ledger_index": 72,
+    "phase": "Subscription"
+  },
+  {
+    "close_time": 845357120,
+    "closed": true,
+    "ledger_hash": "1454C003430804C9063E724B55FF1C7557E9804399BAAAE7348072080DF76E5A",
+    "ledger_index": 73,
+    "phase": "Subscription"
+  },
+  {
+    "close_time": 845357121,
+    "closed": true,
+    "ledger_hash": "5C0543AC712081E19B8B54B531BD46B41EC5F9FD2F2FA7834795C8F661058F5D",
+    "ledger_index": 74,
+    "phase": "Subscription"
+  },
+  {
+    "close_time": 845357122,
+    "closed": true,
+    "ledger_hash": "F6656A999E2C9918ACE4761602930EE31B374FAE105E42C8A39A099B5F8216DC",
+    "ledger_index": 75,
+    "phase": "Subscription"
+  },
+  {
+    "close_time": 845357123,
+    "closed": true,
+    "ledger_hash": "64E49FF0623A55DC3B476C27BC1A607F140B67AA8B2854765C5FFCD0E1707F63",
+    "ledger_index": 76,
+    "phase": "Investment"
+  }
+]

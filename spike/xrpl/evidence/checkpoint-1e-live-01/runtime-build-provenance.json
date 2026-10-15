@@ -1,0 +1,24 @@
+{
+  "rippled": {
+    "executable_report": "xrpld version 3.4.0",
+    "version": "3.4.0",
+    "source_commit": "4a4fded2eba11427c48ce3f24d9c1aea5e7a9d17",
+    "build_branch": "HEAD"
+  },
+  "container": {
+    "image": "credence-xrpl-spike:3.4.0",
+    "image_digest": "sha256:8cb9cb9e02b5f92d1c8c8721b439e7568acf5da657e54b3f8bb5b8daad32dca9",
+    "base_image": "debian:12-slim@sha256:a4672c0cb26fbdde88e38fa2dfb6c681942306680e41e4378b28770b6e79ee91",
+    "package": "xrpld_3.4.0-1_amd64.deb",
+    "package_sha256": "4dc40a21b12b7d21f2760b16545c1d842962a96978dd3199eb8de9aa0aff8339"
+  },
+  "configuration": {
+    "config_Dockerfile_sha256": "49888f41fd9f0a94038db32dd07ff789f421902eb3d0df5389b9099bf1db7d99",
+    "config_xrpld_cfg_sha256": "37ffc6f93f7d8838aef681e4a3c7e39d7427e101cb6c62113dca208dc1e8e820",
+    "start_ledger_script_sha256": "55893cb0a9630b797aef7fd30905d4f52e674484b88b3ea617c69873154960fd",
+    "network_id": 21337,
+    "mode": "standalone",
+    "fresh_volume_recreated": true,
+    "genesis_credential_recorded": false
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "checkpoint": "1E-LIVE-01",
+  "classification": "FROZEN_RUNNER_ORACLE_INTEGRATION_DEFECT",
+  "outcome": "STOP",
+  "retry_attempted": false,
+  "runner_modified_after_live_start": false,
+  "failure": {
+    "exception_type": "KeyError",
+    "exception_message": "'Account'",
+    "location": "scripts/e6_oracle.py:305 in positive_post_state_assertions",
+    "caller": "scripts/run_checkpoint_1e.py:901",
+    "cause": "The frozen runner passed LOAN_TERM_FIELDS plus VaultID to the positive post-state oracle, but the oracle also requires terms.Account.",
+    "first_failed_classification_stage": "positive semantic post-state assertion construction"
+  },
+  "live_observation_before_stop": {
+    "transaction_hash": "9D83105152990F291C2052431FC777717CE335A3BCC0CF9D6D2902EBBBA5BF93",
+    "validated": true,
+    "validated_result": "tesSUCCESS",
+    "ledger_index": 77,
+    "expected_loan_index": "CA5463612F27C156FAEBBF001D233342E6458637837D83DBBD76998D30026ACB",
+    "expected_loan_present": true,
+    "semantic_oracle_verdict": "NOT_COMPLETED"
+  },
+  "case_status": {
+    "positive": "BLOCKED_AFTER_VALIDATED_SUBMISSION",
+    "N1": "NOT_ATTEMPTED",
+    "N2": "NOT_ATTEMPTED",
+    "N3": "NOT_ATTEMPTED",
+    "N4": "NOT_ATTEMPTED",
+    "N5": "NOT_ATTEMPTED",
+    "N6": "NOT_ATTEMPTED"
+  },
+  "prohibited_work_confirmed": {
+    "LoanPay_submitted": false,
+    "E7_E8_E9_executed": false
+  }
+}

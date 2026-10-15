@@ -1,0 +1,1427 @@
+[
+  {
+    "after": {
+      "close_time": 845357050,
+      "closed": true,
+      "ledger_hash": "76C4757A8E3BAD51F09F2DE3603B43DC269DD0CED6E78077BC8EE9674FBCE8B3",
+      "ledger_index": 3
+    },
+    "before": {
+      "close_time": 845357020,
+      "closed": true,
+      "ledger_hash": "5E5A9A9E8853EBCA7B8CA1FFA7FC1D9DFBF23252FE3938520873C92120C28800",
+      "ledger_index": 2
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 4,
+      "status": "success"
+    },
+    "reason": "validate prerequisite fund_issuer"
+  },
+  {
+    "after": {
+      "close_time": 845357051,
+      "closed": true,
+      "ledger_hash": "816122AFFCA2FB1FA1BE8134C281A6B240AE41F6BF9627B7A222333FE2D310A3",
+      "ledger_index": 4
+    },
+    "before": {
+      "close_time": 845357050,
+      "closed": true,
+      "ledger_hash": "76C4757A8E3BAD51F09F2DE3603B43DC269DD0CED6E78077BC8EE9674FBCE8B3",
+      "ledger_index": 3
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 5,
+      "status": "success"
+    },
+    "reason": "validate prerequisite fund_lender"
+  },
+  {
+    "after": {
+      "close_time": 845357052,
+      "closed": true,
+      "ledger_hash": "BB9CA2E2DB737AF3FCD3E6B5ECFF87BE956358E130C44DD5DBD3947493046326",
+      "ledger_index": 5
+    },
+    "before": {
+      "close_time": 845357051,
+      "closed": true,
+      "ledger_hash": "816122AFFCA2FB1FA1BE8134C281A6B240AE41F6BF9627B7A222333FE2D310A3",
+      "ledger_index": 4
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 6,
+      "status": "success"
+    },
+    "reason": "validate prerequisite fund_borrower"
+  },
+  {
+    "after": {
+      "close_time": 845357053,
+      "closed": true,
+      "ledger_hash": "638D6BE19FBB7809DE6AADA3A9DD2BAE67F58E8A114F5409C5D7044B2F8E79AB",
+      "ledger_index": 6
+    },
+    "before": {
+      "close_time": 845357052,
+      "closed": true,
+      "ledger_hash": "BB9CA2E2DB737AF3FCD3E6B5ECFF87BE956358E130C44DD5DBD3947493046326",
+      "ledger_index": 5
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 7,
+      "status": "success"
+    },
+    "reason": "validate prerequisite fund_research_bot"
+  },
+  {
+    "after": {
+      "close_time": 845357054,
+      "closed": true,
+      "ledger_hash": "4CC75BBE4404DC3989ABF8D7B0E4A36964CB6854BDA00409919A18C1C4388E55",
+      "ledger_index": 7
+    },
+    "before": {
+      "close_time": 845357053,
+      "closed": true,
+      "ledger_hash": "638D6BE19FBB7809DE6AADA3A9DD2BAE67F58E8A114F5409C5D7044B2F8E79AB",
+      "ledger_index": 6
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 8,
+      "status": "success"
+    },
+    "reason": "validate prerequisite fund_credence_policy"
+  },
+  {
+    "after": {
+      "close_time": 845357055,
+      "closed": true,
+      "ledger_hash": "5DFD5100E44A2038288668B80A4FE239D81867E3AC4ABD6CA054C9719D769A36",
+      "ledger_index": 8
+    },
+    "before": {
+      "close_time": 845357054,
+      "closed": true,
+      "ledger_hash": "4CC75BBE4404DC3989ABF8D7B0E4A36964CB6854BDA00409919A18C1C4388E55",
+      "ledger_index": 7
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 9,
+      "status": "success"
+    },
+    "reason": "validate prerequisite fund_broker_owner"
+  },
+  {
+    "after": {
+      "close_time": 845357056,
+      "closed": true,
+      "ledger_hash": "0E365A8DF07CD187EB98EC33557181431A4FE0CC5A9743E944F3FE91A0F677AC",
+      "ledger_index": 9
+    },
+    "before": {
+      "close_time": 845357055,
+      "closed": true,
+      "ledger_hash": "5DFD5100E44A2038288668B80A4FE239D81867E3AC4ABD6CA054C9719D769A36",
+      "ledger_index": 8
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 10,
+      "status": "success"
+    },
+    "reason": "validate prerequisite issuer_enable_default_ripple"
+  },
+  {
+    "after": {
+      "close_time": 845357057,
+      "closed": true,
+      "ledger_hash": "2383B22AF87EFB2E69DB3AFA0BEA2C49C3DA2DF6F2976481FB713D992C1A6CA1",
+      "ledger_index": 10
+    },
+    "before": {
+      "close_time": 845357056,
+      "closed": true,
+      "ledger_hash": "0E365A8DF07CD187EB98EC33557181431A4FE0CC5A9743E944F3FE91A0F677AC",
+      "ledger_index": 9
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 11,
+      "status": "success"
+    },
+    "reason": "validate prerequisite lender_trust_tRLUSD"
+  },
+  {
+    "after": {
+      "close_time": 845357058,
+      "closed": true,
+      "ledger_hash": "86A43C307B3ADCB6E8A0B5DDCD186589DD15E6176A4C23EED7D8B71142D1B021",
+      "ledger_index": 11
+    },
+    "before": {
+      "close_time": 845357057,
+      "closed": true,
+      "ledger_hash": "2383B22AF87EFB2E69DB3AFA0BEA2C49C3DA2DF6F2976481FB713D992C1A6CA1",
+      "ledger_index": 10
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 12,
+      "status": "success"
+    },
+    "reason": "validate prerequisite borrower_trust_tRLUSD"
+  },
+  {
+    "after": {
+      "close_time": 845357059,
+      "closed": true,
+      "ledger_hash": "38FE8FD911AF2A7A97937EC1859B9CDED2E33296199D76523111C87193EE24CB",
+      "ledger_index": 12
+    },
+    "before": {
+      "close_time": 845357058,
+      "closed": true,
+      "ledger_hash": "86A43C307B3ADCB6E8A0B5DDCD186589DD15E6176A4C23EED7D8B71142D1B021",
+      "ledger_index": 11
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 13,
+      "status": "success"
+    },
+    "reason": "validate prerequisite broker_owner_trust_tRLUSD"
+  },
+  {
+    "after": {
+      "close_time": 845357060,
+      "closed": true,
+      "ledger_hash": "B6C4710F9E9AF153D618239DF5E45104E01A8ED0272D44DF102C6F9FEF074130",
+      "ledger_index": 13
+    },
+    "before": {
+      "close_time": 845357059,
+      "closed": true,
+      "ledger_hash": "38FE8FD911AF2A7A97937EC1859B9CDED2E33296199D76523111C87193EE24CB",
+      "ledger_index": 12
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 14,
+      "status": "success"
+    },
+    "reason": "validate prerequisite issue_tRLUSD_to_lender"
+  },
+  {
+    "after": {
+      "close_time": 845357061,
+      "closed": true,
+      "ledger_hash": "95E377EFD9D87690B4B8BA7B68E802C879761A35D3AA2CB5756BC1765F71C338",
+      "ledger_index": 14
+    },
+    "before": {
+      "close_time": 845357060,
+      "closed": true,
+      "ledger_hash": "B6C4710F9E9AF153D618239DF5E45104E01A8ED0272D44DF102C6F9FEF074130",
+      "ledger_index": 13
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 15,
+      "status": "success"
+    },
+    "reason": "validate prerequisite issue_tRLUSD_to_broker_owner"
+  },
+  {
+    "after": {
+      "close_time": 845357062,
+      "closed": true,
+      "ledger_hash": "42FE433DE3CFBD15EC882571EEB1B41793702FE14A2596A5D59B409C67E43795",
+      "ledger_index": 15
+    },
+    "before": {
+      "close_time": 845357061,
+      "closed": true,
+      "ledger_hash": "95E377EFD9D87690B4B8BA7B68E802C879761A35D3AA2CB5756BC1765F71C338",
+      "ledger_index": 14
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 16,
+      "status": "success"
+    },
+    "reason": "validate prerequisite borrower_set_2_of_2_signer_list"
+  },
+  {
+    "after": {
+      "close_time": 845357063,
+      "closed": true,
+      "ledger_hash": "77B543407BDEF3FCE8A7235F7EC6C9C5BE8752622BE111B9478505BEF177457B",
+      "ledger_index": 16
+    },
+    "before": {
+      "close_time": 845357062,
+      "closed": true,
+      "ledger_hash": "42FE433DE3CFBD15EC882571EEB1B41793702FE14A2596A5D59B409C67E43795",
+      "ledger_index": 15
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 17,
+      "status": "success"
+    },
+    "reason": "validate prerequisite positive_create_closed_vault"
+  },
+  {
+    "after": {
+      "close_time": 845357064,
+      "closed": true,
+      "ledger_hash": "D3A2A259D6BEAEF73EBEF451D50A982542827A13F296E914ABB4B20664F67531",
+      "ledger_index": 17
+    },
+    "before": {
+      "close_time": 845357063,
+      "closed": true,
+      "ledger_hash": "77B543407BDEF3FCE8A7235F7EC6C9C5BE8752622BE111B9478505BEF177457B",
+      "ledger_index": 16
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 18,
+      "status": "success"
+    },
+    "reason": "validate prerequisite positive_deposit_vault_assets"
+  },
+  {
+    "after": {
+      "close_time": 845357065,
+      "closed": true,
+      "ledger_hash": "3467D35204434BD5449A365952921CF0688C39F6D41A503AE50B5677B1E40367",
+      "ledger_index": 18
+    },
+    "before": {
+      "close_time": 845357064,
+      "closed": true,
+      "ledger_hash": "D3A2A259D6BEAEF73EBEF451D50A982542827A13F296E914ABB4B20664F67531",
+      "ledger_index": 17
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 19,
+      "status": "success"
+    },
+    "reason": "validate prerequisite positive_create_loan_broker"
+  },
+  {
+    "after": {
+      "close_time": 845357066,
+      "closed": true,
+      "ledger_hash": "310F67567EA16F2D3D1BEEDC6612CB1727E238AEED10FAA967FB0805674D2EA8",
+      "ledger_index": 19
+    },
+    "before": {
+      "close_time": 845357065,
+      "closed": true,
+      "ledger_hash": "3467D35204434BD5449A365952921CF0688C39F6D41A503AE50B5677B1E40367",
+      "ledger_index": 18
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 20,
+      "status": "success"
+    },
+    "reason": "validate prerequisite positive_deposit_first_loss_cover"
+  },
+  {
+    "after": {
+      "close_time": 845357067,
+      "closed": true,
+      "ledger_hash": "824404C487A1241B6CBA6937E909960E16C7DC3505246ABA1F59CA52CFD8985A",
+      "ledger_index": 20
+    },
+    "before": {
+      "close_time": 845357066,
+      "closed": true,
+      "ledger_hash": "310F67567EA16F2D3D1BEEDC6612CB1727E238AEED10FAA967FB0805674D2EA8",
+      "ledger_index": 19
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 21,
+      "status": "success"
+    },
+    "reason": "advance prerequisite Vault to Investment"
+  },
+  {
+    "after": {
+      "close_time": 845357068,
+      "closed": true,
+      "ledger_hash": "8A4D8AB7EC7E45B69EF5FD783CBD0D165041D68800C61996A62E980BF1108D00",
+      "ledger_index": 21
+    },
+    "before": {
+      "close_time": 845357067,
+      "closed": true,
+      "ledger_hash": "824404C487A1241B6CBA6937E909960E16C7DC3505246ABA1F59CA52CFD8985A",
+      "ledger_index": 20
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 22,
+      "status": "success"
+    },
+    "reason": "advance prerequisite Vault to Investment"
+  },
+  {
+    "after": {
+      "close_time": 845357069,
+      "closed": true,
+      "ledger_hash": "76ECFC304B5712FE74D3A197FABE960DE2E472B664F6CE6E3ADF727ACAD7488D",
+      "ledger_index": 22
+    },
+    "before": {
+      "close_time": 845357068,
+      "closed": true,
+      "ledger_hash": "8A4D8AB7EC7E45B69EF5FD783CBD0D165041D68800C61996A62E980BF1108D00",
+      "ledger_index": 21
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 23,
+      "status": "success"
+    },
+    "reason": "advance prerequisite Vault to Investment"
+  },
+  {
+    "after": {
+      "close_time": 845357070,
+      "closed": true,
+      "ledger_hash": "40BFF5D7A391D02EEA3F4D5396A760AFB8E602308370036F87B810E25C95987F",
+      "ledger_index": 23
+    },
+    "before": {
+      "close_time": 845357069,
+      "closed": true,
+      "ledger_hash": "76ECFC304B5712FE74D3A197FABE960DE2E472B664F6CE6E3ADF727ACAD7488D",
+      "ledger_index": 22
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 24,
+      "status": "success"
+    },
+    "reason": "advance prerequisite Vault to Investment"
+  },
+  {
+    "after": {
+      "close_time": 845357071,
+      "closed": true,
+      "ledger_hash": "9AD0743C9F54A594C0A303975A05A1E7533D4C074982A70ADF49F5ADEA724DFD",
+      "ledger_index": 24
+    },
+    "before": {
+      "close_time": 845357070,
+      "closed": true,
+      "ledger_hash": "40BFF5D7A391D02EEA3F4D5396A760AFB8E602308370036F87B810E25C95987F",
+      "ledger_index": 23
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 25,
+      "status": "success"
+    },
+    "reason": "advance prerequisite Vault to Investment"
+  },
+  {
+    "after": {
+      "close_time": 845357072,
+      "closed": true,
+      "ledger_hash": "80818E82EAE69BD9B7504D668D0C3249FE0907B7EC208FC708FE126063705BBA",
+      "ledger_index": 25
+    },
+    "before": {
+      "close_time": 845357071,
+      "closed": true,
+      "ledger_hash": "9AD0743C9F54A594C0A303975A05A1E7533D4C074982A70ADF49F5ADEA724DFD",
+      "ledger_index": 24
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 26,
+      "status": "success"
+    },
+    "reason": "advance prerequisite Vault to Investment"
+  },
+  {
+    "after": {
+      "close_time": 845357073,
+      "closed": true,
+      "ledger_hash": "03DCEE9F4D070693B100388D39FAF5D0DC824C8C70EDC5239E4476F800BDBC57",
+      "ledger_index": 26
+    },
+    "before": {
+      "close_time": 845357072,
+      "closed": true,
+      "ledger_hash": "80818E82EAE69BD9B7504D668D0C3249FE0907B7EC208FC708FE126063705BBA",
+      "ledger_index": 25
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 27,
+      "status": "success"
+    },
+    "reason": "advance prerequisite Vault to Investment"
+  },
+  {
+    "after": {
+      "close_time": 845357074,
+      "closed": true,
+      "ledger_hash": "8A1257A3676BFE89E3156890A900FB5115CF3D702B8857E31C17EE831D379A7F",
+      "ledger_index": 27
+    },
+    "before": {
+      "close_time": 845357073,
+      "closed": true,
+      "ledger_hash": "03DCEE9F4D070693B100388D39FAF5D0DC824C8C70EDC5239E4476F800BDBC57",
+      "ledger_index": 26
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 28,
+      "status": "success"
+    },
+    "reason": "advance prerequisite Vault to Investment"
+  },
+  {
+    "after": {
+      "close_time": 845357075,
+      "closed": true,
+      "ledger_hash": "6EE3FDA04ECDCCD5F412E141D23338030BEA2C0157A4808A0B9143E001FECF79",
+      "ledger_index": 28
+    },
+    "before": {
+      "close_time": 845357074,
+      "closed": true,
+      "ledger_hash": "8A1257A3676BFE89E3156890A900FB5115CF3D702B8857E31C17EE831D379A7F",
+      "ledger_index": 27
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 29,
+      "status": "success"
+    },
+    "reason": "advance prerequisite Vault to Investment"
+  },
+  {
+    "after": {
+      "close_time": 845357076,
+      "closed": true,
+      "ledger_hash": "31AD2270FB06ED2C178B73F5F2D555C0E30616E23012946C995B8A244F6F2DEE",
+      "ledger_index": 29
+    },
+    "before": {
+      "close_time": 845357075,
+      "closed": true,
+      "ledger_hash": "6EE3FDA04ECDCCD5F412E141D23338030BEA2C0157A4808A0B9143E001FECF79",
+      "ledger_index": 28
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 30,
+      "status": "success"
+    },
+    "reason": "advance prerequisite Vault to Investment"
+  },
+  {
+    "after": {
+      "close_time": 845357077,
+      "closed": true,
+      "ledger_hash": "BAADEE0349C76110066688527E99C0C200C703EC808251974A23628D54937E37",
+      "ledger_index": 30
+    },
+    "before": {
+      "close_time": 845357076,
+      "closed": true,
+      "ledger_hash": "31AD2270FB06ED2C178B73F5F2D555C0E30616E23012946C995B8A244F6F2DEE",
+      "ledger_index": 29
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 31,
+      "status": "success"
+    },
+    "reason": "advance prerequisite Vault to Investment"
+  },
+  {
+    "after": {
+      "close_time": 845357078,
+      "closed": true,
+      "ledger_hash": "C2340FC25D710DAEDC18C937858116058188F9AD295FB0F28A34FF8A6E61EC6D",
+      "ledger_index": 31
+    },
+    "before": {
+      "close_time": 845357077,
+      "closed": true,
+      "ledger_hash": "BAADEE0349C76110066688527E99C0C200C703EC808251974A23628D54937E37",
+      "ledger_index": 30
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 32,
+      "status": "success"
+    },
+    "reason": "advance prerequisite Vault to Investment"
+  },
+  {
+    "after": {
+      "close_time": 845357079,
+      "closed": true,
+      "ledger_hash": "D75632EF878C4D00786BE928415729F77246AE59940B96AACA59DA7FCA4093FE",
+      "ledger_index": 32
+    },
+    "before": {
+      "close_time": 845357078,
+      "closed": true,
+      "ledger_hash": "C2340FC25D710DAEDC18C937858116058188F9AD295FB0F28A34FF8A6E61EC6D",
+      "ledger_index": 31
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 33,
+      "status": "success"
+    },
+    "reason": "advance prerequisite Vault to Investment"
+  },
+  {
+    "after": {
+      "close_time": 845357080,
+      "closed": true,
+      "ledger_hash": "B3DAB6AE537BD485D1B3F06602518A7BA56CADE8434DBE54438ACA3D3F8E1E7D",
+      "ledger_index": 33
+    },
+    "before": {
+      "close_time": 845357079,
+      "closed": true,
+      "ledger_hash": "D75632EF878C4D00786BE928415729F77246AE59940B96AACA59DA7FCA4093FE",
+      "ledger_index": 32
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 34,
+      "status": "success"
+    },
+    "reason": "advance prerequisite Vault to Investment"
+  },
+  {
+    "after": {
+      "close_time": 845357081,
+      "closed": true,
+      "ledger_hash": "87684C3C3FF03F0333B04A66A604EFD0D1DAF6B9BD5A12200D9FAACC68765142",
+      "ledger_index": 34
+    },
+    "before": {
+      "close_time": 845357080,
+      "closed": true,
+      "ledger_hash": "B3DAB6AE537BD485D1B3F06602518A7BA56CADE8434DBE54438ACA3D3F8E1E7D",
+      "ledger_index": 33
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 35,
+      "status": "success"
+    },
+    "reason": "advance prerequisite Vault to Investment"
+  },
+  {
+    "after": {
+      "close_time": 845357082,
+      "closed": true,
+      "ledger_hash": "05D1C0CD7F3F0D892ED62C8F7404A601B71EE67A5579FCF848D0562139F6162C",
+      "ledger_index": 35
+    },
+    "before": {
+      "close_time": 845357081,
+      "closed": true,
+      "ledger_hash": "87684C3C3FF03F0333B04A66A604EFD0D1DAF6B9BD5A12200D9FAACC68765142",
+      "ledger_index": 34
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 36,
+      "status": "success"
+    },
+    "reason": "advance prerequisite Vault to Investment"
+  },
+  {
+    "after": {
+      "close_time": 845357083,
+      "closed": true,
+      "ledger_hash": "1BD56D916EABD01212D28DF697935B1D94A59AC1ACC18398C6EB914B79AB9746",
+      "ledger_index": 36
+    },
+    "before": {
+      "close_time": 845357082,
+      "closed": true,
+      "ledger_hash": "05D1C0CD7F3F0D892ED62C8F7404A601B71EE67A5579FCF848D0562139F6162C",
+      "ledger_index": 35
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 37,
+      "status": "success"
+    },
+    "reason": "advance prerequisite Vault to Investment"
+  },
+  {
+    "after": {
+      "close_time": 845357084,
+      "closed": true,
+      "ledger_hash": "33DD034ADA2546DD052500ADCC02713B97BB4C8A2B735852153E98F2B22956AB",
+      "ledger_index": 37
+    },
+    "before": {
+      "close_time": 845357083,
+      "closed": true,
+      "ledger_hash": "1BD56D916EABD01212D28DF697935B1D94A59AC1ACC18398C6EB914B79AB9746",
+      "ledger_index": 36
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 38,
+      "status": "success"
+    },
+    "reason": "advance prerequisite Vault to Investment"
+  },
+  {
+    "after": {
+      "close_time": 845357085,
+      "closed": true,
+      "ledger_hash": "3EFFB7E9EC6B654B2B58164B35C334A07161AFDFA3AEF013EA6760D724787B3C",
+      "ledger_index": 38
+    },
+    "before": {
+      "close_time": 845357084,
+      "closed": true,
+      "ledger_hash": "33DD034ADA2546DD052500ADCC02713B97BB4C8A2B735852153E98F2B22956AB",
+      "ledger_index": 37
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 39,
+      "status": "success"
+    },
+    "reason": "advance prerequisite Vault to Investment"
+  },
+  {
+    "after": {
+      "close_time": 845357086,
+      "closed": true,
+      "ledger_hash": "4B6F1B13D6291A38D50FFEF6CB830B44DA6E99FA9306709A0175A326CCCEB5F1",
+      "ledger_index": 39
+    },
+    "before": {
+      "close_time": 845357085,
+      "closed": true,
+      "ledger_hash": "3EFFB7E9EC6B654B2B58164B35C334A07161AFDFA3AEF013EA6760D724787B3C",
+      "ledger_index": 38
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 40,
+      "status": "success"
+    },
+    "reason": "advance prerequisite Vault to Investment"
+  },
+  {
+    "after": {
+      "close_time": 845357087,
+      "closed": true,
+      "ledger_hash": "14D7DA0CFBC176AA3559A854078411DA9392FB76EB4EDFB84D704E1C18C5DCD2",
+      "ledger_index": 40
+    },
+    "before": {
+      "close_time": 845357086,
+      "closed": true,
+      "ledger_hash": "4B6F1B13D6291A38D50FFEF6CB830B44DA6E99FA9306709A0175A326CCCEB5F1",
+      "ledger_index": 39
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 41,
+      "status": "success"
+    },
+    "reason": "advance prerequisite Vault to Investment"
+  },
+  {
+    "after": {
+      "close_time": 845357088,
+      "closed": true,
+      "ledger_hash": "FC494913AAAC49E848526E7179F44B63CD226E48076D8C2EAA6C7D64A9E606E4",
+      "ledger_index": 41
+    },
+    "before": {
+      "close_time": 845357087,
+      "closed": true,
+      "ledger_hash": "14D7DA0CFBC176AA3559A854078411DA9392FB76EB4EDFB84D704E1C18C5DCD2",
+      "ledger_index": 40
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 42,
+      "status": "success"
+    },
+    "reason": "advance prerequisite Vault to Investment"
+  },
+  {
+    "after": {
+      "close_time": 845357089,
+      "closed": true,
+      "ledger_hash": "9263D07107CD6A2431FE3E98D738DABAB70310DCE2C973B9A417F704E66A14DD",
+      "ledger_index": 42
+    },
+    "before": {
+      "close_time": 845357088,
+      "closed": true,
+      "ledger_hash": "FC494913AAAC49E848526E7179F44B63CD226E48076D8C2EAA6C7D64A9E606E4",
+      "ledger_index": 41
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 43,
+      "status": "success"
+    },
+    "reason": "advance prerequisite Vault to Investment"
+  },
+  {
+    "after": {
+      "close_time": 845357090,
+      "closed": true,
+      "ledger_hash": "2A93A97E21DFE858E8395F67AD3C93AD14D79314CA6CEF806AC5225090C9BA01",
+      "ledger_index": 43
+    },
+    "before": {
+      "close_time": 845357089,
+      "closed": true,
+      "ledger_hash": "9263D07107CD6A2431FE3E98D738DABAB70310DCE2C973B9A417F704E66A14DD",
+      "ledger_index": 42
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 44,
+      "status": "success"
+    },
+    "reason": "advance prerequisite Vault to Investment"
+  },
+  {
+    "after": {
+      "close_time": 845357091,
+      "closed": true,
+      "ledger_hash": "58F6A0928257872E4F082A0CBB2E692AEFF2301C6F1C904ED66FEED4289FCAF3",
+      "ledger_index": 44
+    },
+    "before": {
+      "close_time": 845357090,
+      "closed": true,
+      "ledger_hash": "2A93A97E21DFE858E8395F67AD3C93AD14D79314CA6CEF806AC5225090C9BA01",
+      "ledger_index": 43
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 45,
+      "status": "success"
+    },
+    "reason": "advance prerequisite Vault to Investment"
+  },
+  {
+    "after": {
+      "close_time": 845357092,
+      "closed": true,
+      "ledger_hash": "86E60173A4F909995E9903592CE451DB72B9F630A26105FED955D85D52D45AD7",
+      "ledger_index": 45
+    },
+    "before": {
+      "close_time": 845357091,
+      "closed": true,
+      "ledger_hash": "58F6A0928257872E4F082A0CBB2E692AEFF2301C6F1C904ED66FEED4289FCAF3",
+      "ledger_index": 44
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 46,
+      "status": "success"
+    },
+    "reason": "advance prerequisite Vault to Investment"
+  },
+  {
+    "after": {
+      "close_time": 845357093,
+      "closed": true,
+      "ledger_hash": "F3C6AC45313EFDA699755748BADBEA44C2A00C7C80FA6B859990ACF6C2290C7E",
+      "ledger_index": 46
+    },
+    "before": {
+      "close_time": 845357092,
+      "closed": true,
+      "ledger_hash": "86E60173A4F909995E9903592CE451DB72B9F630A26105FED955D85D52D45AD7",
+      "ledger_index": 45
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 47,
+      "status": "success"
+    },
+    "reason": "advance prerequisite Vault to Investment"
+  },
+  {
+    "after": {
+      "close_time": 845357094,
+      "closed": true,
+      "ledger_hash": "D903FA458961B508D77468C9A09AC6E0DCDD436847E1416E9AAEA067D8A6E5C6",
+      "ledger_index": 47
+    },
+    "before": {
+      "close_time": 845357093,
+      "closed": true,
+      "ledger_hash": "F3C6AC45313EFDA699755748BADBEA44C2A00C7C80FA6B859990ACF6C2290C7E",
+      "ledger_index": 46
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 48,
+      "status": "success"
+    },
+    "reason": "advance prerequisite Vault to Investment"
+  },
+  {
+    "after": {
+      "close_time": 845357095,
+      "closed": true,
+      "ledger_hash": "1BC357A857FFA331663F4C833537E5EA4B5C125DC720EA32589142DF9E4CE824",
+      "ledger_index": 48
+    },
+    "before": {
+      "close_time": 845357094,
+      "closed": true,
+      "ledger_hash": "D903FA458961B508D77468C9A09AC6E0DCDD436847E1416E9AAEA067D8A6E5C6",
+      "ledger_index": 47
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 49,
+      "status": "success"
+    },
+    "reason": "advance prerequisite Vault to Investment"
+  },
+  {
+    "after": {
+      "close_time": 845357096,
+      "closed": true,
+      "ledger_hash": "DA1686BBF50A582E83EFE0FDA6BC4A6F6502D6D60EA9560ABA89372230EA919E",
+      "ledger_index": 49
+    },
+    "before": {
+      "close_time": 845357095,
+      "closed": true,
+      "ledger_hash": "1BC357A857FFA331663F4C833537E5EA4B5C125DC720EA32589142DF9E4CE824",
+      "ledger_index": 48
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 50,
+      "status": "success"
+    },
+    "reason": "advance prerequisite Vault to Investment"
+  },
+  {
+    "after": {
+      "close_time": 845357097,
+      "closed": true,
+      "ledger_hash": "C82612DFECDD8015FA97F5C374909F71C7CD3D3ADBD4F43A15AF58C337FC896D",
+      "ledger_index": 50
+    },
+    "before": {
+      "close_time": 845357096,
+      "closed": true,
+      "ledger_hash": "DA1686BBF50A582E83EFE0FDA6BC4A6F6502D6D60EA9560ABA89372230EA919E",
+      "ledger_index": 49
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 51,
+      "status": "success"
+    },
+    "reason": "advance prerequisite Vault to Investment"
+  },
+  {
+    "after": {
+      "close_time": 845357098,
+      "closed": true,
+      "ledger_hash": "1EA06B6E17010D55AA67AA17F48C9997723E4BCF3955967A939FA96F9D5E1B6D",
+      "ledger_index": 51
+    },
+    "before": {
+      "close_time": 845357097,
+      "closed": true,
+      "ledger_hash": "C82612DFECDD8015FA97F5C374909F71C7CD3D3ADBD4F43A15AF58C337FC896D",
+      "ledger_index": 50
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 52,
+      "status": "success"
+    },
+    "reason": "advance prerequisite Vault to Investment"
+  },
+  {
+    "after": {
+      "close_time": 845357099,
+      "closed": true,
+      "ledger_hash": "715BDCD27AD1C49CD00E5B0087F729F83E2C5ECE01638ADAB2F388D3FBB15880",
+      "ledger_index": 52
+    },
+    "before": {
+      "close_time": 845357098,
+      "closed": true,
+      "ledger_hash": "1EA06B6E17010D55AA67AA17F48C9997723E4BCF3955967A939FA96F9D5E1B6D",
+      "ledger_index": 51
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 53,
+      "status": "success"
+    },
+    "reason": "advance prerequisite Vault to Investment"
+  },
+  {
+    "after": {
+      "close_time": 845357100,
+      "closed": true,
+      "ledger_hash": "948925347C51159B20CF89B236804FC98954945579299A21988E30671C82CA50",
+      "ledger_index": 53
+    },
+    "before": {
+      "close_time": 845357099,
+      "closed": true,
+      "ledger_hash": "715BDCD27AD1C49CD00E5B0087F729F83E2C5ECE01638ADAB2F388D3FBB15880",
+      "ledger_index": 52
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 54,
+      "status": "success"
+    },
+    "reason": "advance prerequisite Vault to Investment"
+  },
+  {
+    "after": {
+      "close_time": 845357101,
+      "closed": true,
+      "ledger_hash": "677D9429B358F4B882D35240EA33E0856F5358D305112F368FC425C1DAABB105",
+      "ledger_index": 54
+    },
+    "before": {
+      "close_time": 845357100,
+      "closed": true,
+      "ledger_hash": "948925347C51159B20CF89B236804FC98954945579299A21988E30671C82CA50",
+      "ledger_index": 53
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 55,
+      "status": "success"
+    },
+    "reason": "advance prerequisite Vault to Investment"
+  },
+  {
+    "after": {
+      "close_time": 845357102,
+      "closed": true,
+      "ledger_hash": "217D9EFF1C91246AD0A6D5B8C7341445AA4696C6C524EFFFFFA31BB68C1BB756",
+      "ledger_index": 55
+    },
+    "before": {
+      "close_time": 845357101,
+      "closed": true,
+      "ledger_hash": "677D9429B358F4B882D35240EA33E0856F5358D305112F368FC425C1DAABB105",
+      "ledger_index": 54
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 56,
+      "status": "success"
+    },
+    "reason": "advance prerequisite Vault to Investment"
+  },
+  {
+    "after": {
+      "close_time": 845357103,
+      "closed": true,
+      "ledger_hash": "F4FB67277A4F1290E6FDC70CD9498306BD0A6FE60279EED4001B837E50C88103",
+      "ledger_index": 56
+    },
+    "before": {
+      "close_time": 845357102,
+      "closed": true,
+      "ledger_hash": "217D9EFF1C91246AD0A6D5B8C7341445AA4696C6C524EFFFFFA31BB68C1BB756",
+      "ledger_index": 55
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 57,
+      "status": "success"
+    },
+    "reason": "advance prerequisite Vault to Investment"
+  },
+  {
+    "after": {
+      "close_time": 845357104,
+      "closed": true,
+      "ledger_hash": "AA905E6BCD58493508E5BB1038CD7D8249295174E15C8135E2B9F73572773C1E",
+      "ledger_index": 57
+    },
+    "before": {
+      "close_time": 845357103,
+      "closed": true,
+      "ledger_hash": "F4FB67277A4F1290E6FDC70CD9498306BD0A6FE60279EED4001B837E50C88103",
+      "ledger_index": 56
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 58,
+      "status": "success"
+    },
+    "reason": "advance prerequisite Vault to Investment"
+  },
+  {
+    "after": {
+      "close_time": 845357105,
+      "closed": true,
+      "ledger_hash": "16E01ABC931D23FD38A854F9668FB111A446F3501149A06F82C56EF03A5BB648",
+      "ledger_index": 58
+    },
+    "before": {
+      "close_time": 845357104,
+      "closed": true,
+      "ledger_hash": "AA905E6BCD58493508E5BB1038CD7D8249295174E15C8135E2B9F73572773C1E",
+      "ledger_index": 57
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 59,
+      "status": "success"
+    },
+    "reason": "advance prerequisite Vault to Investment"
+  },
+  {
+    "after": {
+      "close_time": 845357106,
+      "closed": true,
+      "ledger_hash": "35CFB265E44081CEC442D56957D23C00E34507172420C0C98164FB18F923CF4E",
+      "ledger_index": 59
+    },
+    "before": {
+      "close_time": 845357105,
+      "closed": true,
+      "ledger_hash": "16E01ABC931D23FD38A854F9668FB111A446F3501149A06F82C56EF03A5BB648",
+      "ledger_index": 58
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 60,
+      "status": "success"
+    },
+    "reason": "advance prerequisite Vault to Investment"
+  },
+  {
+    "after": {
+      "close_time": 845357107,
+      "closed": true,
+      "ledger_hash": "51139C31D4A0173B4DA9593A019F8D009B2D608604571D59E98075239EEA82E2",
+      "ledger_index": 60
+    },
+    "before": {
+      "close_time": 845357106,
+      "closed": true,
+      "ledger_hash": "35CFB265E44081CEC442D56957D23C00E34507172420C0C98164FB18F923CF4E",
+      "ledger_index": 59
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 61,
+      "status": "success"
+    },
+    "reason": "advance prerequisite Vault to Investment"
+  },
+  {
+    "after": {
+      "close_time": 845357108,
+      "closed": true,
+      "ledger_hash": "5B5C648CD348C5A5E81BF288DC764B5C2D20C42A0CA20B033893865887C8CF93",
+      "ledger_index": 61
+    },
+    "before": {
+      "close_time": 845357107,
+      "closed": true,
+      "ledger_hash": "51139C31D4A0173B4DA9593A019F8D009B2D608604571D59E98075239EEA82E2",
+      "ledger_index": 60
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 62,
+      "status": "success"
+    },
+    "reason": "advance prerequisite Vault to Investment"
+  },
+  {
+    "after": {
+      "close_time": 845357109,
+      "closed": true,
+      "ledger_hash": "721DC1B6FF1B08457D091A123DE189B0736392A8A49FF08AA1A3B199022CFE04",
+      "ledger_index": 62
+    },
+    "before": {
+      "close_time": 845357108,
+      "closed": true,
+      "ledger_hash": "5B5C648CD348C5A5E81BF288DC764B5C2D20C42A0CA20B033893865887C8CF93",
+      "ledger_index": 61
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 63,
+      "status": "success"
+    },
+    "reason": "advance prerequisite Vault to Investment"
+  },
+  {
+    "after": {
+      "close_time": 845357110,
+      "closed": true,
+      "ledger_hash": "D7485A0C9A9B957921C83152B42060701A016F7DAEBAA3B8269C34ADE710F88C",
+      "ledger_index": 63
+    },
+    "before": {
+      "close_time": 845357109,
+      "closed": true,
+      "ledger_hash": "721DC1B6FF1B08457D091A123DE189B0736392A8A49FF08AA1A3B199022CFE04",
+      "ledger_index": 62
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 64,
+      "status": "success"
+    },
+    "reason": "advance prerequisite Vault to Investment"
+  },
+  {
+    "after": {
+      "close_time": 845357111,
+      "closed": true,
+      "ledger_hash": "BB53035BBDFCFD895D4F02D4559368FA511A016C2CC8DA028B8A906F54F2C5A7",
+      "ledger_index": 64
+    },
+    "before": {
+      "close_time": 845357110,
+      "closed": true,
+      "ledger_hash": "D7485A0C9A9B957921C83152B42060701A016F7DAEBAA3B8269C34ADE710F88C",
+      "ledger_index": 63
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 65,
+      "status": "success"
+    },
+    "reason": "advance prerequisite Vault to Investment"
+  },
+  {
+    "after": {
+      "close_time": 845357112,
+      "closed": true,
+      "ledger_hash": "4CFFA70F80C8216D8F98DED7E3C5F52DA91123A21C69DE2C216B7C0F6723D924",
+      "ledger_index": 65
+    },
+    "before": {
+      "close_time": 845357111,
+      "closed": true,
+      "ledger_hash": "BB53035BBDFCFD895D4F02D4559368FA511A016C2CC8DA028B8A906F54F2C5A7",
+      "ledger_index": 64
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 66,
+      "status": "success"
+    },
+    "reason": "advance prerequisite Vault to Investment"
+  },
+  {
+    "after": {
+      "close_time": 845357113,
+      "closed": true,
+      "ledger_hash": "00A23E2E6C75666FFDB70E66B56761B329A63AEFCAB6BB0A48966F52BC4E684A",
+      "ledger_index": 66
+    },
+    "before": {
+      "close_time": 845357112,
+      "closed": true,
+      "ledger_hash": "4CFFA70F80C8216D8F98DED7E3C5F52DA91123A21C69DE2C216B7C0F6723D924",
+      "ledger_index": 65
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 67,
+      "status": "success"
+    },
+    "reason": "advance prerequisite Vault to Investment"
+  },
+  {
+    "after": {
+      "close_time": 845357114,
+      "closed": true,
+      "ledger_hash": "A6C1C18FC96616692E32BC7CBD7FEAA7BD9B1EE42FFD010984D34901B6276F47",
+      "ledger_index": 67
+    },
+    "before": {
+      "close_time": 845357113,
+      "closed": true,
+      "ledger_hash": "00A23E2E6C75666FFDB70E66B56761B329A63AEFCAB6BB0A48966F52BC4E684A",
+      "ledger_index": 66
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 68,
+      "status": "success"
+    },
+    "reason": "advance prerequisite Vault to Investment"
+  },
+  {
+    "after": {
+      "close_time": 845357115,
+      "closed": true,
+      "ledger_hash": "10B27A5647BC1902111C86AF45D61F8C9EA191797F85AD3098E080659AC1B004",
+      "ledger_index": 68
+    },
+    "before": {
+      "close_time": 845357114,
+      "closed": true,
+      "ledger_hash": "A6C1C18FC96616692E32BC7CBD7FEAA7BD9B1EE42FFD010984D34901B6276F47",
+      "ledger_index": 67
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 69,
+      "status": "success"
+    },
+    "reason": "advance prerequisite Vault to Investment"
+  },
+  {
+    "after": {
+      "close_time": 845357116,
+      "closed": true,
+      "ledger_hash": "7A4427769155A7C18029881024EE6CF93BA5E0C01E1D2D2997BE29554FD83944",
+      "ledger_index": 69
+    },
+    "before": {
+      "close_time": 845357115,
+      "closed": true,
+      "ledger_hash": "10B27A5647BC1902111C86AF45D61F8C9EA191797F85AD3098E080659AC1B004",
+      "ledger_index": 68
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 70,
+      "status": "success"
+    },
+    "reason": "advance prerequisite Vault to Investment"
+  },
+  {
+    "after": {
+      "close_time": 845357117,
+      "closed": true,
+      "ledger_hash": "103EE8890FA589275F359B65D36652D5B6F071C290EFBEF9879302AD3357DEA7",
+      "ledger_index": 70
+    },
+    "before": {
+      "close_time": 845357116,
+      "closed": true,
+      "ledger_hash": "7A4427769155A7C18029881024EE6CF93BA5E0C01E1D2D2997BE29554FD83944",
+      "ledger_index": 69
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 71,
+      "status": "success"
+    },
+    "reason": "advance prerequisite Vault to Investment"
+  },
+  {
+    "after": {
+      "close_time": 845357118,
+      "closed": true,
+      "ledger_hash": "019B5824F6707DC6CA1DC28BEB6943C9072B18F9A767D38767F161625A66AD97",
+      "ledger_index": 71
+    },
+    "before": {
+      "close_time": 845357117,
+      "closed": true,
+      "ledger_hash": "103EE8890FA589275F359B65D36652D5B6F071C290EFBEF9879302AD3357DEA7",
+      "ledger_index": 70
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 72,
+      "status": "success"
+    },
+    "reason": "advance prerequisite Vault to Investment"
+  },
+  {
+    "after": {
+      "close_time": 845357119,
+      "closed": true,
+      "ledger_hash": "52071498510D978FB0CE75449D248B2A36C2D260D6A236CFD30D909AFDF617F0",
+      "ledger_index": 72
+    },
+    "before": {
+      "close_time": 845357118,
+      "closed": true,
+      "ledger_hash": "019B5824F6707DC6CA1DC28BEB6943C9072B18F9A767D38767F161625A66AD97",
+      "ledger_index": 71
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 73,
+      "status": "success"
+    },
+    "reason": "advance prerequisite Vault to Investment"
+  },
+  {
+    "after": {
+      "close_time": 845357120,
+      "closed": true,
+      "ledger_hash": "1454C003430804C9063E724B55FF1C7557E9804399BAAAE7348072080DF76E5A",
+      "ledger_index": 73
+    },
+    "before": {
+      "close_time": 845357119,
+      "closed": true,
+      "ledger_hash": "52071498510D978FB0CE75449D248B2A36C2D260D6A236CFD30D909AFDF617F0",
+      "ledger_index": 72
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 74,
+      "status": "success"
+    },
+    "reason": "advance prerequisite Vault to Investment"
+  },
+  {
+    "after": {
+      "close_time": 845357121,
+      "closed": true,
+      "ledger_hash": "5C0543AC712081E19B8B54B531BD46B41EC5F9FD2F2FA7834795C8F661058F5D",
+      "ledger_index": 74
+    },
+    "before": {
+      "close_time": 845357120,
+      "closed": true,
+      "ledger_hash": "1454C003430804C9063E724B55FF1C7557E9804399BAAAE7348072080DF76E5A",
+      "ledger_index": 73
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 75,
+      "status": "success"
+    },
+    "reason": "advance prerequisite Vault to Investment"
+  },
+  {
+    "after": {
+      "close_time": 845357122,
+      "closed": true,
+      "ledger_hash": "F6656A999E2C9918ACE4761602930EE31B374FAE105E42C8A39A099B5F8216DC",
+      "ledger_index": 75
+    },
+    "before": {
+      "close_time": 845357121,
+      "closed": true,
+      "ledger_hash": "5C0543AC712081E19B8B54B531BD46B41EC5F9FD2F2FA7834795C8F661058F5D",
+      "ledger_index": 74
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 76,
+      "status": "success"
+    },
+    "reason": "advance prerequisite Vault to Investment"
+  },
+  {
+    "after": {
+      "close_time": 845357123,
+      "closed": true,
+      "ledger_hash": "64E49FF0623A55DC3B476C27BC1A607F140B67AA8B2854765C5FFCD0E1707F63",
+      "ledger_index": 76
+    },
+    "before": {
+      "close_time": 845357122,
+      "closed": true,
+      "ledger_hash": "F6656A999E2C9918ACE4761602930EE31B374FAE105E42C8A39A099B5F8216DC",
+      "ledger_index": 75
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 77,
+      "status": "success"
+    },
+    "reason": "advance prerequisite Vault to Investment"
+  },
+  {
+    "after": {
+      "close_time": 845357124,
+      "closed": true,
+      "ledger_hash": "10398BA2856115ADB64DD39AA99FA0072B772DB583091F58773DDCB2D486CC5A",
+      "ledger_index": 77
+    },
+    "before": {
+      "close_time": 845357123,
+      "closed": true,
+      "ledger_hash": "64E49FF0623A55DC3B476C27BC1A607F140B67AA8B2854765C5FFCD0E1707F63",
+      "ledger_index": 76
+    },
+    "ledger_accept_response": {
+      "ledger_current_index": 78,
+      "status": "success"
+    },
+    "reason": "validate or establish rejection for e6_positive_dual_domain_loanset"
+  }
+]
