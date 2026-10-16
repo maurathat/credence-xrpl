@@ -1,8 +1,128 @@
 {
-  "schema_version": 21,
+  "schema_version": 22,
   "overall": "FAIL",
-  "scope": "Checkpoint 1E-N-LIVE-02 stopped before transactions because the frozen serializer rejected a float in the rippled environment record",
-  "start_commit": "8c5f4ebe8c6d2fa58c4c19bb5f834fad9b9037b3",
+  "scope": "Checkpoint 1E-NR2 repaired the environment evidence boundary and complete pre-transaction preflight offline; protocol classifications remain unchanged",
+  "start_commit": "6917f556e9969a5767cf7cb99765158ff1cf8714",
+  "checkpoint_1e_nr2": {
+    "outcome": "PASS",
+    "mode": "FINAL_HARNESS_REPAIR_ZERO_XRPL_TRANSACTIONS",
+    "start_commit": "6917f556e9969a5767cf7cb99765158ff1cf8714",
+    "float_root_cause": {
+      "path": "$.server_info.validated_ledger.base_fee_xrp",
+      "wire_body_preserved_in_live_02": false,
+      "equivalent_pinned_wire_token": "1e-05",
+      "python_value": "float(1e-05)",
+      "parsing_path": "httpx.Response.json -> Python JSON number decoder -> sanitize_response scalar passthrough",
+      "field_classification": "XRPL_RPC_ENVIRONMENT_TELEMETRY",
+      "credence_money": false,
+      "tRLUSD_accounting": false,
+      "signed_credence_object": false,
+      "loanset_economic_term": false
+    },
+    "normalization": {
+      "allowed_path": "server_info.validated_ledger.base_fee_xrp",
+      "representation": {
+        "json_number": "1e-05",
+        "normalization": "Python shortest round-trip decimal representation",
+        "source_json_type": "number"
+      },
+      "round_trip_exact": true,
+      "deterministic": true,
+      "silent_rounding": false,
+      "generic_float_support_added": false,
+      "default_str_added": false
+    },
+    "environment_audit": {
+      "committed_environment_payloads_checked": "ALL",
+      "float_paths": [
+        "$.server_info.validated_ledger.base_fee_xrp"
+      ],
+      "other_float_paths": [],
+      "sets": [],
+      "tuples": [],
+      "bytes": [],
+      "paths": [],
+      "enums": [],
+      "dataclasses_or_custom_objects": [],
+      "non_string_keys": []
+    },
+    "pretransaction_preflight": {
+      "result": "PASS",
+      "uses_production_serializer": true,
+      "runs_before_xrpld": true,
+      "coverage": {
+        "A_provenance": "PASS",
+        "B_amendment_evidence": "PASS",
+        "C_feature_response": "PASS",
+        "D_amendments_ledger_entry_response": "PASS",
+        "E_environment_evidence": "PASS",
+        "F_ledger_header_time": "PASS",
+        "G_actor_setup_evidence": "PASS",
+        "H_protected_state_structures": "PASS",
+        "I_N1_N6_evidence": "PASS",
+        "J_manifest_metadata": "PASS"
+      },
+      "detects_historical_signing_domain_set": true,
+      "detects_unhandled_environment_float": true
+    },
+    "regressions": {
+      "F1": "PASS",
+      "F2": "PASS",
+      "F3": "PASS",
+      "F4": "PASS",
+      "F5": "PASS",
+      "F6": "PASS",
+      "F7": "PASS",
+      "F8": "PASS",
+      "F9": "PASS",
+      "F10": "PASS",
+      "F11": "PASS",
+      "F12": "PASS",
+      "future_provenance_destination": "PASS"
+    },
+    "legacy_provenance_label": {
+      "historical_live_02_modified": false,
+      "cause": "runner used a stale constant rather than the selected destination",
+      "prospective_repair": "derive evidence_directory from the actual parameterized destination",
+      "future_example": "evidence/checkpoint-1e-n-live-03"
+    },
+    "protocol_semantics_unchanged": true,
+    "preserved_classifications": {
+      "historical_E6": "FAIL",
+      "positive_authorization_composition": "SUPPORTED",
+      "positive_timing": "SOURCE_CONFORMANT",
+      "historical_timing_oracle": "ORACLE_DEFECT",
+      "historical_N1": "BLOCKED_AFTER_SUBMISSION",
+      "fresh_negative_campaign_N1_N6": "NOT_ATTEMPTED",
+      "E6_authorization_architecture": "NOT_VALIDATED",
+      "E7_E9": "NOT_ATTEMPTED"
+    },
+    "historical_evidence_immutable": true,
+    "xrpld_started": false,
+    "xrpl_rpc_calls": 0,
+    "ledger_advances": 0,
+    "xrpl_transactions_submitted": 0,
+    "new_live_evidence_directory_created": false,
+    "gates": {
+      "F1_F12": "PASS (12)",
+      "provenance_label_regression": "PASS",
+      "prior_serialization_repair_tests": "PASS (12)",
+      "prospective_negative_tests": "PASS (14)",
+      "historical_E6_tests": "PASS (40)",
+      "all_spike_tests": "PASS (181)",
+      "repository_unit_tests": "PASS (17)",
+      "conformance_tests": "PASS (4)",
+      "lint_format_large_file": "PASS",
+      "strict_typecheck": "PASS (25 source files)",
+      "secrets_scan": "PASS",
+      "json_and_manifests": "PASS (16 manifests)",
+      "historical_evidence_immutability": "PASS",
+      "authorized_paths": "PASS",
+      "git_diff_check": "PASS"
+    },
+    "final_fresh_run_may_be_separately_authorized": true,
+    "further_packaging_failure_policy": "SIMPLIFY rather than add another generalized harness repair"
+  },
   "checkpoint_1e_n_live_02": {
     "outcome": "STOP/BLOCKED",
     "classification": "LOCAL_FROZEN_HARNESS_ENVIRONMENT_EVIDENCE_SERIALIZATION_DEFECT",

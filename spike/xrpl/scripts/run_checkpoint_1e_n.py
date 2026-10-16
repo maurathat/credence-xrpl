@@ -9,6 +9,8 @@ import json
 import os
 import sys
 from collections.abc import Callable
+from dataclasses import is_dataclass
+from enum import Enum
 from pathlib import Path
 from typing import Any, cast
 
@@ -71,7 +73,12 @@ TIMING_PATH = ROOT / "E6-TIMING-ORACLE-v2.md"
 ORACLE_PATH = ROOT / "scripts" / "e6_negative_oracle.py"
 RUNNER_PATH = Path(__file__).resolve()
 TEST_PATH = ROOT / "tests" / "test_checkpoint_1e_n.py"
-EVIDENCE_NAME = "checkpoint-1e-n"
+REPAIR_TEST_PATH = ROOT / "tests" / "test_checkpoint_1e_nr.py"
+ENVIRONMENT_REPAIR_TEST_PATH = ROOT / "tests" / "test_checkpoint_1e_nr2.py"
+ENVIRONMENT_FIXTURE_PATH = EVIDENCE_ROOT / "checkpoint-1e-n" / "environment-start.json"
+FEATURE_FIXTURE_PATH = EVIDENCE_ROOT / "checkpoint-1e-n-live-02" / "feature-raw.json"
+AMENDMENTS_FIXTURE_PATH = EVIDENCE_ROOT / "checkpoint-1e-n-live-02" / "amendments-ledger-entry.json"
+BASE_FEE_XRP_PATH = ("server_info", "validated_ledger", "base_fee_xrp")
 
 CASE_LABELS = {
     "N1": "n1_research_bot_alone",
@@ -101,15 +108,97 @@ def frozen_file_hashes() -> dict[str, str]:
         "scripts/e6_negative_oracle.py": sha256_file(ORACLE_PATH),
         "scripts/run_checkpoint_1e_n.py": sha256_file(RUNNER_PATH),
         "tests/test_checkpoint_1e_n.py": sha256_file(TEST_PATH),
+        "tests/test_checkpoint_1e_nr.py": sha256_file(REPAIR_TEST_PATH),
+        "tests/test_checkpoint_1e_nr2.py": sha256_file(ENVIRONMENT_REPAIR_TEST_PATH),
+        "evidence/checkpoint-1e-n/environment-start.json": sha256_file(ENVIRONMENT_FIXTURE_PATH),
+        "evidence/checkpoint-1e-n-live-02/feature-raw.json": sha256_file(FEATURE_FIXTURE_PATH),
+        "evidence/checkpoint-1e-n-live-02/amendments-ledger-entry.json": sha256_file(
+            AMENDMENTS_FIXTURE_PATH
+        ),
     }
 
 
-def preflight_payload() -> dict[str, Any]:
+def evidence_directory_label(destination: Path) -> str:
+    """Return the actual selected evidence directory relative to spike/xrpl."""
+
+    return destination.resolve().relative_to(ROOT.resolve()).as_posix()
+
+
+def environment_non_json_inventory(value: Any, *, path: str = "$") -> list[dict[str, str]]:
+    """Inventory non-JSON-native values in an environment payload."""
+
+    if isinstance(value, float):
+        return [{"path": path, "python_type": "float"}]
+    if isinstance(value, Enum):
+        return [{"path": path, "python_type": type(value).__name__}]
+    if is_dataclass(value) and not isinstance(value, type):
+        return [{"path": path, "python_type": type(value).__name__}]
+    if isinstance(value, dict):
+        findings: list[dict[str, str]] = []
+        for key, item in value.items():
+            if not isinstance(key, str):
+                findings.append(
+                    {"path": path, "python_type": f"non-string-key:{type(key).__name__}"}
+                )
+                continue
+            findings.extend(environment_non_json_inventory(item, path=f"{path}.{key}"))
+        return findings
+    if isinstance(value, list):
+        findings = []
+        for index, item in enumerate(value):
+            findings.extend(environment_non_json_inventory(item, path=f"{path}[{index}]"))
+        return findings
+    if isinstance(value, tuple):
+        return [{"path": path, "python_type": "tuple"}]
+    if isinstance(value, (set, frozenset, bytes, Path)):
+        return [{"path": path, "python_type": type(value).__name__}]
+    if value is None or isinstance(value, (str, int, bool)):
+        return []
+    return [{"path": path, "python_type": type(value).__name__}]
+
+
+def normalize_environment_evidence(value: Any, *, path: tuple[str, ...] = ()) -> Any:
+    """Normalize only allowlisted rippled telemetry; reject every other non-JSON value."""
+
+    if isinstance(value, float):
+        if path != BASE_FEE_XRP_PATH:
+            dotted = ".".join(path)
+            raise TypeError(f"unhandled environment float at $.{dotted}")
+        decimal_lexeme = repr(value)
+        if float(decimal_lexeme) != value:
+            raise TypeError("base_fee_xrp decimal normalization is not round-trip exact")
+        return {
+            "json_number": decimal_lexeme,
+            "source_json_type": "number",
+            "normalization": "Python shortest round-trip decimal representation",
+        }
+    if isinstance(value, dict):
+        normalized: dict[str, Any] = {}
+        for key, item in value.items():
+            if not isinstance(key, str):
+                dotted = ".".join(path) or "$"
+                raise TypeError(f"non-string environment key at {dotted}")
+            normalized[key] = normalize_environment_evidence(item, path=(*path, key))
+        return normalized
+    if isinstance(value, list):
+        return [
+            normalize_environment_evidence(item, path=(*path, str(index)))
+            for index, item in enumerate(value)
+        ]
+    if value is None or isinstance(value, (str, int, bool)):
+        return value
+    dotted = ".".join(path)
+    raise TypeError(f"unsupported environment evidence type {type(value).__name__} at $.{dotted}")
+
+
+def preflight_payload(destination: Path | None = None) -> dict[str, Any]:
     require_static_preflight()
+    selected_destination = destination or (EVIDENCE_ROOT / "checkpoint-1e-n-live-future")
     return {
         "checkpoint": "1E-N",
         "mode": "PRE_LEDGER_STATIC_PREFLIGHT",
         "git_commit": git_head(),
+        "evidence_destination": evidence_directory_label(selected_destination),
         "new_xrpl_transactions": 0,
         "xrpld_started": False,
         "positive_loanset_included": False,
@@ -124,6 +213,9 @@ def preflight_payload() -> dict[str, Any]:
         "frozen_files": frozen_file_hashes(),
         "assertions": static_preflight_assertions(),
         "full_evidence_serialization": full_evidence_serialization_preflight(),
+        "complete_pretransaction_serialization": full_pretransaction_serialization_preflight(
+            selected_destination
+        ),
         "result": "PASS",
     }
 
@@ -379,11 +471,113 @@ def full_evidence_serialization_preflight(
     }
 
 
+def complete_pretransaction_evidence_skeleton(destination: Path) -> dict[str, Any]:
+    """Build fixture-equivalent shapes for everything persisted before N1."""
+
+    environment_fixture = json.loads(ENVIRONMENT_FIXTURE_PATH.read_text())
+    feature_fixture = json.loads(FEATURE_FIXTURE_PATH.read_text())
+    amendments_fixture = json.loads(AMENDMENTS_FIXTURE_PATH.read_text())
+    inventory = environment_non_json_inventory(environment_fixture)
+    normalized_environment = normalize_environment_evidence(environment_fixture)
+    ledger_header_fixture = normalized_environment["ledger"]
+    actor_setup = {
+        "actors_public": {
+            "issuer": {"account": "ISSUER_ACCOUNT_PLACEHOLDER"},
+            "lender": {"account": "LENDER_ACCOUNT_PLACEHOLDER"},
+            "borrower": {"account": "BORROWER_ACCOUNT_PLACEHOLDER"},
+            "research_bot": {"account": "RESEARCH_BOT_ACCOUNT_PLACEHOLDER"},
+            "credence_policy": {"account": "CREDENCE_POLICY_ACCOUNT_PLACEHOLDER"},
+            "broker_owner": {"account": "BROKER_OWNER_ACCOUNT_PLACEHOLDER"},
+        },
+        "transaction_record": {
+            "label": "setup_placeholder",
+            "expected_result": "tesSUCCESS",
+            "observed_result": None,
+            "before_state": {},
+            "after_state": {},
+            "state_assertions": [],
+        },
+        "fixture": {
+            "vault_id": "VAULT_ID_PLACEHOLDER",
+            "loan_broker_id": "LOAN_BROKER_ID_PLACEHOLDER",
+            "subscription_date": 100,
+            "redemption_date": 200,
+        },
+    }
+    negative_program = complete_evidence_skeleton()
+    return {
+        "A_provenance": {
+            "checkpoint": "1E-N",
+            "git_commit_at_run_start": git_head(),
+            "rippled_source_commit": SOURCE_COMMIT,
+            "evidence_directory": evidence_directory_label(destination),
+            "frozen_files": frozen_file_hashes(),
+        },
+        "B_amendment_evidence": {
+            "required_amendments": sorted(REQUIRED_AMENDMENTS),
+            "feature_validation": environment_fixture["feature_validation"],
+            "amendments_ledger_validation": environment_fixture["amendments_ledger_validation"],
+            "amendment_cross_check": environment_fixture["amendment_cross_check"],
+        },
+        "C_feature_response": feature_fixture,
+        "D_amendments_ledger_entry_response": amendments_fixture,
+        "E_environment_evidence": normalized_environment,
+        "F_ledger_header_time": ledger_header_fixture,
+        "G_actor_setup_evidence": actor_setup,
+        "H_protected_state_structures": {
+            case_id: record["state_assertions"]
+            for case_id, record in negative_program["cases"].items()
+        },
+        "I_N1_N6_evidence": negative_program,
+        "J_manifest_metadata": {"algorithm": "SHA-256", "file_count": 0, "files": []},
+        "environment_non_json_inventory_before_normalization": inventory,
+    }
+
+
+def full_pretransaction_serialization_preflight(
+    destination: Path,
+    *,
+    skeleton: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Serialize every fixture-equivalent artifact shape before xrpld may start."""
+
+    value = (
+        skeleton if skeleton is not None else complete_pretransaction_evidence_skeleton(destination)
+    )
+    serialized = serialize_json(value)
+    decoded = json.loads(serialized)
+    required_sections = [f"{letter}_" for letter in "ABCDEFGHIJ"]
+    missing = [
+        prefix for prefix in required_sections if not any(key.startswith(prefix) for key in decoded)
+    ]
+    if missing:
+        raise TypeError(f"pre-transaction serialization sections missing: {missing!r}")
+    return {
+        "result": "PASS",
+        "coverage": {
+            "A_provenance": "PASS",
+            "B_amendment_evidence": "PASS",
+            "C_feature_response": "PASS",
+            "D_amendments_ledger_entry_response": "PASS",
+            "E_environment_evidence": "PASS",
+            "F_ledger_header_time": "PASS",
+            "G_actor_setup_evidence": "PASS",
+            "H_protected_state_structures": "PASS",
+            "I_N1_N6_evidence": "PASS",
+            "J_manifest_metadata": "PASS",
+        },
+        "environment_normalization_inventory": decoded[
+            "environment_non_json_inventory_before_normalization"
+        ],
+        "serialized_sha256": hashlib.sha256(serialized.encode()).hexdigest(),
+    }
+
+
 def write_preflight(destination: Path) -> int:
     if destination.exists() and any(destination.iterdir()):
         raise CheckpointStop(f"evidence destination is not empty: {destination}")
     destination.mkdir(parents=True, exist_ok=True)
-    write_json(destination / "preflight.json", preflight_payload())
+    write_json(destination / "preflight.json", preflight_payload(destination))
     print("Checkpoint 1E-N pre-ledger preflight PASS; xrpld was not started.")
     return 0
 
@@ -397,6 +591,8 @@ def verify_preflight(destination: Path) -> dict[str, Any]:
         raise CheckpointStop("frozen preflight did not pass")
     if value.get("git_commit") != git_head():
         raise CheckpointStop("git HEAD changed after negative preflight")
+    if value.get("evidence_destination") != evidence_directory_label(destination):
+        raise CheckpointStop("frozen preflight evidence destination does not match selection")
     if value.get("frozen_files") != frozen_file_hashes():
         raise CheckpointStop("a frozen negative file changed after preflight")
     if value.get("negative_cases") != case_definitions():
@@ -583,7 +779,7 @@ def execute_live(destination: Path) -> int:
         "checkpoint": "1E-N",
         "git_commit_at_run_start": git_head(),
         "rippled_source_commit": SOURCE_COMMIT,
-        "evidence_directory": f"evidence/{EVIDENCE_NAME}",
+        "evidence_directory": evidence_directory_label(destination),
         "preflight_sha256": sha256_file(destination / "preflight.json"),
         "frozen_files": frozen_file_hashes(),
     }
@@ -606,9 +802,10 @@ def execute_live(destination: Path) -> int:
         "amendment_cross_check": cross_check,
         "fresh_environment": True,
     }
+    environment_evidence = normalize_environment_evidence(environment)
     runner.write("feature-raw.json", feature)
     runner.write("amendments-ledger-entry.json", amendments)
-    runner.write("environment-start.json", environment)
+    runner.write("environment-start.json", environment_evidence)
     if (
         server_info.get("build_version") != "3.4.0"
         or server_info.get("network_id") != NETWORK_ID
@@ -616,7 +813,7 @@ def execute_live(destination: Path) -> int:
         or not ledger_validation["valid"]
         or not cross_check["valid"]
     ):
-        runner.write("unexpected-result.json", environment)
+        runner.write("unexpected-result.json", environment_evidence)
         raise CheckpointStop("frozen environment invariants are absent")
 
     actors = create_actors(runner, Wallet.from_seed(root_seed))

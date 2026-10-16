@@ -1,3 +1,135 @@
+# Checkpoint 1E-NR2 — environment evidence serialization repair
+
+## Outcome
+
+**PASS — the live-02 environment serialization failure is reproduced offline,
+the exact telemetry field is normalized without relaxing the generic
+serializer, and the preflight now covers the complete pre-transaction evidence
+path. ZERO XRPL transactions were submitted.**
+
+The checkpoint began at clean commit
+`6917f556e9969a5767cf7cb99765158ff1cf8714`, descended from checkpoint-0,
+with unchanged submodule gitlinks. It did not start rippled, call XRPL RPC,
+advance a ledger, or create a future live evidence directory.
+
+## Exact float root cause
+
+The committed live-02 exception reproduces exactly when the equivalent pinned
+environment fixture is passed through the pre-repair production serializer:
+
+```text
+TypeError: unsupported JSON evidence type float at
+$.server_info.validated_ledger.base_fee_xrp
+```
+
+Live-02 stopped before its `server_info` body could be persisted, so its exact
+wire body is unavailable. Raw committed evidence from the same pinned rippled
+3.4.0 build and network preserves the token as
+`"base_fee_xrp":1e-05`. `httpx.Response.json()` decoded that JSON number to
+Python `float(1e-05)`, and `sanitize_response` returned the scalar unchanged.
+
+An audit of every committed environment-start payload found this as the only
+float path. No set, tuple, bytes, Path, enum, dataclass/custom object, or
+non-string key was present in the fixture-equivalent environment structure.
+
+`base_fee_xrp` is rippled RPC/environment telemetry. It is not Credence
+canonical money, tRLUSD accounting, a signed Credence object, or a LoanSet
+economic term. Credence money remains integer micro-units.
+
+## Narrow normalization
+
+Only `server_info.validated_ledger.base_fee_xrp` may be converted. The evidence
+boundary records it as an object containing the deterministic shortest
+round-trip decimal lexeme `1e-05`, its source JSON type `number`, and the named
+normalization rule. The normalizer verifies that parsing the lexeme reproduces
+the original float exactly. It does not round or convert the value to Credence
+units.
+
+The generic serializer continues to reject every float. Any float at another
+environment path also fails closed. There is no `default=str` or generic
+stringification fallback.
+
+## True pre-transaction preflight
+
+Before a future run may start rippled, the production serializer now processes
+fixture-equivalent evidence for all ten required sections:
+
+| Section | Coverage | Result |
+| --- | --- | --- |
+| A | provenance and selected evidence destination | **PASS** |
+| B | required-amendment and validation evidence | **PASS** |
+| C | feature response | **PASS** |
+| D | Amendments ledger-entry response | **PASS** |
+| E | normalized server/environment evidence | **PASS** |
+| F | ledger-header and close-time evidence | **PASS** |
+| G | actor/setup evidence skeletons | **PASS** |
+| H | protected-state structures | **PASS** |
+| I | N1-N6 evidence skeletons | **PASS** |
+| J | manifest metadata | **PASS** |
+
+An injected signing-domain set fails in section I, and an unhandled float fails
+in section E. Thus the preflight catches both historical serialization defects
+before the environment may start.
+
+## Regression results
+
+| Requirement | Result |
+| --- | --- |
+| F1 committed live-02 failure reproduces | **PASS** |
+| F2 repaired environment payload serializes | **PASS** |
+| F3 base-fee representation is deterministic | **PASS** |
+| F4 representation is non-lossy for the recorded value | **PASS** |
+| F5 arbitrary environment float fails closed | **PASS** |
+| F6 Credence money float semantics remain rejected | **PASS** |
+| F7 all environment fields serialize after narrow normalization | **PASS** |
+| F8 signing-domain set normalization remains deterministic | **PASS** |
+| F9 complete A-J pre-transaction preflight passes | **PASS** |
+| F10 injected signing-domain set fails preflight | **PASS** |
+| F11 injected unhandled environment float fails preflight | **PASS** |
+| F12 no generic stringify/fallback exists | **PASS** |
+
+The separate provenance regression also passes. Prospectively, the runner
+derives `evidence_directory` from the selected destination, so a future
+`checkpoint-1e-n-live-03` run will record
+`evidence/checkpoint-1e-n-live-03`. The stale historical live-02 label remains
+unchanged.
+
+## Preserved semantics and history
+
+N1-N6 expected results, the N5 `1000` to `1001` mutation, timing v2, SMT-NUL,
+CPT-NUL, and protected-state rules are unchanged. Historical classifications
+remain unchanged: historical E6 is **FAIL**, positive composition is
+**SUPPORTED**, timing is **SOURCE_CONFORMANT**, the historical timing oracle is
+**ORACLE_DEFECT**, historical N1 is **BLOCKED_AFTER_SUBMISSION**, the fresh
+negative campaign has not attempted N1-N6, and the E6 authorization
+architecture remains **NOT_VALIDATED**.
+
+All existing evidence directories, including `checkpoint-1e-n-live-02/`, are
+byte-for-byte unchanged and all manifests verify.
+
+## Gates
+
+- F1-F12: **PASS** (12), plus provenance-label regression **PASS**.
+- Prior serialization-repair tests: **PASS** (12).
+- Prospective negative tests: **PASS** (14).
+- Historical E6 tests: **PASS** (40).
+- All spike tests: **PASS** (181).
+- Repository unit tests: **PASS** (17).
+- Conformance tests: **PASS** (4).
+- Lint, formatting, large-file check, strict typecheck, secrets scan, JSON
+  validation, all 16 manifests, historical-evidence immutability, authorized
+  paths, and `git diff --check`: **PASS**.
+
+## Modified paths
+
+- `spike/xrpl/E6-ENVIRONMENT-EVIDENCE-SERIALIZATION.md`
+- `spike/xrpl/scripts/run_checkpoint_1e_n.py`
+- `spike/xrpl/tests/test_checkpoint_1e_nr2.py`
+- `spike/xrpl/REPORT.md`
+- `spike/xrpl/RESULTS.json`
+
+---
+
 # Checkpoint 1E-N-LIVE-02 — frozen E6 negative controls
 
 ## Outcome
