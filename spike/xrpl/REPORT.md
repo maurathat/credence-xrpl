@@ -1,3 +1,158 @@
+# Checkpoint 1E-N — E6 negative authorization validation
+
+## Outcome
+
+**STOP / BLOCKED — the first negative reached submission and a ledger close,
+but the frozen runner failed while serializing its evidence. No negative is
+classified PASS and the E6 authorization architecture is NOT VALIDATED.**
+
+The checkpoint began at clean commit
+`543f92d77364700af8f6bfd0b851ffd8924e35de`, descended from checkpoint-0,
+with unchanged submodule gitlinks. The historical E6 experiment remains
+**FAIL**. Its positive authorization composition remains **SUPPORTED**, its
+timing behavior remains **SOURCE_CONFORMANT**, and the historical timing
+oracle remains **ORACLE_DEFECT**. These classifications are separate and were
+not rewritten.
+
+## Prospective oracle and frozen provenance
+
+`E6-TIMING-ORACLE-v2.md` prospectively defines StartDate as the applying-view
+header `closeTime` read during `LoanSet::doApply`, and
+`NextPaymentDueDate = StartDate + PaymentInterval`. PaymentInterval and
+GracePeriod are each 60 seconds. Transaction lookup `date` is explicitly
+forbidden as the StartDate anchor. This applies only after Checkpoint 1E-T and
+does not change the historical verdict.
+
+Before xrpld started, the negative-only preflight passed 9 assertions, recorded
+zero transactions and `xrpld_started: false`, and froze these hashes:
+
+| Artifact | SHA-256 |
+| --- | --- |
+| `E6-NEGATIVE-ASSERTIONS.md` | `6c8a89a94a16d1830e99e28acfc2c1fe792ad75cbb5b1050dcea3546e68cf876` |
+| `E6-TIMING-ORACLE-v2.md` | `4acb653ab61374757a24800dd05a069a4d942e9fbfc3b9226f2f8d8f7b783f77` |
+| `scripts/e6_negative_oracle.py` | `0ac1797f23bd8a62c4e4227a8c7b68c5b9d9504438e68eacb4208455a86b0040` |
+| `scripts/run_checkpoint_1e_n.py` | `be7afe654ebc178593be932f5eeb4c430e3fd8e74d38dd2ccd058a089da12319` |
+| `tests/test_checkpoint_1e_n.py` | `ed1b1a09897cc4d24f43d0331a6c28bdb1ebb2a1c4c9ce4cbe398181cf0f4167` |
+
+The preflight artifact hash is
+`9ce658decccecc20283ed38396a64a10e82bf205b037518759764fce0ebcc5df`.
+After setup, the live binding passed all six checks before N1. It bound the
+exact N1-N6 finalized constructions, expected results, actor identities,
+fixtures, runner, tests, oracle, timing spec, and proof that every expected
+Loan was absent. No negative depended on a positive LoanSet.
+
+## Fresh prerequisite state
+
+The recreated environment reported xrpld 3.4.0, pinned source
+`4a4fded2eba11427c48ce3f24d9c1aea5e7a9d17`, network ID 21337, and all eight
+required amendments present, supported, enabled, and cross-checked. It began at
+validated ledger 2 with 10-second close-time resolution.
+
+All 21 prerequisite transactions passed. They created the public tRLUSD
+fixture, borrower, ResearchBot and Credence policy signers, borrower quorum-2
+SignerList, Vault/Loan Broker owner, and two independent Vault/Loan Broker/cover
+fixtures. The main fixture entered Investment in ledger 76 at close time
+`845486843`. The N6 fixture remained in Subscription at ledger 80, close time
+`845486847`, with SubscriptionDate `845486903`. Both expected Loan identities
+were absent. No positive LoanSet was submitted as setup.
+
+## STOP at N1
+
+The frozen N1 construction had ResearchBot as the sole borrower signer,
+Credence absent, no borrower master signature, and a preflight-validated broker
+owner CPT-NUL signature. Its expected result was `tefBAD_QUORUM`.
+
+N1 was submitted. The ledger-close log records the dedicated N1 close from
+ledger 80 / `845486847` to ledger 81 / `845486848`. The runner then completed
+its post-submission state reads and constructed the frozen assertion list, but
+failed before the case record could be persisted:
+
+```text
+TypeError: Object of type set is not JSON serializable
+```
+
+The exact local defect is that authorization assertions contain set-valued
+actual/expected fields. `harness.json_safe` converted each `StateAssertion`
+dataclass to a dictionary without recursively normalizing the nested sets.
+`json.dumps` therefore raised while writing the N1 transaction record.
+
+The submission response, observed result, and protected-state assertion output
+were not persisted. N1 is consequently **BLOCKED_AFTER_SUBMISSION**, not PASS.
+No protocol conclusion is drawn from the ledger close alone. Per the frozen
+fail-closed rule, the harness was not changed and the run was not retried.
+
+## Case disposition
+
+| Case | Disposition |
+| --- | --- |
+| N1 | **BLOCKED_AFTER_SUBMISSION** — expected `tefBAD_QUORUM`; observed result and protected-state verdict were not persisted |
+| N2 | **NOT_ATTEMPTED** |
+| N3 | **NOT_ATTEMPTED** |
+| N4 | **NOT_ATTEMPTED** |
+| N5 | **NOT_ATTEMPTED** |
+| N6 | **NOT_ATTEMPTED** |
+
+No protected-state claim is made for N1. All six pre-submit
+authorization/construction bindings remain in `live-bindings.json`, including
+their exact finalized-body hashes. Public `SigningPubKey` values were replaced
+with an explicit redaction marker during fail-closed packaging to satisfy the
+repository's no-key-shaped-strings rule. The bindings do not replace the
+missing result and post-state record.
+
+## Architecture and prohibited work
+
+The committed historical positive remains unchanged and retained. No new
+positive LoanSet, LoanPay, or E7-E9 transaction was submitted. Because N1 did
+not complete classification and N2-N6 were not attempted,
+**E6 AUTHORIZATION ARCHITECTURE = NOT VALIDATED** for product integration.
+E7-E9 remain **NOT_ATTEMPTED** and must not begin.
+
+## Evidence and immutability
+
+Fail-closed evidence is under `evidence/checkpoint-1e-n/`. Its manifest covers
+34 payload files totaling 442,175 bytes and verifies with SHA-256. It contains the
+pre-ledger preflight, exact live bindings, environment and prerequisite state,
+21 successful setup transaction records, 79 ledger-close records, the generic
+exception record, and the stop summary.
+
+Historical evidence directories `checkpoint-1e-live-01/`,
+`checkpoint-1e-r1-corrected/`, and `checkpoint-1e-t/` were not modified. Their
+manifest hashes remain respectively
+`42129b0aad5fb7b6f9e641a600ad848f9d8ef47cae26d7beb3fe65559a81d9c8`,
+`af51faa819d13b76646f8291d04eee43460311b77686ce00cbe1bc3177433be5`,
+and `07419d73a3d4d4f7e76c06ddaf494dfd006e63c014f4cd24b0771fdf8d731dc1`.
+
+## Gates
+
+- Prospective negative tests: **PASS** (14).
+- Existing E6 tests: **PASS** (40).
+- All spike tests: **PASS** (156).
+- Repository unit tests: **PASS** (17).
+- Conformance tests: **PASS** (4).
+- Lint, formatting, large-file check, strict typecheck, secrets scan, JSON
+  validation, manifests, frozen provenance, historical immutability,
+  authorized paths, and `git diff --check`: **PASS**.
+
+## Minimum next work — not performed
+
+A separately authorized harness-only checkpoint must recursively JSON-normalize
+`StateAssertion` values and add a regression reproducing this exact set-valued
+serialization failure. This checkpoint does not authorize a live retry. That
+repair and retry were not performed.
+
+## Modified paths
+
+- `spike/xrpl/E6-NEGATIVE-ASSERTIONS.md`
+- `spike/xrpl/E6-TIMING-ORACLE-v2.md`
+- `spike/xrpl/scripts/e6_negative_oracle.py`
+- `spike/xrpl/scripts/run_checkpoint_1e_n.py`
+- `spike/xrpl/tests/test_checkpoint_1e_n.py`
+- `spike/xrpl/evidence/checkpoint-1e-n/`
+- `spike/xrpl/REPORT.md`
+- `spike/xrpl/RESULTS.json`
+
+---
+
 # Checkpoint 1E-T — E6 Loan start-time adjudication
 
 ## Outcome

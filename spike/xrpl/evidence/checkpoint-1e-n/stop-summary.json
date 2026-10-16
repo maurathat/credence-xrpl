@@ -1,0 +1,64 @@
+{
+  "checkpoint": "1E-N",
+  "outcome": "STOP/BLOCKED",
+  "classification": "LOCAL_FROZEN_HARNESS_EVIDENCE_SERIALIZATION_DEFECT",
+  "start_commit": "543f92d77364700af8f6bfd0b851ffd8924e35de",
+  "historical_state": {
+    "E6": "FAIL",
+    "positive_authorization_composition": "SUPPORTED",
+    "timing_behavior": "SOURCE_CONFORMANT",
+    "historical_timing_oracle": "ORACLE_DEFECT"
+  },
+  "preflight": {
+    "result": "PASS",
+    "sha256": "9ce658decccecc20283ed38396a64a10e82bf205b037518759764fce0ebcc5df",
+    "all_six_exact_constructions_bound_before_negative_execution": true,
+    "positive_loanset_dependency": false
+  },
+  "fresh_environment": {
+    "rippled_version": "3.4.0",
+    "source_commit": "4a4fded2eba11427c48ce3f24d9c1aea5e7a9d17",
+    "network_id": 21337,
+    "initial_ledger_index": 2,
+    "required_amendments": "PASS",
+    "prerequisite_transactions_passed": 21,
+    "main_fixture_investment_ledger": 76,
+    "main_fixture_investment_close_time": 845486843,
+    "wrong_phase_fixture_ledger_before_negative_execution": 80,
+    "wrong_phase_fixture_close_time_before_negative_execution": 845486847
+  },
+  "stop": {
+    "case": "N1",
+    "stage": "write frozen case evidence after submission, ledger close, state reads, and assertion construction",
+    "exception_type": "TypeError",
+    "message": "Object of type set is not JSON serializable",
+    "cause": "A frozen authorization StateAssertion contained set-valued actual/expected fields; harness.json_safe converted the dataclass to a dict without recursively converting those nested sets.",
+    "retry_attempted": false,
+    "frozen_design_modified_after_live_start": false
+  },
+  "case_results": {
+    "N1": {
+      "status": "BLOCKED_AFTER_SUBMISSION",
+      "submission_attempted": true,
+      "ledger_close_recorded": true,
+      "ledger_before": 80,
+      "ledger_after": 81,
+      "expected_result": "tefBAD_QUORUM",
+      "observed_result": "NOT_PERSISTED",
+      "protected_state_verdict": "NOT_PERSISTED",
+      "protocol_pass_claimed": false
+    },
+    "N2": "NOT_ATTEMPTED",
+    "N3": "NOT_ATTEMPTED",
+    "N4": "NOT_ATTEMPTED",
+    "N5": "NOT_ATTEMPTED",
+    "N6": "NOT_ATTEMPTED"
+  },
+  "prohibited_work": {
+    "positive_loanset_submitted": false,
+    "loan_pay_submitted": false,
+    "E7_E8_E9_executed": false
+  },
+  "architecture_classification": "NOT_VALIDATED",
+  "minimum_next_work": "A separately authorized harness-only correction must recursively JSON-normalize StateAssertion values, with a regression reproducing this exact set-valued serialization failure. No live retry is authorized by this checkpoint."
+}

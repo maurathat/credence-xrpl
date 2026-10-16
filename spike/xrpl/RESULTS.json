@@ -1,8 +1,122 @@
 {
-  "schema_version": 18,
+  "schema_version": 19,
   "overall": "FAIL",
-  "scope": "Checkpoint 1E-T adjudicated the frozen timing failure from pinned source and committed evidence without changing the historical E6 FAIL",
-  "start_commit": "d3612702f97848c2accf921dd9f37510d391d07c",
+  "scope": "Checkpoint 1E-N stopped fail-closed at N1 because the frozen runner could not serialize set-valued authorization assertions",
+  "start_commit": "543f92d77364700af8f6bfd0b851ffd8924e35de",
+  "checkpoint_1e_n": {
+    "outcome": "STOP/BLOCKED",
+    "classification": "LOCAL_FROZEN_HARNESS_EVIDENCE_SERIALIZATION_DEFECT",
+    "start_commit": "543f92d77364700af8f6bfd0b851ffd8924e35de",
+    "historical_classifications": {
+      "E6": "FAIL",
+      "positive_authorization_composition": "SUPPORTED",
+      "timing_behavior": "SOURCE_CONFORMANT",
+      "historical_timing_oracle": "ORACLE_DEFECT"
+    },
+    "prospective_timing_oracle": {
+      "version": 2,
+      "StartDate": "applying view header closeTime read during LoanSet::doApply",
+      "NextPaymentDueDate": "StartDate + PaymentInterval",
+      "PaymentInterval": 60,
+      "GracePeriod": 60,
+      "uses_transaction_lookup_date": false,
+      "retroactively_changes_historical_e6": false
+    },
+    "frozen_provenance": {
+      "preflight": "PASS",
+      "preflight_sha256": "9ce658decccecc20283ed38396a64a10e82bf205b037518759764fce0ebcc5df",
+      "E6-NEGATIVE-ASSERTIONS.md": "6c8a89a94a16d1830e99e28acfc2c1fe792ad75cbb5b1050dcea3546e68cf876",
+      "E6-TIMING-ORACLE-v2.md": "4acb653ab61374757a24800dd05a069a4d942e9fbfc3b9226f2f8d8f7b783f77",
+      "scripts/e6_negative_oracle.py": "0ac1797f23bd8a62c4e4227a8c7b68c5b9d9504438e68eacb4208455a86b0040",
+      "scripts/run_checkpoint_1e_n.py": "be7afe654ebc178593be932f5eeb4c430e3fd8e74d38dd2ccd058a089da12319",
+      "tests/test_checkpoint_1e_n.py": "ed1b1a09897cc4d24f43d0331a6c28bdb1ebb2a1c4c9ce4cbe398181cf0f4167",
+      "live_binding": "PASS",
+      "all_six_exact_constructions_bound": true,
+      "existing_loan_dependency": false,
+      "modified_after_live_start": false
+    },
+    "fresh_environment": {
+      "rippled_version": "3.4.0",
+      "source_commit": "4a4fded2eba11427c48ce3f24d9c1aea5e7a9d17",
+      "network_id": 21337,
+      "initial_ledger_index": 2,
+      "initial_close_time": 845486760,
+      "required_amendments": "PASS",
+      "prerequisite_transactions": "PASS (21)",
+      "main_fixture_investment": {
+        "ledger_index": 76,
+        "close_time": 845486843
+      },
+      "wrong_phase_fixture_before_negatives": {
+        "phase": "Subscription",
+        "ledger_index": 80,
+        "close_time": 845486847,
+        "subscription_date": 845486903
+      },
+      "positive_loanset_used_as_setup": false
+    },
+    "stop": {
+      "case": "N1",
+      "stage": "frozen evidence serialization after submission and ledger close",
+      "exception": "TypeError: Object of type set is not JSON serializable",
+      "cause": "StateAssertion dataclass conversion did not recursively normalize nested set values before json.dumps",
+      "retry_attempted": false
+    },
+    "negative_results": {
+      "N1": {
+        "status": "BLOCKED_AFTER_SUBMISSION",
+        "expected": "tefBAD_QUORUM",
+        "observed": "NOT_PERSISTED",
+        "protected_state": "NOT_PERSISTED",
+        "ledger_before": 80,
+        "ledger_after": 81
+      },
+      "N2": "NOT_ATTEMPTED",
+      "N3": "NOT_ATTEMPTED",
+      "N4": "NOT_ATTEMPTED",
+      "N5": "NOT_ATTEMPTED",
+      "N6": "NOT_ATTEMPTED"
+    },
+    "protected_state_findings": "No N1 protected-state verdict was persisted; no protected-state claim is made.",
+    "authorization_evidence": "All six public constructions and authorization preflights were bound before N1, but no case completed result/state classification.",
+    "evidence_redaction": "Public SigningPubKey values in live-bindings.json were replaced with an explicit redaction marker during fail-closed packaging; exact finalized-body hashes remain recorded.",
+    "historical_positive_evidence": "RETAINED AND UNCHANGED",
+    "e6_authorization_architecture": "NOT_VALIDATED",
+    "prohibited_work": {
+      "positive_loanset_submitted": false,
+      "loan_pay_submitted": false,
+      "E7_E8_E9": "NOT_ATTEMPTED"
+    },
+    "historical_evidence": {
+      "modified": false,
+      "checkpoint_1e_live_01_manifest_sha256": "42129b0aad5fb7b6f9e641a600ad848f9d8ef47cae26d7beb3fe65559a81d9c8",
+      "checkpoint_1e_r1_corrected_manifest_sha256": "af51faa819d13b76646f8291d04eee43460311b77686ce00cbe1bc3177433be5",
+      "checkpoint_1e_t_manifest_sha256": "07419d73a3d4d4f7e76c06ddaf494dfd006e63c014f4cd24b0771fdf8d731dc1"
+    },
+    "evidence_manifest": {
+      "directory": "evidence/checkpoint-1e-n",
+      "file_count": 34,
+      "total_bytes": 442175,
+      "algorithm": "SHA-256",
+      "verified": true
+    },
+    "gates": {
+      "prospective_negative_tests": "PASS (14)",
+      "existing_e6_tests": "PASS (40)",
+      "all_spike_tests": "PASS (156)",
+      "repository_unit_tests": "PASS (17)",
+      "conformance_tests": "PASS (4)",
+      "lint_format_large_file": "PASS",
+      "strict_typecheck": "PASS (25 source files)",
+      "secrets_scan": "PASS",
+      "json_and_manifests": "PASS (15 manifests)",
+      "historical_evidence_immutability": "PASS",
+      "frozen_provenance": "PASS",
+      "authorized_paths": "PASS",
+      "git_diff_check": "PASS"
+    },
+    "minimum_next_work": "Separately authorize a harness-only recursive JSON normalization fix and exact regression before any live retry."
+  },
   "checkpoint_1e_t": {
     "outcome": "ORACLE_DEFECT_ESTABLISHED",
     "start_commit": "d3612702f97848c2accf921dd9f37510d391d07c",

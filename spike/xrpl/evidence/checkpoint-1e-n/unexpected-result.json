@@ -1,0 +1,7 @@
+{
+  "checkpoint": "1E-N",
+  "exception_type": "TypeError",
+  "message": "Object of type set is not JSON serializable",
+  "outcome": "STOP",
+  "retry_attempted": false
+}

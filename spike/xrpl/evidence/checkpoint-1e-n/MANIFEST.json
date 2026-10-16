@@ -1,0 +1,176 @@
+{
+  "algorithm": "SHA-256",
+  "file_count": 34,
+  "files": [
+    {
+      "bytes": 1004,
+      "path": "actors-public.json",
+      "sha256": "2e0e0c45f2c42db5cd6eb929366320684dc299cb947b59e78ca83f887ccb3461"
+    },
+    {
+      "bytes": 1074,
+      "path": "amendments-ledger-entry.json",
+      "sha256": "060b4477952710e97eee0f7fe58e9fe9cb263dc55b2b9a99d77911b35fc61044"
+    },
+    {
+      "bytes": 8064,
+      "path": "environment-start.json",
+      "sha256": "f717df029356afac8c5d8ffc7eee9810b951f5a691ee23dc9511ae90c4a88d01"
+    },
+    {
+      "bytes": 164361,
+      "path": "experiment-summary.json",
+      "sha256": "b9ff0f79e03c33065af6f170d004ca759a2c745cfc7b617442acf3b842022841"
+    },
+    {
+      "bytes": 19677,
+      "path": "feature-raw.json",
+      "sha256": "69e43df7637a7be0b1a1b02d18c1b89c5517ddc849e341ccc05a920800b07844"
+    },
+    {
+      "bytes": 11427,
+      "path": "investment-entry.json",
+      "sha256": "e3cdbc7f113ca2ef91cc7ff6b78d7c86b072f3e7908c1c4f3777bbcf4a360d17"
+    },
+    {
+      "bytes": 43190,
+      "path": "ledger-closes.json",
+      "sha256": "83c82309fab72b9ffcbeb9702ec2027ce95ca4ca343b5f627496d1b666ae5ad4"
+    },
+    {
+      "bytes": 23172,
+      "path": "live-bindings.json",
+      "sha256": "82568a6e4e7eb807c2e7d30f208ffd04309b6f23a5c6085fcbb0330fb07761d3"
+    },
+    {
+      "bytes": 5037,
+      "path": "preflight.json",
+      "sha256": "9ce658decccecc20283ed38396a64a10e82bf205b037518759764fce0ebcc5df"
+    },
+    {
+      "bytes": 6429,
+      "path": "prerequisite-state.json",
+      "sha256": "1ee8ebb2d0fdbd471cdfcfa17e8f87dd85a89fedb8a40a99207e5422932914e0"
+    },
+    {
+      "bytes": 852,
+      "path": "provenance.json",
+      "sha256": "488f924d7f5cccec6c52cdf1c193912a74a6950b04daf43f599046884e6f5a2c"
+    },
+    {
+      "bytes": 2606,
+      "path": "stop-summary.json",
+      "sha256": "80d9c40cb5822869de2b884b20725d56739fd478fa7c3c246be3cc4590528c43"
+    },
+    {
+      "bytes": 3657,
+      "path": "transactions/01-fund_issuer.json",
+      "sha256": "369e2cf25f8caa1a53ea4f200bfccabc055748460b031fba0ad6a8ebf90d2656"
+    },
+    {
+      "bytes": 3789,
+      "path": "transactions/02-fund_lender.json",
+      "sha256": "e40dcbafc6ae7b58b31c7f96335046ff27a8ae50881c84e3145143f49da9a8ec"
+    },
+    {
+      "bytes": 3793,
+      "path": "transactions/03-fund_borrower.json",
+      "sha256": "e2742eb8142adb85cc944f02e3afa5cf50841c8f45b7353769b26693aadee5aa"
+    },
+    {
+      "bytes": 3801,
+      "path": "transactions/04-fund_research_bot.json",
+      "sha256": "83d52de9ae987cc642e64bb274cb4691f6fb1767a0688070734ed63cbc62f707"
+    },
+    {
+      "bytes": 3807,
+      "path": "transactions/05-fund_credence_policy.json",
+      "sha256": "fe8ba794f6c0c2517bbb38bb8554859957ca763f4c09a1db87e4e6f0db4c0c84"
+    },
+    {
+      "bytes": 3801,
+      "path": "transactions/06-fund_broker_owner.json",
+      "sha256": "35e850747afa177772a4dc85da7dfafb1ab4075637b727a37e6667e4db1fe621"
+    },
+    {
+      "bytes": 3521,
+      "path": "transactions/07-issuer_enable_default_ripple.json",
+      "sha256": "fb590104c4b641816705fec85ff032f3c321c9327bca5a2c6b68e6b4ea123884"
+    },
+    {
+      "bytes": 5447,
+      "path": "transactions/08-lender_trust_tRLUSD.json",
+      "sha256": "37b9af13170e3ae6adba11645f0c6e6f68767f3c4e62e14bfeecacbb565be940"
+    },
+    {
+      "bytes": 5482,
+      "path": "transactions/09-borrower_trust_tRLUSD.json",
+      "sha256": "dd5f824eb8a7d79d94e9b1a991c4cc7009657497b49c05ccce33f49635171b5b"
+    },
+    {
+      "bytes": 5489,
+      "path": "transactions/10-broker_owner_trust_tRLUSD.json",
+      "sha256": "efe3431b08f47ba09106af0162e0cde0eb9016cd05acd40e02689fbee7bad822"
+    },
+    {
+      "bytes": 5011,
+      "path": "transactions/11-issue_tRLUSD_to_lender.json",
+      "sha256": "9dfd553acd542624b921678933da8bff41d00ee61fc7b72df50bf1cb14da3519"
+    },
+    {
+      "bytes": 5012,
+      "path": "transactions/12-issue_tRLUSD_to_broker_owner.json",
+      "sha256": "948f628c69e259c62772a754ec9e5e54f644bf4ee7933c2a740de8a2c1a28798"
+    },
+    {
+      "bytes": 7747,
+      "path": "transactions/13-borrower_set_2_of_2_signer_list.json",
+      "sha256": "ec8f2aa3324629f93ce3efa6b1cc1ede5f2d48600ae01e6b691157c74b8737a0"
+    },
+    {
+      "bytes": 11227,
+      "path": "transactions/14-negative_investment_create_closed_vault.json",
+      "sha256": "8408d86785d54d37349b889799d521ee8eab62519b50679d03adeb3ee8e210c6"
+    },
+    {
+      "bytes": 10893,
+      "path": "transactions/15-negative_investment_deposit_vault_assets.json",
+      "sha256": "f38b487e0ae2ef03db5220d43e56b00dd98260f217917a5bbed068654df5dbec"
+    },
+    {
+      "bytes": 12548,
+      "path": "transactions/16-negative_investment_create_loan_broker.json",
+      "sha256": "5482e5c7db3fb138f4b6e270f6c531484ee335290cf11f06e1389711ca7e4eba"
+    },
+    {
+      "bytes": 8517,
+      "path": "transactions/17-negative_investment_deposit_first_loss_cover.json",
+      "sha256": "3c45098049603aa4f82f3c7cb652d8d3189f1b8d416f205d132e2a08a7129406"
+    },
+    {
+      "bytes": 15427,
+      "path": "transactions/18-negative_subscription_create_closed_vault.json",
+      "sha256": "7463801684e67019716866f387089e3eba2e81713ef418adc0947ccb9681340b"
+    },
+    {
+      "bytes": 10887,
+      "path": "transactions/19-negative_subscription_deposit_vault_assets.json",
+      "sha256": "cf4e73219276109a52f6d750d989748420514711ccc78be4ee207d6bfa27f9d0"
+    },
+    {
+      "bytes": 16745,
+      "path": "transactions/20-negative_subscription_create_loan_broker.json",
+      "sha256": "a0c6c6f0881f822e9025b6472b9dab0daf304300ba30e16c23a7a17731f65272"
+    },
+    {
+      "bytes": 8512,
+      "path": "transactions/21-negative_subscription_deposit_first_loss_cover.json",
+      "sha256": "bcedf227f33e92d8c088a5e7641332727c654cc60410da8f9ed7ce2060323be9"
+    },
+    {
+      "bytes": 169,
+      "path": "unexpected-result.json",
+      "sha256": "7bdcc5b65030c97891c91671d235aa4f5bff43424c7d59aad5067927f7ef9f00"
+    }
+  ]
+}
