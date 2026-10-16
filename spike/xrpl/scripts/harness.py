@@ -6,6 +6,7 @@ import hashlib
 import json
 from collections.abc import Callable
 from dataclasses import asdict, dataclass
+from enum import Enum
 from pathlib import Path
 from typing import Any
 
@@ -451,19 +452,38 @@ def cover_transition_assertions(
     return checks
 
 
-def json_safe(value: Any) -> Any:
-    if isinstance(value, dict):
-        return {str(key): json_safe(item) for key, item in value.items()}
-    if isinstance(value, (list, tuple)):
-        return [json_safe(item) for item in value]
+def json_safe(value: Any, *, path: str = "$") -> Any:
+    """Return JSON-native evidence or fail closed at the unsupported value path."""
+
     if isinstance(value, StateAssertion):
-        return asdict(value)
-    return value
+        return json_safe(asdict(value), path=path)
+    if isinstance(value, Enum):
+        raise TypeError(f"unsupported JSON evidence type {type(value).__name__} at {path}")
+    if value is None or isinstance(value, (str, int, bool)):
+        return value
+    if isinstance(value, dict):
+        normalized: dict[str, Any] = {}
+        for key, item in value.items():
+            if not isinstance(key, str):
+                raise TypeError(
+                    f"unsupported JSON evidence key type {type(key).__name__} at {path}"
+                )
+            normalized[key] = json_safe(item, path=f"{path}.{key}")
+        return normalized
+    if isinstance(value, (list, tuple)):
+        return [json_safe(item, path=f"{path}[{index}]") for index, item in enumerate(value)]
+    raise TypeError(f"unsupported JSON evidence type {type(value).__name__} at {path}")
+
+
+def serialize_json(value: Any) -> str:
+    """Serialize evidence through the same strict path used by file output."""
+
+    return json.dumps(json_safe(value), indent=2, sort_keys=True) + "\n"
 
 
 def write_json(path: Path, value: Any) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(json_safe(value), indent=2, sort_keys=True) + "\n")
+    path.write_text(serialize_json(value))
 
 
 def public_transaction(transaction: dict[str, Any]) -> dict[str, Any]:

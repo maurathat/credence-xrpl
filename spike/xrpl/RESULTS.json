@@ -1,8 +1,107 @@
 {
-  "schema_version": 19,
+  "schema_version": 20,
   "overall": "FAIL",
-  "scope": "Checkpoint 1E-N stopped fail-closed at N1 because the frozen runner could not serialize set-valued authorization assertions",
-  "start_commit": "543f92d77364700af8f6bfd0b851ffd8924e35de",
+  "scope": "Checkpoint 1E-NR repaired and preflighted E6 negative evidence serialization offline; historical E6 and N1-N6 classifications remain unchanged",
+  "start_commit": "e913fbd1b172455dff0a29c12b890f311f233aad",
+  "checkpoint_1e_nr": {
+    "outcome": "PASS",
+    "mode": "HARNESS_REPAIR_ONLY_ZERO_XRPL_TRANSACTIONS",
+    "start_commit": "e913fbd1b172455dff0a29c12b890f311f233aad",
+    "serialization_root_cause": {
+      "exception": "TypeError: Object of type set is not JSON serializable",
+      "assertion": "borrower SMT-NUL domains",
+      "paths": [
+        "state_assertions[4].actual",
+        "state_assertions[4].expected"
+      ],
+      "source": "set comprehension over borrower signing prefixes and one-element expected-prefix set literal in negative_authorization_assertions",
+      "serializer_defect": "json_safe returned asdict(StateAssertion) without recursively normalizing the resulting dictionary",
+      "preflight_gap": "assertion truth was checked without constructing and serializing complete N1-N6 evidence records",
+      "affected_cases": [
+        "N1",
+        "N2",
+        "N3",
+        "N4",
+        "N5",
+        "N6"
+      ]
+    },
+    "repair": {
+      "field_conversion": "unordered signing-domain strings become a unique lexicographically sorted JSON array at the assertion construction boundary",
+      "unsupported_values": "fail closed with exact JSON path; no default=str or silent stringification",
+      "production_path": "build_negative_case_record, preflight, and write_json all use serialize_json/json_safe",
+      "deterministic": true,
+      "changes_protocol_semantics": false
+    },
+    "regressions": {
+      "S1": "PASS",
+      "S2": "PASS",
+      "S3": "PASS",
+      "S4": "PASS",
+      "S5": "PASS",
+      "S6": "PASS",
+      "S7": "PASS",
+      "S8": "PASS",
+      "S9": "PASS",
+      "S10": "PASS",
+      "S11": "PASS",
+      "S12": "PASS"
+    },
+    "full_six_case_serialization_preflight": {
+      "result": "PASS",
+      "uses_production_serializer": true,
+      "cases": {
+        "N1": "PASS",
+        "N2": "PASS",
+        "N3": "PASS",
+        "N4": "PASS",
+        "N5": "PASS",
+        "N6": "PASS"
+      },
+      "manifest_metadata": "PASS",
+      "protected_state": "PASS",
+      "authorization_signing": "PASS",
+      "result_placeholders": "PASS",
+      "phase_timing": "PASS"
+    },
+    "preserved_classifications": {
+      "E1_E2": "PASS/FROZEN",
+      "E3_E4": "PASS/RETIRED within tested scope",
+      "E5": "PASS",
+      "historical_E6": "FAIL",
+      "positive_authorization_composition": "SUPPORTED",
+      "timing": "SOURCE_CONFORMANT",
+      "historical_timing_oracle": "ORACLE_DEFECT",
+      "N1": "BLOCKED_AFTER_SUBMISSION",
+      "N2_N6": "NOT_ATTEMPTED",
+      "E6_authorization_architecture": "NOT_VALIDATED",
+      "E7_E9": "NOT_ATTEMPTED"
+    },
+    "protocol_semantics_unchanged": true,
+    "historical_evidence_immutable": true,
+    "xrpld_started": false,
+    "xrpl_rpc_calls": 0,
+    "ledger_advances": 0,
+    "xrpl_transactions_submitted": 0,
+    "new_evidence_directory_created": false,
+    "gates": {
+      "S1_S12": "PASS (12)",
+      "prospective_e6_negative_tests": "PASS (14)",
+      "existing_e6_tests": "PASS (40)",
+      "all_spike_tests": "PASS (168)",
+      "repository_unit_tests": "PASS (17)",
+      "conformance_tests": "PASS (4)",
+      "lint_format_large_file": "PASS",
+      "strict_typecheck": "PASS (25 source files)",
+      "secrets_scan": "PASS",
+      "json_and_manifests": "PASS",
+      "historical_evidence_immutability": "PASS",
+      "authorized_paths": "PASS",
+      "git_diff_check": "PASS"
+    },
+    "fresh_negative_run_may_be_separately_authorized": true,
+    "required_future_destination": "new unused directory such as evidence/checkpoint-1e-n-live-02"
+  },
   "checkpoint_1e_n": {
     "outcome": "STOP/BLOCKED",
     "classification": "LOCAL_FROZEN_HARNESS_EVIDENCE_SERIALIZATION_DEFECT",

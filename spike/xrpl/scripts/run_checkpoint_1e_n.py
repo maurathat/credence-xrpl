@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import sys
@@ -29,8 +30,16 @@ from e6_negative_oracle import (
     require_static_preflight,
     static_preflight_assertions,
 )
-from e6_oracle import loan_index
-from harness import StateAssertion, create_manifest, sha256_file, state_assertion, write_json
+from e6_oracle import BORROWER_MULTISIGN_PREFIX_HEX, loan_index, negative_state_assertions
+from harness import (
+    StateAssertion,
+    create_manifest,
+    json_safe,
+    serialize_json,
+    sha256_file,
+    state_assertion,
+    write_json,
+)
 from run_checkpoint_1e import (
     NETWORK_ID,
     ROOT_SEED_ENV,
@@ -63,6 +72,15 @@ ORACLE_PATH = ROOT / "scripts" / "e6_negative_oracle.py"
 RUNNER_PATH = Path(__file__).resolve()
 TEST_PATH = ROOT / "tests" / "test_checkpoint_1e_n.py"
 EVIDENCE_NAME = "checkpoint-1e-n"
+
+CASE_LABELS = {
+    "N1": "n1_research_bot_alone",
+    "N2": "n2_credence_policy_alone",
+    "N3": "n3_missing_counterparty_signature",
+    "N4": "n4_invalid_counterparty_signature",
+    "N5": "n5_altered_principal_reuses_counterparty_signature",
+    "N6": "n6_subscription_phase",
+}
 
 
 def evidence_destination(value: str | Path) -> Path:
@@ -105,7 +123,259 @@ def preflight_payload() -> dict[str, Any]:
         },
         "frozen_files": frozen_file_hashes(),
         "assertions": static_preflight_assertions(),
+        "full_evidence_serialization": full_evidence_serialization_preflight(),
         "result": "PASS",
+    }
+
+
+def build_negative_case_record(
+    *,
+    case_id: str,
+    label: str,
+    expected_result: str,
+    observed_result: str | None,
+    expect_validated: bool,
+    validated: bool,
+    local_validation_result: str | None,
+    submission_result: str | None,
+    validated_result: str | None,
+    submission_hash_if_any: str | None,
+    before_state: dict[str, Any],
+    after_state: dict[str, Any],
+    state_assertions: list[StateAssertion],
+    classification_status: str,
+    public_signing_evidence: dict[str, Any],
+    submission_response: dict[str, Any] | None,
+    validated_transaction_response: dict[str, Any] | None,
+    ledger_before: dict[str, Any],
+    ledger_after: dict[str, Any],
+    timing: dict[str, Any],
+) -> dict[str, Any]:
+    """Construct one JSON-native record through the production evidence boundary."""
+
+    value = {
+        "experiment": "E6-NEGATIVE",
+        "case": case_id,
+        "label": label,
+        "expected_result": expected_result,
+        "observed_result": observed_result,
+        "expect_validated": expect_validated,
+        "validated": validated,
+        "local_validation_result": local_validation_result,
+        "submission_result": submission_result,
+        "validated_result": validated_result,
+        "submission_hash_if_any": submission_hash_if_any,
+        "before_state": before_state,
+        "after_state": after_state,
+        "state_assertions": state_assertions,
+        "classification": {"status": classification_status},
+        "public_signing_evidence": public_signing_evidence,
+        "submission_response": submission_response,
+        "validated_transaction_response": validated_transaction_response,
+        "ledger_before": ledger_before,
+        "ledger_after": ledger_after,
+        "timing": timing,
+    }
+    normalized = json_safe(value)
+    if not isinstance(normalized, dict):  # pragma: no cover - fixed top-level construction
+        raise TypeError("negative evidence record did not normalize to an object")
+    return normalized
+
+
+def _serialization_skeleton_record(
+    definition: Any,
+    prepared: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    fixture = dict((prepared or {}).get("fixture") or {})
+    subscription_date = int(fixture.get("subscription_date", 100))
+    redemption_date = int(fixture.get("redemption_date", 200))
+    ledger_before = {
+        "close_flags": 0,
+        "close_time": subscription_date if definition.case_id == "N6" else subscription_date + 1,
+        "close_time_resolution": 10,
+        "closed": True,
+        "ledger_hash": "HASH_BEFORE_PLACEHOLDER",
+        "ledger_index": 1,
+        "parent_close_time": subscription_date - 1,
+    }
+    ledger_after = {
+        **ledger_before,
+        "close_time": ledger_before["close_time"] + 1,
+        "ledger_hash": "HASH_AFTER_PLACEHOLDER",
+        "ledger_index": 2,
+        "parent_close_time": ledger_before["close_time"],
+    }
+    signing_evidence = (prepared or {}).get("auth") or {
+        "transaction_hash": None,
+        "signed_transaction_blob": None,
+        "exact_loan_set_body": {"PrincipalRequested": definition.principal},
+        "bound_loan_terms": {"PrincipalRequested": definition.principal},
+        "borrower_authorization": {
+            "account": "BORROWER_ACCOUNT_PLACEHOLDER",
+            "top_level_signing_public_key": "",
+            "top_level_transaction_signature": None,
+            "signers": [
+                {
+                    "account": f"{role.upper()}_ACCOUNT_PLACEHOLDER",
+                    "public_key_hex": None,
+                    "txn_signature_hex": None,
+                    "signing_prefix_hex": BORROWER_MULTISIGN_PREFIX_HEX,
+                    "signing_payload_hex": None,
+                    "signing_payload_sha512_half": None,
+                    "serialized_body_hex": None,
+                }
+                for role in definition.borrower_signers
+            ],
+        },
+        "broker_counterparty_authorization": {
+            "counterparty": "BROKER_ACCOUNT_PLACEHOLDER",
+            "public_key_hex": None,
+            "txn_signature_hex": None,
+            "counterparty_signers": None,
+            "signing_prefix_hex": "CPT-NUL",
+            "signing_payload_hex": None,
+            "signing_payload_sha512_half": None,
+            "serialized_body_hex": None,
+        },
+    }
+    auth_assertions = list((prepared or {}).get("auth_checks") or [])
+    if not auth_assertions:
+        auth_assertions = [
+            state_assertion(
+                "borrower SMT-NUL domains",
+                [BORROWER_MULTISIGN_PREFIX_HEX],
+                [BORROWER_MULTISIGN_PREFIX_HEX],
+            )
+        ]
+    protected_before = {
+        "loan": None,
+        "borrower_account": {
+            "Account": "BORROWER_ACCOUNT_PLACEHOLDER",
+            "Balance": "1000",
+            "OwnerCount": 2,
+            "Sequence": 7,
+        },
+        "vault": {"AssetsAvailable": "100000"},
+    }
+    protected_after = json.loads(json.dumps(protected_before))
+    if definition.case_id == "N6":
+        protected_after["borrower_account"]["Balance"] = "960"
+        protected_after["borrower_account"]["Sequence"] = 8
+        protected_assertions = n6_state_assertions(
+            before=protected_before,
+            after=protected_after,
+            observed="tecTOO_SOON",
+            fee=40,
+        )
+    else:
+        protected_assertions = negative_state_assertions(
+            observed_result=definition.expected_result,
+            expected_result=definition.expected_result,
+            before=protected_before,
+            after=protected_after,
+        )
+    assertions = [
+        *auth_assertions,
+        *((prepared or {}).get("extra_checks") or []),
+        *protected_assertions,
+        state_assertion(
+            f"{definition.case_id} execution phase", definition.phase, definition.phase
+        ),
+    ]
+    timing: dict[str, Any] = {
+        "subscription_date": subscription_date,
+        "redemption_date": redemption_date,
+        "parent_validated_ledger": ledger_before,
+        "accepted_or_unchanged_ledger": ledger_after,
+        "phase_at_parent_close": definition.phase,
+    }
+    if definition.case_id == "N6":
+        timing.update(
+            {
+                "source_derived_applying_view_header_close_time": (
+                    ledger_before["close_time"] + ledger_after["close_time_resolution"]
+                ),
+                "accepted_ledger": ledger_after,
+                "accepted_transaction_date": None,
+                "prospective_oracle_start_date_anchor_used": False,
+            }
+        )
+    return build_negative_case_record(
+        case_id=definition.case_id,
+        label=CASE_LABELS[definition.case_id],
+        expected_result=definition.expected_result,
+        observed_result=None,
+        expect_validated=definition.expect_validated,
+        validated=False,
+        local_validation_result=None,
+        submission_result=None,
+        validated_result=None,
+        submission_hash_if_any=None,
+        before_state={"loan": None, "phase": definition.phase},
+        after_state={"loan": None, "phase": definition.phase},
+        state_assertions=assertions,
+        classification_status="NOT_EXECUTED",
+        public_signing_evidence=signing_evidence,
+        submission_response=None,
+        validated_transaction_response=None,
+        ledger_before=ledger_before,
+        ledger_after=ledger_after,
+        timing=timing,
+    )
+
+
+def complete_evidence_skeleton(
+    prepared_cases: dict[str, dict[str, Any]] | None = None,
+) -> dict[str, Any]:
+    """Build all post-execution shapes without submitting a transaction."""
+
+    prepared_cases = prepared_cases or {}
+    return {
+        "cases": {
+            definition.case_id: _serialization_skeleton_record(
+                definition, prepared_cases.get(definition.case_id)
+            )
+            for definition in NEGATIVE_CASES
+        },
+        "experiment_summary": [],
+        "checkpoint_result": {
+            "outcome": "NOT_EXECUTED",
+            "negative_results": {
+                definition.case_id: {
+                    "status": "NOT_EXECUTED",
+                    "expected": definition.expected_result,
+                    "observed": None,
+                }
+                for definition in NEGATIVE_CASES
+            },
+        },
+        "manifest_metadata": {"algorithm": "SHA-256", "file_count": 0, "files": []},
+    }
+
+
+def full_evidence_serialization_preflight(
+    prepared_cases: dict[str, dict[str, Any]] | None = None,
+    *,
+    skeleton: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Exercise the production serializer over every future N1-N6 evidence shape."""
+
+    value = skeleton if skeleton is not None else complete_evidence_skeleton(prepared_cases)
+    serialized = serialize_json(value)
+    decoded = json.loads(serialized)
+    case_ids = sorted(decoded.get("cases", {}))
+    expected_ids = [definition.case_id for definition in NEGATIVE_CASES]
+    if case_ids != expected_ids:
+        raise TypeError(f"serialization preflight cases {case_ids!r} != {expected_ids!r}")
+    return {
+        "result": "PASS",
+        "cases": {case_id: "PASS" for case_id in case_ids},
+        "manifest_metadata": "PASS",
+        "protected_state": "PASS",
+        "authorization_signing": "PASS",
+        "result_placeholders": "PASS",
+        "phase_timing": "PASS",
+        "serialized_sha256": hashlib.sha256(serialized.encode()).hexdigest(),
     }
 
 
@@ -260,31 +530,30 @@ def submit_negative_case(
         and (validated if expect_validated else not validated)
         else "FAIL"
     )
-    record = {
-        "experiment": "E6-NEGATIVE",
-        "case": case_id,
-        "label": label,
-        "expected_result": expected_result,
-        "observed_result": observed,
-        "expect_validated": expect_validated,
-        "validated": validated,
-        "local_validation_result": local_error,
-        "submission_result": submission_result,
-        "validated_result": (
+    record = build_negative_case_record(
+        case_id=case_id,
+        label=label,
+        expected_result=expected_result,
+        observed_result=cast(str | None, observed),
+        expect_validated=expect_validated,
+        validated=validated,
+        local_validation_result=cast(str | None, local_error),
+        submission_result=cast(str | None, submission_result),
+        validated_result=(
             (lookup.get("meta") or {}).get("TransactionResult") if lookup is not None else None
         ),
-        "submission_hash_if_any": tx_hash,
-        "before_state": before,
-        "after_state": after,
-        "state_assertions": checks,
-        "classification": {"status": status},
-        "public_signing_evidence": signing_evidence,
-        "submission_response": submission,
-        "validated_transaction_response": lookup,
-        "ledger_before": ledger_before,
-        "ledger_after": ledger_after,
-        "timing": timing,
-    }
+        submission_hash_if_any=tx_hash,
+        before_state=before,
+        after_state=after,
+        state_assertions=checks,
+        classification_status=status,
+        public_signing_evidence=signing_evidence,
+        submission_response=submission,
+        validated_transaction_response=lookup,
+        ledger_before=ledger_before,
+        ledger_after=ledger_after,
+        timing=timing,
+    )
     write_json(runner.transactions_dir / f"{runner.sequence:02d}-{label}.json", record)
     runner.records.append(record)
     runner.write("experiment-summary.json", runner.records)
@@ -456,6 +725,7 @@ def execute_live(destination: Path) -> int:
             "authorization_assertions_pass": all_pass([*auth_checks, *extra_checks]),
         }
 
+    serialization_preflight = full_evidence_serialization_preflight(prepared)
     bindings = {
         "actors": {
             role: {"account": wallet.address, "public_key_hex": wallet.public_key}
@@ -481,6 +751,7 @@ def execute_live(destination: Path) -> int:
                 wrong_phase_header["close_time"], wrong_phase_fixture
             ),
         },
+        "full_evidence_serialization_preflight": serialization_preflight,
     }
     binding_checks = live_binding_assertions(bindings)
     require_live_bindings(bindings)
@@ -513,8 +784,6 @@ def execute_live(destination: Path) -> int:
     )
 
     results: dict[str, Any] = {}
-    from e6_oracle import negative_state_assertions
-
     for definition in NEGATIVE_CASES:
         item = prepared[definition.case_id]
         fixture = cast(dict[str, Any], item["fixture"])
@@ -578,14 +847,7 @@ def execute_live(destination: Path) -> int:
         results[definition.case_id] = submit_negative_case(
             runner,
             case_id=definition.case_id,
-            label={
-                "N1": "n1_research_bot_alone",
-                "N2": "n2_credence_policy_alone",
-                "N3": "n3_missing_counterparty_signature",
-                "N4": "n4_invalid_counterparty_signature",
-                "N5": "n5_altered_principal_reuses_counterparty_signature",
-                "N6": "n6_subscription_phase",
-            }[definition.case_id],
+            label=CASE_LABELS[definition.case_id],
             signed=signed,
             signing_evidence=item["auth"],
             expected_result=definition.expected_result,

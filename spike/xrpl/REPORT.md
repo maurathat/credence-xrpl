@@ -1,3 +1,119 @@
+# Checkpoint 1E-NR — E6 negative evidence serialization repair
+
+## Outcome
+
+**PASS — the historical evidence-serialization defect is reproduced offline,
+repaired narrowly, and guarded by a full six-case pre-submit preflight. ZERO
+XRPL transactions were submitted.**
+
+The checkpoint began at clean commit
+`e913fbd1b172455dff0a29c12b890f311f233aad`, descended from checkpoint-0,
+with unchanged submodule gitlinks. rippled was not started, XRPL RPC was not
+called, and no ledger was advanced.
+
+## Exact root cause and repair
+
+The committed Checkpoint 1E-N N1 construction reproduces the old exception
+through the old conversion path:
+
+```text
+TypeError: Object of type set is not JSON serializable
+```
+
+The exact paths were `state_assertions[4].actual` and
+`state_assertions[4].expected` in the `borrower SMT-NUL domains` assertion.
+`negative_authorization_assertions` created them respectively from a set
+comprehension over borrower signer prefixes and a one-element set literal.
+Every N1-N6 case used this construction. The old `json_safe` returned
+`asdict(StateAssertion)` without recursively processing that dictionary, and
+the old preflight checked assertion truth without serializing a complete case
+record. The sets therefore survived until the post-submission `json.dumps`.
+
+The repair deliberately normalizes this unordered string collection at the
+assertion boundary to a unique, lexicographically sorted JSON array. The
+shared serializer now recursively handles the explicitly supported assertion
+and tuple representations, accepts only JSON-native output, and raises with an
+exact value path for unsupported types. It does not stringify unsupported
+objects. `build_negative_case_record`, `write_json`, and the full preflight all
+use this same strict serialization path.
+
+## Regression and preflight results
+
+| Requirement | Result |
+| --- | --- |
+| S1 committed N1 fixture reproduces the old set failure | **PASS** |
+| S2 repaired N1 evidence serializes | **PASS** |
+| S3 repaired N2 evidence serializes | **PASS** |
+| S4 repaired N3 evidence serializes | **PASS** |
+| S5 repaired N4 evidence serializes | **PASS** |
+| S6 repaired N5 evidence serializes | **PASS** |
+| S7 repaired N6 evidence serializes | **PASS** |
+| S8 insertion order produces byte-identical normalized JSON | **PASS** |
+| S9 arbitrary objects fail closed | **PASS** |
+| S10 bytes fail closed without an explicit encoding rule | **PASS** |
+| S11 complete six-case production serialization preflight | **PASS** |
+| S12 bypassed normalization fails before the transaction boundary | **PASS** |
+
+The six-case preflight includes protected-state structures, public
+authorization/signing structures, result placeholders, phase/timing
+structures, experiment/checkpoint result structures, and manifest metadata.
+It runs in the static pre-ledger preflight and again over exact prepared case
+evidence before a future N1 submission.
+
+## Preserved classifications and semantics
+
+- E1/E2 remain **PASS/FROZEN**.
+- E3/E4 remain **PASS/RETIRED** within tested scope.
+- E5 remains **PASS**.
+- Historical E6 remains **FAIL**.
+- Positive authorization composition remains **SUPPORTED**.
+- Timing remains **SOURCE_CONFORMANT**; the historical timing oracle remains
+  **ORACLE_DEFECT**.
+- N1 remains **BLOCKED_AFTER_SUBMISSION**. No result or post-state is inferred.
+- N2-N6 remain **NOT_ATTEMPTED**.
+- E6 authorization architecture remains **NOT_VALIDATED**.
+- E7-E9 remain **NOT_ATTEMPTED**.
+
+The N1-N6 expected results, altered-principal construction, timing v2,
+borrower and broker signing domains, protected-state definitions, and positive
+historical classifications are unchanged.
+
+## Historical evidence and prohibited execution
+
+The historical evidence directories `checkpoint-1e-live-01/`,
+`checkpoint-1e-r1-corrected/`, `checkpoint-1e-t/`, and `checkpoint-1e-n/`
+are byte-for-byte unchanged from the start commit. No new evidence directory
+was created. A future separately authorized run must use a new destination
+such as `checkpoint-1e-n-live-02/`.
+
+This checkpoint started no rippled process, made no XRPL RPC call, advanced no
+ledger, and submitted no prerequisite, LoanSet, N1-N6, LoanPay, or E7-E9
+transaction.
+
+## Gates
+
+- S1-S12: **PASS** (12).
+- Prospective E6-negative tests: **PASS** (14).
+- Existing E6 tests: **PASS** (40).
+- All spike tests: **PASS** (168).
+- Repository unit tests: **PASS** (17).
+- Conformance tests: **PASS** (4).
+- Lint, formatting, large-file check, strict typecheck, secrets scan, JSON
+  validation, all manifests, historical-evidence immutability, authorized
+  paths, and `git diff --check`: **PASS**.
+
+## Modified paths
+
+- `spike/xrpl/E6-EVIDENCE-SERIALIZATION.md`
+- `spike/xrpl/scripts/harness.py`
+- `spike/xrpl/scripts/e6_negative_oracle.py`
+- `spike/xrpl/scripts/run_checkpoint_1e_n.py`
+- `spike/xrpl/tests/test_checkpoint_1e_nr.py`
+- `spike/xrpl/REPORT.md`
+- `spike/xrpl/RESULTS.json`
+
+---
+
 # Checkpoint 1E-N — E6 negative authorization validation
 
 ## Outcome

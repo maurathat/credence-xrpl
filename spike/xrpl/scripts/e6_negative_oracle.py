@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import dataclass
 from typing import Any, Literal
 
@@ -110,6 +111,15 @@ REQUIRED_LIVE_BINDINGS = frozenset(
 
 class NegativePreflightError(RuntimeError):
     """The negative design or live binding is incomplete."""
+
+
+def normalize_unordered_strings(values: Iterable[str]) -> list[str]:
+    """Normalize an unordered semantic collection as a deterministic JSON array."""
+
+    normalized = list(values)
+    if any(not isinstance(value, str) for value in normalized):
+        raise TypeError("unordered signing-domain values must all be strings")
+    return sorted(set(normalized))
 
 
 def case_definitions() -> list[dict[str, Any]]:
@@ -266,8 +276,12 @@ def negative_authorization_assertions(
         state_assertion("borrower signer identities", observed_signers, expected_borrower_signers),
         state_assertion(
             "borrower SMT-NUL domains",
-            {row.get("signing_prefix_hex") for row in rows},
-            {BORROWER_MULTISIGN_PREFIX_HEX},
+            normalize_unordered_strings(
+                row.get("signing_prefix_hex")
+                for row in rows
+                if isinstance(row.get("signing_prefix_hex"), str)
+            ),
+            [BORROWER_MULTISIGN_PREFIX_HEX],
         ),
         state_assertion("broker Counterparty", broker.get("counterparty"), broker_owner_account),
         state_assertion(
