@@ -1,0 +1,212 @@
+{
+  "assertions": [
+    {
+      "actual": [
+        "N1",
+        "N2",
+        "N3",
+        "N4",
+        "N5",
+        "N6"
+      ],
+      "expected": [
+        "N1",
+        "N2",
+        "N3",
+        "N4",
+        "N5",
+        "N6"
+      ],
+      "name": "exact N1-N6 order",
+      "passed": true
+    },
+    {
+      "actual": {
+        "N1": "tefBAD_QUORUM",
+        "N2": "tefBAD_QUORUM",
+        "N3": "temBAD_SIGNER",
+        "N4": "local invalidTransaction",
+        "N5": "local invalidTransaction",
+        "N6": "tecTOO_SOON"
+      },
+      "expected": {
+        "N1": "tefBAD_QUORUM",
+        "N2": "tefBAD_QUORUM",
+        "N3": "temBAD_SIGNER",
+        "N4": "local invalidTransaction",
+        "N5": "local invalidTransaction",
+        "N6": "tecTOO_SOON"
+      },
+      "name": "exact expected results",
+      "passed": true
+    },
+    {
+      "actual": [
+        "N6"
+      ],
+      "expected": [
+        "N6"
+      ],
+      "name": "only N6 expects validation",
+      "passed": true
+    },
+    {
+      "actual": "1001",
+      "expected": "1001",
+      "name": "N5 submitted principal",
+      "passed": true
+    },
+    {
+      "actual": "1000",
+      "expected": "1000",
+      "name": "N5 broker-signed principal",
+      "passed": true
+    },
+    {
+      "actual": "Subscription",
+      "expected": "Subscription",
+      "name": "N6 phase",
+      "passed": true
+    },
+    {
+      "actual": 60,
+      "expected": 60,
+      "name": "prospective PaymentInterval",
+      "passed": true
+    },
+    {
+      "actual": 60,
+      "expected": 60,
+      "name": "prospective GracePeriod",
+      "passed": true
+    },
+    {
+      "actual": true,
+      "expected": true,
+      "name": "prospective StartDate excludes transaction lookup date",
+      "passed": true
+    }
+  ],
+  "checkpoint": "1E-N",
+  "e7_e8_e9_included": false,
+  "frozen_files": {
+    "E6-NEGATIVE-ASSERTIONS.md": "6c8a89a94a16d1830e99e28acfc2c1fe792ad75cbb5b1050dcea3546e68cf876",
+    "E6-TIMING-ORACLE-v2.md": "4acb653ab61374757a24800dd05a069a4d942e9fbfc3b9226f2f8d8f7b783f77",
+    "scripts/e6_negative_oracle.py": "c733bffb57866efbfde5e373eded26a53e521de26742a769408e82ffc3efad13",
+    "scripts/run_checkpoint_1e_n.py": "540e131bbba00cb8dfef6ba7b5a9db0f14fd3110a1963805a300252e97b37227",
+    "tests/test_checkpoint_1e_n.py": "ed1b1a09897cc4d24f43d0331a6c28bdb1ebb2a1c4c9ce4cbe398181cf0f4167"
+  },
+  "full_evidence_serialization": {
+    "authorization_signing": "PASS",
+    "cases": {
+      "N1": "PASS",
+      "N2": "PASS",
+      "N3": "PASS",
+      "N4": "PASS",
+      "N5": "PASS",
+      "N6": "PASS"
+    },
+    "manifest_metadata": "PASS",
+    "phase_timing": "PASS",
+    "protected_state": "PASS",
+    "result": "PASS",
+    "result_placeholders": "PASS",
+    "serialized_sha256": "47e2798eb019468e74b3ce28f2e5073b7d2b99868f4d7764937cb74811c03f64"
+  },
+  "git_commit": "8c5f4ebe8c6d2fa58c4c19bb5f834fad9b9037b3",
+  "loan_pay_included": false,
+  "mode": "PRE_LEDGER_STATIC_PREFLIGHT",
+  "negative_cases": [
+    {
+      "borrower_signers": [
+        "research_bot"
+      ],
+      "broker_mode": "valid",
+      "broker_signed_principal": null,
+      "case_id": "N1",
+      "expect_validated": false,
+      "expected_result": "tefBAD_QUORUM",
+      "phase": "Investment",
+      "principal": "1000"
+    },
+    {
+      "borrower_signers": [
+        "credence_policy"
+      ],
+      "broker_mode": "valid",
+      "broker_signed_principal": null,
+      "case_id": "N2",
+      "expect_validated": false,
+      "expected_result": "tefBAD_QUORUM",
+      "phase": "Investment",
+      "principal": "1000"
+    },
+    {
+      "borrower_signers": [
+        "research_bot",
+        "credence_policy"
+      ],
+      "broker_mode": "missing",
+      "broker_signed_principal": null,
+      "case_id": "N3",
+      "expect_validated": false,
+      "expected_result": "temBAD_SIGNER",
+      "phase": "Investment",
+      "principal": "1000"
+    },
+    {
+      "borrower_signers": [
+        "research_bot",
+        "credence_policy"
+      ],
+      "broker_mode": "invalid",
+      "broker_signed_principal": null,
+      "case_id": "N4",
+      "expect_validated": false,
+      "expected_result": "local invalidTransaction",
+      "phase": "Investment",
+      "principal": "1000"
+    },
+    {
+      "borrower_signers": [
+        "research_bot",
+        "credence_policy"
+      ],
+      "broker_mode": "valid_for_x_only",
+      "broker_signed_principal": "1000",
+      "case_id": "N5",
+      "expect_validated": false,
+      "expected_result": "local invalidTransaction",
+      "phase": "Investment",
+      "principal": "1001"
+    },
+    {
+      "borrower_signers": [
+        "research_bot",
+        "credence_policy"
+      ],
+      "broker_mode": "valid",
+      "broker_signed_principal": null,
+      "case_id": "N6",
+      "expect_validated": true,
+      "expected_result": "tecTOO_SOON",
+      "phase": "Subscription",
+      "principal": "1000"
+    }
+  ],
+  "new_xrpl_transactions": 0,
+  "positive_loanset_included": false,
+  "prospective_timing_oracle": {
+    "GracePeriod": 60,
+    "NextPaymentDueDate": "StartDate + PaymentInterval",
+    "PaymentInterval": 60,
+    "StartDate": "applying view header closeTime read during LoanSet::doApply",
+    "forbidden_anchor": "transaction lookup date"
+  },
+  "protected_state": {
+    "N1-N5": "complete loan_state projection unchanged",
+    "N6": "complete lending projection unchanged; only exact borrower XRP fee and Sequence increment allowed"
+  },
+  "result": "PASS",
+  "xrpld_started": false
+}

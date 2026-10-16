@@ -1,3 +1,117 @@
+# Checkpoint 1E-N-LIVE-02 — frozen E6 negative controls
+
+## Outcome
+
+**STOP / BLOCKED — the frozen runner rejected a Python float while persisting
+the initial environment record. No XRPL transaction was submitted, N1-N6 were
+not executed, and the E6 authorization architecture remains NOT_VALIDATED.**
+
+The checkpoint began at clean commit
+`8c5f4ebe8c6d2fa58c4c19bb5f834fad9b9037b3`, descended from checkpoint-0,
+with unchanged submodule gitlinks and an unused authorized evidence directory.
+
+## Frozen pre-live gates and provenance
+
+Before rippled started, S1-S12 passed, the 14 prospective negative tests
+passed, the 40 historical E6 tests passed, and the complete N1-N6 production
+serialization preflight passed. The serialization preflight digest was
+`47e2798eb019468e74b3ce28f2e5073b7d2b99868f4d7764937cb74811c03f64`.
+
+The live components were frozen at these SHA-256 hashes:
+
+| Artifact | SHA-256 |
+| --- | --- |
+| `E6-TIMING-ORACLE-v2.md` | `4acb653ab61374757a24800dd05a069a4d942e9fbfc3b9226f2f8d8f7b783f77` |
+| `E6-NEGATIVE-ASSERTIONS.md` | `6c8a89a94a16d1830e99e28acfc2c1fe792ad75cbb5b1050dcea3546e68cf876` |
+| `scripts/e6_negative_oracle.py` | `c733bffb57866efbfde5e373eded26a53e521de26742a769408e82ffc3efad13` |
+| `scripts/run_checkpoint_1e_n.py` | `540e131bbba00cb8dfef6ba7b5a9db0f14fd3110a1963805a300252e97b37227` |
+| `scripts/harness.py` | `c0315d45366bdfcbeee97b14cc13cf094614130b14e7a2c36443a62ee14587cf` |
+| `tests/test_checkpoint_1e_nr.py` | `4da47dae1bdf32dd3772d71c488db6bee31884bdf9d9ef8602cb6366c64c8d64` |
+| `tests/test_checkpoint_1e_n.py` | `ed1b1a09897cc4d24f43d0331a6c28bdb1ebb2a1c4c9ce4cbe398181cf0f4167` |
+| `tests/test_checkpoint_1e.py` | `62fc387509da9bc52056e997e4becbc1cb4baf81af6c5266c6303a92e9ccd384` |
+| `tests/test_checkpoint_1e_r1.py` | `4d494d696bdf8c342ef1cbdabcd34502117192215f0d7ed206085c1252953d0a` |
+
+`pre-live-provenance.json` records the actual authorized destination
+`spike/xrpl/evidence/checkpoint-1e-n-live-02/`. The frozen runner's generated
+`provenance.json` retained its historical internal label
+`evidence/checkpoint-1e-n`; this metadata defect was not repaired after live
+execution began.
+
+## Fresh environment and STOP
+
+The pinned rippled 3.4.0 image was rebuilt from the pinned package and started
+with a fresh standalone volume. The predeclared source commit was
+`4a4fded2eba11427c48ce3f24d9c1aea5e7a9d17` and network ID was 21337. The
+`feature` and Amendments ledger-entry responses were persisted; offline
+validation and their cross-check all passed for the eight required amendments.
+
+While constructing `environment-start.json`, rippled's `server_info` response
+contained `validated_ledger.base_fee_xrp` as a Python float. The frozen strict
+serializer permits integer monetary values but rejects floats. The production
+write stopped at the exact path:
+
+```text
+TypeError: unsupported JSON evidence type float at
+$.server_info.validated_ledger.base_fee_xrp
+```
+
+The failure occurred before actor creation or any prerequisite transaction.
+The complete six-case preflight did not expose the defect because it covered
+the N1-N6 result records, authorization evidence, protected state, timing, and
+manifest metadata, but not the rippled environment record.
+
+The failure is classified
+**LOCAL_FROZEN_HARNESS_ENVIRONMENT_EVIDENCE_SERIALIZATION_DEFECT**. No harness
+change or retry was attempted.
+
+## Case and state disposition
+
+| Case | Fresh-run status |
+| --- | --- |
+| N1 | **NOT_ATTEMPTED**; historical N1 remains **BLOCKED_AFTER_SUBMISSION** without a protocol verdict |
+| N2 | **NOT_ATTEMPTED** |
+| N3 | **NOT_ATTEMPTED** |
+| N4 | **NOT_ATTEMPTED** |
+| N5 | **NOT_ATTEMPTED** |
+| N6 | **NOT_ATTEMPTED** |
+
+No protected pre/post-state, borrower-authorization, or broker-authorization
+finding was produced in this run. No positive LoanSet, LoanPay, or E7-E9
+transaction was submitted.
+
+## Preserved classifications
+
+- E1/E2 remain **PASS/FROZEN**.
+- E3/E4 remain **PASS/RETIRED** within tested scope.
+- E5 remains **PASS**.
+- Historical E6 remains **FAIL**.
+- Historical positive authorization composition remains **SUPPORTED**.
+- Positive timing behavior remains **SOURCE_CONFORMANT**; the historical
+  timing oracle remains **ORACLE_DEFECT**.
+- E6 authorization architecture remains **NOT_VALIDATED**.
+- E7-E9 remain **NOT_ATTEMPTED**.
+
+## Evidence and gates
+
+The new evidence is confined to `evidence/checkpoint-1e-n-live-02/`. Its
+SHA-256 manifest covers 7 payload files totaling 31,194 bytes and verifies.
+The four historical evidence directories are unchanged.
+
+Post-STOP gates passed: S1-S12 (12), prospective negative tests (14),
+historical E6 tests (40), all spike tests (168), repository unit tests (17),
+conformance tests (4), lint, formatting, large-file check, strict typecheck,
+secrets scan, JSON validation, all 16 manifests, historical-evidence
+immutability, frozen-provenance verification, authorized paths, and
+`git diff --check`.
+
+## Modified paths
+
+- `spike/xrpl/evidence/checkpoint-1e-n-live-02/`
+- `spike/xrpl/REPORT.md`
+- `spike/xrpl/RESULTS.json`
+
+---
+
 # Checkpoint 1E-NR — E6 negative evidence serialization repair
 
 ## Outcome

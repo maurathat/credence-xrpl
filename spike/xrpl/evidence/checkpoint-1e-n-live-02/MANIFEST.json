@@ -1,0 +1,41 @@
+{
+  "algorithm": "SHA-256",
+  "file_count": 7,
+  "files": [
+    {
+      "bytes": 1074,
+      "path": "amendments-ledger-entry.json",
+      "sha256": "196b963834f27928fe6839231b1f8f1d15311dddfb4a54689f0e9c16d8377f88"
+    },
+    {
+      "bytes": 19677,
+      "path": "feature-raw.json",
+      "sha256": "69e43df7637a7be0b1a1b02d18c1b89c5517ddc849e341ccc05a920800b07844"
+    },
+    {
+      "bytes": 1757,
+      "path": "pre-live-provenance.json",
+      "sha256": "b63e0605e29b7e54063e8e039cbe475e96641278b2b83f6aeba13496053c51b0"
+    },
+    {
+      "bytes": 5496,
+      "path": "preflight.json",
+      "sha256": "b5fc318093c01200e9b02d3bf43672d94eec2f78926acce66c5a68264e86d58a"
+    },
+    {
+      "bytes": 852,
+      "path": "provenance.json",
+      "sha256": "7ce3c206ed9fe6ce2b01a079a6c063a802743881a4c1463bc42a56941259743e"
+    },
+    {
+      "bytes": 2129,
+      "path": "stop-summary.json",
+      "sha256": "cf9ca33571b5216a04eba69d27e751d723e6aa62e84778a19f0614c1f0b1e1ba"
+    },
+    {
+      "bytes": 209,
+      "path": "unexpected-result.json",
+      "sha256": "f56ce816ef98eb67f0e5de07f16c2053d5e1b32753387dca806036dc35cf6962"
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "checkpoint": "1E-N",
+  "exception_type": "TypeError",
+  "message": "unsupported JSON evidence type float at $.server_info.validated_ledger.base_fee_xrp",
+  "outcome": "STOP",
+  "retry_attempted": false
+}

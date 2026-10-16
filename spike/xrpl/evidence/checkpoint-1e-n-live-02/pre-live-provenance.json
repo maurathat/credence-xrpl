@@ -1,0 +1,40 @@
+{
+  "checkpoint": "1E-N-LIVE-02",
+  "evidence_destination": "spike/xrpl/evidence/checkpoint-1e-n-live-02/",
+  "expected_environment": {
+    "network_id": 21337,
+    "required_amendments": [
+      "LendingProtocol",
+      "LendingProtocolV1_1",
+      "MPTokensV1",
+      "SingleAssetVault",
+      "fixCleanup3_1_3",
+      "fixCleanup3_2_0",
+      "fixCleanup3_3_0",
+      "fixCleanup3_4_0"
+    ],
+    "rippled_version": "3.4.0",
+    "source_commit": "4a4fded2eba11427c48ce3f24d9c1aea5e7a9d17"
+  },
+  "files": {
+    "E6-NEGATIVE-ASSERTIONS.md": "6c8a89a94a16d1830e99e28acfc2c1fe792ad75cbb5b1050dcea3546e68cf876",
+    "E6-TIMING-ORACLE-v2.md": "4acb653ab61374757a24800dd05a069a4d942e9fbfc3b9226f2f8d8f7b783f77",
+    "scripts/e6_negative_oracle.py": "c733bffb57866efbfde5e373eded26a53e521de26742a769408e82ffc3efad13",
+    "scripts/harness.py": "c0315d45366bdfcbeee97b14cc13cf094614130b14e7a2c36443a62ee14587cf",
+    "scripts/run_checkpoint_1e_n.py": "540e131bbba00cb8dfef6ba7b5a9db0f14fd3110a1963805a300252e97b37227",
+    "tests/test_checkpoint_1e.py": "62fc387509da9bc52056e997e4becbc1cb4baf81af6c5266c6303a92e9ccd384",
+    "tests/test_checkpoint_1e_n.py": "ed1b1a09897cc4d24f43d0331a6c28bdb1ebb2a1c4c9ce4cbe398181cf0f4167",
+    "tests/test_checkpoint_1e_nr.py": "4da47dae1bdf32dd3772d71c488db6bee31884bdf9d9ef8602cb6366c64c8d64",
+    "tests/test_checkpoint_1e_r1.py": "4d494d696bdf8c342ef1cbdabcd34502117192215f0d7ed206085c1252953d0a"
+  },
+  "git_commit": "8c5f4ebe8c6d2fa58c4c19bb5f834fad9b9037b3",
+  "pre_live_gates": {
+    "S1_S12": "PASS (12)",
+    "historical_E6": "PASS (40)",
+    "prospective_negative": "PASS (14)",
+    "six_case_serialization": "PASS"
+  },
+  "stage": "PRE_LIVE_FROZEN",
+  "xrpl_transactions_submitted": 0,
+  "xrpld_started": false
+}

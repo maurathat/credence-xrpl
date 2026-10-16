@@ -1,0 +1,14 @@
+{
+  "checkpoint": "1E-N",
+  "evidence_directory": "evidence/checkpoint-1e-n",
+  "frozen_files": {
+    "E6-NEGATIVE-ASSERTIONS.md": "6c8a89a94a16d1830e99e28acfc2c1fe792ad75cbb5b1050dcea3546e68cf876",
+    "E6-TIMING-ORACLE-v2.md": "4acb653ab61374757a24800dd05a069a4d942e9fbfc3b9226f2f8d8f7b783f77",
+    "scripts/e6_negative_oracle.py": "c733bffb57866efbfde5e373eded26a53e521de26742a769408e82ffc3efad13",
+    "scripts/run_checkpoint_1e_n.py": "540e131bbba00cb8dfef6ba7b5a9db0f14fd3110a1963805a300252e97b37227",
+    "tests/test_checkpoint_1e_n.py": "ed1b1a09897cc4d24f43d0331a6c28bdb1ebb2a1c4c9ce4cbe398181cf0f4167"
+  },
+  "git_commit_at_run_start": "8c5f4ebe8c6d2fa58c4c19bb5f834fad9b9037b3",
+  "preflight_sha256": "b5fc318093c01200e9b02d3bf43672d94eec2f78926acce66c5a68264e86d58a",
+  "rippled_source_commit": "4a4fded2eba11427c48ce3f24d9c1aea5e7a9d17"
+}

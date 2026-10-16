@@ -1,0 +1,49 @@
+{
+  "checkpoint": "1E-N-LIVE-02",
+  "outcome": "STOP/BLOCKED",
+  "classification": "LOCAL_FROZEN_HARNESS_ENVIRONMENT_EVIDENCE_SERIALIZATION_DEFECT",
+  "stage": "environment-start evidence persistence before actor or prerequisite creation",
+  "exception": "TypeError: unsupported JSON evidence type float at $.server_info.validated_ledger.base_fee_xrp",
+  "root_cause": "The strict evidence serializer rejects float values, while the rippled server_info environment payload contains the JSON number base_fee_xrp as a Python float.",
+  "pre_live_gates": {
+    "S1_S12": "PASS (12)",
+    "prospective_negative_tests": "PASS (14)",
+    "historical_E6_tests": "PASS (40)",
+    "complete_six_case_serialization_preflight": "PASS"
+  },
+  "environment": {
+    "fresh_pinned_rippled_started": true,
+    "expected_rippled_version": "3.4.0",
+    "expected_source_commit": "4a4fded2eba11427c48ce3f24d9c1aea5e7a9d17",
+    "expected_network_id": 21337,
+    "feature_validation": "PASS",
+    "amendments_ledger_entry_validation": "PASS",
+    "amendment_cross_check": "PASS",
+    "environment_start_record_persisted": false
+  },
+  "execution": {
+    "actors_created": false,
+    "prerequisite_transactions_submitted": 0,
+    "negative_transactions_submitted": 0,
+    "positive_loanset_submitted": false,
+    "loan_pay_submitted": false,
+    "N1": "NOT_ATTEMPTED_IN_THIS_RUN",
+    "N2": "NOT_ATTEMPTED",
+    "N3": "NOT_ATTEMPTED",
+    "N4": "NOT_ATTEMPTED",
+    "N5": "NOT_ATTEMPTED",
+    "N6": "NOT_ATTEMPTED",
+    "E7_E8_E9": "NOT_ATTEMPTED"
+  },
+  "preserved_classifications": {
+    "historical_E6": "FAIL",
+    "positive_authorization_composition": "SUPPORTED",
+    "positive_timing_behavior": "SOURCE_CONFORMANT",
+    "historical_timing_oracle": "ORACLE_DEFECT",
+    "historical_N1": "BLOCKED_AFTER_SUBMISSION",
+    "E6_authorization_architecture": "NOT_VALIDATED"
+  },
+  "retry_attempted": false,
+  "frozen_harness_modified_after_live_start": false,
+  "note": "The frozen runner provenance carries its historical evidence/checkpoint-1e-n label; pre-live-provenance.json records the actual authorized checkpoint-1e-n-live-02 destination."
+}

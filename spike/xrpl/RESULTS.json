@@ -1,8 +1,105 @@
 {
-  "schema_version": 20,
+  "schema_version": 21,
   "overall": "FAIL",
-  "scope": "Checkpoint 1E-NR repaired and preflighted E6 negative evidence serialization offline; historical E6 and N1-N6 classifications remain unchanged",
-  "start_commit": "e913fbd1b172455dff0a29c12b890f311f233aad",
+  "scope": "Checkpoint 1E-N-LIVE-02 stopped before transactions because the frozen serializer rejected a float in the rippled environment record",
+  "start_commit": "8c5f4ebe8c6d2fa58c4c19bb5f834fad9b9037b3",
+  "checkpoint_1e_n_live_02": {
+    "outcome": "STOP/BLOCKED",
+    "classification": "LOCAL_FROZEN_HARNESS_ENVIRONMENT_EVIDENCE_SERIALIZATION_DEFECT",
+    "start_commit": "8c5f4ebe8c6d2fa58c4c19bb5f834fad9b9037b3",
+    "pre_live_gates": {
+      "S1_S12": "PASS (12)",
+      "prospective_negative_tests": "PASS (14)",
+      "historical_E6_tests": "PASS (40)",
+      "complete_six_case_serialization_preflight": "PASS",
+      "serialization_sha256": "47e2798eb019468e74b3ce28f2e5073b7d2b99868f4d7764937cb74811c03f64"
+    },
+    "frozen_provenance": {
+      "E6-TIMING-ORACLE-v2.md": "4acb653ab61374757a24800dd05a069a4d942e9fbfc3b9226f2f8d8f7b783f77",
+      "E6-NEGATIVE-ASSERTIONS.md": "6c8a89a94a16d1830e99e28acfc2c1fe792ad75cbb5b1050dcea3546e68cf876",
+      "scripts/e6_negative_oracle.py": "c733bffb57866efbfde5e373eded26a53e521de26742a769408e82ffc3efad13",
+      "scripts/run_checkpoint_1e_n.py": "540e131bbba00cb8dfef6ba7b5a9db0f14fd3110a1963805a300252e97b37227",
+      "scripts/harness.py": "c0315d45366bdfcbeee97b14cc13cf094614130b14e7a2c36443a62ee14587cf",
+      "tests/test_checkpoint_1e_nr.py": "4da47dae1bdf32dd3772d71c488db6bee31884bdf9d9ef8602cb6366c64c8d64",
+      "tests/test_checkpoint_1e_n.py": "ed1b1a09897cc4d24f43d0331a6c28bdb1ebb2a1c4c9ce4cbe398181cf0f4167",
+      "tests/test_checkpoint_1e.py": "62fc387509da9bc52056e997e4becbc1cb4baf81af6c5266c6303a92e9ccd384",
+      "tests/test_checkpoint_1e_r1.py": "4d494d696bdf8c342ef1cbdabcd34502117192215f0d7ed206085c1252953d0a"
+    },
+    "fresh_environment": {
+      "pinned_image_version": "3.4.0",
+      "source_commit": "4a4fded2eba11427c48ce3f24d9c1aea5e7a9d17",
+      "network_id": 21337,
+      "fresh_volume": true,
+      "feature_validation": "PASS",
+      "amendments_ledger_entry_validation": "PASS",
+      "amendment_cross_check": "PASS",
+      "environment_start_record_persisted": false
+    },
+    "stop": {
+      "stage": "environment-start evidence persistence before actor or prerequisite creation",
+      "exception": "TypeError: unsupported JSON evidence type float at $.server_info.validated_ledger.base_fee_xrp",
+      "root_cause": "The frozen strict serializer rejects float values, while server_info represents validated_ledger.base_fee_xrp as a Python float.",
+      "preflight_gap": "The complete N1-N6 record preflight did not include the rippled environment-start payload.",
+      "retry_attempted": false,
+      "frozen_harness_modified": false
+    },
+    "execution": {
+      "actors_created": false,
+      "prerequisite_transactions": 0,
+      "negative_transactions": 0,
+      "positive_loanset_submitted": false,
+      "loan_pay_submitted": false,
+      "N1": "NOT_ATTEMPTED_IN_THIS_RUN",
+      "N2": "NOT_ATTEMPTED",
+      "N3": "NOT_ATTEMPTED",
+      "N4": "NOT_ATTEMPTED",
+      "N5": "NOT_ATTEMPTED",
+      "N6": "NOT_ATTEMPTED",
+      "E7_E8_E9": "NOT_ATTEMPTED"
+    },
+    "protected_state_findings": "NONE; no negative case was submitted",
+    "borrower_authorization_evidence": "NONE; actors were not created",
+    "broker_authorization_evidence": "NONE; actors were not created",
+    "historical_classifications": {
+      "E1_E2": "PASS/FROZEN",
+      "E3_E4": "PASS/RETIRED within tested scope",
+      "E5": "PASS",
+      "historical_E6": "FAIL",
+      "positive_authorization_composition": "SUPPORTED",
+      "positive_timing_behavior": "SOURCE_CONFORMANT",
+      "historical_timing_oracle": "ORACLE_DEFECT",
+      "historical_N1": "BLOCKED_AFTER_SUBMISSION",
+      "E6_authorization_architecture": "NOT_VALIDATED",
+      "E7_E9": "NOT_ATTEMPTED"
+    },
+    "evidence": {
+      "actual_directory": "evidence/checkpoint-1e-n-live-02",
+      "frozen_runner_internal_legacy_label": "evidence/checkpoint-1e-n",
+      "manifest_algorithm": "SHA-256",
+      "manifest_file_count": 7,
+      "manifest_total_bytes": 31194,
+      "manifest_verified": true,
+      "historical_evidence_modified": false
+    },
+    "gates": {
+      "S1_S12": "PASS (12)",
+      "prospective_negative_tests": "PASS (14)",
+      "historical_E6_tests": "PASS (40)",
+      "all_spike_tests": "PASS (168)",
+      "repository_unit_tests": "PASS (17)",
+      "conformance_tests": "PASS (4)",
+      "lint_format_large_file": "PASS",
+      "strict_typecheck": "PASS (25 source files)",
+      "secrets_scan": "PASS",
+      "json_and_manifests": "PASS (16 manifests)",
+      "historical_evidence_immutability": "PASS",
+      "frozen_provenance": "PASS",
+      "authorized_paths": "PASS",
+      "git_diff_check": "PASS"
+    },
+    "product_integration_recommendation": "DO NOT USE; E6 authorization architecture is NOT_VALIDATED",
+    "E7_E8_E9_recommendation": "DO NOT BEGIN"
+  },
   "checkpoint_1e_nr": {
     "outcome": "PASS",
     "mode": "HARNESS_REPAIR_ONLY_ZERO_XRPL_TRANSACTIONS",
