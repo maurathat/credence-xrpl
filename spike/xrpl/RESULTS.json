@@ -1,8 +1,102 @@
 {
-  "schema_version": 17,
+  "schema_version": 18,
   "overall": "FAIL",
-  "scope": "Checkpoint 1E-R1-CORRECTED repaired the terms projection and offline adjudication found the committed positive contradicted the frozen timing oracle",
-  "start_commit": "c0ff25cd6408e051206bb893b0b9d28ae3803a40",
+  "scope": "Checkpoint 1E-T adjudicated the frozen timing failure from pinned source and committed evidence without changing the historical E6 FAIL",
+  "start_commit": "d3612702f97848c2accf921dd9f37510d391d07c",
+  "checkpoint_1e_t": {
+    "outcome": "ORACLE_DEFECT_ESTABLISHED",
+    "start_commit": "d3612702f97848c2accf921dd9f37510d391d07c",
+    "mode": "SOURCE + COMMITTED-EVIDENCE ADJUDICATION",
+    "new_xrpl_transactions": 0,
+    "xrpld_started": false,
+    "rpc_calls": 0,
+    "ledger_advances": 0,
+    "history": {
+      "transaction_hash": "9D83105152990F291C2052431FC777717CE335A3BCC0CF9D6D2902EBBBA5BF93",
+      "transaction_sequence": 7,
+      "validated_result": "tesSUCCESS",
+      "validated_ledger_index": 77,
+      "parent_ledger_index": 76,
+      "parent_ledger_close_time": 845357123,
+      "validated_ledger_close_time": 845357124,
+      "submission_time": "NOT_REPRESENTED"
+    },
+    "frozen_expectation": {
+      "expected_start_date": 845357124,
+      "origin": "run_checkpoint_1e.py:930 passed validated lookup date",
+      "expected_next_payment_due_date": 845357184,
+      "next_due_origin": "e6_oracle.py:386-388 added PaymentInterval 60 to expected_start_date"
+    },
+    "observed_schedule": {
+      "StartDate": 845357133,
+      "NextPaymentDueDate": 845357193,
+      "PaymentInterval": 60,
+      "GracePeriod": 60,
+      "interval_preserved": true
+    },
+    "source_basis": {
+      "rippled_version": "3.4.0",
+      "commit": "4a4fded2eba11427c48ce3f24d9c1aea5e7a9d17",
+      "start_date": "applying view header closeTime read during LoanSet::doApply",
+      "next_due": "StartDate + PaymentInterval",
+      "client_can_choose_start_date": false,
+      "grace": "stored separately; default boundary uses NextPaymentDueDate + GracePeriod"
+    },
+    "nine_second_offset": {
+      "applying_view_header_close_time": 845357133,
+      "accepted_ledger_close_time": 845357124,
+      "difference_seconds": 9,
+      "intervening_recorded_operations": 0,
+      "explanation": "transactions were applied against the provisional constructed-ledger header before setAccepted installed the final standalone close time"
+    },
+    "classifications": {
+      "historical_e6": "FAIL",
+      "positive_authorization_composition": "SUPPORTED",
+      "timing_behavior": "SOURCE_CONFORMANT",
+      "timing_oracle": "ORACLE_DEFECT"
+    },
+    "economic_terms": {
+      "client_supplied_differences": [],
+      "principal_micro_tRLUSD": 1000,
+      "payment_total": 1,
+      "payment_interval_seconds": 60,
+      "grace_period_seconds": 60,
+      "fees_and_rates": 0
+    },
+    "future_oracle_recommendation": "Assert StartDate against the protocol-defined applying-view header time when independently captured or source-reconstructable; assert NextPaymentDueDate equals StartDate plus PaymentInterval; do not bind StartDate to validated transaction date.",
+    "disposition": {
+      "retain_existing_positive_evidence": true,
+      "new_positive_loanset_required": false,
+      "revised_positive_experiment_required": false,
+      "N1_N6": "MAY PROCEED ONLY UNDER SEPARATE AUTHORIZATION",
+      "LoanPay": "NOT AUTHORIZED"
+    },
+    "historical_evidence": {
+      "modified": false,
+      "checkpoint_1e_live_01_manifest_sha256": "42129b0aad5fb7b6f9e641a600ad848f9d8ef47cae26d7beb3fe65559a81d9c8",
+      "checkpoint_1e_r1_corrected_manifest_sha256": "af51faa819d13b76646f8291d04eee43460311b77686ce00cbe1bc3177433be5",
+      "all_manifests_verified": true
+    },
+    "evidence_manifest": {
+      "directory": "evidence/checkpoint-1e-t",
+      "file_count": 4,
+      "bytes": 11803,
+      "verified": true
+    },
+    "gates": {
+      "existing_e6_tests": "PASS (40)",
+      "all_spike_tests": "PASS (142)",
+      "repository_unit_tests": "PASS (17)",
+      "conformance_tests": "PASS (4)",
+      "lint_format_large_file": "PASS (79 formatted files checked)",
+      "strict_typecheck": "PASS (25 source files)",
+      "secrets_scan": "PASS",
+      "json_and_manifests": "PASS (181 JSON files; 14 manifests)",
+      "historical_evidence_immutability": "PASS",
+      "authorized_paths": "PASS",
+      "git_diff_check": "PASS"
+    }
+  },
   "checkpoint_1e_r1_corrected": {
     "outcome": "HARNESS_REPAIR_PASS_POSITIVE_ADJUDICATION_CONTRADICTED",
     "start_commit": "c0ff25cd6408e051206bb893b0b9d28ae3803a40",

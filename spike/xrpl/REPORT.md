@@ -1,3 +1,175 @@
+# Checkpoint 1E-T — E6 Loan start-time adjudication
+
+## Outcome
+
+**ORACLE_DEFECT ESTABLISHED; TIMING IS SOURCE_CONFORMANT; AUTHORIZATION
+COMPOSITION REMAINS SUPPORTED; HISTORICAL E6 REMAINS FAIL.**
+
+This source-and-committed-evidence checkpoint began at clean commit
+`d3612702f97848c2accf921dd9f37510d391d07c`, descended from checkpoint-0
+`810c7870d2ebb23e0b07b6017c4c88344f742aed`, with unchanged submodule
+gitlinks. It did not start xrpld, call RPC, advance a ledger, or submit a
+transaction. N1-N6 and LoanPay were not executed.
+
+## Reconstructed timeline
+
+The table is in execution order. Its time columns are protocol header values,
+not a wall-clock event log; the committed evidence contains no submission
+timestamp.
+
+| Event | Ledger | Recorded/derived time | Evidence status |
+| --- | ---: | ---: | --- |
+| Vault SubscriptionDate boundary | 75 | `845357122` | recorded close |
+| Investment entry and state immediately before LoanSet | 76 | `845357123` | recorded close; parent of ledger 77 |
+| Positive LoanSet submission, Sequence 7 | open 77 | none | submission time not represented |
+| LoanSet application while building ledger 77 | 77 | applying header `closeTime = 845357133` | established by pinned source plus persisted `Loan.StartDate` |
+| Standalone `ledger_accept` accepts ledger 77 | 77 | final close/transaction date `845357124` | recorded close and transaction lookup |
+| Validated Loan schedule | 77 | StartDate `845357133`; next due `845357193` | recorded post-state |
+
+The Vault was configured with SubscriptionDate `845357122` and RedemptionDate
+`845357422`. PaymentInterval and GracePeriod were each 60 seconds. The
+`ledger_accept` record is the only committed ledger operation associated with
+the positive case. No transaction or ledger operation is recorded at a time
+between `845357124` and `845357133`; those values are different header-time
+anchors, not endpoints of observed elapsed activity.
+
+## Frozen expectation origin
+
+At `scripts/run_checkpoint_1e.py:930`, the runner passed
+`int((lookup or {}).get("date", -1))` as `expected_start_date`. The committed
+lookup date was `845357124`: the final close time of validated ledger 77. It
+was not the preparation time, phase-entry time, submission time, autofill time,
+parent close time, or applying-view header time.
+
+At `scripts/e6_oracle.py:386-388`, the oracle computed the expected
+NextPaymentDueDate as `expected_start_date + payment_interval`, so
+`845357184 = 845357124 + 60`. It had no independent time anchor.
+
+## Pinned 3.4.0 source semantics
+
+Pinned source commit is
+`4a4fded2eba11427c48ce3f24d9c1aea5e7a9d17`.
+
+- A/B/C: `LoanSet.cpp:225-229` reads `view.header().closeTime` in integer
+  seconds. `LoanSet.cpp:430-434,649-666` does so during `LoanSet::doApply`,
+  immediately before creating and populating the Loan. This is the applying
+  view's in-construction ledger header time—not `parentCloseTime`, a transaction
+  field, or the later finalized validated-ledger close time.
+- D/E: LoanSet does not supply StartDate and the client cannot choose it. The
+  transaction format at `transactions.macro:963-986` has no StartDate field;
+  `LoanSet.cpp:650-666` computes and stores it.
+- F/G: `LoanSet.cpp:690` initializes NextPaymentDueDate as
+  `StartDate + PaymentInterval`; the first interval therefore begins at
+  StartDate. `LoanLifecycle_test.cpp:248-273` and
+  `LoanTestBase.h:1551-1555` assert the same relationship.
+- H: GracePeriod is stored separately (`LoanSet.cpp:683`) and is not added to
+  the initial NextPaymentDueDate. The creation overflow bound treats the final
+  grace end as `StartDate + PaymentInterval * PaymentTotal + GracePeriod`
+  (`LoanSet.cpp:238-278`). With `fixCleanup3_4_0`, default uses an exclusive
+  expiry check at `NextPaymentDueDate + GracePeriod`
+  (`LoanManage.cpp:106-114`).
+
+The exact standalone construction sequence explains why applying time and
+accepted time diverged. `Ledger.cpp:253-278` gives a non-genesis successor a
+provisional closeTime of previous closeTime plus its close-time resolution.
+`BuildLedger.cpp:38-62` applies transactions against that header. Only after
+application does `BuildLedger.cpp:75-80` call `Ledger::setAccepted`, which
+replaces the header closeTime with the supplied final close time at
+`Ledger.cpp:331-343`. `NetworkOPs.cpp:4520-4534` confirms that
+`ledger_accept` drives this standalone consensus path.
+
+Here the committed values establish a 10-second construction increment:
+`845357133 - 845357123 = 10`; 10 seconds is a permitted source-defined
+resolution (`LedgerTiming.h:17-33`). The artifacts did not independently
+capture a `close_time_resolution` field, so that resolution is reported as a
+source-and-state reconstruction, not as a separately recorded RPC field.
+
+## Source comparison and nine-second offset
+
+Observed StartDate `845357133` is **SOURCE_CONFORMANT**: it is the value that
+pinned LoanSet necessarily copied from the applying view header. Observed
+NextPaymentDueDate `845357193` is also **SOURCE_CONFORMANT** because
+`845357133 + 60 = 845357193`.
+
+The exact `+9` compares two concrete values attached to different stages:
+
+1. `845357133` — ledger 77's provisional applying-view header closeTime,
+   persisted into Loan.StartDate before acceptance; and
+2. `845357124` — ledger 77's final accepted close time and transaction date,
+   installed after transaction application.
+
+The frozen oracle was nine seconds early because it used the second value to
+predict a field defined from the first. This is **A. ORACLE_DEFECT**, not a
+protocol contradiction or design ambiguity. The classification does not
+rewrite the historical frozen E6 verdict, which remains **FAIL**.
+
+## Schedule, economics, and architecture
+
+The economically requested schedule was preserved: `845357193 - 845357133 =
+60`. GracePeriod is 60. For this one-payment schedule, the source-derived grace
+boundary is `845357253`, but no lifecycle transaction exercised it.
+
+No client-supplied economic term differs from the validated Loan: principal
+1000 integer micro-tRLUSD, one payment, 60-second interval, 60-second grace,
+and every requested fee/rate at zero all passed the corrected semantic oracle.
+StartDate and NextPaymentDueDate are protocol-derived schedule fields, not
+borrower-chosen economic terms.
+
+Separately, the existing positive evidence continues to classify the Credence
+authorization composition as **SUPPORTED**: ResearchBot + Credence policy
+2-of-2 borrower authorization and the Loan Broker owner's
+CounterpartySignature coexisted on the same validated `tesSUCCESS` LoanSet.
+That result is not conflated with the timing-oracle defect.
+
+## Future oracle and N1-N6 disposition
+
+No normative oracle was edited. A future oracle should not bind StartDate to
+the validated transaction date or another pre-submission timestamp. It should
+assert StartDate against the protocol-defined applying-view header time when
+that value is independently captured or source-reconstructable, always assert
+`NextPaymentDueDate == StartDate + PaymentInterval`, and assert GracePeriod and
+its lifecycle boundary separately when exercised.
+
+The existing positive evidence should be retained. A new positive LoanSet or
+revised positive experiment is not necessary before the negative program.
+N1-N6 may proceed only under a separately authorized checkpoint. None was
+executed here.
+
+## Evidence, immutability, and gates
+
+The bounded adjudication evidence is under
+`evidence/checkpoint-1e-t/`. Its manifest verifies. Historical directories
+`checkpoint-1e-live-01/` and `checkpoint-1e-r1-corrected/` were not modified;
+their manifest hashes remain respectively
+`42129b0aad5fb7b6f9e641a600ad848f9d8ef47cae26d7beb3fe65559a81d9c8`
+and `af51faa819d13b76646f8291d04eee43460311b77686ce00cbe1bc3177433be5`.
+
+- Existing E6 tests: **PASS** (40).
+- All spike tests: **PASS** (142).
+- Repository unit tests: **PASS** (17); conformance tests: **PASS** (4).
+- Lint, formatting, large-file check, strict typecheck, secrets scan, JSON
+  validation, all manifests, historical-evidence immutability,
+  authorized-path check, and `git diff --check`: **PASS**.
+- XRPL transactions: **ZERO**. xrpld starts, RPC calls, and ledger advances:
+  **ZERO**.
+
+## Result state and modified paths
+
+- Historical E6: **FAIL**.
+- Positive authorization composition: **SUPPORTED**.
+- Timing behavior: **SOURCE_CONFORMANT**.
+- Timing oracle: **ORACLE_DEFECT**.
+- N1-N6: **NOT EXECUTED**.
+- E7-E9: **NOT ATTEMPTED**.
+
+Modified paths are limited to:
+
+- `spike/xrpl/REPORT.md`
+- `spike/xrpl/RESULTS.json`
+- `spike/xrpl/evidence/checkpoint-1e-t/`
+
+---
+
 # Checkpoint 1E-R1-CORRECTED — E6 terms projection repair and adjudication
 
 ## Outcome

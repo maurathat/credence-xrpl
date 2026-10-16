@@ -1,0 +1,85 @@
+{
+  "checkpoint": "1E-T",
+  "rippled": {
+    "version": "3.4.0",
+    "source_commit": "4a4fded2eba11427c48ce3f24d9c1aea5e7a9d17"
+  },
+  "findings": {
+    "A_value_read": {
+      "answer": "view.header().closeTime converted to integer seconds since the XRPL epoch",
+      "citations": [
+        "src/libxrpl/tx/transactors/lending/LoanSet.cpp:225-229"
+      ]
+    },
+    "B_processing_stage": {
+      "answer": "LoanSet::doApply, immediately before the Loan ledger object is constructed and populated",
+      "citations": [
+        "src/libxrpl/tx/transactors/lending/LoanSet.cpp:430-434",
+        "src/libxrpl/tx/transactors/lending/LoanSet.cpp:649-666"
+      ]
+    },
+    "C_time_classification": {
+      "answer": "The applying view's in-construction ledger header closeTime. It is not parentCloseTime, a transaction field, or the later finalized validated-ledger close time.",
+      "citations": [
+        "src/libxrpl/tx/transactors/lending/LoanSet.cpp:225-229",
+        "src/xrpld/app/ledger/detail/BuildLedger.cpp:38-62",
+        "src/libxrpl/ledger/Ledger.cpp:253-278",
+        "src/libxrpl/ledger/Ledger.cpp:331-343"
+      ]
+    },
+    "D_loanset_supplies_start_date": {
+      "answer": false,
+      "detail": "The LoanSet transaction format has no StartDate field.",
+      "citations": [
+        "include/xrpl/protocol/detail/transactions.macro:963-986"
+      ]
+    },
+    "E_client_can_choose_start_date": {
+      "answer": false,
+      "detail": "The protocol computes it from the applying view header.",
+      "citations": [
+        "include/xrpl/protocol/detail/transactions.macro:963-986",
+        "src/libxrpl/tx/transactors/lending/LoanSet.cpp:650-666"
+      ]
+    },
+    "F_initial_next_payment_due_date": {
+      "answer": "StartDate + PaymentInterval",
+      "citations": [
+        "src/libxrpl/tx/transactors/lending/LoanSet.cpp:664-690",
+        "src/test/app/lending/LoanLifecycle_test.cpp:248-273",
+        "src/test/app/lending/LoanTestBase.h:1551-1555"
+      ]
+    },
+    "G_first_interval_anchor": {
+      "answer": "StartDate",
+      "citations": [
+        "src/libxrpl/tx/transactors/lending/LoanSet.cpp:690",
+        "src/test/app/lending/LoanTestBase.h:1551-1555"
+      ]
+    },
+    "H_grace_period": {
+      "answer": "GracePeriod is stored separately and is not added to the initial NextPaymentDueDate. For schedule bounds, the final grace end is StartDate + PaymentInterval * PaymentTotal + GracePeriod. With fixCleanup3_4_0, default is permitted only after the exclusive expiry check at NextPaymentDueDate + GracePeriod.",
+      "citations": [
+        "src/libxrpl/tx/transactors/lending/LoanSet.cpp:238-278",
+        "src/libxrpl/tx/transactors/lending/LoanSet.cpp:683-690",
+        "src/libxrpl/tx/transactors/lending/LoanManage.cpp:106-114"
+      ]
+    },
+    "ledger_build_and_accept_sequence": {
+      "answer": "The ledger constructor initializes a non-genesis successor's provisional closeTime as previous closeTime plus the selected close-time resolution. Transactions are applied to that header in buildLedgerImpl. Only after application does setAccepted replace the ledger header closeTime with the consensus/standalone closeTime.",
+      "citations": [
+        "src/libxrpl/ledger/Ledger.cpp:253-278",
+        "src/xrpld/app/ledger/detail/BuildLedger.cpp:38-80",
+        "src/libxrpl/ledger/Ledger.cpp:331-343",
+        "src/xrpld/app/misc/NetworkOPs.cpp:4520-4534"
+      ]
+    },
+    "close_time_resolution": {
+      "answer": "The source permits 10-second resolution and the committed observation establishes the constructed-ledger increment was 10 seconds: 845357133 - 845357123 = 10. The evidence did not independently record a close_time_resolution field.",
+      "citations": [
+        "include/xrpl/ledger/LedgerTiming.h:17-33",
+        "src/libxrpl/ledger/Ledger.cpp:263-278"
+      ]
+    }
+  }
+}

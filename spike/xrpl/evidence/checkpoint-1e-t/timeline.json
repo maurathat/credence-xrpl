@@ -1,0 +1,73 @@
+{
+  "checkpoint": "1E-T",
+  "mode": "SOURCE_AND_COMMITTED_EVIDENCE_ADJUDICATION",
+  "new_xrpl_transactions": 0,
+  "transaction_hash": "9D83105152990F291C2052431FC777717CE335A3BCC0CF9D6D2902EBBBA5BF93",
+  "configured_vault_dates": {
+    "SubscriptionDate": 845357122,
+    "RedemptionDate": 845357422
+  },
+  "events_in_execution_order": [
+    {
+      "event": "Vault subscription boundary validated",
+      "ledger_index": 75,
+      "ledger_close_time": 845357122,
+      "evidence": "checkpoint-1e-live-01/ledger-closes.json"
+    },
+    {
+      "event": "Immediate pre-LoanSet ledger and Investment phase observation",
+      "ledger_index": 76,
+      "ledger_close_time": 845357123,
+      "phase": "Investment",
+      "evidence": "checkpoint-1e-live-01/prerequisite-state.json"
+    },
+    {
+      "event": "Positive LoanSet submitted",
+      "submission_time": null,
+      "submission_time_status": "NOT_REPRESENTED_IN_COMMITTED_EVIDENCE",
+      "transaction_sequence": 7,
+      "evidence": "checkpoint-1e-live-01/positive-observation.json"
+    },
+    {
+      "event": "LoanSet reapplied while building ledger 77",
+      "ledger_index": 77,
+      "applying_view_header_close_time": 845357133,
+      "value_status": "ESTABLISHED_BY_PINNED_SOURCE_AND_OBSERVED_LOAN_START_DATE",
+      "derivation": "LoanSet.cpp:226-229,650,666 copies the applying view header closeTime to StartDate; the validated Loan contains StartDate 845357133",
+      "evidence": "checkpoint-1e-live-01/positive-observation.json"
+    },
+    {
+      "event": "Standalone ledger_accept finalized ledger 77",
+      "ledger_index": 77,
+      "validated_ledger_close_time": 845357124,
+      "transaction_date": 845357124,
+      "transaction_result": "tesSUCCESS",
+      "operation": "validate or establish rejection for e6_positive_dual_domain_loanset",
+      "evidence": "checkpoint-1e-live-01/ledger-closes.json and positive-observation.json"
+    },
+    {
+      "event": "Validated Loan schedule observed",
+      "ledger_index": 77,
+      "StartDate": 845357133,
+      "NextPaymentDueDate": 845357193,
+      "PaymentInterval": 60,
+      "GracePeriod": 60,
+      "evidence": "checkpoint-1e-live-01/positive-observation.json"
+    }
+  ],
+  "parent_ledger": {
+    "ledger_index": 76,
+    "close_time": 845357123
+  },
+  "validated_ledger": {
+    "ledger_index": 77,
+    "close_time": 845357124
+  },
+  "nine_second_comparison": {
+    "applying_view_header_close_time": 845357133,
+    "final_validated_ledger_close_time": 845357124,
+    "difference_seconds": 9,
+    "intervening_transaction_or_ledger_operation_in_committed_evidence": null,
+    "finding": "The offset compares a provisional in-construction ledger header value with the later accepted ledger close time; it is not an elapsed interval containing recorded ledger operations."
+  }
+}

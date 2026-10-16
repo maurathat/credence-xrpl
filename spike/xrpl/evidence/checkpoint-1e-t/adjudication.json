@@ -1,0 +1,113 @@
+{
+  "checkpoint": "1E-T",
+  "start_commit": "d3612702f97848c2accf921dd9f37510d391d07c",
+  "mode": "SOURCE_AND_COMMITTED_EVIDENCE_ADJUDICATION",
+  "new_xrpl_transactions": 0,
+  "xrpld_started": false,
+  "rpc_calls": 0,
+  "ledger_advances": 0,
+  "historical_e6_verdict": "FAIL",
+  "expected_value_origin": {
+    "StartDate": {
+      "expected": 845357124,
+      "runner_expression": "int((lookup or {}).get(\"date\", -1))",
+      "runner_location": "spike/xrpl/scripts/run_checkpoint_1e.py:930",
+      "oracle_parameter": "expected_start_date",
+      "observation": "committed validated transaction lookup date",
+      "represented_event": "final close time of validated ledger 77",
+      "did_not_represent": [
+        "preparation",
+        "Investment phase entry",
+        "submission wall-clock time",
+        "autofill time",
+        "parent-ledger close time",
+        "LoanSet applying-view header closeTime"
+      ]
+    },
+    "NextPaymentDueDate": {
+      "expected": 845357184,
+      "oracle_expression": "expected_start_date + payment_interval",
+      "oracle_location": "spike/xrpl/scripts/e6_oracle.py:386-388",
+      "derivation": "845357124 + 60",
+      "independently_derived": false
+    }
+  },
+  "source_comparison": {
+    "StartDate": {
+      "observed": 845357133,
+      "classification": "SOURCE_CONFORMANT",
+      "reason": "Pinned LoanSet copies the applying view header closeTime. The observed Loan therefore establishes that header value as 845357133; the parent ledger was 845357123 and the source-defined successor construction used a 10-second increment."
+    },
+    "NextPaymentDueDate": {
+      "observed": 845357193,
+      "classification": "SOURCE_CONFORMANT",
+      "reason": "Pinned LoanSet initializes NextPaymentDueDate as StartDate + PaymentInterval: 845357133 + 60 = 845357193."
+    }
+  },
+  "nine_second_offset": {
+    "classification": "ESTABLISHED",
+    "frozen_anchor": 845357124,
+    "frozen_anchor_event": "final accepted close time of ledger 77 and committed transaction date",
+    "protocol_anchor": 845357133,
+    "protocol_anchor_event": "ledger 77 in-construction applying-view header closeTime copied into Loan.StartDate before acceptance",
+    "difference_seconds": 9,
+    "cause": "The frozen oracle compared the persisted pre-acceptance applying-view time with the post-application accepted ledger close time. buildLedgerImpl applies transactions before Ledger::setAccepted replaces the header closeTime.",
+    "recorded_intervening_operations": []
+  },
+  "schedule": {
+    "PaymentInterval": 60,
+    "GracePeriod": 60,
+    "StartDate": 845357133,
+    "NextPaymentDueDate": 845357193,
+    "observed_interval_seconds": 60,
+    "interval_preserved": true,
+    "grace_representation_preserved": true,
+    "initial_grace_deadline_for_single_payment": 845357253,
+    "grace_deadline_status": "SOURCE_DERIVED_NOT_LIVE_EXERCISED"
+  },
+  "economic_terms": {
+    "client_supplied_differences": [],
+    "requested_and_observed": {
+      "PrincipalRequested_or_PrincipalOutstanding": "1000",
+      "PaymentTotal_or_PaymentRemaining": 1,
+      "PaymentInterval": 60,
+      "GracePeriod": 60,
+      "LoanOriginationFee": "0",
+      "LoanServiceFee": "0",
+      "LatePaymentFee": "0",
+      "ClosePaymentFee": "0",
+      "OverpaymentFee": 0,
+      "InterestRate": 0,
+      "LateInterestRate": 0,
+      "CloseInterestRate": 0,
+      "OverpaymentInterestRate": 0
+    },
+    "protocol_derived_not_borrower_chosen": [
+      "StartDate",
+      "NextPaymentDueDate"
+    ]
+  },
+  "classifications": {
+    "historical_e6": "FAIL",
+    "positive_authorization_composition": "SUPPORTED",
+    "timing_behavior": "SOURCE_CONFORMANT",
+    "timing_oracle": "ORACLE_DEFECT"
+  },
+  "future_oracle_recommendation": {
+    "normative_change_made": false,
+    "recommendation": [
+      "Do not bind StartDate to the validated transaction date or another pre-submission timestamp.",
+      "Assert StartDate equals the protocol-defined applying-view header closeTime when that value is independently captured or source-reconstructable.",
+      "Always assert NextPaymentDueDate equals StartDate plus PaymentInterval.",
+      "Assert GracePeriod independently and, where lifecycle behavior is exercised, assert the source-defined boundary at NextPaymentDueDate plus GracePeriod."
+    ]
+  },
+  "disposition": {
+    "retain_existing_positive_evidence": true,
+    "new_positive_loanset_required_before_negatives": false,
+    "revised_positive_experiment_required": false,
+    "N1_N6": "MAY_PROCEED_ONLY_UNDER_A_SEPARATELY_AUTHORIZED_CHECKPOINT",
+    "LoanPay": "NOT_AUTHORIZED"
+  },
+  "verdict": "ORACLE_DEFECT_ESTABLISHED; SOURCE_CONFORMANT_TIMING; AUTHORIZATION_COMPOSITION_SUPPORTED; HISTORICAL_E6_REMAINS_FAIL"
+}

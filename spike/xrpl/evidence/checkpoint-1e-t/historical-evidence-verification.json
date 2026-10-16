@@ -1,0 +1,14 @@
+{
+  "checkpoint": "1E-T",
+  "verified_before_changes": true,
+  "checkpoint_1e_live_01": {
+    "manifest_sha256": "42129b0aad5fb7b6f9e641a600ad848f9d8ef47cae26d7beb3fe65559a81d9c8",
+    "payloads_verified": true,
+    "modified": false
+  },
+  "checkpoint_1e_r1_corrected": {
+    "manifest_sha256": "af51faa819d13b76646f8291d04eee43460311b77686ce00cbe1bc3177433be5",
+    "payloads_verified": true,
+    "modified": false
+  }
+}
