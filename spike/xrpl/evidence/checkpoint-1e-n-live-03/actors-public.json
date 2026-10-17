@@ -1,0 +1,26 @@
+{
+  "borrower": {
+    "account": "r9ddcSuxVD2VcEbbxKkWFe9JBaYZuMVY1j",
+    "public_key_hex": "EDB8366D392D23835E43551A8F5E0C646944947D2B6340BD4B2A6F8B94E9BDB771"
+  },
+  "broker_owner": {
+    "account": "rHoyKzrC9CmUMqVVn2uun8Et4ce5ha8mDA",
+    "public_key_hex": "ED8417BF5D319958FF16ECC4133C925BBD6B17D776D1251DD70B6B5753B27A010A"
+  },
+  "credence_policy": {
+    "account": "rLG4FTojy6ukJULQYaXqffoZvLeN6Mbcy9",
+    "public_key_hex": "EDBB4E55E3A858AA937019F05F6F8CDCEF232CDF691160B970CFC15AEBFE481486"
+  },
+  "issuer": {
+    "account": "rn9x3HEH3aSWkNekUKkMydkC1LfBYSDsU6",
+    "public_key_hex": "ED79AE72B9AE9CC87C148099185666A06CA9C7B8F9CB4B4D1FF9A740DCC737AC6E"
+  },
+  "lender": {
+    "account": "rMMebS6CkYYLUdHuH5KCgB8HKjzB5uffuc",
+    "public_key_hex": "EDA4CC1D5965D06066AAAC3A672B89DB8AA951720CBADCCF2E16924F0B34D4F831"
+  },
+  "research_bot": {
+    "account": "raCYHzQbiLAmaBm8u2NuMhKwEyvuttByuA",
+    "public_key_hex": "ED4A989D13515E59BE88C5AB63AB1B2911494BE8B2D64DA42389C68F932D363AC8"
+  }
+}

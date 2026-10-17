@@ -1,0 +1,626 @@
+{
+  "assertions": [
+    {
+      "actual": [],
+      "expected": [],
+      "name": "required negative live bindings",
+      "passed": true
+    },
+    {
+      "actual": [
+        "N1",
+        "N2",
+        "N3",
+        "N4",
+        "N5",
+        "N6"
+      ],
+      "expected": [
+        "N1",
+        "N2",
+        "N3",
+        "N4",
+        "N5",
+        "N6"
+      ],
+      "name": "exact live N1-N6 constructions",
+      "passed": true
+    },
+    {
+      "actual": true,
+      "expected": true,
+      "name": "no negative depends on an existing Loan",
+      "passed": true
+    },
+    {
+      "actual": true,
+      "expected": true,
+      "name": "no positive LoanSet construction",
+      "passed": true
+    },
+    {
+      "actual": {
+        "N1": "tefBAD_QUORUM",
+        "N2": "tefBAD_QUORUM",
+        "N3": "temBAD_SIGNER",
+        "N4": "local invalidTransaction",
+        "N5": "local invalidTransaction",
+        "N6": "tecTOO_SOON"
+      },
+      "expected": {
+        "N1": "tefBAD_QUORUM",
+        "N2": "tefBAD_QUORUM",
+        "N3": "temBAD_SIGNER",
+        "N4": "local invalidTransaction",
+        "N5": "local invalidTransaction",
+        "N6": "tecTOO_SOON"
+      },
+      "name": "live expected results",
+      "passed": true
+    },
+    {
+      "actual": true,
+      "expected": true,
+      "name": "all authorization constructions pass preflight",
+      "passed": true
+    }
+  ],
+  "bindings": {
+    "actors": {
+      "borrower": {
+        "account": "r9ddcSuxVD2VcEbbxKkWFe9JBaYZuMVY1j",
+        "public_key_hex": "EDB8366D392D23835E43551A8F5E0C646944947D2B6340BD4B2A6F8B94E9BDB771"
+      },
+      "broker_owner": {
+        "account": "rHoyKzrC9CmUMqVVn2uun8Et4ce5ha8mDA",
+        "public_key_hex": "ED8417BF5D319958FF16ECC4133C925BBD6B17D776D1251DD70B6B5753B27A010A"
+      },
+      "credence_policy": {
+        "account": "rLG4FTojy6ukJULQYaXqffoZvLeN6Mbcy9",
+        "public_key_hex": "EDBB4E55E3A858AA937019F05F6F8CDCEF232CDF691160B970CFC15AEBFE481486"
+      },
+      "issuer": {
+        "account": "rn9x3HEH3aSWkNekUKkMydkC1LfBYSDsU6",
+        "public_key_hex": "ED79AE72B9AE9CC87C148099185666A06CA9C7B8F9CB4B4D1FF9A740DCC737AC6E"
+      },
+      "lender": {
+        "account": "rMMebS6CkYYLUdHuH5KCgB8HKjzB5uffuc",
+        "public_key_hex": "EDA4CC1D5965D06066AAAC3A672B89DB8AA951720CBADCCF2E16924F0B34D4F831"
+      },
+      "research_bot": {
+        "account": "raCYHzQbiLAmaBm8u2NuMhKwEyvuttByuA",
+        "public_key_hex": "ED4A989D13515E59BE88C5AB63AB1B2911494BE8B2D64DA42389C68F932D363AC8"
+      }
+    },
+    "amendments": [
+      "LendingProtocol",
+      "LendingProtocolV1_1",
+      "MPTokensV1",
+      "SingleAssetVault",
+      "fixCleanup3_1_3",
+      "fixCleanup3_2_0",
+      "fixCleanup3_3_0",
+      "fixCleanup3_4_0"
+    ],
+    "assertion_spec_hash": "6c8a89a94a16d1830e99e28acfc2c1fe792ad75cbb5b1050dcea3546e68cf876",
+    "case_constructions": {
+      "N1": {
+        "authorization_assertions_pass": true,
+        "broker_body_x": null,
+        "exact_finalized_body": {
+          "Account": "r9ddcSuxVD2VcEbbxKkWFe9JBaYZuMVY1j",
+          "CloseInterestRate": 0,
+          "ClosePaymentFee": "0",
+          "Counterparty": "rHoyKzrC9CmUMqVVn2uun8Et4ce5ha8mDA",
+          "Fee": "30",
+          "GracePeriod": 60,
+          "InterestRate": 0,
+          "LastLedgerSequence": 100,
+          "LateInterestRate": 0,
+          "LatePaymentFee": "0",
+          "LoanBrokerID": "17BA85BCB5AD48791D255142C3E59C1F20C5A6E0621EF672F54D071DCAED12AA",
+          "LoanOriginationFee": "0",
+          "LoanServiceFee": "0",
+          "NetworkID": 21337,
+          "OverpaymentFee": 0,
+          "OverpaymentInterestRate": 0,
+          "PaymentInterval": 60,
+          "PaymentTotal": 1,
+          "PrincipalRequested": "1000",
+          "Sequence": 7,
+          "SigningPubKey": "",
+          "TransactionType": "LoanSet"
+        },
+        "exact_signed_transaction": {
+          "Account": "r9ddcSuxVD2VcEbbxKkWFe9JBaYZuMVY1j",
+          "CloseInterestRate": 0,
+          "ClosePaymentFee": "0",
+          "Counterparty": "rHoyKzrC9CmUMqVVn2uun8Et4ce5ha8mDA",
+          "CounterpartySignature": {
+            "SigningPubKey": "[PUBLIC_KEY_REDACTED]",
+            "TxnSignature": "B3AF0F48C01AA107470C3389906A6D6171A04F4D59611C3C8294CEEE962416B5359CB9F43B4111FCDC97A8DDD4BA4E0C947524ED06525D8392AFEF95FBF66802"
+          },
+          "Fee": "30",
+          "GracePeriod": 60,
+          "InterestRate": 0,
+          "LastLedgerSequence": 100,
+          "LateInterestRate": 0,
+          "LatePaymentFee": "0",
+          "LoanBrokerID": "17BA85BCB5AD48791D255142C3E59C1F20C5A6E0621EF672F54D071DCAED12AA",
+          "LoanOriginationFee": "0",
+          "LoanServiceFee": "0",
+          "NetworkID": 21337,
+          "OverpaymentFee": 0,
+          "OverpaymentInterestRate": 0,
+          "PaymentInterval": 60,
+          "PaymentTotal": 1,
+          "PrincipalRequested": "1000",
+          "Sequence": 7,
+          "Signers": [
+            {
+              "Signer": {
+                "Account": "raCYHzQbiLAmaBm8u2NuMhKwEyvuttByuA",
+                "SigningPubKey": "[PUBLIC_KEY_REDACTED]",
+                "TxnSignature": "A5BBB3628D91118EB2CEEFBEA154C741D4D4AA3751284967E75C7B2488D2C45E9F46E77B299B2F3A277E1698FDEA9155BEA8A2F48AEB973A3443ECB6742E5E05"
+              }
+            }
+          ],
+          "SigningPubKey": "",
+          "TransactionType": "LoanSet"
+        },
+        "expect_validated": false,
+        "expected_loan_absent_before": true,
+        "expected_loan_index": "8C2203B4E8F88957F815CF2055357913C949B362BB11284321EC053A49890A86",
+        "expected_result": "tefBAD_QUORUM",
+        "phase": "Investment"
+      },
+      "N2": {
+        "authorization_assertions_pass": true,
+        "broker_body_x": null,
+        "exact_finalized_body": {
+          "Account": "r9ddcSuxVD2VcEbbxKkWFe9JBaYZuMVY1j",
+          "CloseInterestRate": 0,
+          "ClosePaymentFee": "0",
+          "Counterparty": "rHoyKzrC9CmUMqVVn2uun8Et4ce5ha8mDA",
+          "Fee": "30",
+          "GracePeriod": 60,
+          "InterestRate": 0,
+          "LastLedgerSequence": 100,
+          "LateInterestRate": 0,
+          "LatePaymentFee": "0",
+          "LoanBrokerID": "17BA85BCB5AD48791D255142C3E59C1F20C5A6E0621EF672F54D071DCAED12AA",
+          "LoanOriginationFee": "0",
+          "LoanServiceFee": "0",
+          "NetworkID": 21337,
+          "OverpaymentFee": 0,
+          "OverpaymentInterestRate": 0,
+          "PaymentInterval": 60,
+          "PaymentTotal": 1,
+          "PrincipalRequested": "1000",
+          "Sequence": 7,
+          "SigningPubKey": "",
+          "TransactionType": "LoanSet"
+        },
+        "exact_signed_transaction": {
+          "Account": "r9ddcSuxVD2VcEbbxKkWFe9JBaYZuMVY1j",
+          "CloseInterestRate": 0,
+          "ClosePaymentFee": "0",
+          "Counterparty": "rHoyKzrC9CmUMqVVn2uun8Et4ce5ha8mDA",
+          "CounterpartySignature": {
+            "SigningPubKey": "[PUBLIC_KEY_REDACTED]",
+            "TxnSignature": "B3AF0F48C01AA107470C3389906A6D6171A04F4D59611C3C8294CEEE962416B5359CB9F43B4111FCDC97A8DDD4BA4E0C947524ED06525D8392AFEF95FBF66802"
+          },
+          "Fee": "30",
+          "GracePeriod": 60,
+          "InterestRate": 0,
+          "LastLedgerSequence": 100,
+          "LateInterestRate": 0,
+          "LatePaymentFee": "0",
+          "LoanBrokerID": "17BA85BCB5AD48791D255142C3E59C1F20C5A6E0621EF672F54D071DCAED12AA",
+          "LoanOriginationFee": "0",
+          "LoanServiceFee": "0",
+          "NetworkID": 21337,
+          "OverpaymentFee": 0,
+          "OverpaymentInterestRate": 0,
+          "PaymentInterval": 60,
+          "PaymentTotal": 1,
+          "PrincipalRequested": "1000",
+          "Sequence": 7,
+          "Signers": [
+            {
+              "Signer": {
+                "Account": "rLG4FTojy6ukJULQYaXqffoZvLeN6Mbcy9",
+                "SigningPubKey": "[PUBLIC_KEY_REDACTED]",
+                "TxnSignature": "51F00E6994FDC88C973CAACF3BC62050EACA232C39A5BCA267C3F23A18EC8B99B12E896C491354EC85BB630012B91B1F6D15A978A5611FC49246BAF86A185B0E"
+              }
+            }
+          ],
+          "SigningPubKey": "",
+          "TransactionType": "LoanSet"
+        },
+        "expect_validated": false,
+        "expected_loan_absent_before": true,
+        "expected_loan_index": "8C2203B4E8F88957F815CF2055357913C949B362BB11284321EC053A49890A86",
+        "expected_result": "tefBAD_QUORUM",
+        "phase": "Investment"
+      },
+      "N3": {
+        "authorization_assertions_pass": true,
+        "broker_body_x": null,
+        "exact_finalized_body": {
+          "Account": "r9ddcSuxVD2VcEbbxKkWFe9JBaYZuMVY1j",
+          "CloseInterestRate": 0,
+          "ClosePaymentFee": "0",
+          "Counterparty": "rHoyKzrC9CmUMqVVn2uun8Et4ce5ha8mDA",
+          "Fee": "40",
+          "GracePeriod": 60,
+          "InterestRate": 0,
+          "LastLedgerSequence": 100,
+          "LateInterestRate": 0,
+          "LatePaymentFee": "0",
+          "LoanBrokerID": "17BA85BCB5AD48791D255142C3E59C1F20C5A6E0621EF672F54D071DCAED12AA",
+          "LoanOriginationFee": "0",
+          "LoanServiceFee": "0",
+          "NetworkID": 21337,
+          "OverpaymentFee": 0,
+          "OverpaymentInterestRate": 0,
+          "PaymentInterval": 60,
+          "PaymentTotal": 1,
+          "PrincipalRequested": "1000",
+          "Sequence": 7,
+          "SigningPubKey": "",
+          "TransactionType": "LoanSet"
+        },
+        "exact_signed_transaction": {
+          "Account": "r9ddcSuxVD2VcEbbxKkWFe9JBaYZuMVY1j",
+          "CloseInterestRate": 0,
+          "ClosePaymentFee": "0",
+          "Counterparty": "rHoyKzrC9CmUMqVVn2uun8Et4ce5ha8mDA",
+          "Fee": "40",
+          "GracePeriod": 60,
+          "InterestRate": 0,
+          "LastLedgerSequence": 100,
+          "LateInterestRate": 0,
+          "LatePaymentFee": "0",
+          "LoanBrokerID": "17BA85BCB5AD48791D255142C3E59C1F20C5A6E0621EF672F54D071DCAED12AA",
+          "LoanOriginationFee": "0",
+          "LoanServiceFee": "0",
+          "NetworkID": 21337,
+          "OverpaymentFee": 0,
+          "OverpaymentInterestRate": 0,
+          "PaymentInterval": 60,
+          "PaymentTotal": 1,
+          "PrincipalRequested": "1000",
+          "Sequence": 7,
+          "Signers": [
+            {
+              "Signer": {
+                "Account": "raCYHzQbiLAmaBm8u2NuMhKwEyvuttByuA",
+                "SigningPubKey": "[PUBLIC_KEY_REDACTED]",
+                "TxnSignature": "DD213F25BFAD5B02A0BF59A11E3264A23FA93813EE92A5B9406A6892FA9FEEA7042419F1CC82F56EC3119F23333A014BD212004EEF6C2E9EF61945FE302A7E0B"
+              }
+            },
+            {
+              "Signer": {
+                "Account": "rLG4FTojy6ukJULQYaXqffoZvLeN6Mbcy9",
+                "SigningPubKey": "[PUBLIC_KEY_REDACTED]",
+                "TxnSignature": "9220144E6DB332CAB551C17DAC144017438F2002AC2C152341C25E2312EA86BADE851C9924AB731C96562DFC0F03BE2FDBEC7A120CC2EB4F1A74ABCC0A1A2F09"
+              }
+            }
+          ],
+          "SigningPubKey": "",
+          "TransactionType": "LoanSet"
+        },
+        "expect_validated": false,
+        "expected_loan_absent_before": true,
+        "expected_loan_index": "8C2203B4E8F88957F815CF2055357913C949B362BB11284321EC053A49890A86",
+        "expected_result": "temBAD_SIGNER",
+        "phase": "Investment"
+      },
+      "N4": {
+        "authorization_assertions_pass": true,
+        "broker_body_x": null,
+        "exact_finalized_body": {
+          "Account": "r9ddcSuxVD2VcEbbxKkWFe9JBaYZuMVY1j",
+          "CloseInterestRate": 0,
+          "ClosePaymentFee": "0",
+          "Counterparty": "rHoyKzrC9CmUMqVVn2uun8Et4ce5ha8mDA",
+          "Fee": "40",
+          "GracePeriod": 60,
+          "InterestRate": 0,
+          "LastLedgerSequence": 100,
+          "LateInterestRate": 0,
+          "LatePaymentFee": "0",
+          "LoanBrokerID": "17BA85BCB5AD48791D255142C3E59C1F20C5A6E0621EF672F54D071DCAED12AA",
+          "LoanOriginationFee": "0",
+          "LoanServiceFee": "0",
+          "NetworkID": 21337,
+          "OverpaymentFee": 0,
+          "OverpaymentInterestRate": 0,
+          "PaymentInterval": 60,
+          "PaymentTotal": 1,
+          "PrincipalRequested": "1000",
+          "Sequence": 7,
+          "SigningPubKey": "",
+          "TransactionType": "LoanSet"
+        },
+        "exact_signed_transaction": {
+          "Account": "r9ddcSuxVD2VcEbbxKkWFe9JBaYZuMVY1j",
+          "CloseInterestRate": 0,
+          "ClosePaymentFee": "0",
+          "Counterparty": "rHoyKzrC9CmUMqVVn2uun8Et4ce5ha8mDA",
+          "CounterpartySignature": {
+            "SigningPubKey": "[PUBLIC_KEY_REDACTED]",
+            "TxnSignature": "00"
+          },
+          "Fee": "40",
+          "GracePeriod": 60,
+          "InterestRate": 0,
+          "LastLedgerSequence": 100,
+          "LateInterestRate": 0,
+          "LatePaymentFee": "0",
+          "LoanBrokerID": "17BA85BCB5AD48791D255142C3E59C1F20C5A6E0621EF672F54D071DCAED12AA",
+          "LoanOriginationFee": "0",
+          "LoanServiceFee": "0",
+          "NetworkID": 21337,
+          "OverpaymentFee": 0,
+          "OverpaymentInterestRate": 0,
+          "PaymentInterval": 60,
+          "PaymentTotal": 1,
+          "PrincipalRequested": "1000",
+          "Sequence": 7,
+          "Signers": [
+            {
+              "Signer": {
+                "Account": "raCYHzQbiLAmaBm8u2NuMhKwEyvuttByuA",
+                "SigningPubKey": "[PUBLIC_KEY_REDACTED]",
+                "TxnSignature": "DD213F25BFAD5B02A0BF59A11E3264A23FA93813EE92A5B9406A6892FA9FEEA7042419F1CC82F56EC3119F23333A014BD212004EEF6C2E9EF61945FE302A7E0B"
+              }
+            },
+            {
+              "Signer": {
+                "Account": "rLG4FTojy6ukJULQYaXqffoZvLeN6Mbcy9",
+                "SigningPubKey": "[PUBLIC_KEY_REDACTED]",
+                "TxnSignature": "9220144E6DB332CAB551C17DAC144017438F2002AC2C152341C25E2312EA86BADE851C9924AB731C96562DFC0F03BE2FDBEC7A120CC2EB4F1A74ABCC0A1A2F09"
+              }
+            }
+          ],
+          "SigningPubKey": "",
+          "TransactionType": "LoanSet"
+        },
+        "expect_validated": false,
+        "expected_loan_absent_before": true,
+        "expected_loan_index": "8C2203B4E8F88957F815CF2055357913C949B362BB11284321EC053A49890A86",
+        "expected_result": "local invalidTransaction",
+        "phase": "Investment"
+      },
+      "N5": {
+        "authorization_assertions_pass": true,
+        "broker_body_x": {
+          "Account": "r9ddcSuxVD2VcEbbxKkWFe9JBaYZuMVY1j",
+          "CloseInterestRate": 0,
+          "ClosePaymentFee": "0",
+          "Counterparty": "rHoyKzrC9CmUMqVVn2uun8Et4ce5ha8mDA",
+          "Fee": "40",
+          "GracePeriod": 60,
+          "InterestRate": 0,
+          "LastLedgerSequence": 100,
+          "LateInterestRate": 0,
+          "LatePaymentFee": "0",
+          "LoanBrokerID": "17BA85BCB5AD48791D255142C3E59C1F20C5A6E0621EF672F54D071DCAED12AA",
+          "LoanOriginationFee": "0",
+          "LoanServiceFee": "0",
+          "NetworkID": 21337,
+          "OverpaymentFee": 0,
+          "OverpaymentInterestRate": 0,
+          "PaymentInterval": 60,
+          "PaymentTotal": 1,
+          "PrincipalRequested": "1000",
+          "Sequence": 7,
+          "SigningPubKey": "",
+          "TransactionType": "LoanSet"
+        },
+        "exact_finalized_body": {
+          "Account": "r9ddcSuxVD2VcEbbxKkWFe9JBaYZuMVY1j",
+          "CloseInterestRate": 0,
+          "ClosePaymentFee": "0",
+          "Counterparty": "rHoyKzrC9CmUMqVVn2uun8Et4ce5ha8mDA",
+          "Fee": "40",
+          "GracePeriod": 60,
+          "InterestRate": 0,
+          "LastLedgerSequence": 100,
+          "LateInterestRate": 0,
+          "LatePaymentFee": "0",
+          "LoanBrokerID": "17BA85BCB5AD48791D255142C3E59C1F20C5A6E0621EF672F54D071DCAED12AA",
+          "LoanOriginationFee": "0",
+          "LoanServiceFee": "0",
+          "NetworkID": 21337,
+          "OverpaymentFee": 0,
+          "OverpaymentInterestRate": 0,
+          "PaymentInterval": 60,
+          "PaymentTotal": 1,
+          "PrincipalRequested": "1001",
+          "Sequence": 7,
+          "SigningPubKey": "",
+          "TransactionType": "LoanSet"
+        },
+        "exact_signed_transaction": {
+          "Account": "r9ddcSuxVD2VcEbbxKkWFe9JBaYZuMVY1j",
+          "CloseInterestRate": 0,
+          "ClosePaymentFee": "0",
+          "Counterparty": "rHoyKzrC9CmUMqVVn2uun8Et4ce5ha8mDA",
+          "CounterpartySignature": {
+            "SigningPubKey": "[PUBLIC_KEY_REDACTED]",
+            "TxnSignature": "FAB49CA5E7605694E4E55723CC1A948ADE385253687E095DD798D03C97B157872B07A87C20006FF474C0D4CBD9000F202F949FD3AA2C2FC4677673C629FDED0F"
+          },
+          "Fee": "40",
+          "GracePeriod": 60,
+          "InterestRate": 0,
+          "LastLedgerSequence": 100,
+          "LateInterestRate": 0,
+          "LatePaymentFee": "0",
+          "LoanBrokerID": "17BA85BCB5AD48791D255142C3E59C1F20C5A6E0621EF672F54D071DCAED12AA",
+          "LoanOriginationFee": "0",
+          "LoanServiceFee": "0",
+          "NetworkID": 21337,
+          "OverpaymentFee": 0,
+          "OverpaymentInterestRate": 0,
+          "PaymentInterval": 60,
+          "PaymentTotal": 1,
+          "PrincipalRequested": "1001",
+          "Sequence": 7,
+          "Signers": [
+            {
+              "Signer": {
+                "Account": "raCYHzQbiLAmaBm8u2NuMhKwEyvuttByuA",
+                "SigningPubKey": "[PUBLIC_KEY_REDACTED]",
+                "TxnSignature": "3D40FB01BFAFA3B29794C2F13FA36E8A682262E6DD134F3B46763DB8B8BD948EF0E80FE7D8CA3894715C9017436FBE1281E98C3234D28E20BD7843AEF64C2F0C"
+              }
+            },
+            {
+              "Signer": {
+                "Account": "rLG4FTojy6ukJULQYaXqffoZvLeN6Mbcy9",
+                "SigningPubKey": "[PUBLIC_KEY_REDACTED]",
+                "TxnSignature": "E9C9BFB98101CCED79CCE02D2CBC5076A2268498B5256AA4647F2D8231AC4CA2ED317F03B7796AB5F55C286B1DF8CAAB045EC10AF6DF99B646144644CDADBE09"
+              }
+            }
+          ],
+          "SigningPubKey": "",
+          "TransactionType": "LoanSet"
+        },
+        "expect_validated": false,
+        "expected_loan_absent_before": true,
+        "expected_loan_index": "8C2203B4E8F88957F815CF2055357913C949B362BB11284321EC053A49890A86",
+        "expected_result": "local invalidTransaction",
+        "phase": "Investment"
+      },
+      "N6": {
+        "authorization_assertions_pass": true,
+        "broker_body_x": null,
+        "exact_finalized_body": {
+          "Account": "r9ddcSuxVD2VcEbbxKkWFe9JBaYZuMVY1j",
+          "CloseInterestRate": 0,
+          "ClosePaymentFee": "0",
+          "Counterparty": "rHoyKzrC9CmUMqVVn2uun8Et4ce5ha8mDA",
+          "Fee": "40",
+          "GracePeriod": 60,
+          "InterestRate": 0,
+          "LastLedgerSequence": 100,
+          "LateInterestRate": 0,
+          "LatePaymentFee": "0",
+          "LoanBrokerID": "E9F68287709F2CB3C9D963B87C1D17E2DD17E28B65AA89D1F5E1805F9C66D4EA",
+          "LoanOriginationFee": "0",
+          "LoanServiceFee": "0",
+          "NetworkID": 21337,
+          "OverpaymentFee": 0,
+          "OverpaymentInterestRate": 0,
+          "PaymentInterval": 60,
+          "PaymentTotal": 1,
+          "PrincipalRequested": "1000",
+          "Sequence": 7,
+          "SigningPubKey": "",
+          "TransactionType": "LoanSet"
+        },
+        "exact_signed_transaction": {
+          "Account": "r9ddcSuxVD2VcEbbxKkWFe9JBaYZuMVY1j",
+          "CloseInterestRate": 0,
+          "ClosePaymentFee": "0",
+          "Counterparty": "rHoyKzrC9CmUMqVVn2uun8Et4ce5ha8mDA",
+          "CounterpartySignature": {
+            "SigningPubKey": "[PUBLIC_KEY_REDACTED]",
+            "TxnSignature": "77732FCD3293F213F53AE9AC6AE5F00EF1322FD507887BB22CE639CBF87E8471F33BBFABE81F1D284C24BBFDD587B744355C6FFFE269D6B15E8722590D420803"
+          },
+          "Fee": "40",
+          "GracePeriod": 60,
+          "InterestRate": 0,
+          "LastLedgerSequence": 100,
+          "LateInterestRate": 0,
+          "LatePaymentFee": "0",
+          "LoanBrokerID": "E9F68287709F2CB3C9D963B87C1D17E2DD17E28B65AA89D1F5E1805F9C66D4EA",
+          "LoanOriginationFee": "0",
+          "LoanServiceFee": "0",
+          "NetworkID": 21337,
+          "OverpaymentFee": 0,
+          "OverpaymentInterestRate": 0,
+          "PaymentInterval": 60,
+          "PaymentTotal": 1,
+          "PrincipalRequested": "1000",
+          "Sequence": 7,
+          "Signers": [
+            {
+              "Signer": {
+                "Account": "raCYHzQbiLAmaBm8u2NuMhKwEyvuttByuA",
+                "SigningPubKey": "[PUBLIC_KEY_REDACTED]",
+                "TxnSignature": "B24011D7BBBA1E6C3E421F40740DB45321266DE6E54E29241F418ECF1B3B2E8199C905C6220B79204A3F3547397393DB6C7033D77CD4FA6DD10EB8C1A90BD702"
+              }
+            },
+            {
+              "Signer": {
+                "Account": "rLG4FTojy6ukJULQYaXqffoZvLeN6Mbcy9",
+                "SigningPubKey": "[PUBLIC_KEY_REDACTED]",
+                "TxnSignature": "E2890E2520A70A465D17943261316B130DA73E9D456F8FFFB03013C2C0BA2CA85D8EFA3CD0953CCED4789459939B6FC4CCC3DD656A47C7F767DE1FFDF140EB06"
+              }
+            }
+          ],
+          "SigningPubKey": "",
+          "TransactionType": "LoanSet"
+        },
+        "expect_validated": true,
+        "expected_loan_absent_before": true,
+        "expected_loan_index": "2A35AFBB57E7A43BA801D6B643AC83C3ACD7EEA5B91A49D56C2ADB14FC8C913D",
+        "expected_result": "tecTOO_SOON",
+        "phase": "Subscription"
+      }
+    },
+    "evidence_destination": "evidence/checkpoint-1e-n-live-03",
+    "full_evidence_serialization_preflight": {
+      "authorization_signing": "PASS",
+      "cases": {
+        "N1": "PASS",
+        "N2": "PASS",
+        "N3": "PASS",
+        "N4": "PASS",
+        "N5": "PASS",
+        "N6": "PASS"
+      },
+      "manifest_metadata": "PASS",
+      "phase_timing": "PASS",
+      "protected_state": "PASS",
+      "result": "PASS",
+      "result_placeholders": "PASS",
+      "serialized_sha256": "c713baed79a68e17e1702b40b6f1715e72247a36379e6ef1665e4baaab82dad3"
+    },
+    "git_commit": "d23a4eebcfe98e09eb55558b4a0248e4d46e99ae",
+    "main_fixture": {
+      "investment_entry": {
+        "close_time": 845557803,
+        "closed": true,
+        "ledger_hash": "D2CC9A1AE4991213F20935B9FFE76F3F221DEA6F2967B35193DA1E219512330B",
+        "ledger_index": 76,
+        "phase": "Investment"
+      },
+      "loan_broker_id": "17BA85BCB5AD48791D255142C3E59C1F20C5A6E0621EF672F54D071DCAED12AA",
+      "redemption_date": 845558102,
+      "subscription_date": 845557802,
+      "vault_account": "rLEdhmvw3zMAHMSebiXfT63CpekQYdRQGB",
+      "vault_id": "BD44EA75F641C020A1DE1CFC9357D641EC56765DD261D601B2AE02C14746DB17"
+    },
+    "negative_oracle_hash": "c733bffb57866efbfde5e373eded26a53e521de26742a769408e82ffc3efad13",
+    "network_id": 21337,
+    "preflight_hash": "eebaa8cb11a596f0ccb37d5ac4603b411caa170e48e68ee879f6346ffbe2bd34",
+    "rippled_source_commit": "4a4fded2eba11427c48ce3f24d9c1aea5e7a9d17",
+    "rippled_version": "3.4.0",
+    "runner_hash": "f85025e7102c79fd057c1e0050629e02d44628372d05a991bd5f8d5d4540e971",
+    "tests_hash": "ed1b1a09897cc4d24f43d0331a6c28bdb1ebb2a1c4c9ce4cbe398181cf0f4167",
+    "timing_spec_hash": "4acb653ab61374757a24800dd05a069a4d942e9fbfc3b9226f2f8d8f7b783f77",
+    "wrong_phase_fixture": {
+      "loan_broker_id": "E9F68287709F2CB3C9D963B87C1D17E2DD17E28B65AA89D1F5E1805F9C66D4EA",
+      "phase_before_negative_execution": "Subscription",
+      "redemption_date": 845558163,
+      "subscription_date": 845557863,
+      "vault_account": "rMNLHRz6YcJKMHnV6PfGiK9wqAjNsE17Lf",
+      "vault_id": "D7528A5BC4027D8B901A43EAFF987F84213477FD7C7B3550EF44BAF2387F6C87"
+    }
+  },
+  "result": "PASS"
+}

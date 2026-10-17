@@ -1,0 +1,19 @@
+{
+  "checkpoint": "1E-N",
+  "evidence_directory": "evidence/checkpoint-1e-n-live-03",
+  "frozen_files": {
+    "E6-NEGATIVE-ASSERTIONS.md": "6c8a89a94a16d1830e99e28acfc2c1fe792ad75cbb5b1050dcea3546e68cf876",
+    "E6-TIMING-ORACLE-v2.md": "4acb653ab61374757a24800dd05a069a4d942e9fbfc3b9226f2f8d8f7b783f77",
+    "evidence/checkpoint-1e-n-live-02/amendments-ledger-entry.json": "196b963834f27928fe6839231b1f8f1d15311dddfb4a54689f0e9c16d8377f88",
+    "evidence/checkpoint-1e-n-live-02/feature-raw.json": "69e43df7637a7be0b1a1b02d18c1b89c5517ddc849e341ccc05a920800b07844",
+    "evidence/checkpoint-1e-n/environment-start.json": "f717df029356afac8c5d8ffc7eee9810b951f5a691ee23dc9511ae90c4a88d01",
+    "scripts/e6_negative_oracle.py": "c733bffb57866efbfde5e373eded26a53e521de26742a769408e82ffc3efad13",
+    "scripts/run_checkpoint_1e_n.py": "f85025e7102c79fd057c1e0050629e02d44628372d05a991bd5f8d5d4540e971",
+    "tests/test_checkpoint_1e_n.py": "ed1b1a09897cc4d24f43d0331a6c28bdb1ebb2a1c4c9ce4cbe398181cf0f4167",
+    "tests/test_checkpoint_1e_nr.py": "4da47dae1bdf32dd3772d71c488db6bee31884bdf9d9ef8602cb6366c64c8d64",
+    "tests/test_checkpoint_1e_nr2.py": "422531f154a7e98709fed8904c300faa99fadc1e4cd96dbf24f7126d80a68f0b"
+  },
+  "git_commit_at_run_start": "d23a4eebcfe98e09eb55558b4a0248e4d46e99ae",
+  "preflight_sha256": "eebaa8cb11a596f0ccb37d5ac4603b411caa170e48e68ee879f6346ffbe2bd34",
+  "rippled_source_commit": "4a4fded2eba11427c48ce3f24d9c1aea5e7a9d17"
+}

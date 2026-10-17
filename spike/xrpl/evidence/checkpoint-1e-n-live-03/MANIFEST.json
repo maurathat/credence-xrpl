@@ -1,0 +1,216 @@
+{
+  "algorithm": "SHA-256",
+  "file_count": 42,
+  "files": [
+    {
+      "bytes": 1004,
+      "path": "actors-public.json",
+      "sha256": "75953713eddfb79c702ba148d0eea1a88287546b11e92f6e8ec00cfccb7c9d2c"
+    },
+    {
+      "bytes": 1074,
+      "path": "amendments-ledger-entry.json",
+      "sha256": "6f5b8f1e263cd9dca597126b86d3523ab567667f734a221014cc714988c93dbc"
+    },
+    {
+      "bytes": 8215,
+      "path": "environment-start.json",
+      "sha256": "f882e106452810797b89f774e408a4f8ac31bf8ede4b40c5022a497a950d36cf"
+    },
+    {
+      "bytes": 336120,
+      "path": "experiment-summary.json",
+      "sha256": "b1198f2cd12307a83c86c2b4e3931c6c10b7921a5fa0f5fa098870b6ce099e06"
+    },
+    {
+      "bytes": 19677,
+      "path": "feature-raw.json",
+      "sha256": "69e43df7637a7be0b1a1b02d18c1b89c5517ddc849e341ccc05a920800b07844"
+    },
+    {
+      "bytes": 11427,
+      "path": "investment-entry.json",
+      "sha256": "12ca3c92077419dd9bd66abc52d7dc81f0618934dd39161bcf3b5c88347f8fe5"
+    },
+    {
+      "bytes": 44888,
+      "path": "ledger-closes.json",
+      "sha256": "c0312a281da6598b58a7897479c3b02a397f0a9c92cfbf11a94f4d181720839a"
+    },
+    {
+      "bytes": 23683,
+      "path": "live-bindings.json",
+      "sha256": "b9b0f128ecff0ad177cca70ccdae2c03a41573498a94d7ffadd26f6f0fc6dfcb"
+    },
+    {
+      "bytes": 1898,
+      "path": "pre-live-provenance.json",
+      "sha256": "2c3836dad15e3b40d15f078e040bd091eeeb317aa3428b79653861b2fe849770"
+    },
+    {
+      "bytes": 6897,
+      "path": "preflight.json",
+      "sha256": "eebaa8cb11a596f0ccb37d5ac4603b411caa170e48e68ee879f6346ffbe2bd34"
+    },
+    {
+      "bytes": 6429,
+      "path": "prerequisite-state.json",
+      "sha256": "88dbc188f27d9140e1bf766f6703f40d333122f4437a5860938a224955cde23a"
+    },
+    {
+      "bytes": 1458,
+      "path": "provenance.json",
+      "sha256": "357b50f8be92c4ee4a9710d3d172caf9dc6f4405305e0e0e5aad4829923619da"
+    },
+    {
+      "bytes": 787,
+      "path": "redaction-summary.json",
+      "sha256": "c083d83e30500937ee94bd283d36054be49592ed2353a809731e36987df01aee"
+    },
+    {
+      "bytes": 2886,
+      "path": "stop-summary.json",
+      "sha256": "f37122d1e775cb8683ac4b8667a48b7ee137cf40ada4139b8ca821fd3ff63140"
+    },
+    {
+      "bytes": 3657,
+      "path": "transactions/01-fund_issuer.json",
+      "sha256": "ecf4ae5d6d85d07cd45db68c35810f06a0e45c31e86d74e51f755ab62e01d486"
+    },
+    {
+      "bytes": 3789,
+      "path": "transactions/02-fund_lender.json",
+      "sha256": "2d69ad626092b45d451eec733c64b159089f023707e73ffc82a90160e48253f7"
+    },
+    {
+      "bytes": 3793,
+      "path": "transactions/03-fund_borrower.json",
+      "sha256": "7cfa9ed5218fcf987a0494c7d6ce662ec8b7c16ea76d693caf45dd139a7b39ff"
+    },
+    {
+      "bytes": 3801,
+      "path": "transactions/04-fund_research_bot.json",
+      "sha256": "20de7809a132f0dc8b1a67e7b91a2355ad08eac1a38691d35cb07f53eff035e3"
+    },
+    {
+      "bytes": 3807,
+      "path": "transactions/05-fund_credence_policy.json",
+      "sha256": "79d5eda32f84f090dbff2dd972a0e7703eb6abc8be8474e9e488b050cf9622af"
+    },
+    {
+      "bytes": 3801,
+      "path": "transactions/06-fund_broker_owner.json",
+      "sha256": "b2e9a07a85ccd62693e8f93e823b0eac04dabe31bc5a5f2dc9c04798ab75f65c"
+    },
+    {
+      "bytes": 3521,
+      "path": "transactions/07-issuer_enable_default_ripple.json",
+      "sha256": "cf42776ff8f1b0d8e5806a4bce3c68e0e8ce94ef04c5d3701934a9ccfe7eaf1d"
+    },
+    {
+      "bytes": 5447,
+      "path": "transactions/08-lender_trust_tRLUSD.json",
+      "sha256": "d84cc319077c64c92cd48cfc6f695b824d9f318c50edefbc92ce7fba67dd1b25"
+    },
+    {
+      "bytes": 5482,
+      "path": "transactions/09-borrower_trust_tRLUSD.json",
+      "sha256": "b529ed65aaa86940879ae649651d25bbd365ce40f0be8dd1a231b861f8a6e51d"
+    },
+    {
+      "bytes": 5490,
+      "path": "transactions/10-broker_owner_trust_tRLUSD.json",
+      "sha256": "3db19aec17fc5516518ba45a3b287f583f8c726f96ffc7d53623fddfd92ab414"
+    },
+    {
+      "bytes": 5011,
+      "path": "transactions/11-issue_tRLUSD_to_lender.json",
+      "sha256": "ecdbe97b62e35acb7081b9c514648ccda23506558962e89c254518c277d67375"
+    },
+    {
+      "bytes": 5014,
+      "path": "transactions/12-issue_tRLUSD_to_broker_owner.json",
+      "sha256": "de2a6bfbb5939fad288b3a35f67b460f825e042add6f36d4f0df6e00f5ed01ab"
+    },
+    {
+      "bytes": 7747,
+      "path": "transactions/13-borrower_set_2_of_2_signer_list.json",
+      "sha256": "7093f23476013d281d4d9e8eb86a4b76df7beec673f7f488011ade5985ab0efe"
+    },
+    {
+      "bytes": 11231,
+      "path": "transactions/14-negative_investment_create_closed_vault.json",
+      "sha256": "683afb1fcdb5741acc2ce4ccfd46fb1b3de2b147364c78ebcc8a9783bd3b491d"
+    },
+    {
+      "bytes": 10893,
+      "path": "transactions/15-negative_investment_deposit_vault_assets.json",
+      "sha256": "c2bfea1e0fff676062e9e10d669cdaa6d536e5bdb0098eeeb3ac27b609b3b065"
+    },
+    {
+      "bytes": 12552,
+      "path": "transactions/16-negative_investment_create_loan_broker.json",
+      "sha256": "1591d5f8c91e03f207c3458d3ffd5a9a71c384c5e826d849e0a61dde156435e9"
+    },
+    {
+      "bytes": 8520,
+      "path": "transactions/17-negative_investment_deposit_first_loss_cover.json",
+      "sha256": "661a2971d46e06cdd7de4f96e66fc0f22d796d668f6280fe00e2602e5606eded"
+    },
+    {
+      "bytes": 15431,
+      "path": "transactions/18-negative_subscription_create_closed_vault.json",
+      "sha256": "f03f84bb637a582fdbb7c7c698497026c585b5a979a1704eb8853f684e682af9"
+    },
+    {
+      "bytes": 10887,
+      "path": "transactions/19-negative_subscription_deposit_vault_assets.json",
+      "sha256": "a58d2d05a028ca0c91873e79d1ca85798293160829f9c9c59425f6fe3f0fdf95"
+    },
+    {
+      "bytes": 16749,
+      "path": "transactions/20-negative_subscription_create_loan_broker.json",
+      "sha256": "d86fc9805ce60523d874d5790cf0f7e42361f8085800f05c6011b6e1fbf72e06"
+    },
+    {
+      "bytes": 8514,
+      "path": "transactions/21-negative_subscription_deposit_first_loss_cover.json",
+      "sha256": "838a6f7392f4a0297da29ae306cf458e47d82b31a9164462720b59b92848ba75"
+    },
+    {
+      "bytes": 25573,
+      "path": "transactions/22-n1_research_bot_alone.json",
+      "sha256": "d5abcf55c9c46e859bf30f3d9fea73b55f0a895a78c3590c0195fe335cb57bdf"
+    },
+    {
+      "bytes": 25576,
+      "path": "transactions/23-n2_credence_policy_alone.json",
+      "sha256": "5406ce2e9d1b2551de9cae0a9d7ee1d3ced389c5bdca41fc036d8b5fdaa8f409"
+    },
+    {
+      "bytes": 28475,
+      "path": "transactions/24-n3_missing_counterparty_signature.json",
+      "sha256": "d2d6c59145472419ac74c83950cb3bac41f3e35b8d85a5ae38edff483da6d581"
+    },
+    {
+      "bytes": 26575,
+      "path": "transactions/25-n4_invalid_counterparty_signature.json",
+      "sha256": "61504bd5274815ce113566c4bc16681166b6b15825b82db41e0c58c4facd08a7"
+    },
+    {
+      "bytes": 27554,
+      "path": "transactions/26-n5_altered_principal_reuses_counterparty_signature.json",
+      "sha256": "5b79d4cb81c732264f9d1d839e4e1c4f21dc3e40cd03a5f607bfe9fa0bb829fa"
+    },
+    {
+      "bytes": 29928,
+      "path": "transactions/27-n6_subscription_phase.json",
+      "sha256": "8e16eabdf83750f152a42c5d77df8cb49c6e7351e01e4440fe7fec4e698ab21c"
+    },
+    {
+      "bytes": 29928,
+      "path": "unexpected-result.json",
+      "sha256": "8e16eabdf83750f152a42c5d77df8cb49c6e7351e01e4440fe7fec4e698ab21c"
+    }
+  ]
+}

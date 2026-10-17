@@ -1,3 +1,139 @@
+# Checkpoint 1E-N-LIVE-03 — final E6 negative control run
+
+## Outcome
+
+**STOP / BLOCKED — N1-N5 passed their frozen negative specifications, but N6
+contradicted its required validation disposition. rippled returned
+`tecTOO_SOON` at submission without validating the transaction or consuming
+the frozen fee and sequence effects. The runner stopped without retry or
+harness modification.**
+
+The checkpoint began at clean commit
+`d23a4eebcfe98e09eb55558b4a0248e4d46e99ae`, descended from checkpoint-0,
+with unchanged submodule gitlinks. This was the one authorized execution of
+the final generalized E6 negative harness.
+
+## Preserved classifications
+
+- E1/E2 remain **PASS/FROZEN**.
+- E3/E4 remain **PASS/RETIRED** within tested scope.
+- E5 remains **PASS**.
+- Historical E6 remains **FAIL**.
+- Historical positive authorization composition remains **SUPPORTED**.
+- Historical positive timing remains **SOURCE_CONFORMANT**; the historical
+  timing oracle remains **ORACLE_DEFECT**.
+- Historical interrupted N1 remains **BLOCKED_AFTER_SUBMISSION** without a
+  protocol verdict.
+- E6 authorization architecture remains **NOT_VALIDATED**.
+- E7-E9 remain **NOT_ATTEMPTED**.
+
+## Frozen provenance and pre-live gate
+
+The complete A-J production preflight passed before xrpld started. F1-F12 plus
+the provenance regression passed (13 tests), S1-S12 passed (12), prospective
+negative tests passed (14), and historical E6 tests passed (40). The A-J
+serialized fixture digest was
+`1f208622281c5079e5eb425f94bbd98395c80dbececfbf2689ac1a6d661d6385`;
+the persisted preflight record digest was
+`eebaa8cb11a596f0ccb37d5ac4603b411caa170e48e68ee879f6346ffbe2bd34`.
+The destination was exactly `evidence/checkpoint-1e-n-live-03`.
+
+| Frozen artifact | SHA-256 |
+| --- | --- |
+| `E6-NEGATIVE-ASSERTIONS.md` | `6c8a89a94a16d1830e99e28acfc2c1fe792ad75cbb5b1050dcea3546e68cf876` |
+| `E6-TIMING-ORACLE-v2.md` | `4acb653ab61374757a24800dd05a069a4d942e9fbfc3b9226f2f8d8f7b783f77` |
+| `scripts/e6_negative_oracle.py` | `c733bffb57866efbfde5e373eded26a53e521de26742a769408e82ffc3efad13` |
+| `scripts/run_checkpoint_1e_n.py` | `f85025e7102c79fd057c1e0050629e02d44628372d05a991bd5f8d5d4540e971` |
+| `scripts/harness.py` | `c0315d45366bdfcbeee97b14cc13cf094614130b14e7a2c36443a62ee14587cf` |
+| `tests/test_checkpoint_1e.py` | `62fc387509da9bc52056e997e4becbc1cb4baf81af6c5266c6303a92e9ccd384` |
+| `tests/test_checkpoint_1e_n.py` | `ed1b1a09897cc4d24f43d0331a6c28bdb1ebb2a1c4c9ce4cbe398181cf0f4167` |
+| `tests/test_checkpoint_1e_nr.py` | `4da47dae1bdf32dd3772d71c488db6bee31884bdf9d9ef8602cb6366c64c8d64` |
+| `tests/test_checkpoint_1e_nr2.py` | `422531f154a7e98709fed8904c300faa99fadc1e4cd96dbf24f7126d80a68f0b` |
+| `tests/test_checkpoint_1e_r1.py` | `4d494d696bdf8c342ef1cbdabcd34502117192215f0d7ed206085c1252953d0a` |
+
+## Environment and prerequisite state
+
+The fresh standalone environment used pinned rippled 3.4.0, source commit
+`4a4fded2eba11427c48ce3f24d9c1aea5e7a9d17`, and network ID 21337. All eight
+required amendments were supported, enabled, present in the Amendments ledger
+entry, and cross-checked without disagreement. Environment evidence persisted
+successfully; only `server_info.validated_ledger.base_fee_xrp` used the frozen
+NR2 telemetry normalization.
+
+All 21 prerequisite transactions passed and persisted the required issuer,
+tRLUSD state, actors, 2-of-2 borrower SignerList, closed-ended Vaults, Loan
+Brokers, cover, and phase state. No positive LoanSet was submitted.
+
+## Negative-control results
+
+| Case | Frozen expectation | Observation | State | Result |
+| --- | --- | --- | --- | --- |
+| N1 | `tefBAD_QUORUM` | `tefBAD_QUORUM`, ResearchBot alone | unchanged | **PASS** |
+| N2 | `tefBAD_QUORUM` | `tefBAD_QUORUM`, Credence alone | unchanged | **PASS** |
+| N3 | `temBAD_SIGNER` | `temBAD_SIGNER`, broker authorization absent | unchanged | **PASS** |
+| N4 | local `invalidTransaction` | local `invalidTransaction`, broker signature invalid | unchanged | **PASS** |
+| N5 | local `invalidTransaction` | local `invalidTransaction`; broker-authorized X=`1000`, submitted Y=`1001` | unchanged | **PASS** |
+| N6 | validated `tecTOO_SOON` | submission-level `tecTOO_SOON`; not validated | lending state unchanged; fee/sequence effects absent | **FAIL** |
+
+N1 and N2 each demonstrated that one borrower signer was insufficient, with
+the other signer and borrower master signature absent. N3 demonstrated that a
+valid borrower 2-of-2 authorization was insufficient without broker-owner
+authorization. N4 established a present but invalid broker signature. N5
+established valid borrower authorization for Y, valid broker authorization for
+X, reuse of X's signature, and failed broker verification for Y.
+
+N6 ran in Subscription. Its parent ledger was 83 at close time `845557810`;
+the following ledger was 84 at `845557811`. The source-derived applying-view
+header close time was `845557820`, SubscriptionDate was `845557863`, and
+RedemptionDate was `845558163`. The engine result string matched, but the
+transaction was not found validated, `accepted_transaction_date` was null,
+borrower Sequence changed by 0 rather than 1, and the XRP fee debit was 0
+rather than 40 drops. N6 passed 19 of 22 assertions and failed exactly those
+three validation-effect assertions.
+
+This is classified
+**FROZEN_N6_VALIDATION_DISPOSITION_CONTRADICTION**. It is not a new evidence
+serialization or packaging defect. No retry, correction, positive LoanSet,
+LoanPay, or E7-E9 transaction was attempted after STOP.
+
+## Verdict and recommendation
+
+The E6 authorization architecture remains **NOT_VALIDATED** because all six
+frozen controls did not pass. It must not be used for product integration.
+E7-E9 must not begin. The frozen N6 validation expectation requires
+adjudication before any separately authorized future experiment; this final
+generalized harness is not to be repaired or rerun.
+
+During fail-closed packaging, 15 public `SigningPubKey` values and 35 public
+signing-payload digests were replaced with explicit redaction markers so the
+repository's key-shape secrets gate remained fail closed. No seed or private
+key was found. Signer identities, signature-validity and body-binding
+assertions, results, state, and timing remain in the evidence. No source or
+harness artifact was changed.
+
+## Evidence and gates
+
+Evidence is confined to `evidence/checkpoint-1e-n-live-03/`, including the 27
+transaction records, STOP record, public authorization evidence, timing,
+environment, provenance, redaction record, and SHA-256 manifest. The manifest
+covers 42 payload files totaling 815,189 bytes and verifies.
+Historical evidence directories are unchanged.
+
+Post-STOP gates passed: F1-F12 plus provenance (13), S1-S12 (12), prospective
+negative tests (14), historical E6 tests (40), all spike tests (181),
+repository unit tests (17), conformance tests (4), lint, formatting,
+large-file check, strict typecheck, secrets scan, JSON validation, all
+manifests, historical-evidence immutability, frozen-provenance verification,
+authorized paths, and `git diff --check`.
+
+## Modified paths
+
+- `spike/xrpl/REPORT.md`
+- `spike/xrpl/RESULTS.json`
+- `spike/xrpl/evidence/checkpoint-1e-n-live-03/`
+
+---
+
 # Checkpoint 1E-NR2 — environment evidence serialization repair
 
 ## Outcome

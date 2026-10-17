@@ -1,8 +1,175 @@
 {
-  "schema_version": 22,
+  "schema_version": 23,
   "overall": "FAIL",
-  "scope": "Checkpoint 1E-NR2 repaired the environment evidence boundary and complete pre-transaction preflight offline; protocol classifications remain unchanged",
-  "start_commit": "6917f556e9969a5767cf7cb99765158ff1cf8714",
+  "scope": "Checkpoint 1E-N-LIVE-03 executed the final frozen E6 negative campaign; N1-N5 passed and N6 stopped on a validation-disposition contradiction",
+  "start_commit": "d23a4eebcfe98e09eb55558b4a0248e4d46e99ae",
+  "checkpoint_1e_n_live_03": {
+    "outcome": "STOP/BLOCKED",
+    "classification": "FROZEN_N6_VALIDATION_DISPOSITION_CONTRADICTION",
+    "start_commit": "d23a4eebcfe98e09eb55558b4a0248e4d46e99ae",
+    "historical_classifications": {
+      "E1_E2": "PASS/FROZEN",
+      "E3_E4": "PASS/RETIRED within tested scope",
+      "E5": "PASS",
+      "historical_E6": "FAIL",
+      "positive_authorization_composition": "SUPPORTED",
+      "positive_timing": "SOURCE_CONFORMANT",
+      "historical_timing_oracle": "ORACLE_DEFECT",
+      "historical_N1": "BLOCKED_AFTER_SUBMISSION",
+      "E7_E9": "NOT_ATTEMPTED"
+    },
+    "pre_live_gates": {
+      "complete_A_J_serialization": "PASS",
+      "serialized_fixture_sha256": "1f208622281c5079e5eb425f94bbd98395c80dbececfbf2689ac1a6d661d6385",
+      "persisted_preflight_sha256": "eebaa8cb11a596f0ccb37d5ac4603b411caa170e48e68ee879f6346ffbe2bd34",
+      "F1_F12_and_provenance": "PASS (13)",
+      "S1_S12": "PASS (12)",
+      "prospective_negative_tests": "PASS (14)",
+      "historical_E6_tests": "PASS (40)",
+      "evidence_destination": "evidence/checkpoint-1e-n-live-03"
+    },
+    "frozen_provenance": {
+      "E6-NEGATIVE-ASSERTIONS.md": "6c8a89a94a16d1830e99e28acfc2c1fe792ad75cbb5b1050dcea3546e68cf876",
+      "E6-TIMING-ORACLE-v2.md": "4acb653ab61374757a24800dd05a069a4d942e9fbfc3b9226f2f8d8f7b783f77",
+      "scripts/e6_negative_oracle.py": "c733bffb57866efbfde5e373eded26a53e521de26742a769408e82ffc3efad13",
+      "scripts/run_checkpoint_1e_n.py": "f85025e7102c79fd057c1e0050629e02d44628372d05a991bd5f8d5d4540e971",
+      "scripts/harness.py": "c0315d45366bdfcbeee97b14cc13cf094614130b14e7a2c36443a62ee14587cf",
+      "tests/test_checkpoint_1e.py": "62fc387509da9bc52056e997e4becbc1cb4baf81af6c5266c6303a92e9ccd384",
+      "tests/test_checkpoint_1e_n.py": "ed1b1a09897cc4d24f43d0331a6c28bdb1ebb2a1c4c9ce4cbe398181cf0f4167",
+      "tests/test_checkpoint_1e_nr.py": "4da47dae1bdf32dd3772d71c488db6bee31884bdf9d9ef8602cb6366c64c8d64",
+      "tests/test_checkpoint_1e_nr2.py": "422531f154a7e98709fed8904c300faa99fadc1e4cd96dbf24f7126d80a68f0b",
+      "tests/test_checkpoint_1e_r1.py": "4d494d696bdf8c342ef1cbdabcd34502117192215f0d7ed206085c1252953d0a"
+    },
+    "environment": {
+      "rippled_version": "3.4.0",
+      "source_commit": "4a4fded2eba11427c48ce3f24d9c1aea5e7a9d17",
+      "network_id": 21337,
+      "fresh_volume": true,
+      "required_amendments": "PASS (8 supported and enabled; feature and ledger entry agree)",
+      "environment_evidence_persisted": true,
+      "normalized_field": "$.server_info.validated_ledger.base_fee_xrp"
+    },
+    "prerequisites": {
+      "transactions": "PASS (21)",
+      "positive_loanset_submitted": false,
+      "required_actor_and_lending_state_persisted": true,
+      "investment_fixture_phase": "Investment",
+      "wrong_phase_fixture_phase": "Subscription"
+    },
+    "negative_results": {
+      "N1": {
+        "status": "PASS",
+        "expected": "tefBAD_QUORUM",
+        "observed": "tefBAD_QUORUM",
+        "validated": false,
+        "protected_state": "UNCHANGED"
+      },
+      "N2": {
+        "status": "PASS",
+        "expected": "tefBAD_QUORUM",
+        "observed": "tefBAD_QUORUM",
+        "validated": false,
+        "protected_state": "UNCHANGED"
+      },
+      "N3": {
+        "status": "PASS",
+        "expected": "temBAD_SIGNER",
+        "observed": "temBAD_SIGNER",
+        "validated": false,
+        "protected_state": "UNCHANGED"
+      },
+      "N4": {
+        "status": "PASS",
+        "expected": "local invalidTransaction",
+        "observed": "local invalidTransaction",
+        "validated": false,
+        "protected_state": "UNCHANGED"
+      },
+      "N5": {
+        "status": "PASS",
+        "expected": "local invalidTransaction",
+        "observed": "local invalidTransaction",
+        "validated": false,
+        "broker_authorized_principal": "1000",
+        "submitted_principal": "1001",
+        "borrower_authorization_for_submitted_body": "VALID",
+        "broker_authorization_for_submitted_body": "INVALID",
+        "protected_state": "UNCHANGED"
+      },
+      "N6": {
+        "status": "FAIL",
+        "expected": "validated tecTOO_SOON",
+        "observed": "submission-level tecTOO_SOON",
+        "validated": false,
+        "phase": "Subscription",
+        "parent_close_time": 845557810,
+        "following_close_time": 845557811,
+        "source_derived_applying_view_close_time": 845557820,
+        "subscription_date": 845557863,
+        "redemption_date": 845558163,
+        "accepted_transaction_date": null,
+        "actual_sequence_increment": 0,
+        "expected_sequence_increment": 1,
+        "actual_fee_debit_drops": 0,
+        "expected_fee_debit_drops": 40,
+        "protected_lending_state": "UNCHANGED",
+        "assertions": "19 PASS, 3 FAIL"
+      }
+    },
+    "authorization_findings": {
+      "borrower_2_of_2": "N1 and N2 each failed quorum alone; N3-N6 record valid ResearchBot plus Credence authorization with no borrower master signature",
+      "broker": "N3 rejected absent authorization; N4 rejected invalid authorization; N5 established authorization bound to principal 1000 and invalid after mutation to 1001",
+      "historical_positive": "validated tesSUCCESS; composition SUPPORTED; timing SOURCE_CONFORMANT"
+    },
+    "evidence_redaction": {
+      "public_SigningPubKey_values": 15,
+      "public_signing_payload_hashes": 35,
+      "private_keys_found": 0,
+      "seeds_found": 0,
+      "semantic_assertions_preserved": true,
+      "source_artifacts_modified": false
+    },
+    "protected_state_findings": "N1-N5 complete protected state unchanged. N6 lending state unchanged, but the frozen validated-tec fee and sequence effects were absent.",
+    "execution": {
+      "runner_executions": 1,
+      "prerequisite_transactions": 21,
+      "negative_cases_attempted": 6,
+      "retry_attempted": false,
+      "frozen_harness_modified_after_xrpld_start": false,
+      "positive_loanset_submitted": false,
+      "loan_pay_submitted": false,
+      "E7_E8_E9": "NOT_ATTEMPTED"
+    },
+    "E6_authorization_architecture": "NOT_VALIDATED",
+    "product_integration_recommendation": "DO NOT USE",
+    "E7_E8_E9_recommendation": "DO NOT BEGIN",
+    "minimum_next_work": "Adjudicate the frozen N6 validation expectation before authorizing any further experiment; do not repair or rerun the generalized harness.",
+    "evidence": {
+      "directory": "evidence/checkpoint-1e-n-live-03",
+      "algorithm": "SHA-256",
+      "file_count": 42,
+      "total_bytes": 815189,
+      "manifest_verified": true,
+      "historical_evidence_modified": false
+    },
+    "gates": {
+      "F1_F12_and_provenance": "PASS (13)",
+      "S1_S12": "PASS (12)",
+      "prospective_negative_tests": "PASS (14)",
+      "historical_E6_tests": "PASS (40)",
+      "all_spike_tests": "PASS (181)",
+      "repository_unit_tests": "PASS (17)",
+      "conformance_tests": "PASS (4)",
+      "lint_format_large_file": "PASS",
+      "strict_typecheck": "PASS (25 source files)",
+      "secrets_scan": "PASS",
+      "json_and_manifests": "PASS",
+      "historical_evidence_immutability": "PASS",
+      "frozen_provenance": "PASS",
+      "authorized_paths": "PASS",
+      "git_diff_check": "PASS"
+    }
+  },
   "checkpoint_1e_nr2": {
     "outcome": "PASS",
     "mode": "FINAL_HARNESS_REPAIR_ZERO_XRPL_TRANSACTIONS",

@@ -1,0 +1,158 @@
+{
+  "after_state": {
+    "balance": "200000"
+  },
+  "before_state": {
+    "balance": "0"
+  },
+  "classification": {
+    "status": "PASS"
+  },
+  "expected_result": "tesSUCCESS",
+  "experiment": "SETUP",
+  "label": "issue_tRLUSD_to_lender",
+  "public_transaction": {
+    "Account": "rn9x3HEH3aSWkNekUKkMydkC1LfBYSDsU6",
+    "Amount": {
+      "currency": "74524C5553440000000000000000000000000000",
+      "issuer": "rn9x3HEH3aSWkNekUKkMydkC1LfBYSDsU6",
+      "value": "200000"
+    },
+    "Destination": "rMMebS6CkYYLUdHuH5KCgB8HKjzB5uffuc",
+    "Fee": "10",
+    "LastLedgerSequence": 32,
+    "NetworkID": 21337,
+    "Sequence": 4,
+    "TransactionType": "Payment"
+  },
+  "state_assertions": [
+    {
+      "actual": "200000",
+      "expected": "200000",
+      "name": "lender tRLUSD balance",
+      "passed": true
+    }
+  ],
+  "submission_response": {
+    "accepted": true,
+    "account_sequence_available": 5,
+    "account_sequence_next": 5,
+    "applied": true,
+    "broadcast": true,
+    "engine_result": "tesSUCCESS",
+    "engine_result_code": 0,
+    "engine_result_message": "The transaction was applied. Only final in a validated ledger.",
+    "kept": true,
+    "open_ledger_cost": "10",
+    "queued": false,
+    "status": "success",
+    "tx_json": {
+      "Account": "rn9x3HEH3aSWkNekUKkMydkC1LfBYSDsU6",
+      "Amount": {
+        "currency": "74524C5553440000000000000000000000000000",
+        "issuer": "rn9x3HEH3aSWkNekUKkMydkC1LfBYSDsU6",
+        "value": "200000"
+      },
+      "Destination": "rMMebS6CkYYLUdHuH5KCgB8HKjzB5uffuc",
+      "Fee": "10",
+      "LastLedgerSequence": 32,
+      "NetworkID": 21337,
+      "Sequence": 4,
+      "TransactionType": "Payment",
+      "hash": "122ADE5A49FBB292A38B10C4AAA2A4493CCD745F651F10DD85B36DD430DEBB63"
+    },
+    "validated_ledger_index": 12
+  },
+  "validated_result": "tesSUCCESS",
+  "validated_transaction_response": {
+    "Account": "rn9x3HEH3aSWkNekUKkMydkC1LfBYSDsU6",
+    "Amount": {
+      "currency": "74524C5553440000000000000000000000000000",
+      "issuer": "rn9x3HEH3aSWkNekUKkMydkC1LfBYSDsU6",
+      "value": "200000"
+    },
+    "DeliverMax": {
+      "currency": "74524C5553440000000000000000000000000000",
+      "issuer": "rn9x3HEH3aSWkNekUKkMydkC1LfBYSDsU6",
+      "value": "200000"
+    },
+    "Destination": "rMMebS6CkYYLUdHuH5KCgB8HKjzB5uffuc",
+    "Fee": "10",
+    "LastLedgerSequence": 32,
+    "NetworkID": 21337,
+    "Sequence": 4,
+    "TransactionType": "Payment",
+    "ctid": "C000000D00005359",
+    "date": 845557740,
+    "hash": "122ADE5A49FBB292A38B10C4AAA2A4493CCD745F651F10DD85B36DD430DEBB63",
+    "inLedger": 13,
+    "ledger_index": 13,
+    "meta": {
+      "AffectedNodes": [
+        {
+          "ModifiedNode": {
+            "FinalFields": {
+              "Account": "rn9x3HEH3aSWkNekUKkMydkC1LfBYSDsU6",
+              "Balance": "999999980",
+              "Flags": 8388608,
+              "OwnerCount": 0,
+              "Sequence": 5
+            },
+            "LedgerEntryType": "AccountRoot",
+            "LedgerIndex": "86B9496B95903F77755FA722A717725913D33954CCEAB71B69D865E1250E7B0A",
+            "PreviousFields": {
+              "Balance": "999999990",
+              "Sequence": 4
+            },
+            "PreviousTxnID": "0BD189764646984DF0C3485293C521909E2330BF82D84FA0C29FB3C39632F18B",
+            "PreviousTxnLgrSeq": 12
+          }
+        },
+        {
+          "ModifiedNode": {
+            "FinalFields": {
+              "Balance": {
+                "currency": "74524C5553440000000000000000000000000000",
+                "issuer": "rrrrrrrrrrrrrrrrrrrrBZbvji",
+                "value": "-200000"
+              },
+              "Flags": 131072,
+              "HighLimit": {
+                "currency": "74524C5553440000000000000000000000000000",
+                "issuer": "rMMebS6CkYYLUdHuH5KCgB8HKjzB5uffuc",
+                "value": "1000000"
+              },
+              "HighNode": "0",
+              "LowLimit": {
+                "currency": "74524C5553440000000000000000000000000000",
+                "issuer": "rn9x3HEH3aSWkNekUKkMydkC1LfBYSDsU6",
+                "value": "0"
+              },
+              "LowNode": "0"
+            },
+            "LedgerEntryType": "RippleState",
+            "LedgerIndex": "9D8C78D86A1B1125B841853AF1E4FE96CDDEE88C88DC9D50E9E44DC9AB4850A0",
+            "PreviousFields": {
+              "Balance": {
+                "currency": "74524C5553440000000000000000000000000000",
+                "issuer": "rrrrrrrrrrrrrrrrrrrrBZbvji",
+                "value": "0"
+              }
+            },
+            "PreviousTxnID": "A82152BE8639A6860945FC899DB10248F3FA964FBB4A4D03CB0F76570E15FC77",
+            "PreviousTxnLgrSeq": 10
+          }
+        }
+      ],
+      "TransactionIndex": 0,
+      "TransactionResult": "tesSUCCESS",
+      "delivered_amount": {
+        "currency": "74524C5553440000000000000000000000000000",
+        "issuer": "rn9x3HEH3aSWkNekUKkMydkC1LfBYSDsU6",
+        "value": "200000"
+      }
+    },
+    "status": "success",
+    "validated": true
+  }
+}

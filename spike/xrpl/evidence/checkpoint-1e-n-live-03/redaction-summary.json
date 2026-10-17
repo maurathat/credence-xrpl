@@ -1,0 +1,26 @@
+{
+  "checkpoint": "1E-N-LIVE-03",
+  "evidence_semantics_preserved": [
+    "signer identities",
+    "signature validity assertions",
+    "serialized body binding assertions",
+    "N5 principal mutation assertions",
+    "transaction results",
+    "protected state",
+    "timing"
+  ],
+  "private_keys_found": 0,
+  "redactions": {
+    "public_signing_payload_hashes": {
+      "count": 35,
+      "replacement": "[PUBLIC_HASH_REDACTED]"
+    },
+    "public_signing_keys": {
+      "count": 15,
+      "replacement": "[PUBLIC_KEY_REDACTED]"
+    }
+  },
+  "reason": "Repository secrets policy rejects key-shaped public fields. These public derived values were redacted during fail-closed evidence packaging after the live runner stopped.",
+  "seeds_found": 0,
+  "source_artifacts_modified": false
+}

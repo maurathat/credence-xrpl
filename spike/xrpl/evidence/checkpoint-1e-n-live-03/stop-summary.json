@@ -1,0 +1,84 @@
+{
+  "architecture_classification": "NOT_VALIDATED",
+  "case_results": {
+    "N1": {
+      "expected": "tefBAD_QUORUM",
+      "observed": "tefBAD_QUORUM",
+      "protected_state": "UNCHANGED",
+      "status": "PASS",
+      "validated": false
+    },
+    "N2": {
+      "expected": "tefBAD_QUORUM",
+      "observed": "tefBAD_QUORUM",
+      "protected_state": "UNCHANGED",
+      "status": "PASS",
+      "validated": false
+    },
+    "N3": {
+      "expected": "temBAD_SIGNER",
+      "observed": "temBAD_SIGNER",
+      "protected_state": "UNCHANGED",
+      "status": "PASS",
+      "validated": false
+    },
+    "N4": {
+      "expected": "local invalidTransaction",
+      "observed": "local invalidTransaction",
+      "protected_state": "UNCHANGED",
+      "status": "PASS",
+      "validated": false
+    },
+    "N5": {
+      "borrower_authorization_for_submitted_body": "VALID",
+      "broker_authorization_for_submitted_body": "INVALID",
+      "broker_authorized_principal": "1000",
+      "expected": "local invalidTransaction",
+      "observed": "local invalidTransaction",
+      "protected_state": "UNCHANGED",
+      "status": "PASS",
+      "submitted_principal": "1001",
+      "validated": false
+    },
+    "N6": {
+      "accepted_transaction_date": null,
+      "actual_fee_debit_drops": 0,
+      "actual_sequence_increment": 0,
+      "expected": "validated tecTOO_SOON",
+      "expected_fee_debit_drops": 40,
+      "expected_sequence_increment": 1,
+      "observed": "submission-level tecTOO_SOON",
+      "phase": "Subscription",
+      "protected_lending_state": "UNCHANGED",
+      "status": "FAIL",
+      "validated": false
+    }
+  },
+  "checkpoint": "1E-N-LIVE-03",
+  "classification": "FROZEN_N6_VALIDATION_DISPOSITION_CONTRADICTION",
+  "e7_e8_e9": "NOT_ATTEMPTED",
+  "fresh_run": {
+    "negative_cases_attempted": 6,
+    "positive_loanset_submitted": false,
+    "prerequisite_transactions": 21,
+    "runner_executions": 1
+  },
+  "frozen_harness_modified_after_xrpld_start": false,
+  "historical_classifications_preserved": {
+    "E1_E2": "PASS/FROZEN",
+    "E3_E4": "PASS/RETIRED within tested scope",
+    "E5": "PASS",
+    "E7_E9": "NOT_ATTEMPTED",
+    "historical_E6": "FAIL",
+    "historical_N1": "BLOCKED_AFTER_SUBMISSION",
+    "historical_positive_authorization_composition": "SUPPORTED",
+    "historical_positive_timing": "SOURCE_CONFORMANT",
+    "historical_timing_oracle": "ORACLE_DEFECT"
+  },
+  "loan_pay_submitted": false,
+  "recommendation": "STOP. Do not use the E6 authorization architecture for product integration and do not begin E7-E9. Adjudicate the frozen N6 validation expectation before authorizing any further experiment.",
+  "retry_attempted": false,
+  "start_commit": "d23a4eebcfe98e09eb55558b4a0248e4d46e99ae",
+  "stop": "N6 returned tecTOO_SOON at submission but did not validate or consume the frozen fee and sequence effects.",
+  "verdict": "STOP/BLOCKED"
+}

@@ -1,0 +1,240 @@
+{
+  "assertions": [
+    {
+      "actual": [
+        "N1",
+        "N2",
+        "N3",
+        "N4",
+        "N5",
+        "N6"
+      ],
+      "expected": [
+        "N1",
+        "N2",
+        "N3",
+        "N4",
+        "N5",
+        "N6"
+      ],
+      "name": "exact N1-N6 order",
+      "passed": true
+    },
+    {
+      "actual": {
+        "N1": "tefBAD_QUORUM",
+        "N2": "tefBAD_QUORUM",
+        "N3": "temBAD_SIGNER",
+        "N4": "local invalidTransaction",
+        "N5": "local invalidTransaction",
+        "N6": "tecTOO_SOON"
+      },
+      "expected": {
+        "N1": "tefBAD_QUORUM",
+        "N2": "tefBAD_QUORUM",
+        "N3": "temBAD_SIGNER",
+        "N4": "local invalidTransaction",
+        "N5": "local invalidTransaction",
+        "N6": "tecTOO_SOON"
+      },
+      "name": "exact expected results",
+      "passed": true
+    },
+    {
+      "actual": [
+        "N6"
+      ],
+      "expected": [
+        "N6"
+      ],
+      "name": "only N6 expects validation",
+      "passed": true
+    },
+    {
+      "actual": "1001",
+      "expected": "1001",
+      "name": "N5 submitted principal",
+      "passed": true
+    },
+    {
+      "actual": "1000",
+      "expected": "1000",
+      "name": "N5 broker-signed principal",
+      "passed": true
+    },
+    {
+      "actual": "Subscription",
+      "expected": "Subscription",
+      "name": "N6 phase",
+      "passed": true
+    },
+    {
+      "actual": 60,
+      "expected": 60,
+      "name": "prospective PaymentInterval",
+      "passed": true
+    },
+    {
+      "actual": 60,
+      "expected": 60,
+      "name": "prospective GracePeriod",
+      "passed": true
+    },
+    {
+      "actual": true,
+      "expected": true,
+      "name": "prospective StartDate excludes transaction lookup date",
+      "passed": true
+    }
+  ],
+  "checkpoint": "1E-N",
+  "complete_pretransaction_serialization": {
+    "coverage": {
+      "A_provenance": "PASS",
+      "B_amendment_evidence": "PASS",
+      "C_feature_response": "PASS",
+      "D_amendments_ledger_entry_response": "PASS",
+      "E_environment_evidence": "PASS",
+      "F_ledger_header_time": "PASS",
+      "G_actor_setup_evidence": "PASS",
+      "H_protected_state_structures": "PASS",
+      "I_N1_N6_evidence": "PASS",
+      "J_manifest_metadata": "PASS"
+    },
+    "environment_normalization_inventory": [
+      {
+        "path": "$.server_info.validated_ledger.base_fee_xrp",
+        "python_type": "float"
+      }
+    ],
+    "result": "PASS",
+    "serialized_sha256": "1f208622281c5079e5eb425f94bbd98395c80dbececfbf2689ac1a6d661d6385"
+  },
+  "e7_e8_e9_included": false,
+  "evidence_destination": "evidence/checkpoint-1e-n-live-03",
+  "frozen_files": {
+    "E6-NEGATIVE-ASSERTIONS.md": "6c8a89a94a16d1830e99e28acfc2c1fe792ad75cbb5b1050dcea3546e68cf876",
+    "E6-TIMING-ORACLE-v2.md": "4acb653ab61374757a24800dd05a069a4d942e9fbfc3b9226f2f8d8f7b783f77",
+    "evidence/checkpoint-1e-n-live-02/amendments-ledger-entry.json": "196b963834f27928fe6839231b1f8f1d15311dddfb4a54689f0e9c16d8377f88",
+    "evidence/checkpoint-1e-n-live-02/feature-raw.json": "69e43df7637a7be0b1a1b02d18c1b89c5517ddc849e341ccc05a920800b07844",
+    "evidence/checkpoint-1e-n/environment-start.json": "f717df029356afac8c5d8ffc7eee9810b951f5a691ee23dc9511ae90c4a88d01",
+    "scripts/e6_negative_oracle.py": "c733bffb57866efbfde5e373eded26a53e521de26742a769408e82ffc3efad13",
+    "scripts/run_checkpoint_1e_n.py": "f85025e7102c79fd057c1e0050629e02d44628372d05a991bd5f8d5d4540e971",
+    "tests/test_checkpoint_1e_n.py": "ed1b1a09897cc4d24f43d0331a6c28bdb1ebb2a1c4c9ce4cbe398181cf0f4167",
+    "tests/test_checkpoint_1e_nr.py": "4da47dae1bdf32dd3772d71c488db6bee31884bdf9d9ef8602cb6366c64c8d64",
+    "tests/test_checkpoint_1e_nr2.py": "422531f154a7e98709fed8904c300faa99fadc1e4cd96dbf24f7126d80a68f0b"
+  },
+  "full_evidence_serialization": {
+    "authorization_signing": "PASS",
+    "cases": {
+      "N1": "PASS",
+      "N2": "PASS",
+      "N3": "PASS",
+      "N4": "PASS",
+      "N5": "PASS",
+      "N6": "PASS"
+    },
+    "manifest_metadata": "PASS",
+    "phase_timing": "PASS",
+    "protected_state": "PASS",
+    "result": "PASS",
+    "result_placeholders": "PASS",
+    "serialized_sha256": "47e2798eb019468e74b3ce28f2e5073b7d2b99868f4d7764937cb74811c03f64"
+  },
+  "git_commit": "d23a4eebcfe98e09eb55558b4a0248e4d46e99ae",
+  "loan_pay_included": false,
+  "mode": "PRE_LEDGER_STATIC_PREFLIGHT",
+  "negative_cases": [
+    {
+      "borrower_signers": [
+        "research_bot"
+      ],
+      "broker_mode": "valid",
+      "broker_signed_principal": null,
+      "case_id": "N1",
+      "expect_validated": false,
+      "expected_result": "tefBAD_QUORUM",
+      "phase": "Investment",
+      "principal": "1000"
+    },
+    {
+      "borrower_signers": [
+        "credence_policy"
+      ],
+      "broker_mode": "valid",
+      "broker_signed_principal": null,
+      "case_id": "N2",
+      "expect_validated": false,
+      "expected_result": "tefBAD_QUORUM",
+      "phase": "Investment",
+      "principal": "1000"
+    },
+    {
+      "borrower_signers": [
+        "research_bot",
+        "credence_policy"
+      ],
+      "broker_mode": "missing",
+      "broker_signed_principal": null,
+      "case_id": "N3",
+      "expect_validated": false,
+      "expected_result": "temBAD_SIGNER",
+      "phase": "Investment",
+      "principal": "1000"
+    },
+    {
+      "borrower_signers": [
+        "research_bot",
+        "credence_policy"
+      ],
+      "broker_mode": "invalid",
+      "broker_signed_principal": null,
+      "case_id": "N4",
+      "expect_validated": false,
+      "expected_result": "local invalidTransaction",
+      "phase": "Investment",
+      "principal": "1000"
+    },
+    {
+      "borrower_signers": [
+        "research_bot",
+        "credence_policy"
+      ],
+      "broker_mode": "valid_for_x_only",
+      "broker_signed_principal": "1000",
+      "case_id": "N5",
+      "expect_validated": false,
+      "expected_result": "local invalidTransaction",
+      "phase": "Investment",
+      "principal": "1001"
+    },
+    {
+      "borrower_signers": [
+        "research_bot",
+        "credence_policy"
+      ],
+      "broker_mode": "valid",
+      "broker_signed_principal": null,
+      "case_id": "N6",
+      "expect_validated": true,
+      "expected_result": "tecTOO_SOON",
+      "phase": "Subscription",
+      "principal": "1000"
+    }
+  ],
+  "new_xrpl_transactions": 0,
+  "positive_loanset_included": false,
+  "prospective_timing_oracle": {
+    "GracePeriod": 60,
+    "NextPaymentDueDate": "StartDate + PaymentInterval",
+    "PaymentInterval": 60,
+    "StartDate": "applying view header closeTime read during LoanSet::doApply",
+    "forbidden_anchor": "transaction lookup date"
+  },
+  "protected_state": {
+    "N1-N5": "complete loan_state projection unchanged",
+    "N6": "complete lending projection unchanged; only exact borrower XRP fee and Sequence increment allowed"
+  },
+  "result": "PASS",
+  "xrpld_started": false
+}

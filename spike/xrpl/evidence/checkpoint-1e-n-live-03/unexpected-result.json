@@ -1,0 +1,732 @@
+{
+  "after_state": {
+    "borrower_account": {
+      "Account": "r9ddcSuxVD2VcEbbxKkWFe9JBaYZuMVY1j",
+      "Balance": "999999980",
+      "OwnerCount": 2,
+      "Sequence": 7
+    },
+    "borrower_balance": "0",
+    "broker_owner_balance": "0",
+    "loan": null,
+    "loan_broker": {
+      "Account": "rEn9nBK4uGhjTtmzcgCFJrUoLhMtVnPn9g",
+      "CoverAvailable": "10000",
+      "CoverRateLiquidation": 25000,
+      "CoverRateMinimum": 10000,
+      "DebtMaximum": "50000",
+      "Flags": 0,
+      "LedgerEntryType": "LoanBroker",
+      "LoanSequence": 1,
+      "Owner": "rHoyKzrC9CmUMqVVn2uun8Et4ce5ha8mDA",
+      "OwnerNode": "0",
+      "PreviousTxnID": "63E5ABA477EC7E312D3719CFB39C70DB9166C633A6EF157DBFD7B209A575F2A8",
+      "PreviousTxnLgrSeq": 80,
+      "Sequence": 13,
+      "VaultID": "D7528A5BC4027D8B901A43EAFF987F84213477FD7C7B3550EF44BAF2387F6C87",
+      "VaultNode": "0",
+      "index": "E9F68287709F2CB3C9D963B87C1D17E2DD17E28B65AA89D1F5E1805F9C66D4EA"
+    },
+    "regular_key": null,
+    "signer_lists": [
+      {
+        "Flags": 65536,
+        "LedgerEntryType": "SignerList",
+        "OwnerNode": "0",
+        "PreviousTxnID": "0D035A0AD7E74EEED9E65D0936D5F9CE10912A5A2F3686C9FF522EC63C6363CC",
+        "PreviousTxnLgrSeq": 15,
+        "SignerEntries": [
+          {
+            "SignerEntry": {
+              "Account": "raCYHzQbiLAmaBm8u2NuMhKwEyvuttByuA",
+              "SignerWeight": 1
+            }
+          },
+          {
+            "SignerEntry": {
+              "Account": "rLG4FTojy6ukJULQYaXqffoZvLeN6Mbcy9",
+              "SignerWeight": 1
+            }
+          }
+        ],
+        "SignerListID": 0,
+        "SignerQuorum": 2,
+        "index": "70225A7C3034F86CE547F93BAB506A1EB365C9DA0CC2FF378A6BCCBF93570B75"
+      }
+    ],
+    "vault": {
+      "Account": "rMNLHRz6YcJKMHnV6PfGiK9wqAjNsE17Lf",
+      "Asset": {
+        "currency": "74524C5553440000000000000000000000000000",
+        "issuer": "rn9x3HEH3aSWkNekUKkMydkC1LfBYSDsU6"
+      },
+      "AssetsAvailable": "100000",
+      "AssetsTotal": "100000",
+      "Flags": 0,
+      "LEVersion": 1,
+      "LedgerEntryType": "Vault",
+      "Owner": "rHoyKzrC9CmUMqVVn2uun8Et4ce5ha8mDA",
+      "OwnerNode": "0",
+      "PreviousTxnID": "F23E1F0520D314A5222827F7EAE72756A1CC47FE28052C0D91149284DD8552B7",
+      "PreviousTxnLgrSeq": 78,
+      "RedemptionDate": 845558163,
+      "Scale": 6,
+      "Sequence": 12,
+      "ShareMPTID": "00000001DDE80522AEDB193E32DBD86EAD0A471395A24317",
+      "SubscriptionDate": 845557863,
+      "VaultKind": 1,
+      "WithdrawalPolicy": 1,
+      "index": "D7528A5BC4027D8B901A43EAFF987F84213477FD7C7B3550EF44BAF2387F6C87"
+    },
+    "vault_pseudo_balance": "100000"
+  },
+  "before_state": {
+    "borrower_account": {
+      "Account": "r9ddcSuxVD2VcEbbxKkWFe9JBaYZuMVY1j",
+      "Balance": "999999980",
+      "OwnerCount": 2,
+      "Sequence": 7
+    },
+    "borrower_balance": "0",
+    "broker_owner_balance": "0",
+    "loan": null,
+    "loan_broker": {
+      "Account": "rEn9nBK4uGhjTtmzcgCFJrUoLhMtVnPn9g",
+      "CoverAvailable": "10000",
+      "CoverRateLiquidation": 25000,
+      "CoverRateMinimum": 10000,
+      "DebtMaximum": "50000",
+      "Flags": 0,
+      "LedgerEntryType": "LoanBroker",
+      "LoanSequence": 1,
+      "Owner": "rHoyKzrC9CmUMqVVn2uun8Et4ce5ha8mDA",
+      "OwnerNode": "0",
+      "PreviousTxnID": "63E5ABA477EC7E312D3719CFB39C70DB9166C633A6EF157DBFD7B209A575F2A8",
+      "PreviousTxnLgrSeq": 80,
+      "Sequence": 13,
+      "VaultID": "D7528A5BC4027D8B901A43EAFF987F84213477FD7C7B3550EF44BAF2387F6C87",
+      "VaultNode": "0",
+      "index": "E9F68287709F2CB3C9D963B87C1D17E2DD17E28B65AA89D1F5E1805F9C66D4EA"
+    },
+    "regular_key": null,
+    "signer_lists": [
+      {
+        "Flags": 65536,
+        "LedgerEntryType": "SignerList",
+        "OwnerNode": "0",
+        "PreviousTxnID": "0D035A0AD7E74EEED9E65D0936D5F9CE10912A5A2F3686C9FF522EC63C6363CC",
+        "PreviousTxnLgrSeq": 15,
+        "SignerEntries": [
+          {
+            "SignerEntry": {
+              "Account": "raCYHzQbiLAmaBm8u2NuMhKwEyvuttByuA",
+              "SignerWeight": 1
+            }
+          },
+          {
+            "SignerEntry": {
+              "Account": "rLG4FTojy6ukJULQYaXqffoZvLeN6Mbcy9",
+              "SignerWeight": 1
+            }
+          }
+        ],
+        "SignerListID": 0,
+        "SignerQuorum": 2,
+        "index": "70225A7C3034F86CE547F93BAB506A1EB365C9DA0CC2FF378A6BCCBF93570B75"
+      }
+    ],
+    "vault": {
+      "Account": "rMNLHRz6YcJKMHnV6PfGiK9wqAjNsE17Lf",
+      "Asset": {
+        "currency": "74524C5553440000000000000000000000000000",
+        "issuer": "rn9x3HEH3aSWkNekUKkMydkC1LfBYSDsU6"
+      },
+      "AssetsAvailable": "100000",
+      "AssetsTotal": "100000",
+      "Flags": 0,
+      "LEVersion": 1,
+      "LedgerEntryType": "Vault",
+      "Owner": "rHoyKzrC9CmUMqVVn2uun8Et4ce5ha8mDA",
+      "OwnerNode": "0",
+      "PreviousTxnID": "F23E1F0520D314A5222827F7EAE72756A1CC47FE28052C0D91149284DD8552B7",
+      "PreviousTxnLgrSeq": 78,
+      "RedemptionDate": 845558163,
+      "Scale": 6,
+      "Sequence": 12,
+      "ShareMPTID": "00000001DDE80522AEDB193E32DBD86EAD0A471395A24317",
+      "SubscriptionDate": 845557863,
+      "VaultKind": 1,
+      "WithdrawalPolicy": 1,
+      "index": "D7528A5BC4027D8B901A43EAFF987F84213477FD7C7B3550EF44BAF2387F6C87"
+    },
+    "vault_pseudo_balance": "100000"
+  },
+  "case": "N6",
+  "classification": {
+    "status": "FAIL"
+  },
+  "expect_validated": true,
+  "expected_result": "tecTOO_SOON",
+  "experiment": "E6-NEGATIVE",
+  "label": "n6_subscription_phase",
+  "ledger_after": {
+    "close_flags": 0,
+    "close_time": 845557811,
+    "close_time_resolution": 10,
+    "closed": true,
+    "ledger_hash": "B92313A3A2C22E8684145DD10F12E2FBA4E794194AF8746A031D3A5C1C74DC3A",
+    "ledger_index": 84,
+    "parent_close_time": 845557810
+  },
+  "ledger_before": {
+    "close_flags": 0,
+    "close_time": 845557810,
+    "close_time_resolution": 10,
+    "closed": true,
+    "ledger_hash": "3CA383889F9BF3384DD7D8B9436D1CA32459FB0568A5765892EA7456F73E32C5",
+    "ledger_index": 83,
+    "parent_close_time": 845557809
+  },
+  "local_validation_result": null,
+  "observed_result": "tecTOO_SOON",
+  "public_signing_evidence": {
+    "borrower_authorization": {
+      "account": "r9ddcSuxVD2VcEbbxKkWFe9JBaYZuMVY1j",
+      "signers": [
+        {
+          "account": "raCYHzQbiLAmaBm8u2NuMhKwEyvuttByuA",
+          "public_key_hex": "ED4A989D13515E59BE88C5AB63AB1B2911494BE8B2D64DA42389C68F932D363AC8",
+          "serialized_body_hex": "12005021000053592400000007201B0000006420370000003C20380000003C203C000000012040000000002041000000002042000000002043000000002044000000005025E9F68287709F2CB3C9D963B87C1D17E2DD17E28B65AA89D1F5E1805F9C66D4EA684000000000000028730081145EAE8AD71A1457F138EEA28D5FF2138CC23E8C28801A14B8642A9BB64B0EA50D62BFBF785F56A5D090DCCF990000000000000000800000009A0000000000000000800000009B0000000000000000800000009C0000000000000000800000009E0DE0B6B3A7640000FFFFFFF1",
+          "signing_payload_hex": "534D540012005021000053592400000007201B0000006420370000003C20380000003C203C000000012040000000002041000000002042000000002043000000002044000000005025E9F68287709F2CB3C9D963B87C1D17E2DD17E28B65AA89D1F5E1805F9C66D4EA684000000000000028730081145EAE8AD71A1457F138EEA28D5FF2138CC23E8C28801A14B8642A9BB64B0EA50D62BFBF785F56A5D090DCCF990000000000000000800000009A0000000000000000800000009B0000000000000000800000009C0000000000000000800000009E0DE0B6B3A7640000FFFFFFF13E228EB777375F720D924C31E9DF2A914192484C",
+          "signing_payload_sha512_half": "[PUBLIC_HASH_REDACTED]",
+          "signing_prefix_hex": "534D5400",
+          "txn_signature_hex": "B24011D7BBBA1E6C3E421F40740DB45321266DE6E54E29241F418ECF1B3B2E8199C905C6220B79204A3F3547397393DB6C7033D77CD4FA6DD10EB8C1A90BD702"
+        },
+        {
+          "account": "rLG4FTojy6ukJULQYaXqffoZvLeN6Mbcy9",
+          "public_key_hex": "EDBB4E55E3A858AA937019F05F6F8CDCEF232CDF691160B970CFC15AEBFE481486",
+          "serialized_body_hex": "12005021000053592400000007201B0000006420370000003C20380000003C203C000000012040000000002041000000002042000000002043000000002044000000005025E9F68287709F2CB3C9D963B87C1D17E2DD17E28B65AA89D1F5E1805F9C66D4EA684000000000000028730081145EAE8AD71A1457F138EEA28D5FF2138CC23E8C28801A14B8642A9BB64B0EA50D62BFBF785F56A5D090DCCF990000000000000000800000009A0000000000000000800000009B0000000000000000800000009C0000000000000000800000009E0DE0B6B3A7640000FFFFFFF1",
+          "signing_payload_hex": "534D540012005021000053592400000007201B0000006420370000003C20380000003C203C000000012040000000002041000000002042000000002043000000002044000000005025E9F68287709F2CB3C9D963B87C1D17E2DD17E28B65AA89D1F5E1805F9C66D4EA684000000000000028730081145EAE8AD71A1457F138EEA28D5FF2138CC23E8C28801A14B8642A9BB64B0EA50D62BFBF785F56A5D090DCCF990000000000000000800000009A0000000000000000800000009B0000000000000000800000009C0000000000000000800000009E0DE0B6B3A7640000FFFFFFF1D352D7A2E549C93DFDB3D2480F59E60B8EFE71B4",
+          "signing_payload_sha512_half": "[PUBLIC_HASH_REDACTED]",
+          "signing_prefix_hex": "534D5400",
+          "txn_signature_hex": "E2890E2520A70A465D17943261316B130DA73E9D456F8FFFB03013C2C0BA2CA85D8EFA3CD0953CCED4789459939B6FC4CCC3DD656A47C7F767DE1FFDF140EB06"
+        }
+      ],
+      "top_level_signing_public_key": "",
+      "top_level_transaction_signature": null
+    },
+    "bound_loan_terms": {
+      "CloseInterestRate": 0,
+      "ClosePaymentFee": "0",
+      "Counterparty": "rHoyKzrC9CmUMqVVn2uun8Et4ce5ha8mDA",
+      "GracePeriod": 60,
+      "InterestRate": 0,
+      "LateInterestRate": 0,
+      "LatePaymentFee": "0",
+      "LoanBrokerID": "E9F68287709F2CB3C9D963B87C1D17E2DD17E28B65AA89D1F5E1805F9C66D4EA",
+      "LoanOriginationFee": "0",
+      "LoanServiceFee": "0",
+      "OverpaymentFee": 0,
+      "OverpaymentInterestRate": 0,
+      "PaymentInterval": 60,
+      "PaymentTotal": 1,
+      "PrincipalRequested": "1000"
+    },
+    "broker_counterparty_authorization": {
+      "counterparty": "rHoyKzrC9CmUMqVVn2uun8Et4ce5ha8mDA",
+      "counterparty_signers": null,
+      "public_key_hex": "ED8417BF5D319958FF16ECC4133C925BBD6B17D776D1251DD70B6B5753B27A010A",
+      "serialized_body_hex": "12005021000053592400000007201B0000006420370000003C20380000003C203C000000012040000000002041000000002042000000002043000000002044000000005025E9F68287709F2CB3C9D963B87C1D17E2DD17E28B65AA89D1F5E1805F9C66D4EA684000000000000028730081145EAE8AD71A1457F138EEA28D5FF2138CC23E8C28801A14B8642A9BB64B0EA50D62BFBF785F56A5D090DCCF990000000000000000800000009A0000000000000000800000009B0000000000000000800000009C0000000000000000800000009E0DE0B6B3A7640000FFFFFFF1",
+      "signing_payload_hex": "4350540012005021000053592400000007201B0000006420370000003C20380000003C203C000000012040000000002041000000002042000000002043000000002044000000005025E9F68287709F2CB3C9D963B87C1D17E2DD17E28B65AA89D1F5E1805F9C66D4EA684000000000000028730081145EAE8AD71A1457F138EEA28D5FF2138CC23E8C28801A14B8642A9BB64B0EA50D62BFBF785F56A5D090DCCF990000000000000000800000009A0000000000000000800000009B0000000000000000800000009C0000000000000000800000009E0DE0B6B3A7640000FFFFFFF1",
+      "signing_payload_sha512_half": "[PUBLIC_HASH_REDACTED]",
+      "signing_prefix_hex": "43505400",
+      "txn_signature_hex": "77732FCD3293F213F53AE9AC6AE5F00EF1322FD507887BB22CE639CBF87E8471F33BBFABE81F1D284C24BBFDD587B744355C6FFFE269D6B15E8722590D420803"
+    },
+    "exact_loan_set_body": {
+      "Account": "r9ddcSuxVD2VcEbbxKkWFe9JBaYZuMVY1j",
+      "CloseInterestRate": 0,
+      "ClosePaymentFee": "0",
+      "Counterparty": "rHoyKzrC9CmUMqVVn2uun8Et4ce5ha8mDA",
+      "Fee": "40",
+      "GracePeriod": 60,
+      "InterestRate": 0,
+      "LastLedgerSequence": 100,
+      "LateInterestRate": 0,
+      "LatePaymentFee": "0",
+      "LoanBrokerID": "E9F68287709F2CB3C9D963B87C1D17E2DD17E28B65AA89D1F5E1805F9C66D4EA",
+      "LoanOriginationFee": "0",
+      "LoanServiceFee": "0",
+      "NetworkID": 21337,
+      "OverpaymentFee": 0,
+      "OverpaymentInterestRate": 0,
+      "PaymentInterval": 60,
+      "PaymentTotal": 1,
+      "PrincipalRequested": "1000",
+      "Sequence": 7,
+      "SigningPubKey": "",
+      "TransactionType": "LoanSet"
+    },
+    "signed_transaction_blob": "12005021000053592400000007201B0000006420370000003C20380000003C203C000000012040000000002041000000002042000000002043000000002044000000005025E9F68287709F2CB3C9D963B87C1D17E2DD17E28B65AA89D1F5E1805F9C66D4EA684000000000000028730081145EAE8AD71A1457F138EEA28D5FF2138CC23E8C28801A14B8642A9BB64B0EA50D62BFBF785F56A5D090DCCF990000000000000000800000009A0000000000000000800000009B0000000000000000800000009C0000000000000000800000009E0DE0B6B3A7640000FFFFFFF1E0257321ED8417BF5D319958FF16ECC4133C925BBD6B17D776D1251DD70B6B5753B27A010A744077732FCD3293F213F53AE9AC6AE5F00EF1322FD507887BB22CE639CBF87E8471F33BBFABE81F1D284C24BBFDD587B744355C6FFFE269D6B15E8722590D420803E1F3E0107321ED4A989D13515E59BE88C5AB63AB1B2911494BE8B2D64DA42389C68F932D363AC87440B24011D7BBBA1E6C3E421F40740DB45321266DE6E54E29241F418ECF1B3B2E8199C905C6220B79204A3F3547397393DB6C7033D77CD4FA6DD10EB8C1A90BD70281143E228EB777375F720D924C31E9DF2A914192484CE1E0107321EDBB4E55E3A858AA937019F05F6F8CDCEF232CDF691160B970CFC15AEBFE4814867440E2890E2520A70A465D17943261316B130DA73E9D456F8FFFB03013C2C0BA2CA85D8EFA3CD0953CCED4789459939B6FC4CCC3DD656A47C7F767DE1FFDF140EB068114D352D7A2E549C93DFDB3D2480F59E60B8EFE71B4E1F1",
+    "transaction_hash": "64361829FEE6145482157BB58E95E45C23B50FE54367456CFA68AE06A914F252"
+  },
+  "state_assertions": [
+    {
+      "actual": "r9ddcSuxVD2VcEbbxKkWFe9JBaYZuMVY1j",
+      "expected": "r9ddcSuxVD2VcEbbxKkWFe9JBaYZuMVY1j",
+      "name": "borrower transaction Account",
+      "passed": true
+    },
+    {
+      "actual": "",
+      "expected": "",
+      "name": "borrower top-level SigningPubKey",
+      "passed": true
+    },
+    {
+      "actual": null,
+      "expected": null,
+      "name": "borrower master signature absent",
+      "passed": true
+    },
+    {
+      "actual": {
+        "rLG4FTojy6ukJULQYaXqffoZvLeN6Mbcy9": "EDBB4E55E3A858AA937019F05F6F8CDCEF232CDF691160B970CFC15AEBFE481486",
+        "raCYHzQbiLAmaBm8u2NuMhKwEyvuttByuA": "ED4A989D13515E59BE88C5AB63AB1B2911494BE8B2D64DA42389C68F932D363AC8"
+      },
+      "expected": {
+        "rLG4FTojy6ukJULQYaXqffoZvLeN6Mbcy9": "EDBB4E55E3A858AA937019F05F6F8CDCEF232CDF691160B970CFC15AEBFE481486",
+        "raCYHzQbiLAmaBm8u2NuMhKwEyvuttByuA": "ED4A989D13515E59BE88C5AB63AB1B2911494BE8B2D64DA42389C68F932D363AC8"
+      },
+      "name": "borrower signer identities",
+      "passed": true
+    },
+    {
+      "actual": [
+        "534D5400"
+      ],
+      "expected": [
+        "534D5400"
+      ],
+      "name": "borrower SMT-NUL domains",
+      "passed": true
+    },
+    {
+      "actual": "rHoyKzrC9CmUMqVVn2uun8Et4ce5ha8mDA",
+      "expected": "rHoyKzrC9CmUMqVVn2uun8Et4ce5ha8mDA",
+      "name": "broker Counterparty",
+      "passed": true
+    },
+    {
+      "actual": "43505400",
+      "expected": "43505400",
+      "name": "broker CPT-NUL domain",
+      "passed": true
+    },
+    {
+      "actual": {
+        "CloseInterestRate": 0,
+        "ClosePaymentFee": "0",
+        "Counterparty": "rHoyKzrC9CmUMqVVn2uun8Et4ce5ha8mDA",
+        "GracePeriod": 60,
+        "InterestRate": 0,
+        "LateInterestRate": 0,
+        "LatePaymentFee": "0",
+        "LoanBrokerID": "E9F68287709F2CB3C9D963B87C1D17E2DD17E28B65AA89D1F5E1805F9C66D4EA",
+        "LoanOriginationFee": "0",
+        "LoanServiceFee": "0",
+        "OverpaymentFee": 0,
+        "OverpaymentInterestRate": 0,
+        "PaymentInterval": 60,
+        "PaymentTotal": 1,
+        "PrincipalRequested": "1000"
+      },
+      "expected": {
+        "CloseInterestRate": 0,
+        "ClosePaymentFee": "0",
+        "Counterparty": "rHoyKzrC9CmUMqVVn2uun8Et4ce5ha8mDA",
+        "GracePeriod": 60,
+        "InterestRate": 0,
+        "LateInterestRate": 0,
+        "LatePaymentFee": "0",
+        "LoanBrokerID": "E9F68287709F2CB3C9D963B87C1D17E2DD17E28B65AA89D1F5E1805F9C66D4EA",
+        "LoanOriginationFee": "0",
+        "LoanServiceFee": "0",
+        "OverpaymentFee": 0,
+        "OverpaymentInterestRate": 0,
+        "PaymentInterval": 60,
+        "PaymentTotal": 1,
+        "PrincipalRequested": "1000"
+      },
+      "name": "exact submitted loan terms",
+      "passed": true
+    },
+    {
+      "actual": true,
+      "expected": true,
+      "name": "borrower signer raCYHzQbiLAmaBm8u2NuMhKwEyvuttByuA signature valid",
+      "passed": true
+    },
+    {
+      "actual": true,
+      "expected": true,
+      "name": "borrower signer rLG4FTojy6ukJULQYaXqffoZvLeN6Mbcy9 signature valid",
+      "passed": true
+    },
+    {
+      "actual": "12005021000053592400000007201B0000006420370000003C20380000003C203C000000012040000000002041000000002042000000002043000000002044000000005025E9F68287709F2CB3C9D963B87C1D17E2DD17E28B65AA89D1F5E1805F9C66D4EA684000000000000028730081145EAE8AD71A1457F138EEA28D5FF2138CC23E8C28801A14B8642A9BB64B0EA50D62BFBF785F56A5D090DCCF990000000000000000800000009A0000000000000000800000009B0000000000000000800000009C0000000000000000800000009E0DE0B6B3A7640000FFFFFFF1",
+      "expected": "12005021000053592400000007201B0000006420370000003C20380000003C203C000000012040000000002041000000002042000000002043000000002044000000005025E9F68287709F2CB3C9D963B87C1D17E2DD17E28B65AA89D1F5E1805F9C66D4EA684000000000000028730081145EAE8AD71A1457F138EEA28D5FF2138CC23E8C28801A14B8642A9BB64B0EA50D62BFBF785F56A5D090DCCF990000000000000000800000009A0000000000000000800000009B0000000000000000800000009C0000000000000000800000009E0DE0B6B3A7640000FFFFFFF1",
+      "name": "borrower signer raCYHzQbiLAmaBm8u2NuMhKwEyvuttByuA binds broker body",
+      "passed": true
+    },
+    {
+      "actual": "12005021000053592400000007201B0000006420370000003C20380000003C203C000000012040000000002041000000002042000000002043000000002044000000005025E9F68287709F2CB3C9D963B87C1D17E2DD17E28B65AA89D1F5E1805F9C66D4EA684000000000000028730081145EAE8AD71A1457F138EEA28D5FF2138CC23E8C28801A14B8642A9BB64B0EA50D62BFBF785F56A5D090DCCF990000000000000000800000009A0000000000000000800000009B0000000000000000800000009C0000000000000000800000009E0DE0B6B3A7640000FFFFFFF1",
+      "expected": "12005021000053592400000007201B0000006420370000003C20380000003C203C000000012040000000002041000000002042000000002043000000002044000000005025E9F68287709F2CB3C9D963B87C1D17E2DD17E28B65AA89D1F5E1805F9C66D4EA684000000000000028730081145EAE8AD71A1457F138EEA28D5FF2138CC23E8C28801A14B8642A9BB64B0EA50D62BFBF785F56A5D090DCCF990000000000000000800000009A0000000000000000800000009B0000000000000000800000009C0000000000000000800000009E0DE0B6B3A7640000FFFFFFF1",
+      "name": "borrower signer rLG4FTojy6ukJULQYaXqffoZvLeN6Mbcy9 binds broker body",
+      "passed": true
+    },
+    {
+      "actual": "ED8417BF5D319958FF16ECC4133C925BBD6B17D776D1251DD70B6B5753B27A010A",
+      "expected": "ED8417BF5D319958FF16ECC4133C925BBD6B17D776D1251DD70B6B5753B27A010A",
+      "name": "broker signature public key",
+      "passed": true
+    },
+    {
+      "actual": true,
+      "expected": true,
+      "name": "broker signature valid",
+      "passed": true
+    },
+    {
+      "actual": "tecTOO_SOON",
+      "expected": "tecTOO_SOON",
+      "name": "negative authoritative result",
+      "passed": true
+    },
+    {
+      "actual": {
+        "borrower_account": {
+          "Account": "r9ddcSuxVD2VcEbbxKkWFe9JBaYZuMVY1j",
+          "OwnerCount": 2
+        },
+        "borrower_balance": "0",
+        "broker_owner_balance": "0",
+        "loan": null,
+        "loan_broker": {
+          "Account": "rEn9nBK4uGhjTtmzcgCFJrUoLhMtVnPn9g",
+          "CoverAvailable": "10000",
+          "CoverRateLiquidation": 25000,
+          "CoverRateMinimum": 10000,
+          "DebtMaximum": "50000",
+          "Flags": 0,
+          "LedgerEntryType": "LoanBroker",
+          "LoanSequence": 1,
+          "Owner": "rHoyKzrC9CmUMqVVn2uun8Et4ce5ha8mDA",
+          "OwnerNode": "0",
+          "PreviousTxnID": "63E5ABA477EC7E312D3719CFB39C70DB9166C633A6EF157DBFD7B209A575F2A8",
+          "PreviousTxnLgrSeq": 80,
+          "Sequence": 13,
+          "VaultID": "D7528A5BC4027D8B901A43EAFF987F84213477FD7C7B3550EF44BAF2387F6C87",
+          "VaultNode": "0",
+          "index": "E9F68287709F2CB3C9D963B87C1D17E2DD17E28B65AA89D1F5E1805F9C66D4EA"
+        },
+        "regular_key": null,
+        "signer_lists": [
+          {
+            "Flags": 65536,
+            "LedgerEntryType": "SignerList",
+            "OwnerNode": "0",
+            "PreviousTxnID": "0D035A0AD7E74EEED9E65D0936D5F9CE10912A5A2F3686C9FF522EC63C6363CC",
+            "PreviousTxnLgrSeq": 15,
+            "SignerEntries": [
+              {
+                "SignerEntry": {
+                  "Account": "raCYHzQbiLAmaBm8u2NuMhKwEyvuttByuA",
+                  "SignerWeight": 1
+                }
+              },
+              {
+                "SignerEntry": {
+                  "Account": "rLG4FTojy6ukJULQYaXqffoZvLeN6Mbcy9",
+                  "SignerWeight": 1
+                }
+              }
+            ],
+            "SignerListID": 0,
+            "SignerQuorum": 2,
+            "index": "70225A7C3034F86CE547F93BAB506A1EB365C9DA0CC2FF378A6BCCBF93570B75"
+          }
+        ],
+        "vault": {
+          "Account": "rMNLHRz6YcJKMHnV6PfGiK9wqAjNsE17Lf",
+          "Asset": {
+            "currency": "74524C5553440000000000000000000000000000",
+            "issuer": "rn9x3HEH3aSWkNekUKkMydkC1LfBYSDsU6"
+          },
+          "AssetsAvailable": "100000",
+          "AssetsTotal": "100000",
+          "Flags": 0,
+          "LEVersion": 1,
+          "LedgerEntryType": "Vault",
+          "Owner": "rHoyKzrC9CmUMqVVn2uun8Et4ce5ha8mDA",
+          "OwnerNode": "0",
+          "PreviousTxnID": "F23E1F0520D314A5222827F7EAE72756A1CC47FE28052C0D91149284DD8552B7",
+          "PreviousTxnLgrSeq": 78,
+          "RedemptionDate": 845558163,
+          "Scale": 6,
+          "Sequence": 12,
+          "ShareMPTID": "00000001DDE80522AEDB193E32DBD86EAD0A471395A24317",
+          "SubscriptionDate": 845557863,
+          "VaultKind": 1,
+          "WithdrawalPolicy": 1,
+          "index": "D7528A5BC4027D8B901A43EAFF987F84213477FD7C7B3550EF44BAF2387F6C87"
+        },
+        "vault_pseudo_balance": "100000"
+      },
+      "expected": {
+        "borrower_account": {
+          "Account": "r9ddcSuxVD2VcEbbxKkWFe9JBaYZuMVY1j",
+          "OwnerCount": 2
+        },
+        "borrower_balance": "0",
+        "broker_owner_balance": "0",
+        "loan": null,
+        "loan_broker": {
+          "Account": "rEn9nBK4uGhjTtmzcgCFJrUoLhMtVnPn9g",
+          "CoverAvailable": "10000",
+          "CoverRateLiquidation": 25000,
+          "CoverRateMinimum": 10000,
+          "DebtMaximum": "50000",
+          "Flags": 0,
+          "LedgerEntryType": "LoanBroker",
+          "LoanSequence": 1,
+          "Owner": "rHoyKzrC9CmUMqVVn2uun8Et4ce5ha8mDA",
+          "OwnerNode": "0",
+          "PreviousTxnID": "63E5ABA477EC7E312D3719CFB39C70DB9166C633A6EF157DBFD7B209A575F2A8",
+          "PreviousTxnLgrSeq": 80,
+          "Sequence": 13,
+          "VaultID": "D7528A5BC4027D8B901A43EAFF987F84213477FD7C7B3550EF44BAF2387F6C87",
+          "VaultNode": "0",
+          "index": "E9F68287709F2CB3C9D963B87C1D17E2DD17E28B65AA89D1F5E1805F9C66D4EA"
+        },
+        "regular_key": null,
+        "signer_lists": [
+          {
+            "Flags": 65536,
+            "LedgerEntryType": "SignerList",
+            "OwnerNode": "0",
+            "PreviousTxnID": "0D035A0AD7E74EEED9E65D0936D5F9CE10912A5A2F3686C9FF522EC63C6363CC",
+            "PreviousTxnLgrSeq": 15,
+            "SignerEntries": [
+              {
+                "SignerEntry": {
+                  "Account": "raCYHzQbiLAmaBm8u2NuMhKwEyvuttByuA",
+                  "SignerWeight": 1
+                }
+              },
+              {
+                "SignerEntry": {
+                  "Account": "rLG4FTojy6ukJULQYaXqffoZvLeN6Mbcy9",
+                  "SignerWeight": 1
+                }
+              }
+            ],
+            "SignerListID": 0,
+            "SignerQuorum": 2,
+            "index": "70225A7C3034F86CE547F93BAB506A1EB365C9DA0CC2FF378A6BCCBF93570B75"
+          }
+        ],
+        "vault": {
+          "Account": "rMNLHRz6YcJKMHnV6PfGiK9wqAjNsE17Lf",
+          "Asset": {
+            "currency": "74524C5553440000000000000000000000000000",
+            "issuer": "rn9x3HEH3aSWkNekUKkMydkC1LfBYSDsU6"
+          },
+          "AssetsAvailable": "100000",
+          "AssetsTotal": "100000",
+          "Flags": 0,
+          "LEVersion": 1,
+          "LedgerEntryType": "Vault",
+          "Owner": "rHoyKzrC9CmUMqVVn2uun8Et4ce5ha8mDA",
+          "OwnerNode": "0",
+          "PreviousTxnID": "F23E1F0520D314A5222827F7EAE72756A1CC47FE28052C0D91149284DD8552B7",
+          "PreviousTxnLgrSeq": 78,
+          "RedemptionDate": 845558163,
+          "Scale": 6,
+          "Sequence": 12,
+          "ShareMPTID": "00000001DDE80522AEDB193E32DBD86EAD0A471395A24317",
+          "SubscriptionDate": 845557863,
+          "VaultKind": 1,
+          "WithdrawalPolicy": 1,
+          "index": "D7528A5BC4027D8B901A43EAFF987F84213477FD7C7B3550EF44BAF2387F6C87"
+        },
+        "vault_pseudo_balance": "100000"
+      },
+      "name": "negative protected state",
+      "passed": true
+    },
+    {
+      "actual": 0,
+      "expected": 1,
+      "name": "N6 borrower Sequence increment",
+      "passed": false
+    },
+    {
+      "actual": 0,
+      "expected": 40,
+      "name": "N6 XRP fee debit",
+      "passed": false
+    },
+    {
+      "actual": "Subscription",
+      "expected": "Subscription",
+      "name": "N6 execution phase",
+      "passed": true
+    },
+    {
+      "actual": "Subscription",
+      "expected": "Subscription",
+      "name": "N6 parent phase",
+      "passed": true
+    },
+    {
+      "actual": 84,
+      "expected": 84,
+      "name": "N6 validated ledger increment",
+      "passed": true
+    },
+    {
+      "actual": null,
+      "expected": 845557811,
+      "name": "N6 accepted transaction date",
+      "passed": false
+    }
+  ],
+  "submission_hash_if_any": "64361829FEE6145482157BB58E95E45C23B50FE54367456CFA68AE06A914F252",
+  "submission_response": {
+    "accepted": false,
+    "account_sequence_available": 7,
+    "account_sequence_next": 7,
+    "applied": false,
+    "broadcast": false,
+    "engine_result": "tecTOO_SOON",
+    "engine_result_code": 152,
+    "engine_result_message": "It is too early to attempt the requested operation. Please wait.",
+    "kept": false,
+    "open_ledger_cost": "40",
+    "queued": false,
+    "status": "success",
+    "tx_json": {
+      "Account": "r9ddcSuxVD2VcEbbxKkWFe9JBaYZuMVY1j",
+      "CloseInterestRate": 0,
+      "ClosePaymentFee": "0",
+      "Counterparty": "rHoyKzrC9CmUMqVVn2uun8Et4ce5ha8mDA",
+      "Fee": "40",
+      "GracePeriod": 60,
+      "InterestRate": 0,
+      "LastLedgerSequence": 100,
+      "LateInterestRate": 0,
+      "LatePaymentFee": "0",
+      "LoanBrokerID": "E9F68287709F2CB3C9D963B87C1D17E2DD17E28B65AA89D1F5E1805F9C66D4EA",
+      "LoanOriginationFee": "0",
+      "LoanServiceFee": "0",
+      "NetworkID": 21337,
+      "OverpaymentFee": 0,
+      "OverpaymentInterestRate": 0,
+      "PaymentInterval": 60,
+      "PaymentTotal": 1,
+      "PrincipalRequested": "1000",
+      "Sequence": 7,
+      "Signers": [
+        {
+          "Signer": {
+            "Account": "raCYHzQbiLAmaBm8u2NuMhKwEyvuttByuA"
+          }
+        },
+        {
+          "Signer": {
+            "Account": "rLG4FTojy6ukJULQYaXqffoZvLeN6Mbcy9"
+          }
+        }
+      ],
+      "TransactionType": "LoanSet",
+      "hash": "64361829FEE6145482157BB58E95E45C23B50FE54367456CFA68AE06A914F252"
+    },
+    "validated_ledger_index": 83
+  },
+  "submission_result": "tecTOO_SOON",
+  "timing": {
+    "accepted_ledger": {
+      "close_flags": 0,
+      "close_time": 845557811,
+      "close_time_resolution": 10,
+      "closed": true,
+      "ledger_hash": "B92313A3A2C22E8684145DD10F12E2FBA4E794194AF8746A031D3A5C1C74DC3A",
+      "ledger_index": 84,
+      "parent_close_time": 845557810
+    },
+    "accepted_or_unchanged_ledger": {
+      "close_flags": 0,
+      "close_time": 845557811,
+      "close_time_resolution": 10,
+      "closed": true,
+      "ledger_hash": "B92313A3A2C22E8684145DD10F12E2FBA4E794194AF8746A031D3A5C1C74DC3A",
+      "ledger_index": 84,
+      "parent_close_time": 845557810
+    },
+    "accepted_transaction_date": null,
+    "parent_validated_ledger": {
+      "close_flags": 0,
+      "close_time": 845557810,
+      "close_time_resolution": 10,
+      "closed": true,
+      "ledger_hash": "3CA383889F9BF3384DD7D8B9436D1CA32459FB0568A5765892EA7456F73E32C5",
+      "ledger_index": 83,
+      "parent_close_time": 845557809
+    },
+    "phase_at_parent_close": "Subscription",
+    "prospective_oracle_start_date_anchor_used": false,
+    "redemption_date": 845558163,
+    "source_derived_applying_view_header_close_time": 845557820,
+    "subscription_date": 845557863
+  },
+  "validated": false,
+  "validated_result": null,
+  "validated_transaction_response": {
+    "Account": "r9ddcSuxVD2VcEbbxKkWFe9JBaYZuMVY1j",
+    "CloseInterestRate": 0,
+    "ClosePaymentFee": "0",
+    "Counterparty": "rHoyKzrC9CmUMqVVn2uun8Et4ce5ha8mDA",
+    "Fee": "40",
+    "GracePeriod": 60,
+    "InterestRate": 0,
+    "LastLedgerSequence": 100,
+    "LateInterestRate": 0,
+    "LatePaymentFee": "0",
+    "LoanBrokerID": "E9F68287709F2CB3C9D963B87C1D17E2DD17E28B65AA89D1F5E1805F9C66D4EA",
+    "LoanOriginationFee": "0",
+    "LoanServiceFee": "0",
+    "NetworkID": 21337,
+    "OverpaymentFee": 0,
+    "OverpaymentInterestRate": 0,
+    "PaymentInterval": 60,
+    "PaymentTotal": 1,
+    "PrincipalRequested": "1000",
+    "Sequence": 7,
+    "Signers": [
+      {
+        "Signer": {
+          "Account": "raCYHzQbiLAmaBm8u2NuMhKwEyvuttByuA"
+        }
+      },
+      {
+        "Signer": {
+          "Account": "rLG4FTojy6ukJULQYaXqffoZvLeN6Mbcy9"
+        }
+      }
+    ],
+    "TransactionType": "LoanSet",
+    "hash": "64361829FEE6145482157BB58E95E45C23B50FE54367456CFA68AE06A914F252",
+    "status": "success",
+    "validated": false
+  }
+}
