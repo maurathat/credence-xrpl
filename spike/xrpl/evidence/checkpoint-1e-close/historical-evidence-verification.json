@@ -1,0 +1,23 @@
+{
+  "checkpoint": "1E-CLOSE",
+  "historical_directory": "evidence/checkpoint-1e-n-live-03",
+  "historical_manifest": {
+    "algorithm": "SHA-256",
+    "file_count": 42,
+    "manifest_sha256": "4406c3a81ed7eeb20dc01569fb06fcd4f33075f5572d44b0c4013533d787728a",
+    "total_bytes": 815189,
+    "verified": true
+  },
+  "historical_payloads": {
+    "N1_sha256": "d5abcf55c9c46e859bf30f3d9fea73b55f0a895a78c3590c0195fe335cb57bdf",
+    "N2_sha256": "5406ce2e9d1b2551de9cae0a9d7ee1d3ced389c5bdca41fc036d8b5fdaa8f409",
+    "N3_sha256": "d2d6c59145472419ac74c83950cb3bac41f3e35b8d85a5ae38edff483da6d581",
+    "N4_sha256": "61504bd5274815ce113566c4bc16681166b6b15825b82db41e0c58c4facd08a7",
+    "N5_sha256": "5b79d4cb81c732264f9d1d839e4e1c4f21dc3e40cd03a5f607bfe9fa0bb829fa",
+    "N6_sha256": "8e16eabdf83750f152a42c5d77df8cb49c6e7351e01e4440fe7fec4e698ab21c",
+    "stop_summary_sha256": "f37122d1e775cb8683ac4b8667a48b7ee137cf40ada4139b8ca821fd3ff63140"
+  },
+  "modified": false,
+  "verification_stage": "before adjudication artifact creation",
+  "xrpl_transactions_submitted": 0
+}

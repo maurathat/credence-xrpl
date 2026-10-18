@@ -1,0 +1,21 @@
+{
+  "algorithm": "SHA-256",
+  "file_count": 3,
+  "files": [
+    {
+      "bytes": 2635,
+      "path": "adjudication.json",
+      "sha256": "3b5ed9c4636378a5d23b52932323947c2597e3a31f508893e777d105dfd88ecd"
+    },
+    {
+      "bytes": 1072,
+      "path": "historical-evidence-verification.json",
+      "sha256": "b3626628b04d945fccd0236b5fc2c4904173404cb6b42b23cb2518af095809bb"
+    },
+    {
+      "bytes": 3694,
+      "path": "source-findings.json",
+      "sha256": "c3abccf18c7ebef67c48995886ab469fb7beae696e378024153b23022aa6d206"
+    }
+  ]
+}

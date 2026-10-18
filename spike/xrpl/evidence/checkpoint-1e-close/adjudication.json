@@ -1,0 +1,71 @@
+{
+  "architecture": {
+    "classification": "VALIDATED_FOR_PRODUCT_INTEGRATION",
+    "does_not_reclassify_historical_E6": true,
+    "supported_findings": [
+      "borrower ResearchBot plus Credence 2-of-2 authorization",
+      "either borrower signer alone is insufficient",
+      "Loan Broker owner counterparty authorization is independently required",
+      "invalid broker authorization fails",
+      "counterparty authorization binds the loan terms",
+      "wrong-phase LoanSet is rejected without protected lending-state mutation"
+    ]
+  },
+  "checkpoint": "1E-CLOSE",
+  "consolidated_results": {
+    "N1": {
+      "actual": "tefBAD_QUORUM",
+      "case": "ResearchBot alone",
+      "status": "PASS"
+    },
+    "N2": {
+      "actual": "tefBAD_QUORUM",
+      "case": "Credence alone",
+      "status": "PASS"
+    },
+    "N3": {
+      "actual": "temBAD_SIGNER",
+      "case": "missing broker authorization",
+      "status": "PASS"
+    },
+    "N4": {
+      "actual": "local invalidTransaction",
+      "case": "invalid broker authorization",
+      "status": "PASS"
+    },
+    "N5": {
+      "actual": "local invalidTransaction",
+      "case": "PrincipalRequested changed from broker-authorized 1000 to submitted 1001",
+      "status": "PASS"
+    },
+    "N6": {
+      "actual": "submission-level tecTOO_SOON with no protected lending-state mutation",
+      "case": "correctly authorized LoanSet during Subscription under fail_hard=true",
+      "disposition": "SUBMISSION_MODE_DEPENDENT",
+      "engine_security_behavior": "PHASE_GATE_SUPPORTED",
+      "status": "PASS_AFTER_SOURCE_ADJUDICATION"
+    },
+    "historical_positive": {
+      "authorization_composition": "SUPPORTED",
+      "result": "validated tesSUCCESS",
+      "timing": "SOURCE_CONFORMANT",
+      "timing_oracle": "ORACLE_DEFECT"
+    }
+  },
+  "e7_e9": {
+    "prerequisite_for_e6_product_integration": false,
+    "status": "NOT_ATTEMPTED"
+  },
+  "frozen_n6_disposition_oracle": {
+    "derivative_finding": "The oracle did not bind its expected fee, sequence, validation, and ledger-inclusion disposition to submission mode.",
+    "historical_result": "FAIL"
+  },
+  "historical_E6_experiment": "FAIL",
+  "historical_evidence_modified": false,
+  "loan_pay_submitted": false,
+  "mode": "DOCUMENTATION_AND_SOURCE_ADJUDICATION_ONLY",
+  "product_integration_recommendation": "USE the validated E6 LoanSet authorization architecture within the tested scope; retain historical experiment and oracle failures as permanent records.",
+  "protocol_contradiction": "NONE_ESTABLISHED",
+  "start_commit": "92a903cab0abb3bbd578b5a5f7c18a15e0c6876b",
+  "xrpl_transactions_submitted": 0
+}

@@ -1,8 +1,99 @@
 {
-  "schema_version": 23,
+  "schema_version": 24,
   "overall": "FAIL",
-  "scope": "Checkpoint 1E-N-LIVE-03 executed the final frozen E6 negative campaign; N1-N5 passed and N6 stopped on a validation-disposition contradiction",
-  "start_commit": "d23a4eebcfe98e09eb55558b4a0248e4d46e99ae",
+  "scope": "Checkpoint 1E-CLOSE preserves historical E6 FAIL and closes the separately adjudicated E6 authorization architecture as validated for product integration",
+  "start_commit": "92a903cab0abb3bbd578b5a5f7c18a15e0c6876b",
+  "e6_status": "CLOSED",
+  "e6_authorization_architecture": "VALIDATED_FOR_PRODUCT_INTEGRATION",
+  "e6_authorization_architecture_may_be_used_for_product_integration": true,
+  "e7_e9": "NOT_ATTEMPTED",
+  "checkpoint_1e_close": {
+    "outcome": "PASS",
+    "mode": "DOCUMENTATION_AND_SOURCE_ADJUDICATION_ONLY",
+    "start_commit": "92a903cab0abb3bbd578b5a5f7c18a15e0c6876b",
+    "historical_classifications": {
+      "historical_E6": "FAIL",
+      "historical_positive_loanset": "validated tesSUCCESS",
+      "positive_authorization_composition": "SUPPORTED",
+      "positive_timing": "SOURCE_CONFORMANT",
+      "historical_positive_timing_oracle": "ORACLE_DEFECT",
+      "frozen_N6_disposition_oracle": "FAIL"
+    },
+    "consolidated_results": {
+      "N1": "PASS — ResearchBot alone -> tefBAD_QUORUM",
+      "N2": "PASS — Credence alone -> tefBAD_QUORUM",
+      "N3": "PASS — missing broker authorization -> temBAD_SIGNER",
+      "N4": "PASS — invalid broker authorization -> local invalidTransaction",
+      "N5": "PASS — altered PrincipalRequested invalidated broker signature",
+      "N6_engine_security": "PHASE_GATE_SUPPORTED — otherwise correctly authorized LoanSet in Subscription returned tecTOO_SOON with no protected lending-state mutation",
+      "N6_disposition": "SUBMISSION_MODE_DEPENDENT"
+    },
+    "source_adjudication": {
+      "rippled_version": "3.4.0",
+      "source_commit": "4a4fded2eba11427c48ce3f24d9c1aea5e7a9d17",
+      "runner_fail_hard": true,
+      "mapping": "fail_hard=true -> FailHard::Yes -> TapFailHard",
+      "tec_behavior_under_TapFailHard": "discard transaction effects; do not take ordinary tec fee-claim path",
+      "observed_disposition": {
+        "validated": false,
+        "sequence_unchanged": true,
+        "fee_unchanged": true,
+        "ledger_inclusion": false
+      },
+      "source_conformant": true,
+      "protocol_contradiction": "NONE_ESTABLISHED"
+    },
+    "frozen_N6_disposition_oracle": {
+      "historical_result": "FAIL",
+      "derivative_finding": "The expected fee, sequence, validation, and ledger-inclusion disposition was not bound to submission mode."
+    },
+    "E6_authorization_architecture": {
+      "classification": "VALIDATED_FOR_PRODUCT_INTEGRATION",
+      "does_not_reclassify_historical_E6": true,
+      "tested_scope": [
+        "borrower ResearchBot plus Credence 2-of-2 authorization",
+        "either borrower signer alone is insufficient",
+        "Loan Broker owner counterparty authorization is independently required",
+        "invalid broker authorization fails",
+        "counterparty authorization binds the loan terms",
+        "wrong-phase LoanSet is rejected without protected lending-state mutation"
+      ]
+    },
+    "execution": {
+      "xrpld_started": false,
+      "xrpl_rpc_calls": 0,
+      "xrpl_transactions_submitted": 0,
+      "loan_pay_submitted": false,
+      "E7_E8_E9": "NOT_ATTEMPTED"
+    },
+    "evidence": {
+      "directory": "evidence/checkpoint-1e-close",
+      "algorithm": "SHA-256",
+      "file_count": 3,
+      "total_bytes": 7401,
+      "manifest_verified": true,
+      "historical_evidence_modified": false,
+      "live_03_manifest_sha256": "4406c3a81ed7eeb20dc01569fb06fcd4f33075f5572d44b0c4013533d787728a"
+    },
+    "gates": {
+      "F1_F12_and_provenance": "PASS (13)",
+      "S1_S12": "PASS (12)",
+      "prospective_negative_tests": "PASS (14)",
+      "historical_E6_tests": "PASS (40)",
+      "all_spike_tests": "PASS (181)",
+      "repository_unit_tests": "PASS (17)",
+      "conformance_tests": "PASS (4)",
+      "lint_format_large_file": "PASS",
+      "strict_typecheck": "PASS (25 source files)",
+      "secrets_scan": "PASS",
+      "json_and_manifests": "PASS",
+      "historical_evidence_immutability": "PASS",
+      "authorized_paths": "PASS",
+      "git_diff_check": "PASS"
+    },
+    "product_integration_recommendation": "USE the validated E6 LoanSet authorization architecture within the tested scope",
+    "E7_E8_E9_recommendation": "MAY BE INVESTIGATED SEPARATELY; not prerequisites for E6 product integration"
+  },
   "checkpoint_1e_n_live_03": {
     "outcome": "STOP/BLOCKED",
     "classification": "FROZEN_N6_VALIDATION_DISPOSITION_CONTRADICTION",

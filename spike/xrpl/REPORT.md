@@ -1,3 +1,98 @@
+# Checkpoint 1E-CLOSE — E6 architecture disposition
+
+## Outcome
+
+**PASS — source and committed-evidence adjudication closes the E6 LoanSet
+authorization architecture as VALIDATED FOR PRODUCT INTEGRATION within the
+tested scope. Historical E6 remains FAIL. ZERO XRPL transactions were
+submitted.**
+
+This documentation-only checkpoint began at clean commit
+`92a903cab0abb3bbd578b5a5f7c18a15e0c6876b`. It did not start xrpld, call XRPL
+RPC, execute LoanPay, or execute E7-E9. Historical evidence, the runner,
+oracles, tests, serialization, and signing construction are unchanged.
+
+## Source adjudication
+
+The pinned rippled 3.4.0 source at
+`4a4fded2eba11427c48ce3f24d9c1aea5e7a9d17` establishes the complete N6 path:
+
+1. `LoanSet::preclaim` returns `tecTOO_SOON` when the Vault is in Subscription.
+2. The LIVE-03 runner submitted with `fail_hard=true`.
+3. The submit RPC maps this to `FailHard::Yes`; `NetworkOPs` maps that to
+   `TapFailHard`.
+4. For a tec result under `TapFailHard`, `Transactor` discards the context and
+   leaves the transaction unapplied. Network processing neither keeps nor
+   relays that failed fail-hard submission.
+5. Therefore LIVE-03's `validated=false`, unchanged sequence and fee, and no
+   ledger inclusion are source-conformant for its actual submission mode.
+6. Without `TapFailHard`, the source permits the ordinary tec fee-claim path.
+   The disposition is therefore **SUBMISSION_MODE_DEPENDENT**.
+
+N6 engine/security behavior is **PHASE_GATE_SUPPORTED**: an otherwise correctly
+authorized LoanSet submitted during the prohibited phase returned
+`tecTOO_SOON` and made no protected lending-state mutation. No protocol
+contradiction is established.
+
+The frozen N6 disposition oracle historically **FAILED** and remains failed.
+Its derivative defect is that it did not bind its expected validation,
+fee/sequence, and ledger-inclusion disposition to submission mode. This does
+not invalidate the observed phase gate.
+
+## Consolidated evidence
+
+| Observation | Result | Classification |
+| --- | --- | --- |
+| Historical positive LoanSet | validated `tesSUCCESS` | composition **SUPPORTED**; timing **SOURCE_CONFORMANT** |
+| Historical positive timing oracle | mismatched its evidence | **ORACLE_DEFECT** |
+| N1 ResearchBot alone | `tefBAD_QUORUM` | **PASS** |
+| N2 Credence alone | `tefBAD_QUORUM` | **PASS** |
+| N3 missing broker authorization | `temBAD_SIGNER` | **PASS** |
+| N4 invalid broker authorization | local `invalidTransaction` | **PASS** |
+| N5 altered `PrincipalRequested` | broker signature invalidated | **PASS** |
+| N6 prohibited phase | `tecTOO_SOON`; protected lending state unchanged | **PHASE_GATE_SUPPORTED**; **SUBMISSION_MODE_DEPENDENT** |
+
+Historical E6 remains **FAIL** permanently. The historical positive LoanSet,
+N1-N6 evidence, and source adjudication now support the separate engineering
+classification:
+
+**E6 AUTHORIZATION ARCHITECTURE = VALIDATED FOR PRODUCT INTEGRATION.**
+
+Within the tested scope, this means:
+
+- borrower authorization is ResearchBot + Credence 2-of-2;
+- either borrower signer alone is insufficient;
+- Loan Broker owner counterparty authorization is independently required;
+- invalid broker authorization fails;
+- counterparty authorization binds the agreed LoanSet terms; and
+- a wrong-phase LoanSet is rejected without protected lending-state mutation.
+
+E7-E9 remain **NOT_ATTEMPTED**. They may be investigated separately, but are
+not prerequisites for using this validated E6 authorization architecture.
+
+## Evidence and gates
+
+The bounded adjudication evidence is confined to
+`evidence/checkpoint-1e-close/`. Its SHA-256 manifest covers the adjudication,
+source findings, and historical-evidence verification: 3 payload files totaling
+7,401 bytes. The manifest verifies. The LIVE-03 manifest remains byte-for-byte unchanged at
+`4406c3a81ed7eeb20dc01569fb06fcd4f33075f5572d44b0c4013533d787728a`.
+
+All existing gates pass without test changes: F1-F12 plus provenance (13),
+S1-S12 (12), prospective negative tests (14), historical E6 tests (40), all
+spike tests (181), repository unit tests (17), conformance tests (4), lint,
+formatting, large-file check, strict typecheck, secrets scan, JSON validation,
+all manifests, historical-evidence immutability, authorized paths, and
+`git diff --check`.
+
+## Modified paths
+
+- `spike/xrpl/REPORT.md`
+- `spike/xrpl/RESULTS.json`
+- `spike/xrpl/evidence/checkpoint-1e-close/`
+
+---
+
 # Checkpoint 1E-N-LIVE-03 — final E6 negative control run
 
 ## Outcome

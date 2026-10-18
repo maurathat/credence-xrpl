@@ -1,0 +1,65 @@
+{
+  "checkpoint": "1E-CLOSE",
+  "decision": {
+    "frozen_n6_disposition_oracle": "HISTORICALLY_FAILED",
+    "n6_disposition": "SUBMISSION_MODE_DEPENDENT",
+    "n6_engine_security_behavior": "PHASE_GATE_SUPPORTED",
+    "protocol_contradiction": "NONE_ESTABLISHED"
+  },
+  "findings": [
+    {
+      "finding": "LoanSet preclaim returns tecTOO_SOON when the Vault phase is Subscription.",
+      "lines": "319-326",
+      "path": "src/libxrpl/tx/transactors/lending/LoanSet.cpp",
+      "sha256": "c19ef5dcbe190f347a88e20eb0525a228231d1639573bab6806eb8df29c9a5ae",
+      "url": "https://github.com/XRPLF/rippled/blob/4a4fded2eba11427c48ce3f24d9c1aea5e7a9d17/src/libxrpl/tx/transactors/lending/LoanSet.cpp#L319-L326"
+    },
+    {
+      "finding": "The submit RPC maps a true fail_hard parameter to FailHard::Yes and passes it into transaction processing.",
+      "lines": "29-38, 126-133",
+      "path": "src/xrpld/rpc/handlers/transaction/Submit.cpp",
+      "sha256": "c3247aab1330b5b3d7dd3b6602fc0c6aca6b8e14e789d7003058a7453c58326a",
+      "url": "https://github.com/XRPLF/rippled/blob/4a4fded2eba11427c48ce3f24d9c1aea5e7a9d17/src/xrpld/rpc/handlers/transaction/Submit.cpp#L29-L38"
+    },
+    {
+      "finding": "NetworkOPs maps FailHard::Yes to TapFailHard before TxQ application and reports applied=false when application is suppressed.",
+      "lines": "1695-1706, 1721-1729, 1849-1861",
+      "path": "src/xrpld/app/misc/NetworkOPs.cpp",
+      "sha256": "a255f295dbee09cc3d0f2a925ba921dcefbf66b3c727b9894e46246a68859a0b",
+      "url": "https://github.com/XRPLF/rippled/blob/4a4fded2eba11427c48ce3f24d9c1aea5e7a9d17/src/xrpld/app/misc/NetworkOPs.cpp#L1695-L1706"
+    },
+    {
+      "finding": "For a tec result under TapFailHard, Transactor discards the context and leaves canApply false. Without TapFailHard, the ordinary tec fee-claim path calls processPersistentChanges.",
+      "lines": "1601-1621",
+      "path": "src/libxrpl/tx/Transactor.cpp",
+      "sha256": "a7bbc73ebbf7d30fc3c4a19971c87e2e993505dc907f703656ae5b4ae4922ccc",
+      "url": "https://github.com/XRPLF/rippled/blob/4a4fded2eba11427c48ce3f24d9c1aea5e7a9d17/src/libxrpl/tx/Transactor.cpp#L1601-L1621"
+    },
+    {
+      "finding": "A tec is likely to claim a fee when TapRetry is absent, establishing the ordinary non-fail-hard disposition path.",
+      "lines": "37-45, 292-310",
+      "path": "include/xrpl/tx/applySteps.h",
+      "sha256": "9001b9364bf5f4ab6c66d8ee0333b1523d33741084b33a71398e27253d573806",
+      "url": "https://github.com/XRPLF/rippled/blob/4a4fded2eba11427c48ce3f24d9c1aea5e7a9d17/include/xrpl/tx/applySteps.h#L37-L45"
+    },
+    {
+      "finding": "The pinned LoanSet tests expect tecTOO_SOON for a Subscription-phase LoanSet.",
+      "lines": "740-749",
+      "path": "src/test/app/lending/LoanSet_test.cpp",
+      "sha256": "7f47ccfe615b15f03b0b5df626a096f5ac14fc7ef44e42f16fa15aae34ff845e",
+      "url": "https://github.com/XRPLF/rippled/blob/4a4fded2eba11427c48ce3f24d9c1aea5e7a9d17/src/test/app/lending/LoanSet_test.cpp#L740-L749"
+    },
+    {
+      "finding": "The committed LIVE-03 runner submitted every negative case with fail_hard=true.",
+      "lines": "674",
+      "path": "spike/xrpl/scripts/run_checkpoint_1e_n.py",
+      "sha256": "f85025e7102c79fd057c1e0050629e02d44628372d05a991bd5f8d5d4540e971"
+    }
+  ],
+  "pinned_rippled": {
+    "source_commit": "4a4fded2eba11427c48ce3f24d9c1aea5e7a9d17",
+    "version": "3.4.0"
+  },
+  "source_conclusion": "LIVE-03 is source-conformant for fail_hard=true. The tecTOO_SOON engine result establishes the phase gate; TapFailHard explains validated=false, unchanged sequence and fee, and no ledger inclusion.",
+  "xrpl_transactions_submitted": 0
+}
