@@ -24,10 +24,10 @@ Owner: Inference.
 
 from __future__ import annotations
 
-from collections.abc import Callable, Iterable
+from collections.abc import Callable, Iterable, Sequence
 from dataclasses import dataclass
 from enum import Enum
-from typing import NoReturn
+from typing import TYPE_CHECKING, NoReturn
 
 from nacl.signing import SigningKey
 
@@ -81,6 +81,9 @@ from credence.inference.receipt_state import (
     ReceiptChain,
     SettledReceipts,
 )
+
+if TYPE_CHECKING:
+    from credence.inference.market import MarketOutcome, Selection
 
 
 def quote(*args: object, **kwargs: object) -> NoReturn:
@@ -330,6 +333,23 @@ class Gateway:
             evidence.receipt.digest(),
         )
         return DeliveryVerified(reservation, policy, evidence, decision, result.response)
+
+    def select(self, candidates: Sequence[Purchase]) -> Selection:
+        """Core's dry-run qualification of every candidate, and the cheapest qualifying one."""
+        from credence.inference.market import qualify_and_select  # market builds on this module
+
+        return qualify_and_select(
+            candidates, registry=self._registry, ledger=self._ledger, now=self._clock()
+        )
+
+    def purchase_best(self, candidates: Sequence[Purchase]) -> MarketOutcome:
+        """Select among Core-qualified candidates, then run the chosen one through `purchase`."""
+        from credence.inference.market import MarketOutcome
+
+        selection = self.select(candidates)
+        if selection.chosen is None:
+            return MarketOutcome(selection, None)
+        return MarketOutcome(selection, self.purchase(selection.chosen.purchase))
 
     def verify_delivery(
         self, evidence: DeliveryEvidence, delivered_response: bytes

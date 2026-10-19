@@ -1,6 +1,6 @@
 # INFERENCE-GATEWAY-CONTRACT
 
-Owner: Inference (Claude Code). Status: Inference Checkpoint 2 (local Tier 2 provider added). Only the owner edits this file. Other workstreams file a request in `contracts/requests/`.
+Owner: Inference (Claude Code). Status: Inference Checkpoint 3 (Nebius Tier 1 provider and the two-provider Qwen market added). Only the owner edits this file. Other workstreams file a request in `contracts/requests/`.
 
 This contract describes the in-process inference gateway in `credence/inference/`:
 - the gateway (`gateway.py`);
@@ -8,7 +8,9 @@ This contract describes the in-process inference gateway in `credence/inference/
 - payload digests and token-count source (`payload.py`);
 - the receipt chain and the settled-receipt fact (`receipt_state.py`);
 - the deterministic fake providers (`fake_providers.py`);
-- the local Llama 3.1 8B Instruct Tier 2 provider (`local_llama.py`).
+- the local Tier 2 providers (`local_llama.py`);
+- the Nebius Tier 1 provider (`nebius.py`);
+- routing among Core-qualified quotes (`market.py`).
 
 The code is authoritative. `tests/unit/test_inference_contract.py` checks the lists and tables here against the code. `tests/unit/test_inference_gateway.py` runs every behaviour below through the real Core engines. `tests/unit/test_inference_local_llama.py` covers the local provider without the model, and `tests/integration/test_local_llama.py` runs it with the real model. Fixtures and evidence are in `contracts/fixtures/` (see Fixtures and evidence).
 
@@ -23,7 +25,7 @@ The code is authoritative. `tests/unit/test_inference_contract.py` checks the li
 - A Tier 1 provider signs nothing. Nothing at Tier 1 implies the provider signed or attested anything.
 - Tier 2 is a provider's signed statement. It is not a measurement: no GPU execution proof, no loaded-artifact measurement, no TEE measurement.
 - A model name alone verifies no weights. A profile field that is null is NOT ASSERTED, and the gateway never fills one in.
-- The only real provider is the local Tier 2 provider (see Local Tier 2 provider). No remote provider is called.
+- The real providers are the local Tier 2 providers (see Local Tier 2 provider) and Nebius at Tier 1 (see Nebius Tier 1 provider).
 
 ## Core dependency
 
@@ -227,13 +229,37 @@ These are deterministic and in process, with no network or credentials:
 - The Tier 1 fake does not model Nebius behaviour.
 - The Tier 2 fake runs no model and hashes no weights file.
 
+## Service location (jurisdiction and residency)
+
+Core leaves the general meaning of `ServiceClass.jurisdiction` undefined. `CORE-OBJECTS.md` gives its type, `CountryCode`, but no meaning. This section defines only the meaning the Inference workstream uses for the service classes it builds for this demo. It is not a Credence-wide or legal definition, and it changes nothing in Core.
+
+- **`jurisdiction`** is the country in which the inference execution for that service occurs. It does not mean the provider's place of incorporation, its headquarters, or a governing-law jurisdiction.
+- **`data_residency`** is the set of countries in which the service's execution takes place, under the same meaning.
+
+| Provider | `jurisdiction` | `data_residency` | Provenance |
+| --- | --- | --- | --- |
+| Nebius | `FI` | `{FI}` | Nebius-declared service-region metadata from its live catalog: the selected model's region `eu-north1`, `country_code` `FI`. Not Nebius's legal or corporate jurisdiction. |
+| Local provider | `US` | `{US}` | An operator-supplied deployment fact: the local execution machine physically operates in the United States. Not inferred from fixtures, IP geolocation or the operating system. |
+
+**Buyer allowlists.** A procurement class's `allowed_jurisdictions` and `allowed_data_residencies` are buyer allowlists. The general marketplace class allows `{FI, US}` for both. That says the buyer accepts execution in either country; it is not a claim that any provider operates in both.
+
+**How frozen Core matches them:**
+- Nebius: `FI` ∈ `{FI, US}`, and `{FI}` ⊆ `{FI, US}`.
+- Local: `US` ∈ `{FI, US}`, and `{US}` ⊆ `{FI, US}`.
+
 ## Local Tier 2 provider
 
-`LocalLlamaProvider` (provider ID `local-llama-provider`) serves Llama 3.1 8B Instruct from a local Ollama runtime. It is the build plan's Provider B in process: the provider's signing key is held by the provider object, separate from the gateway key, but in the same process. A separate sidecar process is not implemented.
+`LocalLlamaProvider` serves a model from a local Ollama runtime. It is the build plan's Provider B in process: the provider's signing key is held by the provider object, separate from the gateway key, but in the same process. A separate sidecar process is not implemented.
+
+| Provider ID | Model family | Local artifact (Ollama library tag) |
+| --- | --- | --- |
+| `local-llama-provider` | Llama 3.1 8B Instruct (frozen at Checkpoint 2) | `llama3.1:8b-instruct-fp16` |
+| `local-qwen-provider` | `qwen3-30b-a3b-instruct-2507` | `qwen3:30b-a3b-instruct-2507-q8_0` |
+
+Both use the same binding and execution rules below. Each local execution artifact is an Ollama library GGUF conversion, not the model publisher's original files.
 
 ### Artifact identity
 
-- **Model family.** The model family is Llama 3.1 8B Instruct (Meta). The local execution artifact is an Ollama library GGUF conversion of it, not Meta's original files.
 - **One file, one digest.** The artifact is the single GGUF file that the Ollama manifest for one library tag names as its one model layer. `model_artifact_digest` is SHA-256 of that file's exact bytes.
 - **Checked at bind time.** `bind_local_artifact` streams the file and refuses (`ArtifactBindingError`) unless all of these hold:
   - its size and digest equal the manifest's content address;
@@ -247,10 +273,10 @@ These are deterministic and in process, with no network or credentials:
 | Profile member | Value |
 | --- | --- |
 | `runtime` | `ollama` and the version the runtime reports at bind time |
-| `chat_template_digest` | SHA-256 of the manifest's template file, checked against its content address; null if the manifest has no template layer |
+| `chat_template_digest` | SHA-256 of the manifest's template file only when the template the runtime reports it will use (`/api/show` `template`) is byte-for-byte that file. Otherwise null (NOT ASSERTED): a GGUF file may embed its own chat template, and the runtime may render with it instead. The runtime-reported template's SHA-256 is kept as an observation (`runtime_template_sha256`), never as a profile fact |
 | `tokenizer_digest` | Null (NOT ASSERTED): the tokenizer is embedded in the GGUF file, so it has no separate bytes; the artifact digest covers the file it lives in |
 | `adapter_digest` | Null: no adapter (bind refuses one) |
-| `precision`, `quantization` | `F16` and `none` only when the file's GGUF `general.file_type` is 1 (mostly F16) and every tensor the runtime reports is F16 or F32; otherwise both null (NOT ASSERTED) |
+| `precision`, `quantization` | From the file's own metadata, never the tag. `F16` and `none` only when the file's GGUF `general.file_type` is 1 (mostly F16) and every tensor the runtime reports is F16 or F32. Quantization `Q8_0` with precision null only when `general.file_type` is 7 (mostly Q8_0) and every tensor is Q8_0 or F32, at least one Q8_0; precision is not asserted because Q8_0 stores 8-bit blocks with per-block scales. Otherwise both null (NOT ASSERTED) |
 | `context_min_tokens` | The context window the provider configures (`num_ctx`) |
 | `sampling` | The temperature and fixed seed the provider sends on every request |
 
@@ -264,7 +290,7 @@ The provider only talks to a loopback `http` address (`LoopbackOllamaTransport`)
 
 ### Provider signature
 
-The provider signs every `credence.provider_attestation` through C3A `sign` with its own key. Its key ID is registered under the `provider` role with subject `local-llama-provider`. The key is generated at runtime and never written. Only public key IDs and signatures appear in committed evidence.
+The provider signs every `credence.provider_attestation` through C3A `sign` with its own key. Its key ID is registered under the `provider` role with its provider ID as subject. The key is generated at runtime and never written. Only public key IDs and signatures appear in committed evidence.
 
 ### Claim boundary
 
@@ -282,7 +308,7 @@ Credence must not say any of the following:
 - that there is physical-device execution proof;
 - that this is Tier 3.
 
-Nothing here says the local file is what any other provider runs. The only assertion shared with another provider is the model family.
+Nothing here says the local file is what any other provider runs. The only assertion shared with another provider is the model family. The local Qwen file is not claimed to equal whatever Nebius runs.
 
 ### Runtime failures
 
@@ -290,6 +316,65 @@ Nothing here says the local file is what any other provider runs. The only asser
 | --- | --- | --- |
 | Runtime unreachable, model not found (HTTP 404), or the bound artifact changed or is gone | `ProviderUnavailableError` | `PROVIDER_UNAVAILABLE` |
 | Other HTTP error, timeout, a body that is not a JSON object, or a reply naming another model, not done, without content, or without valid counts | `ProviderExecutionError` | `PROVIDER_EXECUTION_ERROR` |
+
+## Nebius Tier 1 provider
+
+`NebiusProvider` (provider ID `nebius-token-factory`) is the build plan's Provider A. It calls Nebius Token Factory's public API; no partnership is claimed, and Credence pays Nebius through normal billing. It is Tier 1: Credence's gateway witnessed Nebius's response and signs the receipt. Nebius signs no `credence.provider_attestation`, so the result carries no attestation and the provider signature fact is `not_present`.
+
+### Credential boundary
+
+- The key enters only through the `NEBIUS_API_KEY` environment variable, supplied by the operator. Credence code never invokes a password manager and never stores, logs, returns or includes the key in an error.
+- A key with leading or trailing whitespace, or any whitespace or control character, is refused before any network call (`credential_malformed`). It is never silently stripped. A missing key is `credential_missing`.
+- `HttpsNebiusTransport` sends requests only to `https://api.tokenfactory.nebius.com/v1` with `Authorization: Bearer <key>`, and refuses redirects so the header cannot be forwarded to another host.
+- Live calls also require `CREDENCE_NEBIUS_LIVE=1`. Without it, and without the key, live tests and recorders do not run.
+
+### Profile and catalog metadata
+
+| Profile member | Value |
+| --- | --- |
+| `model_identifier` | The exact Nebius model ID, `Qwen/Qwen3-30B-A3B-Instruct-2507`, confirmed in Nebius's live catalog |
+| `model_artifact_digest`, `tokenizer_digest`, `adapter_digest`, `chat_template_digest`, `runtime`, `precision`, `quantization` | Null (NOT ASSERTED) |
+| `context_min_tokens` | The context the Credence quote relies on (8192), not a Nebius claim |
+| `sampling` | Temperature 0 as sent; seed policy `provider`, seed null (Nebius exposes no seed parameter) |
+
+Nebius's catalog metadata (for example `quantization: fp8`, pricing strings, rate limits) is a provider declaration. It is recorded as metadata in sanitized catalog observations and never put into the ExecutionProfile.
+
+### Request and token counts
+
+- `POST /chat/completions` with the model ID, one user message, `max_tokens` equal to the quote's `max_output_tokens`, `temperature` 0, `stream` false, and no seed.
+- The reply must name the same model, have exactly one choice with string content, and carry `usage`.
+- `input_token_count` is `usage.prompt_tokens`; `output_token_count` is `usage.completion_tokens`. Both are provider-reported.
+- A non-zero `usage.prompt_tokens_details.cached_tokens` or `usage.completion_tokens_details.reasoning_tokens` is refused (`unsupported_usage`), because its relation to the totals is not established.
+
+### Failures
+
+| Condition | Category | Raised as | Gateway outcome |
+| --- | --- | --- | --- |
+| Key missing or malformed | `credential_missing`, `credential_malformed` | `ProviderUnavailableError` | `PROVIDER_UNAVAILABLE` |
+| HTTP 401 or 403 | `authentication` | `ProviderUnavailableError` | `PROVIDER_UNAVAILABLE` |
+| HTTP 402 | `payment_required` | `ProviderUnavailableError` | `PROVIDER_UNAVAILABLE` |
+| HTTP 404 | `model_unavailable` | `ProviderUnavailableError` | `PROVIDER_UNAVAILABLE` |
+| HTTP 429 | `rate_limited` | `ProviderUnavailableError` | `PROVIDER_UNAVAILABLE` |
+| HTTP 503 or 529 | `service_unavailable` | `ProviderUnavailableError` | `PROVIDER_UNAVAILABLE` |
+| Host unreachable | `unreachable` | `ProviderUnavailableError` | `PROVIDER_UNAVAILABLE` |
+| HTTP 500 or other 5xx | `server_error` | `ProviderExecutionError` | `PROVIDER_EXECUTION_ERROR` |
+| HTTP 400, 422 or other 4xx | `request_rejected` | `ProviderExecutionError` | `PROVIDER_EXECUTION_ERROR` |
+| Timeout | `timeout` | `ProviderExecutionError` | `PROVIDER_EXECUTION_ERROR` |
+| Body not a JSON object, or an unusable reply | `malformed_response` | `ProviderExecutionError` | `PROVIDER_EXECUTION_ERROR` |
+| Cached or reasoning tokens reported | `unsupported_usage` | `ProviderExecutionError` | `PROVIDER_EXECUTION_ERROR` |
+
+Error messages carry only the category and HTTP status, never the key or the response body.
+
+## Market routing
+
+`Gateway.select(candidates)` and `Gateway.purchase_best(candidates)` choose among quotes for one job. This is not a policy engine.
+
+- **Candidates.** Each candidate is a complete signed purchase for the same facility and the same prompt, one per offered quote.
+- **Eligibility is Core's.** Every candidate goes through the real `policy_engine.evaluate` with its real C3A signature facts and the ledger's current headroom and nonce use, as a dry run: nothing is reserved and no decision is stored.
+- **Routing rule.** Among the candidates Core accepted: lowest maximum cost (Core's `max_total_cost_value` for the quote), then provider ID, then quote ID.
+- **No override.** A candidate Core rejected is never chosen, however cheap. When no candidate qualifies, nothing is reserved and no provider is called.
+- **Authority.** The chosen purchase then runs the normal purchase flow, where `ReservationLedger.reserve` decides again.
+- **Quotes.** Market quotes are configured demo values in micro-tRLUSD (tRLUSD is a test token). They are not Nebius's billed price; Nebius's catalog pricing strings have no established unit and are not converted.
 
 ## Fixtures and evidence
 
@@ -313,14 +398,25 @@ These are **deterministic protocol fixtures**.
 - **Left out:** the response text (only its digest is kept), model weights, private keys and machine paths.
 - **How it is checked:** `contracts/fixtures/record_local_llama_observation.py` writes it, and `tests/conformance/test_inference_c2_observation.py` re-verifies its digests, signatures and verifier decision through Core alone. Because the response text is not committed, the delivered-response digest in that check is the recorded one, not an independent one.
 
+Checkpoint 3 evidence is in `contracts/fixtures/inference_c3/`:
+
+| File | Kind | Written by | Checked by |
+| --- | --- | --- | --- |
+| `market-selection-deterministic.json` | **Deterministic protocol fixture**: Core's dry-run qualification and the routing choice for both price-vs-evidence scenarios, built from the real profiles and demo quotes; no provider is called | `build_inference_c3_market_fixture.py` | `test_inference_c3_market_fixture.py` regenerates it byte-for-byte |
+| `local-qwen-tier2-observation.json` | **Runtime observation**: one real local Qwen Tier 2 purchase | `record_local_qwen_observation.py` | `test_inference_c3_local_qwen_observation.py`, through Core alone |
+| `nebius-qwen-tier1-observation.json` | **Runtime observation**: the real Nebius Tier 1 delivery, its sanitized usage, and the seven Tier 1 attacks run on it in memory | `record_qwen_market_live.py` | `test_inference_c3_live_observations.py`, through Core alone |
+| `qwen-market-live-observation.json` | **Runtime observation**: both live market scenarios; scenario A's delivery is the same single Nebius call as the Tier 1 evidence | `record_qwen_market_live.py` | `test_inference_c3_live_observations.py`, including each candidate's dry-run decision |
+| `nebius-model-discovery.json`, `nebius-model-Qwen_Qwen3-30B-A3B-Instruct-2507.json` | **Runtime observation**: sanitized live catalog snapshots (model IDs and Nebius-declared metadata) | `discover_nebius_models.py`, `describe_nebius_model.py` | Recorded only |
+
+Runtime observations are not deterministically regenerable. None of them holds a credential, a request header, response text, a private key, model weights or a machine path. Where a check needs the delivered response, it uses the recorded digest, not an independent one.
+
 ## Not in this contract
 
-- Quoting: there is no 402 step, and `gateway.quote` is not implemented.
-- Remote providers: no Nebius calls (`provider_a.py` is a stub).
-- A separate signing-sidecar process (`provider_b_sidecar.py` is a stub); the local provider signs in process.
+- Quoting: there is no 402 step, and `gateway.quote` is not implemented. Market quotes are configured demo values.
+- `provider_a.py` and `provider_b_sidecar.py` remain Checkpoint 0 stubs. Provider A is implemented in `nebius.py`, and Provider B in `local_llama.py`, signing in process; there is no separate signing-sidecar process.
 - Tier 3, or any measurement of loaded weights.
 - ResearchBot.
 - Settlement: no settlement, reservation release, disputes, XRPL payments, LoanSet or LoanPay.
 - Persistence: none for chain heads or settled receipts.
 - Interfaces: no rate limiting, HTTP or FastAPI API, or frontend.
-- Credentials of any kind.
+- Credentials beyond `NEBIUS_API_KEY` in the process environment.

@@ -80,7 +80,9 @@ class FakeTransport:
         file_type: int = 1,
         tensor_types: tuple[str, ...] = ("F16", "F32"),
         reply: Mapping[str, object] | None = None,
+        runtime_template: str | None = TEMPLATE_BYTES.decode(),
     ) -> None:
+        self.runtime_template = runtime_template
         self.file_type = file_type
         self.tensor_types = tensor_types
         self.reply = reply
@@ -95,6 +97,7 @@ class FakeTransport:
         if path == "/api/show":
             return {
                 "model_info": {"general.file_type": self.file_type},
+                "template": self.runtime_template,
                 "tensors": [{"name": f"t{i}", "type": t} for i, t in enumerate(self.tensor_types)],
             }
         assert path == "/api/chat"
@@ -144,8 +147,20 @@ def test_profile_is_built_from_observed_files_and_metadata(tmp_path: Path) -> No
 
 @pytest.mark.parametrize(
     "file_type,tensors",
-    [(7, ("Q8_0", "F32")), (1, ("F16", "Q4_K")), (0, ("F32",))],
-    ids=["q8_0-file", "quantized-tensor", "not-mostly-f16"],
+    [
+        (7, ("Q8_0", "F32", "Q6_K")),
+        (7, ("F16", "F32")),
+        (15, ("Q8_0", "F32")),
+        (1, ("F16", "Q4_K")),
+        (0, ("F32",)),
+    ],
+    ids=[
+        "q8_0-file-with-other-quant-tensor",
+        "q8_0-file-without-q8_tensors",
+        "q8_0-tensors-in-q4_k_m-file",
+        "quantized-tensor",
+        "not-mostly-f16",
+    ],
 )
 def test_precision_and_quantization_not_asserted_unless_exact(
     tmp_path: Path, file_type: int, tensors: tuple[str, ...]
@@ -340,3 +355,64 @@ def test_transport_maps_a_closed_port_to_unavailable() -> None:
     transport = LoopbackOllamaTransport(f"http://127.0.0.1:{port}", timeout_seconds=2)
     with pytest.raises(ProviderUnavailableError):
         transport.get("/api/version")
+
+
+# --- Q8_0 binding (Inference CP3B): asserted only from the file's own GGUF metadata ----------
+
+
+def test_q8_0_metadata_asserts_quantization_only(tmp_path: Path) -> None:
+    profile = provider(tmp_path, FakeTransport(file_type=7, tensor_types=("Q8_0", "F32"))).profile
+    assert (profile.precision, profile.quantization) == (None, "Q8_0")
+
+
+def test_f16_binding_is_unchanged(tmp_path: Path) -> None:
+    profile = provider(tmp_path, FakeTransport(file_type=1, tensor_types=("F16", "F32"))).profile
+    assert (profile.precision, profile.quantization) == ("F16", "none")
+
+
+def test_q8_tag_with_incompatible_metadata_asserts_nothing(tmp_path: Path) -> None:
+    """The tag says q8_0; the file says otherwise. The file wins, and nothing is asserted."""
+    store = write_store(tmp_path / "models")
+    transport = FakeTransport(file_type=15, tensor_types=("Q4_K", "Q6_K", "F32"))
+    bound = bind_local_artifact(TAG, transport=transport, models_dir=store)
+    assert (bound.profile.precision, bound.profile.quantization) == (None, None)
+
+
+@pytest.mark.parametrize(
+    "file_type,tensors,expected",
+    [
+        (1, frozenset({"F16", "F32"}), ("F16", "none")),
+        (7, frozenset({"Q8_0", "F32"}), (None, "Q8_0")),
+        (7, frozenset({"Q8_0"}), (None, "Q8_0")),
+        (7, frozenset({"F32"}), (None, None)),
+        (2, frozenset({"Q4_0", "F32"}), (None, None)),
+        (99, frozenset({"Q8_0", "F32"}), (None, None)),
+    ],
+)
+def test_asserted_representation_table(
+    file_type: int, tensors: frozenset[str], expected: tuple[str | None, str | None]
+) -> None:
+    from credence.inference.local_llama import asserted_representation
+
+    assert asserted_representation(file_type, tensors) == expected
+
+
+# --- chat template: bound only when the runtime reports using the template file -------------
+
+
+def test_template_digest_asserted_when_runtime_uses_the_template_file(tmp_path: Path) -> None:
+    profile = provider(tmp_path).profile
+    assert profile.chat_template_digest is not None
+    assert profile.chat_template_digest.value == _digest(TEMPLATE_BYTES)
+
+
+@pytest.mark.parametrize(
+    "runtime_template",
+    ["{% synthetic embedded GGUF template %}", "", None],
+    ids=["runtime-uses-embedded-template", "empty", "not-reported"],
+)
+def test_template_not_asserted_unless_runtime_reports_the_file(
+    tmp_path: Path, runtime_template: str | None
+) -> None:
+    profile = provider(tmp_path, FakeTransport(runtime_template=runtime_template)).profile
+    assert profile.chat_template_digest is None

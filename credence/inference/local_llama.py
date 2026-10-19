@@ -53,6 +53,8 @@ from credence.inference.provider import (
 )
 
 LOCAL_PROVIDER_ID = ProviderId("local-llama-provider")
+# The local Qwen3 30B A3B Instruct 2507 provider (Inference CP3): same runtime path, its own ID.
+LOCAL_QWEN_PROVIDER_ID = ProviderId("local-qwen-provider")
 DEFAULT_BASE_URL = "http://127.0.0.1:11434"
 OLLAMA_REGISTRY = "registry.ollama.ai"
 MODEL_LAYER = "application/vnd.ollama.image.model"
@@ -62,6 +64,9 @@ LOOPBACK_HOSTS = frozenset({"127.0.0.1", "localhost", "::1"})
 # GGUF general.file_type 1 is "mostly F16": weights stored as F16, small tensors (norms) as F32.
 GGUF_FILE_TYPE_MOSTLY_F16 = 1
 UNQUANTIZED_TENSOR_TYPES = frozenset({"F16", "F32"})
+# GGUF general.file_type 7 is "mostly Q8_0": weights in Q8_0 blocks, small tensors (norms) in F32.
+GGUF_FILE_TYPE_MOSTLY_Q8_0 = 7
+Q8_0_TENSOR_TYPES = frozenset({"Q8_0", "F32"})
 _CHUNK = 16 * 1024 * 1024
 
 
@@ -236,6 +241,7 @@ class BoundArtifact:
     runtime_version: str
     file_type: int
     tensor_types: frozenset[str]
+    runtime_template_sha256: Sha256Digest | None
     sampling: SamplingConfig
     profile: ExecutionProfile
 
@@ -244,6 +250,29 @@ def _require_str(value: object, what: str) -> str:
     if not isinstance(value, str) or not value:
         raise ArtifactBindingError(f"runtime metadata: {what} missing")
     return value
+
+
+def asserted_representation(
+    file_type: int, tensor_types: frozenset[str]
+) -> tuple[str | None, str | None]:
+    """(precision, quantization) asserted from the file's own GGUF metadata, never from a tag.
+
+    Only two cases are stated, each from general.file_type AND the type of every tensor:
+    - "mostly F16" (1), every tensor F16 or F32: precision F16, quantization none.
+    - "mostly Q8_0" (7), every tensor Q8_0 or F32, at least one Q8_0: quantization Q8_0. Precision
+      is not asserted: Q8_0 stores 8-bit blocks with per-block scales, which no single precision
+      label describes.
+    Anything else is NOT ASSERTED (null, null).
+    """
+    if file_type == GGUF_FILE_TYPE_MOSTLY_F16 and tensor_types <= UNQUANTIZED_TENSOR_TYPES:
+        return "F16", "none"
+    if (
+        file_type == GGUF_FILE_TYPE_MOSTLY_Q8_0
+        and tensor_types <= Q8_0_TENSOR_TYPES
+        and "Q8_0" in tensor_types
+    ):
+        return None, "Q8_0"
+    return None, None
 
 
 def bind_local_artifact(
@@ -279,20 +308,33 @@ def bind_local_artifact(
         _require_str(t.get("type") if isinstance(t, dict) else None, "tensor type") for t in tensors
     )
 
-    # Precision and quantization are asserted only for the one case this code can state exactly:
-    # a "mostly F16" file whose every tensor is F16 or F32. Anything else is NOT ASSERTED (null).
-    unquantized_f16 = (
-        file_type == GGUF_FILE_TYPE_MOSTLY_F16 and tensor_types <= UNQUANTIZED_TENSOR_TYPES
+    # Which chat template the runtime renders with is the runtime's choice: a GGUF file may embed
+    # its own template, and Ollama may use it instead of the manifest's template file. The
+    # template file's digest is asserted only when the template the runtime reports (/api/show
+    # `template`) is byte-for-byte that file. Otherwise the template in use is not separately
+    # bound, and chat_template_digest is NOT ASSERTED (null).
+    reported = shown.get("template")
+    runtime_template = (
+        Sha256Digest.from_hex(hashlib.sha256(reported.encode("utf-8")).hexdigest())
+        if isinstance(reported, str) and reported
+        else None
     )
+    template_in_use = (
+        installed.template_digest
+        if installed.template_digest is not None and runtime_template == installed.template_digest
+        else None
+    )
+
+    precision, quantization = asserted_representation(file_type, tensor_types)
     profile = ExecutionProfile(
         model_identifier=f"ollama:{tag}",
         model_artifact_digest=installed.model_digest,
         tokenizer_digest=None,
         adapter_digest=None,
-        chat_template_digest=installed.template_digest,
+        chat_template_digest=template_in_use,
         runtime=f"ollama {version}",
-        precision="F16" if unquantized_f16 else None,
-        quantization="none" if unquantized_f16 else None,
+        precision=precision,
+        quantization=quantization,
         context_min_tokens=sampling.context_tokens,
         sampling=SamplingPolicy(
             temperature_milli=sampling.temperature_milli,
@@ -300,7 +342,9 @@ def bind_local_artifact(
             seed=sampling.seed,
         ),
     )
-    return BoundArtifact(installed, version, file_type, tensor_types, sampling, profile)
+    return BoundArtifact(
+        installed, version, file_type, tensor_types, runtime_template, sampling, profile
+    )
 
 
 # --- the provider --------------------------------------------------------------------------------

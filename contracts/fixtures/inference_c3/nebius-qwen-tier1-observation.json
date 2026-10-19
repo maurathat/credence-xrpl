@@ -1,0 +1,254 @@
+{
+  "id": "nebius-qwen-tier1-observation",
+  "kind": "runtime-observation",
+  "regenerable": false,
+  "observed_at": "2026-10-19T16:14:28Z",
+  "nebius_model_id": "Qwen/Qwen3-30B-A3B-Instruct-2507",
+  "nebius_endpoint": "POST https://api.tokenfactory.nebius.com/v1/chat/completions",
+  "registry": [
+    {
+      "key_id": "ed25519:8eb04a6e6270b38255541f977baeb77f3d0b69c44011fb876ff2a32985acf4f1",
+      "role": "agent",
+      "subject": "r3Zdu6biBrNYcvs4zre45udj6WW18yoJst",
+      "status": "current"
+    },
+    {
+      "key_id": "ed25519:9f309c7b8e7fa1a43f79c7fbcaf10b60c98332debedc3d2f94d3f43c2f2fd08f",
+      "role": "gateway",
+      "subject": "credence-gateway",
+      "status": "current"
+    },
+    {
+      "key_id": "ed25519:482b8afa8a8dc79dc947c12b0b66d9b30454cd6f7dc3884b7a8a9ca54f108cb7",
+      "role": "provider",
+      "subject": "local-qwen-provider",
+      "status": "current"
+    }
+  ],
+  "location_provenance": {
+    "nebius": "Nebius-declared service region eu-north1, country_code FI (catalog metadata; not a legal/corporate jurisdiction)",
+    "local": "operator-supplied deployment fact: the execution machine physically operates in the United States"
+  },
+  "quote_provenance": "configured DEMO prices in micro-tRLUSD (tRLUSD is a test token); not Nebius's billed price",
+  "prompt_text": "Synthetic Credence test prompt one: reply with exactly the word OK and nothing else.",
+  "same_call_as": "qwen-market-live-observation.json scenario_a_general",
+  "response_text": null,
+  "http_status": 200,
+  "finish_reason": "stop",
+  "latency_ms": 789,
+  "usage": {
+    "completion_tokens": 2,
+    "prompt_tokens": 27,
+    "total_tokens": 29,
+    "completion_tokens_details": null,
+    "prompt_tokens_details": null
+  },
+  "token_count_mapping": {
+    "input_token_count": "usage.prompt_tokens",
+    "output_token_count": "usage.completion_tokens",
+    "source": "provider_reported"
+  },
+  "objects": {
+    "execution_profile": {
+      "object_type": "credence.execution_profile",
+      "schema_version": "1",
+      "model_identifier": "Qwen/Qwen3-30B-A3B-Instruct-2507",
+      "model_artifact_digest": null,
+      "tokenizer_digest": null,
+      "adapter_digest": null,
+      "chat_template_digest": null,
+      "runtime": null,
+      "precision": null,
+      "quantization": null,
+      "context_min_tokens": 8192,
+      "sampling": {
+        "temperature_milli": 0,
+        "seed_policy": "provider",
+        "seed": null
+      }
+    },
+    "service_class": {
+      "object_type": "credence.service_class",
+      "schema_version": "1",
+      "execution_profile_digest": "sha256:19e83ca9f20aca42c5301a260507b0e29004b7c9331a010f4af99f584a08113f",
+      "model_family": "qwen3-30b-a3b-instruct-2507",
+      "delivery_mode": "interactive",
+      "service_tier": "base",
+      "jurisdiction": "FI",
+      "data_residency": [
+        "FI"
+      ],
+      "residency_region": null,
+      "evidence_tier": 1,
+      "latency_p95_ms": null,
+      "availability_bps": null
+    },
+    "quote": {
+      "object_type": "credence.quote",
+      "schema_version": "1",
+      "quote_id": "quote-nebius-qwen-0001",
+      "provider_id": "nebius-token-factory",
+      "service_class_digest": "sha256:4317c030672f5a53906e191a611b13879fc3ca01ab656f43c309f93c5ed0d610",
+      "input_price_per_million_micro_trlusd": 20000,
+      "output_price_per_million_micro_trlusd": 60000,
+      "max_input_tokens": 4096,
+      "max_output_tokens": 48,
+      "valid_until": "2026-12-31T00:00:00Z"
+    },
+    "procurement_class": {
+      "object_type": "credence.procurement_class",
+      "schema_version": "1",
+      "model_family": "qwen3-30b-a3b-instruct-2507",
+      "allowed_precisions": null,
+      "allowed_quantizations": null,
+      "minimum_evidence_tier": 1,
+      "delivery_mode": "interactive",
+      "allowed_jurisdictions": [
+        "FI",
+        "US"
+      ],
+      "allowed_data_residencies": [
+        "FI",
+        "US"
+      ],
+      "allowed_providers": [
+        "local-qwen-provider",
+        "nebius-token-factory"
+      ]
+    },
+    "facility": {
+      "object_type": "credence.facility",
+      "schema_version": "1",
+      "facility_id": "facility-qwen-market-general",
+      "borrower_account": "r3Zdu6biBrNYcvs4zre45udj6WW18yoJst",
+      "xrpl_loan_id": null,
+      "limit_micro_trlusd": 10000000,
+      "drawn_micro_trlusd": 0,
+      "term_seconds": 86400,
+      "maturity_at": "2026-12-31T00:00:00Z",
+      "spread_bps": 600,
+      "allowed_providers": [
+        "local-qwen-provider",
+        "nebius-token-factory"
+      ],
+      "allowed_procurement_classes": [
+        "sha256:938a6124e2b7730978181c09d7d3f885efc8e68f81a269d1acf8b8aad1440d5a"
+      ],
+      "minimum_evidence_tier": 1,
+      "purpose": "inference",
+      "owner_approval_digest": "sha256:f1e1f6da7928e778210155412dc017e938918290702fa5c76878cf0a61ddc3c8",
+      "status": "active"
+    },
+    "purchase_request": {
+      "object_type": "credence.purchase_request",
+      "schema_version": "1",
+      "facility_id": "facility-qwen-market-general",
+      "provider_id": "nebius-token-factory",
+      "quote_id": "quote-nebius-qwen-0001",
+      "purpose": "inference",
+      "max_total_cost_micro_trlusd": 85,
+      "prompt_digest": "sha256:6dd4f3f23fed2557c429aa3ff17764044dc77cb41ed0156db391471a1716471f",
+      "nonce": "0000000000000000000000000000000a",
+      "expires_at": "2026-12-31T00:00:00Z"
+    },
+    "purchase_request_signature": {
+      "object_type": "credence.signed_object",
+      "schema_version": "1",
+      "object_digest": "sha256:260a54d5472803433968cb78e0f3185a2af8f62072aff7f70514734196913b16",
+      "key_id": "ed25519:8eb04a6e6270b38255541f977baeb77f3d0b69c44011fb876ff2a32985acf4f1",
+      "signature": "198798cccc3f8dfc743bc9876da36ca60b0762b06849110b6b8569a2ca2d91a556d0bcca8e3036028f30be70f2c4167f7fd460a8f4e759c7670e4d198f4d1905"
+    }
+  },
+  "delivery": {
+    "outcome": "DeliveryVerified",
+    "receipt": {
+      "object_type": "credence.delivery_receipt",
+      "schema_version": "1",
+      "purchase_request_digest": "sha256:260a54d5472803433968cb78e0f3185a2af8f62072aff7f70514734196913b16",
+      "execution_profile_digest": "sha256:19e83ca9f20aca42c5301a260507b0e29004b7c9331a010f4af99f584a08113f",
+      "provider_id": "nebius-token-factory",
+      "response_digest": "sha256:565339bc4d33d72817b583024112eb7f5cdf3e5eef0252d6ec1b9c9a94e12bb3",
+      "input_token_count": 27,
+      "output_token_count": 2,
+      "price_micro_trlusd": 2,
+      "started_at": "2026-10-19T16:14:25Z",
+      "completed_at": "2026-10-19T16:14:26Z",
+      "nonce": "0000000000000000000000000000000a",
+      "evidence_tier": 1,
+      "provider_attestation_digest": null,
+      "previous_receipt_digest": null
+    },
+    "receipt_digest": "sha256:618282e6ed736093f08c40ed2823283f0800689c2a76a055926c9d6f84fe8800",
+    "gateway_signature": {
+      "object_type": "credence.signed_object",
+      "schema_version": "1",
+      "object_digest": "sha256:618282e6ed736093f08c40ed2823283f0800689c2a76a055926c9d6f84fe8800",
+      "key_id": "ed25519:9f309c7b8e7fa1a43f79c7fbcaf10b60c98332debedc3d2f94d3f43c2f2fd08f",
+      "signature": "bff5ca97ca90fb248888b5e8103a93c03681fcb1193dbb666b5381dce1ee2bcab93a0e9ceb7e34895ec566b739e7d17c43fe71b065987e9990967065c5fd5f02"
+    },
+    "provider_attestation": null,
+    "provider_attestation_signature": null,
+    "policy_decision": {
+      "object_type": "credence.decision_record",
+      "schema_version": "1",
+      "decision_stage": "policy",
+      "input_digests": [
+        "sha256:260a54d5472803433968cb78e0f3185a2af8f62072aff7f70514734196913b16",
+        "sha256:9b924d835971ac50606b79ed0f52156c5fc1003e0ff7f38ac65f3d9481beefa6",
+        "sha256:0e8bc77bc26bdc5d26cd947c0327d51b9dae3f451b715f95e5bb233cf681fb95",
+        "sha256:4317c030672f5a53906e191a611b13879fc3ca01ab656f43c309f93c5ed0d610",
+        "sha256:19e83ca9f20aca42c5301a260507b0e29004b7c9331a010f4af99f584a08113f",
+        "sha256:938a6124e2b7730978181c09d7d3f885efc8e68f81a269d1acf8b8aad1440d5a"
+      ],
+      "outcome": "accept",
+      "reason_code": null,
+      "engine_version": "credence-core-policy-c2",
+      "decided_at": "2026-10-19T16:14:25Z",
+      "authorized_transaction_digest": null,
+      "authorized_transaction_digest_scheme": null
+    },
+    "verifier_decision": {
+      "object_type": "credence.decision_record",
+      "schema_version": "1",
+      "decision_stage": "verifier",
+      "input_digests": [
+        "sha256:618282e6ed736093f08c40ed2823283f0800689c2a76a055926c9d6f84fe8800",
+        "sha256:260a54d5472803433968cb78e0f3185a2af8f62072aff7f70514734196913b16",
+        "sha256:0e8bc77bc26bdc5d26cd947c0327d51b9dae3f451b715f95e5bb233cf681fb95",
+        "sha256:4317c030672f5a53906e191a611b13879fc3ca01ab656f43c309f93c5ed0d610",
+        "sha256:19e83ca9f20aca42c5301a260507b0e29004b7c9331a010f4af99f584a08113f",
+        "sha256:565339bc4d33d72817b583024112eb7f5cdf3e5eef0252d6ec1b9c9a94e12bb3"
+      ],
+      "outcome": "accept",
+      "reason_code": null,
+      "engine_version": "credence-core-verifier-c2",
+      "decided_at": "2026-10-19T16:14:26Z",
+      "authorized_transaction_digest": null,
+      "authorized_transaction_digest_scheme": null
+    },
+    "reservation": {
+      "object_type": "credence.reservation",
+      "schema_version": "1",
+      "reservation_id": "reservation-260a54d5472803433968cb78e0f3185a",
+      "facility_id": "facility-qwen-market-general",
+      "quote_id": "quote-nebius-qwen-0001",
+      "maximum_amount_micro_trlusd": 85,
+      "created_at": "2026-10-19T16:14:25Z",
+      "expires_at": "2026-10-19T16:24:25Z",
+      "status": "held"
+    }
+  },
+  "attacks": {
+    "A_attestation_inserted": {
+      "gateway_boundary": "PROVIDER_MALFORMED_RESPONSE",
+      "verifier": "VerifierInputError"
+    },
+    "B_tier1_presented_as_tier2": "RECEIPT_SIG_INVALID",
+    "C_swapped_response_bytes": "RESPONSE_DIGEST_MISMATCH",
+    "D_wrong_profile_digest": "BINDING_MISMATCH",
+    "E_token_counts_above_caps": "TOKEN_COUNT_EXCEEDS_QUOTE",
+    "F_altered_billed_amount": "BILLED_AMOUNT_MISMATCH",
+    "G_invalid_gateway_signature": "RECEIPT_SIG_INVALID",
+    "control_untouched": null
+  }
+}

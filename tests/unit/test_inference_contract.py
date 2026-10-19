@@ -116,7 +116,8 @@ def test_local_provider_section_matches_code() -> None:
     from credence.inference import local_llama
 
     text = section("Local Tier 2 provider")
-    assert f"provider ID `{local_llama.LOCAL_PROVIDER_ID.value}`" in text
+    for provider_id in (local_llama.LOCAL_PROVIDER_ID, local_llama.LOCAL_QWEN_PROVIDER_ID):
+        assert f"| `{provider_id.value}` |" in text
     runtime = section("Runtime, template and tokenizer")
     assert local_llama.GGUF_FILE_TYPE_MOSTLY_F16 == 1
     assert "`general.file_type` is 1 (mostly F16)" in runtime
@@ -139,3 +140,51 @@ def test_unexpected_exceptions_are_documented_as_propagating() -> None:
     text = section("Failure behaviour")
     assert "- `PROVIDER_EXECUTION_ERROR`: the provider raised `ProviderExecutionError`." in text
     assert "it propagates to the caller" in text
+
+
+def test_service_location_semantics_are_scoped_to_inference() -> None:
+    text = section("Service location (jurisdiction and residency)")
+    assert "Core leaves the general meaning of `ServiceClass.jurisdiction` undefined" in text
+    assert "the country in which the inference execution for that service occurs" in text
+    assert "It is not a Credence-wide or legal definition" in text
+    assert "Not Nebius's legal or corporate jurisdiction" in text
+    assert "operator-supplied deployment fact" in text
+
+
+def test_template_and_q8_rules_match_the_binder() -> None:
+    from credence.inference import local_llama
+
+    runtime = section("Runtime, template and tokenizer")
+    assert "byte-for-byte that file" in runtime and "`runtime_template_sha256`" in runtime
+    assert local_llama.GGUF_FILE_TYPE_MOSTLY_Q8_0 == 7
+    assert local_llama.Q8_0_TENSOR_TYPES == {"Q8_0", "F32"}
+    assert "`general.file_type` is 7 (mostly Q8_0)" in runtime
+    assert local_llama.asserted_representation(7, frozenset({"Q8_0", "F32"})) == (None, "Q8_0")
+
+
+def test_nebius_section_matches_code() -> None:
+    from credence.inference import nebius
+
+    text = section("Nebius Tier 1 provider")
+    assert f"provider ID `{nebius.NEBIUS_PROVIDER_ID.value}`" in text
+    failures = section("Failures")
+    documented = set(re.findall(r"`([a-z_]+)`", failures))
+    assert {f.value for f in nebius.NebiusFailure} <= documented
+    for failure in nebius.NebiusFailure:
+        row = next(line for line in failures.splitlines() if f"`{failure.value}`" in line)
+        expected = (
+            "ProviderUnavailableError"
+            if failure in nebius.UNAVAILABLE_FAILURES
+            else "ProviderExecutionError"
+        )
+        assert expected in row, failure
+    assert nebius.NEBIUS_BASE_URL in section("Credential boundary")
+
+
+def test_market_rule_is_documented() -> None:
+    text = section("Market routing")
+    assert (
+        "lowest maximum cost (Core's `max_total_cost_value` for the quote), then provider ID, then quote ID"
+        in text
+    )
+    assert "never chosen, however cheap" in text
