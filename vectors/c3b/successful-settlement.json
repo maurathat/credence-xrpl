@@ -1,0 +1,48 @@
+{
+  "id": "successful-settlement",
+  "description": "Reserve 100,000, settle a verified 60,000 delivery",
+  "steps": [
+    {
+      "action": "reserve",
+      "purchase": 1,
+      "policy_decision": "sha256:1f6ed2c1c759294c32b28a07f46cdc4ccd05d91534d5e4434717461a0147b3ed",
+      "reason_code": null,
+      "reservation": {
+        "object_type": "credence.reservation",
+        "schema_version": "1",
+        "reservation_id": "reservation-558cb285ff918478e1ac5e68061ecb25",
+        "facility_id": "facility-0001",
+        "quote_id": "quote-0001",
+        "maximum_amount_micro_trlusd": 100000,
+        "created_at": "2026-10-24T15:00:00Z",
+        "expires_at": "2026-10-24T15:10:00Z",
+        "status": "held"
+      }
+    },
+    {
+      "action": "settle",
+      "label": "verified delivery, 60,000 of 100,000",
+      "at": "2026-10-24T15:00:05Z",
+      "outcome": "accounting_settled",
+      "verifier_decision": "sha256:1acf1a358ac35add2b55215f8385bd5406798c4982371ee696010ba68b7352d0",
+      "reason_code": null,
+      "actual_amount_micro_trlusd": 60000,
+      "reservation_status": "settled",
+      "receipt": "sha256:eafb46e4806b94c405f4f63bbc1367c2023ad9ea224330c213d705bafe9790d2"
+    }
+  ],
+  "final": {
+    "limit_micro_trlusd": 1000000,
+    "drawn_micro_trlusd": 60000,
+    "held_micro_trlusd": 0,
+    "headroom_micro_trlusd": 940000,
+    "chain_head": "sha256:eafb46e4806b94c405f4f63bbc1367c2023ad9ea224330c213d705bafe9790d2",
+    "reservations": {
+      "reservation-558cb285ff918478e1ac5e68061ecb25": {
+        "status": "settled",
+        "release_reason": null
+      }
+    },
+    "disputes": []
+  }
+}

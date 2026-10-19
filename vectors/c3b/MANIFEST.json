@@ -1,0 +1,22 @@
+[
+ [
+  "e05fd72da10d5d69c469a10e244778f0e37153dbe2e8b9143dcd7fc74324f378",
+  "duplicate-settlement.json"
+ ],
+ [
+  "31fb0d532ebd06ae387983e61478344f2829becafc929a57b8c07e0bf04655b8",
+  "expiration.json"
+ ],
+ [
+  "ebd53cc266d77e433802910cf8653b7ca45de35da1eb2a4a80484eff2b3a2b9b",
+  "rejected-settlement.json"
+ ],
+ [
+  "f4ccd3d8e01094b97a1ce3842cb9e5a9766aa5a62ba694a23b1364e24ebbc1d4",
+  "rollback.json"
+ ],
+ [
+  "ea6946b2c21d169b58e9bd4df1bb44b985f5365897752f9ec73ae292a07f6863",
+  "successful-settlement.json"
+ ]
+]

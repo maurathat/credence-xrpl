@@ -1,0 +1,278 @@
+{
+  "id": "rollback",
+  "description": "A failure at each transition point leaves no partial state",
+  "cases": [
+    {
+      "fault_point": "before_drawn_update",
+      "steps": [
+        {
+          "action": "reserve",
+          "purchase": 1,
+          "policy_decision": "sha256:1f6ed2c1c759294c32b28a07f46cdc4ccd05d91534d5e4434717461a0147b3ed",
+          "reason_code": null,
+          "reservation": {
+            "object_type": "credence.reservation",
+            "schema_version": "1",
+            "reservation_id": "reservation-558cb285ff918478e1ac5e68061ecb25",
+            "facility_id": "facility-0001",
+            "quote_id": "quote-0001",
+            "maximum_amount_micro_trlusd": 100000,
+            "created_at": "2026-10-24T15:00:00Z",
+            "expires_at": "2026-10-24T15:10:00Z",
+            "status": "held"
+          }
+        },
+        {
+          "action": "settle",
+          "label": "fault before_drawn_update",
+          "at": "2026-10-24T15:00:05Z",
+          "fault": "injected at before_drawn_update",
+          "receipt": "sha256:eafb46e4806b94c405f4f63bbc1367c2023ad9ea224330c213d705bafe9790d2"
+        },
+        {
+          "action": "settle",
+          "label": "retry without fault",
+          "at": "2026-10-24T15:00:06Z",
+          "outcome": "accounting_settled",
+          "verifier_decision": "sha256:fcd98e05d6fc1c5e6da1ae92d47222b3fb4a19507b8cbf0571b53e76bc2ec3e5",
+          "reason_code": null,
+          "actual_amount_micro_trlusd": 60000,
+          "reservation_status": "settled",
+          "receipt": "sha256:eafb46e4806b94c405f4f63bbc1367c2023ad9ea224330c213d705bafe9790d2"
+        }
+      ],
+      "after_fault": {
+        "limit_micro_trlusd": 1000000,
+        "drawn_micro_trlusd": 0,
+        "held_micro_trlusd": 100000,
+        "headroom_micro_trlusd": 900000,
+        "chain_head": null,
+        "reservations": {
+          "reservation-558cb285ff918478e1ac5e68061ecb25": {
+            "status": "held",
+            "release_reason": null
+          }
+        },
+        "disputes": []
+      },
+      "final": {
+        "limit_micro_trlusd": 1000000,
+        "drawn_micro_trlusd": 60000,
+        "held_micro_trlusd": 0,
+        "headroom_micro_trlusd": 940000,
+        "chain_head": "sha256:eafb46e4806b94c405f4f63bbc1367c2023ad9ea224330c213d705bafe9790d2",
+        "reservations": {
+          "reservation-558cb285ff918478e1ac5e68061ecb25": {
+            "status": "settled",
+            "release_reason": null
+          }
+        },
+        "disputes": []
+      }
+    },
+    {
+      "fault_point": "after_drawn_update",
+      "steps": [
+        {
+          "action": "reserve",
+          "purchase": 1,
+          "policy_decision": "sha256:1f6ed2c1c759294c32b28a07f46cdc4ccd05d91534d5e4434717461a0147b3ed",
+          "reason_code": null,
+          "reservation": {
+            "object_type": "credence.reservation",
+            "schema_version": "1",
+            "reservation_id": "reservation-558cb285ff918478e1ac5e68061ecb25",
+            "facility_id": "facility-0001",
+            "quote_id": "quote-0001",
+            "maximum_amount_micro_trlusd": 100000,
+            "created_at": "2026-10-24T15:00:00Z",
+            "expires_at": "2026-10-24T15:10:00Z",
+            "status": "held"
+          }
+        },
+        {
+          "action": "settle",
+          "label": "fault after_drawn_update",
+          "at": "2026-10-24T15:00:05Z",
+          "fault": "injected at after_drawn_update",
+          "receipt": "sha256:eafb46e4806b94c405f4f63bbc1367c2023ad9ea224330c213d705bafe9790d2"
+        },
+        {
+          "action": "settle",
+          "label": "retry without fault",
+          "at": "2026-10-24T15:00:06Z",
+          "outcome": "accounting_settled",
+          "verifier_decision": "sha256:fcd98e05d6fc1c5e6da1ae92d47222b3fb4a19507b8cbf0571b53e76bc2ec3e5",
+          "reason_code": null,
+          "actual_amount_micro_trlusd": 60000,
+          "reservation_status": "settled",
+          "receipt": "sha256:eafb46e4806b94c405f4f63bbc1367c2023ad9ea224330c213d705bafe9790d2"
+        }
+      ],
+      "after_fault": {
+        "limit_micro_trlusd": 1000000,
+        "drawn_micro_trlusd": 0,
+        "held_micro_trlusd": 100000,
+        "headroom_micro_trlusd": 900000,
+        "chain_head": null,
+        "reservations": {
+          "reservation-558cb285ff918478e1ac5e68061ecb25": {
+            "status": "held",
+            "release_reason": null
+          }
+        },
+        "disputes": []
+      },
+      "final": {
+        "limit_micro_trlusd": 1000000,
+        "drawn_micro_trlusd": 60000,
+        "held_micro_trlusd": 0,
+        "headroom_micro_trlusd": 940000,
+        "chain_head": "sha256:eafb46e4806b94c405f4f63bbc1367c2023ad9ea224330c213d705bafe9790d2",
+        "reservations": {
+          "reservation-558cb285ff918478e1ac5e68061ecb25": {
+            "status": "settled",
+            "release_reason": null
+          }
+        },
+        "disputes": []
+      }
+    },
+    {
+      "fault_point": "after_reservation_settled",
+      "steps": [
+        {
+          "action": "reserve",
+          "purchase": 1,
+          "policy_decision": "sha256:1f6ed2c1c759294c32b28a07f46cdc4ccd05d91534d5e4434717461a0147b3ed",
+          "reason_code": null,
+          "reservation": {
+            "object_type": "credence.reservation",
+            "schema_version": "1",
+            "reservation_id": "reservation-558cb285ff918478e1ac5e68061ecb25",
+            "facility_id": "facility-0001",
+            "quote_id": "quote-0001",
+            "maximum_amount_micro_trlusd": 100000,
+            "created_at": "2026-10-24T15:00:00Z",
+            "expires_at": "2026-10-24T15:10:00Z",
+            "status": "held"
+          }
+        },
+        {
+          "action": "settle",
+          "label": "fault after_reservation_settled",
+          "at": "2026-10-24T15:00:05Z",
+          "fault": "injected at after_reservation_settled",
+          "receipt": "sha256:eafb46e4806b94c405f4f63bbc1367c2023ad9ea224330c213d705bafe9790d2"
+        },
+        {
+          "action": "settle",
+          "label": "retry without fault",
+          "at": "2026-10-24T15:00:06Z",
+          "outcome": "accounting_settled",
+          "verifier_decision": "sha256:fcd98e05d6fc1c5e6da1ae92d47222b3fb4a19507b8cbf0571b53e76bc2ec3e5",
+          "reason_code": null,
+          "actual_amount_micro_trlusd": 60000,
+          "reservation_status": "settled",
+          "receipt": "sha256:eafb46e4806b94c405f4f63bbc1367c2023ad9ea224330c213d705bafe9790d2"
+        }
+      ],
+      "after_fault": {
+        "limit_micro_trlusd": 1000000,
+        "drawn_micro_trlusd": 0,
+        "held_micro_trlusd": 100000,
+        "headroom_micro_trlusd": 900000,
+        "chain_head": null,
+        "reservations": {
+          "reservation-558cb285ff918478e1ac5e68061ecb25": {
+            "status": "held",
+            "release_reason": null
+          }
+        },
+        "disputes": []
+      },
+      "final": {
+        "limit_micro_trlusd": 1000000,
+        "drawn_micro_trlusd": 60000,
+        "held_micro_trlusd": 0,
+        "headroom_micro_trlusd": 940000,
+        "chain_head": "sha256:eafb46e4806b94c405f4f63bbc1367c2023ad9ea224330c213d705bafe9790d2",
+        "reservations": {
+          "reservation-558cb285ff918478e1ac5e68061ecb25": {
+            "status": "settled",
+            "release_reason": null
+          }
+        },
+        "disputes": []
+      }
+    },
+    {
+      "fault_point": "after_receipt_recorded",
+      "steps": [
+        {
+          "action": "reserve",
+          "purchase": 1,
+          "policy_decision": "sha256:1f6ed2c1c759294c32b28a07f46cdc4ccd05d91534d5e4434717461a0147b3ed",
+          "reason_code": null,
+          "reservation": {
+            "object_type": "credence.reservation",
+            "schema_version": "1",
+            "reservation_id": "reservation-558cb285ff918478e1ac5e68061ecb25",
+            "facility_id": "facility-0001",
+            "quote_id": "quote-0001",
+            "maximum_amount_micro_trlusd": 100000,
+            "created_at": "2026-10-24T15:00:00Z",
+            "expires_at": "2026-10-24T15:10:00Z",
+            "status": "held"
+          }
+        },
+        {
+          "action": "settle",
+          "label": "fault after_receipt_recorded",
+          "at": "2026-10-24T15:00:05Z",
+          "fault": "injected at after_receipt_recorded",
+          "receipt": "sha256:eafb46e4806b94c405f4f63bbc1367c2023ad9ea224330c213d705bafe9790d2"
+        },
+        {
+          "action": "settle",
+          "label": "retry without fault",
+          "at": "2026-10-24T15:00:06Z",
+          "outcome": "accounting_settled",
+          "verifier_decision": "sha256:fcd98e05d6fc1c5e6da1ae92d47222b3fb4a19507b8cbf0571b53e76bc2ec3e5",
+          "reason_code": null,
+          "actual_amount_micro_trlusd": 60000,
+          "reservation_status": "settled",
+          "receipt": "sha256:eafb46e4806b94c405f4f63bbc1367c2023ad9ea224330c213d705bafe9790d2"
+        }
+      ],
+      "after_fault": {
+        "limit_micro_trlusd": 1000000,
+        "drawn_micro_trlusd": 0,
+        "held_micro_trlusd": 100000,
+        "headroom_micro_trlusd": 900000,
+        "chain_head": null,
+        "reservations": {
+          "reservation-558cb285ff918478e1ac5e68061ecb25": {
+            "status": "held",
+            "release_reason": null
+          }
+        },
+        "disputes": []
+      },
+      "final": {
+        "limit_micro_trlusd": 1000000,
+        "drawn_micro_trlusd": 60000,
+        "held_micro_trlusd": 0,
+        "headroom_micro_trlusd": 940000,
+        "chain_head": "sha256:eafb46e4806b94c405f4f63bbc1367c2023ad9ea224330c213d705bafe9790d2",
+        "reservations": {
+          "reservation-558cb285ff918478e1ac5e68061ecb25": {
+            "status": "settled",
+            "release_reason": null
+          }
+        },
+        "disputes": []
+      }
+    }
+  ]
+}

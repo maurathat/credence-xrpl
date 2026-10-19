@@ -10,9 +10,15 @@ connection inside BEGIN IMMEDIATE, which takes SQLite's write lock before readin
 held headroom and the nonce, calling the pure policy engine, and writing the reservation, the used
 nonce and the decision record happen as one serialized step: two simultaneous requests cannot both
 spend the last headroom. A reservation is live while now < expires_at. Headroom counts only live
-`held` reservations; settled amounts are expected in facility.drawn_micro_trlusd, which the
-settlement coordinator (a later checkpoint) maintains. Expiry sets status `released` and records
-release_reason `expired` outside the canonical object. No money moves here.
+`held` reservations; settled amounts are in the facility's drawn amount. Expiry sets status
+`released` and records release_reason `expired` outside the canonical object. No money moves here.
+
+Facility accounting (C3B): a facility registered in `facility_accounts` has an authoritative stored
+limit and drawn amount, maintained only by the settlement coordinator. For such a facility,
+`reserve` refuses a Facility whose limit or drawn differs from the stored row (stale or conflicting
+accounting), and the bare `settle` here refuses outright: settlement must go through the
+coordinator, which updates drawn in the same transaction. Unregistered facilities keep the C2
+behaviour.
 
 The database must be a file path (each operation opens its own connection).
 
@@ -72,6 +78,11 @@ CREATE TABLE IF NOT EXISTS used_nonces (
 CREATE TABLE IF NOT EXISTS decision_records (
     digest TEXT PRIMARY KEY,
     canonical BLOB NOT NULL
+);
+CREATE TABLE IF NOT EXISTS facility_accounts (
+    facility_id TEXT PRIMARY KEY,
+    limit_micro_trlusd INTEGER NOT NULL CHECK (limit_micro_trlusd >= 0),
+    drawn_micro_trlusd INTEGER NOT NULL CHECK (drawn_micro_trlusd >= 0)
 );
 """
 
@@ -245,64 +256,94 @@ class ReservationLedger:
         Reading headroom and nonce use, deciding, and writing the reservation, the used nonce and
         the decision record are one BEGIN IMMEDIATE transaction.
         """
-        facility_id = context.facility.facility_id
         with self._write() as conn:
-            self._expire(conn, now)
-            reserved = self._held_amount(conn, facility_id, now)
-            nonce_row = conn.execute(
-                "SELECT 1 FROM used_nonces WHERE facility_id = ? AND nonce = ?",
-                (facility_id.value, context.request.nonce.value),
-            ).fetchone()
-            decision = evaluate(
-                PolicyInput(
-                    request=context.request,
-                    request_signature_valid=context.request_signature_valid,
-                    working_key_current=context.working_key_current,
-                    facility=context.facility,
-                    quote=context.quote,
-                    service_class=context.service_class,
-                    execution_profile=context.execution_profile,
-                    procurement_classes=context.procurement_classes,
-                    currently_reserved=MicroTrlusd(reserved),
-                    nonce_already_used=nonce_row is not None,
-                    evaluated_at=now,
-                )
+            return self.reserve_in_transaction(conn, context, now)
+
+    @contextmanager
+    def write_transaction(self) -> Iterator[sqlite3.Connection]:
+        """One BEGIN IMMEDIATE transaction on this ledger's database (commit or roll back)."""
+        with self._write() as conn:
+            yield conn
+
+    @staticmethod
+    def facility_account(
+        conn: sqlite3.Connection, facility_id: FacilityId
+    ) -> tuple[int, int] | None:
+        """(limit, drawn) stored for a registered facility, or None."""
+        row = conn.execute(
+            "SELECT limit_micro_trlusd, drawn_micro_trlusd FROM facility_accounts "
+            "WHERE facility_id = ?",
+            (facility_id.value,),
+        ).fetchone()
+        return None if row is None else (int(row[0]), int(row[1]))
+
+    def reserve_in_transaction(
+        self, conn: sqlite3.Connection, context: PurchaseContext, now: Timestamp
+    ) -> ReserveResult:
+        """`reserve`, inside a transaction the caller opened with `write_transaction`."""
+        facility_id = context.facility.facility_id
+        account = self.facility_account(conn, facility_id)
+        if account is not None and account != (
+            context.facility.limit_micro_trlusd.value,
+            context.facility.drawn_micro_trlusd.value,
+        ):
+            raise ReservationStateError("STALE_FACILITY_ACCOUNTING", facility_id.value)
+        self._expire(conn, now)
+        reserved = self._held_amount(conn, facility_id, now)
+        nonce_row = conn.execute(
+            "SELECT 1 FROM used_nonces WHERE facility_id = ? AND nonce = ?",
+            (facility_id.value, context.request.nonce.value),
+        ).fetchone()
+        decision = evaluate(
+            PolicyInput(
+                request=context.request,
+                request_signature_valid=context.request_signature_valid,
+                working_key_current=context.working_key_current,
+                facility=context.facility,
+                quote=context.quote,
+                service_class=context.service_class,
+                execution_profile=context.execution_profile,
+                procurement_classes=context.procurement_classes,
+                currently_reserved=MicroTrlusd(reserved),
+                nonce_already_used=nonce_row is not None,
+                evaluated_at=now,
             )
-            record = decision.record
-            conn.execute(
-                "INSERT OR IGNORE INTO decision_records (digest, canonical) VALUES (?, ?)",
-                (record.digest().value, record.canonical_bytes()),
-            )
-            if decision.reservation_amount is None:
-                return ReserveResult(decision=decision, reservation=None)
-            reservation = Reservation(
-                reservation_id=reservation_id_for(context.request),
-                facility_id=facility_id,
-                quote_id=context.quote.quote_id,
-                maximum_amount_micro_trlusd=decision.reservation_amount,
-                created_at=now,
-                expires_at=now.plus_seconds(self._ttl),
-                status=ReservationStatus.HELD,
-            )
-            conn.execute(
-                f"INSERT INTO reservations ({_COLUMNS}, decision_record_digest) "
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                (
-                    reservation.reservation_id.value,
-                    facility_id.value,
-                    reservation.quote_id.value,
-                    reservation.maximum_amount_micro_trlusd.value,
-                    reservation.created_at.value,
-                    reservation.expires_at.value,
-                    reservation.status.value,
-                    record.digest().value,
-                ),
-            )
-            conn.execute(
-                "INSERT INTO used_nonces (facility_id, nonce, reservation_id) VALUES (?, ?, ?)",
-                (facility_id.value, context.request.nonce.value, reservation.reservation_id.value),
-            )
-            return ReserveResult(decision=decision, reservation=reservation)
+        )
+        record = decision.record
+        conn.execute(
+            "INSERT OR IGNORE INTO decision_records (digest, canonical) VALUES (?, ?)",
+            (record.digest().value, record.canonical_bytes()),
+        )
+        if decision.reservation_amount is None:
+            return ReserveResult(decision=decision, reservation=None)
+        reservation = Reservation(
+            reservation_id=reservation_id_for(context.request),
+            facility_id=facility_id,
+            quote_id=context.quote.quote_id,
+            maximum_amount_micro_trlusd=decision.reservation_amount,
+            created_at=now,
+            expires_at=now.plus_seconds(self._ttl),
+            status=ReservationStatus.HELD,
+        )
+        conn.execute(
+            f"INSERT INTO reservations ({_COLUMNS}, decision_record_digest) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            (
+                reservation.reservation_id.value,
+                facility_id.value,
+                reservation.quote_id.value,
+                reservation.maximum_amount_micro_trlusd.value,
+                reservation.created_at.value,
+                reservation.expires_at.value,
+                reservation.status.value,
+                record.digest().value,
+            ),
+        )
+        conn.execute(
+            "INSERT INTO used_nonces (facility_id, nonce, reservation_id) VALUES (?, ?, ?)",
+            (facility_id.value, context.request.nonce.value, reservation.reservation_id.value),
+        )
+        return ReserveResult(decision=decision, reservation=reservation)
 
     def _transition(
         self, reservation_id: ReservationId, now: Timestamp, *, to: ReservationStatus
@@ -310,12 +351,17 @@ class ReservationLedger:
         expired = False
         with self._write() as conn:
             row = conn.execute(
-                "SELECT status, expires_at FROM reservations WHERE reservation_id = ?",
+                "SELECT status, expires_at, facility_id FROM reservations WHERE reservation_id = ?",
                 (reservation_id.value,),
             ).fetchone()
             if row is None:
                 raise ReservationStateError("NOT_FOUND", reservation_id.value)
-            status, expires_at = row
+            status, expires_at, facility_id = row
+            if (
+                to is ReservationStatus.SETTLED
+                and self.facility_account(conn, FacilityId(facility_id)) is not None
+            ):
+                raise ReservationStateError("USE_SETTLEMENT_COORDINATOR", reservation_id.value)
             if status != ReservationStatus.HELD.value:
                 raise ReservationStateError("NOT_HELD", reservation_id.value)
             if to is ReservationStatus.SETTLED and not now.value < expires_at:
@@ -341,9 +387,13 @@ class ReservationLedger:
         return self.get(reservation_id)
 
     def settle(self, reservation_id: ReservationId, now: Timestamp) -> Reservation:
-        """Mark a live held reservation settled. Expired holds are released and refused."""
+        """Mark a live held reservation settled. Expired holds are released and refused.
+
+        Refused for a registered (accounted) facility: use the settlement coordinator.
+        """
         return self._transition(reservation_id, now, to=ReservationStatus.SETTLED)
 
     def release(self, reservation_id: ReservationId, now: Timestamp) -> Reservation:
-        """Release a held reservation (for example after a verifier rejection)."""
+        """Release a held reservation. The settlement coordinator releases only on an
+        authenticated terminal delivery failure, never on an unauthenticated submission."""
         return self._transition(reservation_id, now, to=ReservationStatus.RELEASED)

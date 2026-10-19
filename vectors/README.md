@@ -34,3 +34,11 @@ These are the Credence Core C3A signature vectors (`contracts/SIGNATURES.md`, de
 - **Keys.** They are deterministic TEST keys (NOT FOR PRODUCTION). Each seed is SHA-256 of a public label, derived at run time; no key material is written.
 - **Regenerate:** `uv run python vectors/build_c3a_signature_vectors.py`.
 - **Check:** `tests/conformance/test_core_c3a_signature_vectors.py`. It requires byte-identical regeneration, rebuilds every message by hand, and re-verifies every signature with PyNaCl directly.
+
+## c3b/
+
+These are the Credence Core C3B settlement fixtures (`contracts/SETTLEMENT-COORDINATOR.md`, decision 0005).
+
+- **Content.** Each file is a transcript of one scripted scenario run through the real coordinator on a fresh SQLite database: successful settlement, rejected settlement, duplicate settlement, expiration, and rollback at each fault point. It records decision digests, outcomes, refusals, and the final drawn, held, headroom, chain head and dispute rows.
+- **Regenerate:** `uv run python vectors/build_c3b_settlement_fixtures.py`. It uses the C3B test helpers in `tests/unit` and the deterministic C3A TEST keys.
+- **Check:** `tests/conformance/test_core_c3b_settlement_fixtures.py`. It requires byte-identical regeneration and checks the accounting facts.

@@ -6,7 +6,6 @@ import inspect
 import pytest
 
 MODULES = [
-    "credence.core.settlement_coordinator",
     "credence.core.repayment_scheduler",
     "credence.core.underwriting",
     "credence.core.decision_records",

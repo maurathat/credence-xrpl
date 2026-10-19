@@ -1,0 +1,99 @@
+{
+  "id": "rejected-settlement",
+  "description": "Unauthenticated vs authenticated-terminal rejections",
+  "steps": [
+    {
+      "action": "reserve",
+      "purchase": 1,
+      "policy_decision": "sha256:1f6ed2c1c759294c32b28a07f46cdc4ccd05d91534d5e4434717461a0147b3ed",
+      "reason_code": null,
+      "reservation": {
+        "object_type": "credence.reservation",
+        "schema_version": "1",
+        "reservation_id": "reservation-558cb285ff918478e1ac5e68061ecb25",
+        "facility_id": "facility-0001",
+        "quote_id": "quote-0001",
+        "maximum_amount_micro_trlusd": 100000,
+        "created_at": "2026-10-24T15:00:00Z",
+        "expires_at": "2026-10-24T15:10:00Z",
+        "status": "held"
+      }
+    },
+    {
+      "action": "settle",
+      "label": "forged gateway signature (unauthenticated)",
+      "at": "2026-10-24T15:00:05Z",
+      "outcome": "rejected_submission",
+      "verifier_decision": "sha256:7d23d4bea5458938a4116b8b06bf26a458857644d4d72bf517ce877faffccfb7",
+      "reason_code": "RECEIPT_SIG_INVALID",
+      "actual_amount_micro_trlusd": null,
+      "reservation_status": "held",
+      "receipt": "sha256:eafb46e4806b94c405f4f63bbc1367c2023ad9ea224330c213d705bafe9790d2"
+    },
+    {
+      "action": "reserve",
+      "purchase": 2,
+      "policy_decision": "sha256:d8fbcfbca39b745d545f816f09032fec83f1ba260ec92e802681be81e5eae638",
+      "reason_code": null,
+      "reservation": {
+        "object_type": "credence.reservation",
+        "schema_version": "1",
+        "reservation_id": "reservation-ce6ebd1374820ee61863138ae64b11f6",
+        "facility_id": "facility-0001",
+        "quote_id": "quote-0001",
+        "maximum_amount_micro_trlusd": 100000,
+        "created_at": "2026-10-24T15:00:00Z",
+        "expires_at": "2026-10-24T15:10:00Z",
+        "status": "held"
+      }
+    },
+    {
+      "action": "settle",
+      "label": "gateway-signed over-billed receipt (authenticated terminal)",
+      "at": "2026-10-24T15:00:05Z",
+      "outcome": "delivery_failed",
+      "verifier_decision": "sha256:21de099da0e3b68f5e1015c4c27edc608a8b93044a8352bc7f2616e42bf59bcf",
+      "reason_code": "BILLED_AMOUNT_MISMATCH",
+      "actual_amount_micro_trlusd": null,
+      "reservation_status": "released",
+      "receipt": "sha256:0e0ba3f6614f4ff963e4c38a68af8d8f362587f3f6b604501cb562096ad818bf"
+    }
+  ],
+  "final": {
+    "limit_micro_trlusd": 1000000,
+    "drawn_micro_trlusd": 0,
+    "held_micro_trlusd": 100000,
+    "headroom_micro_trlusd": 900000,
+    "chain_head": null,
+    "reservations": {
+      "reservation-558cb285ff918478e1ac5e68061ecb25": {
+        "status": "held",
+        "release_reason": null
+      },
+      "reservation-ce6ebd1374820ee61863138ae64b11f6": {
+        "status": "released",
+        "release_reason": "released"
+      }
+    },
+    "disputes": [
+      {
+        "kind": "rejected_submission",
+        "reservation_id": "reservation-558cb285ff918478e1ac5e68061ecb25",
+        "facility_id": "facility-0001",
+        "receipt_digest": "sha256:eafb46e4806b94c405f4f63bbc1367c2023ad9ea224330c213d705bafe9790d2",
+        "verifier_decision_digest": "sha256:7d23d4bea5458938a4116b8b06bf26a458857644d4d72bf517ce877faffccfb7",
+        "reason_code": "RECEIPT_SIG_INVALID",
+        "recorded_at": "2026-10-24T15:00:05Z"
+      },
+      {
+        "kind": "delivery_failure",
+        "reservation_id": "reservation-ce6ebd1374820ee61863138ae64b11f6",
+        "facility_id": "facility-0001",
+        "receipt_digest": "sha256:0e0ba3f6614f4ff963e4c38a68af8d8f362587f3f6b604501cb562096ad818bf",
+        "verifier_decision_digest": "sha256:21de099da0e3b68f5e1015c4c27edc608a8b93044a8352bc7f2616e42bf59bcf",
+        "reason_code": "BILLED_AMOUNT_MISMATCH",
+        "recorded_at": "2026-10-24T15:00:05Z"
+      }
+    ]
+  }
+}
