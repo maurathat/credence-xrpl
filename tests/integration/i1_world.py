@@ -271,6 +271,7 @@ def open_service(
     crash_hook: Callable[[str], None] | None = None,
     coordinator_fault: Callable[[str], None] | None = None,
     registry: KeyRegistry | None = None,
+    operator: str = "integration-operator",
 ) -> IntegrationService:
     clock = Clock() if clock is None else clock
     service = IntegrationService(
@@ -282,6 +283,7 @@ def open_service(
         recover=recover,
         crash_hook=crash_hook,
         coordinator_fault=coordinator_fault,
+        operator=operator,
     )
     _CLOCKS[service] = clock
     for facility in register:

@@ -1,6 +1,6 @@
 # INTEGRATION-FLOW
 
-Owner: Integration (San Antonio, Claude Code). Status: Integration I1c, remediated in I1e. Only the owner edits this file. Other workstreams file a request in `contracts/requests/`.
+Owner: Integration (San Antonio, Claude Code). Status: Integration I1c, remediated in I1e and I1g. Only the owner edits this file. Other workstreams file a request in `contracts/requests/`.
 
 This contract describes `credence/integration/` as implemented. The code is authoritative. `tests/integration/test_i1_contract.py` checks the lists below against the code. The decisions are `docs/decisions/0008-integration-i1c-inference-accounting.md` and `docs/decisions/0009-integration-i1e-security-remediation.md`. What a recorded attempt, a claimed execution, provider execution, captured evidence, verified delivery, accounting settlement and XRPL settlement each mean is set out in `contracts/SETTLEMENT-COORDINATOR.md`, "What each record means".
 
@@ -98,9 +98,34 @@ It is accepted only if all of these hold:
 
 Each nonce is single-use per agent key, across actions, operations, processes and restarts. It is consumed in `integration_authorization_nonces` in the same transaction as the access it authorizes, so a refused access does not consume it.
 
+**Atomic access (I1g, finding F2).** Each access is one SQLite transaction on its own connection.
+- `retrieve`, in order: re-read the agent key's persisted revocation; check that the response is available (`settled` or `retrieved`, bytes present); consume the nonce; record the retrieval; read and return the exact bytes.
+- `acknowledge`, in order: re-read the revocation; require `retrieved`; consume the nonce; delete the retained bytes.
+- Retrieval and acknowledgment racing on separate connections therefore serialize. Either the retrieval returns the exact bytes first, or the acknowledgment commits first and the retrieval is refused `ResponseUnavailable(acknowledged)`.
+- A refused access commits nothing and consumes no nonce. Acknowledging before any retrieval is refused (`ResponseUnavailable(settled)`).
+
 So a retrieval authorization cannot acknowledge, an authorization for one operation cannot open another, and a replay is refused. A refusal raises `NotAuthorized` with a code and carries no authorization material. Nothing is logged.
 
 `NotAuthorized` codes: `MALFORMED_AUTHORIZATION`, `WRONG_ACTION`, `WRONG_OPERATION`, `MALFORMED_NONCE`, `AUTHORIZATION_EXPIRED`, `AUTHORIZATION_TOO_LONG`, `UNKNOWN_KEY`, `BAD_SIGNATURE`, `WRONG_ROLE`, `REVOKED_KEY`, `WRONG_AGENT`, `UNKNOWN_OPERATION`, `NONCE_REUSED`.
+
+## Key revocation (I1g, finding F1)
+
+Revocation is durable and fail-closed. It survives restarts and overrides any registry supplied later.
+
+- **Record.** `integration_key_revocations` holds the key ID, the revocation time, the trusted administrative actor (the `operator` the service was opened with), and how it was made. It is in the same database. A record never expires and is never deleted.
+- **Authority.** The service gives Core and the gateway a `DurableKeyRegistry`. Keys come from the operator's registry; a persisted revocation reports the key as `revoked` whatever that registry says. Re-registering the key, or a freshly built registry that lists it as current, does not restore it.
+- **The existing workflow is routed through persistence.** While the service is open, `KeyRegistry.revoke(key_id)` on the registry it was opened with commits the revocation record before the revocation takes effect. A revocation already present in that registry when the service opens is persisted at open. Closing the service restores Core's own `revoke` on that object.
+- **No public revocation operation.** Revoking requires the operator's in-process registry object. Agents and remote callers cannot revoke.
+- **Fail closed.**
+  - An unreadable or malformed revocation record refuses opening the service, purchase admission, retrieval and acknowledgment (`RevocationStateError`).
+  - If a revocation cannot be persisted, the key is still refused in this process and `RevocationNotPersisted` is raised.
+- **Ordering.**
+  - Retrieval and acknowledgment re-read the revocation row inside their access transaction, so a revocation committed first refuses them (`REVOKED_KEY`) without consuming a nonce.
+  - Purchase admission (Core's reservation) and the pre-execution check below run under the same in-process gate as revocation commits.
+- **Purchases already admitted when a revocation commits.**
+  - Not yet executing (no Core delivery attempt): the provider is not called. The hold is released through Core's audited no-delivery release, and the operation ends `released_undelivered` with detail `agent key revoked before execution`.
+  - Executing (Core recorded the attempt): the delivery may be payable, so it continues to accounting settlement. The revoked key cannot retrieve the response, which stays retained (see Known failure windows).
+- A revoked agent key's new purchases are refused before any reservation: Core qualifies no offer (`KEY_REVOKED`).
 
 ## Journal
 
@@ -116,7 +141,7 @@ It holds:
 - the settlement outcome, verifier decision digest and reason code;
 - the state, timestamps, and retrieval and acknowledgment times.
 
-Prompts, credentials and private keys are never stored. Consumed authorization nonces are kept in `integration_authorization_nonces`.
+Prompts, credentials and private keys are never stored. Consumed authorization nonces are kept in `integration_authorization_nonces`, and key revocations in `integration_key_revocations`.
 
 ## Response retention
 
@@ -161,6 +186,8 @@ Interruption points are tested at each of:
 
   A crash after `begin_delivery` but before the claim is also reported as `unknown`. The absence of a claim does show the supported gateway made no call, but the release rule still requires no attempt at all; it was not widened in I1e. The same conservative classification applies to failures a provider adapter raises before sending anything (for example a missing or malformed Nebius credential). This fails closed.
 - **`unknown` holds lapse by expiry.** That frees headroom. If the provider did execute, the cost is outside Credence's accounting until reconciled by hand.
+- **A revoked key strands its settled response.** Retrieval needs the purchasing key, by design, so a response settled for a key that is later revoked stays retained but unreadable until an operator handles it.
+- **Revocations made before the service opens.** These are read from the operator's registry through its internal key table, because Core's `KeyRegistry` exposes no listing. While the service is open, `revoke` on that registry is replaced by an instance-level override; Core's class is unchanged.
 - **Ownership is advisory.** It binds every `IntegrationService`. Code that opens the SQLite file directly is not prevented.
 - **Enforced interfaces only.** Provider execution is authorized by Core only through the supported interfaces: Core's coordinator, `Gateway.deliver` with Core's authority, and this service. A program that calls a provider adapter directly, or writes the SQLite file, is outside them. Credence does not claim execution is impossible there; such a delivery has no Core attempt and cannot settle.
 

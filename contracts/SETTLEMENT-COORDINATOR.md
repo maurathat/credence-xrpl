@@ -1,6 +1,6 @@
 # SETTLEMENT-COORDINATOR
 
-Owner: Credence Core (Claude Code). Status: checkpoint C3B, amended in Integration I1c (`contracts/requests/0001-core-settlement-delivery-attempts.md`) and I1e (`contracts/requests/0003-core-attempt-enforcement.md`), both authorized by Maura on 2026-10-19; Core review pending. Only the owner edits this file. Other workstreams file a request in `contracts/requests/`.
+Owner: Credence Core (Claude Code). Status: checkpoint C3B, amended in Integration I1c (`contracts/requests/0001-core-settlement-delivery-attempts.md`) and I1e (`contracts/requests/0003-core-attempt-enforcement.md`), and I1g (`contracts/requests/0005-core-registration-boundary.md`), authorized by Maura on 2026-10-19 and 2026-10-20; Core review pending. Only the owner edits this file. Other workstreams file a request in `contracts/requests/`.
 
 This contract describes `credence/core/settlement_coordinator.py` as implemented. The code is authoritative. `tests/unit/test_core_settlement_contract.py` checks the lists below against the code. Scenario fixtures are in `vectors/c3b/`. The decisions are `docs/decisions/0007-credence-core-c3b-settlement-coordinator.md`, `docs/decisions/0008-integration-i1c-inference-accounting.md` and `docs/decisions/0009-integration-i1e-security-remediation.md`.
 
@@ -49,9 +49,20 @@ Everything uses the reservation ledger's SQLite file. These are operational tabl
 
 All amounts are integer micro-tRLUSD.
 
+## Keys the coordinator trusts
+
+The coordinator verifies signatures through the `KeyRegistry` it was constructed with; C3A semantics are unchanged. In the integrated flow that registry is the integration's `DurableKeyRegistry` (`contracts/INTEGRATION-FLOW.md`, "Key revocation"). A key revoked there is persisted, survives restarts and overrides any registry supplied later, so a revoked agent key cannot be used to reserve again.
+
 ## Facility accounting
 
-- **Registration.** `register_facility(facility)` starts accounting from the facility's limit and drawn amount, once per facility.
+- **Registration (amended in I1g, Core finding B-1).** `register_facility(facility)` starts accounting from the facility's limit and drawn amount, once per facility (`FACILITY_ALREADY_REGISTERED`).
+  - **Accounted registration requires a history-free facility identity.** The identity is the `facility_id`, the key every ledger and settlement table uses. In the same `BEGIN IMMEDIATE` transaction as the insert, registration refuses (`FACILITY_HAS_HISTORY`) if that identity appears in any of `reservations`, `used_nonces`, `accounting_settlements`, `facility_chain_heads`, `settlement_disputes`, `delivery_attempts`, `no_delivery_releases` or `late_delivery_disputes`. This covers held, released, expired and settled reservations, and consumed nonces.
+  - Two tables are not checked. `dispute_evidence` is reached through `settlement_disputes`. `decision_records` carries no facility identity, and a policy rejection alone creates no exposure, nonce, attempt or settlement state.
+  - **Existing unaccounted history is not silently adopted.** A refused registration writes nothing: no accounted row, no nonce, no change to the history. The facility stays unaccounted unless a separately authorized migration protocol establishes safe adoption. Past standalone provider executions are never reinterpreted as accounted delivery attempts.
+  - **A refused registration does not make historical delivery evidence safe to release.** The facility has no accounted `release_undelivered`, `begin_delivery` or `settle` path (`UNACCOUNTED_FACILITY`).
+  - **Ordering.** The ledger's bare reserve also runs in `BEGIN IMMEDIATE` and checks registration, so a reservation and a registration on separate connections serialize. Either the reservation commits first and registration refuses, or registration commits first and the bare reserve refuses (`USE_SETTLEMENT_COORDINATOR`).
+  - **The registered-facility invariants in this contract apply only after valid registration through this boundary.**
+  - Deferred hardening (decision 0009, B1-D2): settlement requires a persisted attempt but not a claimed execution. Through the supported gateway every receipt follows a claim, and the facility-adoption path is closed above. Requiring `execution_claimed_at` at settlement is recorded as possible further hardening, not added in I1g.
 - **Exposure.** Effective exposure is the stored drawn amount plus live held reservations. Reserving keeps it at or below the limit (C2 `OVER_LIMIT`).
 - **After settlement.** A settled reservation stops counting as held, and its actual charge stays in drawn. The unused part of the hold is simply no longer held. It is never counted as spending, and settled spending is never forgotten.
 - **Stored drawn is authoritative.**
@@ -187,4 +198,4 @@ Concurrent operations are serialized by `BEGIN IMMEDIATE`.
 
 ## Refusal codes
 
-`SettlementRefused.reason`: `AMOUNT_EXCEEDS_RESERVATION`, `ATTEMPT_MISMATCH`, `DELIVERY_ALREADY_ATTEMPTED`, `DELIVERY_ATTEMPTED`, `DELIVERY_OUTCOME_UNKNOWN`, `EXECUTION_ALREADY_CLAIMED`, `EXPIRED`, `FACILITY_ALREADY_REGISTERED`, `INCONSISTENT_SUBMISSION`, `INVALID_RELEASE_REASON`, `INVALID_UNKNOWN_CAUSE`, `LIMIT_EXCEEDED`, `NOT_FOUND`, `NOT_HELD`, `NO_DELIVERY_ATTEMPT`, `POLICY_DECISION_MISSING`, `POLICY_DECISION_NOT_ACCEPT`, `UNACCOUNTED_FACILITY`, `WRONG_PURCHASE`
+`SettlementRefused.reason`: `AMOUNT_EXCEEDS_RESERVATION`, `ATTEMPT_MISMATCH`, `DELIVERY_ALREADY_ATTEMPTED`, `DELIVERY_ATTEMPTED`, `DELIVERY_OUTCOME_UNKNOWN`, `EXECUTION_ALREADY_CLAIMED`, `EXPIRED`, `FACILITY_ALREADY_REGISTERED`, `FACILITY_HAS_HISTORY`, `INCONSISTENT_SUBMISSION`, `INVALID_RELEASE_REASON`, `INVALID_UNKNOWN_CAUSE`, `LIMIT_EXCEEDED`, `NOT_FOUND`, `NOT_HELD`, `NO_DELIVERY_ATTEMPT`, `POLICY_DECISION_MISSING`, `POLICY_DECISION_NOT_ACCEPT`, `UNACCOUNTED_FACILITY`, `WRONG_PURCHASE`

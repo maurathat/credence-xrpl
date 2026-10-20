@@ -166,6 +166,22 @@ TERMINAL_REASONS: frozenset[ReasonCode] = frozenset(
     }
 )
 
+# Ledger and coordinator tables that record history for a facility identity (its facility_id).
+# Registration refuses an identity that appears in any of them (I1g, Core finding B-1): accounted
+# guarantees hold only for facilities that were accounted from their first reservation. (Not
+# listed: dispute_evidence, keyed by settlement_disputes; decision_records, which carries no
+# facility identity and creates no exposure, nonce, attempt or settlement state on its own.)
+FACILITY_HISTORY_TABLES: tuple[str, ...] = (
+    "reservations",
+    "used_nonces",
+    "accounting_settlements",
+    "facility_chain_heads",
+    "settlement_disputes",
+    "delivery_attempts",
+    "no_delivery_releases",
+    "late_delivery_disputes",
+)
+
 # Fault-injection points, in transaction order (tests only).
 FAULT_POINTS = (
     "before_drawn_update",
@@ -401,10 +417,22 @@ class SettlementCoordinator:
     # --- facility accounting -------------------------------------------------------------
 
     def register_facility(self, facility: Facility) -> None:
-        """Start accounting for a facility at its current limit and drawn amount. Once only."""
+        """Start accounting for a history-free facility at its limit and drawn amount. Once only.
+
+        The facility identity (its facility_id) must have no ledger or settlement history:
+        unaccounted history (reservations, used nonces, standalone deliveries) is never adopted
+        (`FACILITY_HAS_HISTORY`). The check and the insert are one BEGIN IMMEDIATE transaction,
+        so no reservation from another connection can land between them; a refusal writes
+        nothing."""
         with self._ledger.write_transaction() as conn:
             if ReservationLedger.facility_account(conn, facility.facility_id) is not None:
                 raise SettlementRefused("FACILITY_ALREADY_REGISTERED", facility.facility_id.value)
+            for table in FACILITY_HISTORY_TABLES:
+                if conn.execute(
+                    f"SELECT 1 FROM {table} WHERE facility_id = ? LIMIT 1",
+                    (facility.facility_id.value,),
+                ).fetchone():
+                    raise SettlementRefused("FACILITY_HAS_HISTORY", facility.facility_id.value)
             conn.execute(
                 "INSERT INTO facility_accounts (facility_id, limit_micro_trlusd, "
                 "drawn_micro_trlusd) VALUES (?, ?, ?)",

@@ -1,6 +1,6 @@
 # 0009. Integration I1e: close authorization and accounting bypasses
 
-- Status: Accepted for the integration branch. **Provisionally blocked for acceptance** until independent Core and Inference owner reviews approve the remediation commit.
+- Status: Accepted for the integration branch, amended for I1g (§7–§10). **Provisionally blocked for acceptance** until independent Core and Inference owner reviews approve the final I1g commit.
 - Date: 2026-10-19
 - Owner: Integration (San Antonio)
 - Source: Maura's I1e authorization, and the I1d owner reviews of commit `cfc6224`:
@@ -35,6 +35,27 @@
    - Decision 0007 carries explicit supersession notes.
    - The meanings of recorded attempt, claimed execution, provider execution, captured evidence, verified delivery, accounting settlement and XRPL settlement are set out in `contracts/SETTLEMENT-COORDINATOR.md`.
 6. **Uncertainty stays fail-closed (I-5).** Outcomes after an attempt remain `unknown` even where the missing claim shows the supported gateway made no call. The release rule (no attempt at all) was deliberately not widened.
+
+7. **Registration requires a history-free facility (I1g amendment, Core finding B-1, 2026-10-20).**
+   - `register_facility` refuses `FACILITY_HAS_HISTORY` when the `facility_id` already appears in any reservation, used-nonce, settlement, chain, dispute, attempt, no-delivery-release or late-delivery table. The check and the insert are one `BEGIN IMMEDIATE` transaction.
+   - Without this, history made through the unaccounted C2 path could be adopted on registration: a forged reservation's held amount (2,458) above a 1,000 limit, a consumed nonce, or a standalone provider execution with no Core attempt that a later `release_undelivered` would falsely classify.
+   - A refusal writes nothing. No migration of past history is performed, and none is implied; adopting a used facility needs a separately authorized protocol.
+   - A rejected policy decision alone is not history: decision records carry no facility identity and create no state.
+
+8. **B-1 policy decisions (Maura, 2026-10-20).**
+   - **B1-D1:** digest-only `decision_records` are not scanned; a facility whose only history is policy rejections may register (they have no accounting or authorization side effects). The exception is documented and tested.
+   - **B1-D2:** no `execution_claimed_at` settlement precondition in I1g. It is recorded as deferred hardening.
+9. **Durable, fail-closed key revocation (I1g, Inference finding F1).**
+   - Revocations persist in `integration_key_revocations`: key, time, operator actor. They are authoritative over any registry supplied later, never expire, and survive re-registration.
+   - The existing `KeyRegistry.revoke` workflow on the operator's registry is routed through persistence while the service is open. Pre-open revocations are persisted at open.
+   - There is no new public revocation operation.
+   - Unreadable or malformed state fails closed, and a persistence failure still refuses the key in-process.
+   - Revocation commits are ordered before later access, by an in-transaction re-check, and before purchase admission and execution, by an in-process gate.
+   - An admitted purchase not yet executing is released through Core's audited no-delivery release. One already executing settles; its response is not released to the revoked key.
+   - C3A signature formats and `KeyRegistry` are unchanged.
+10. **Atomic retrieval (I1g, Inference finding F2).**
+   - Retrieval reads the exact response bytes in the same transaction that re-checks revocation and availability, consumes the nonce and records the retrieval. Acknowledgment is atomic in the same way.
+   - A refusal consumes nothing, and the reachable `AssertionError` is gone.
 
 ## Consequences
 

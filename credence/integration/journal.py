@@ -42,6 +42,7 @@ from credence.core.objects import (
     SignedObject,
 )
 from credence.core.primitives import Timestamp
+from credence.integration.revocation import revocation_in
 
 
 class OperationState(Enum):
@@ -158,6 +159,19 @@ class JournalConflict(RuntimeError):
 
 class NonceReused(RuntimeError):
     """An authorization nonce was already consumed (persisted; survives restarts)."""
+
+
+class KeyRevoked(RuntimeError):
+    """The agent key has a persisted revocation (checked inside the access transaction)."""
+
+
+class StateRefused(RuntimeError):
+    """The operation is not in a state that permits the access; nothing was committed."""
+
+    def __init__(self, operation_id: str, state: OperationState | None) -> None:
+        super().__init__(f"{operation_id}: {None if state is None else state.value}")
+        self.operation_id = operation_id
+        self.state = state
 
 
 def _decode[T: CanonicalObject](cls: type[T], data: object) -> T | None:
@@ -378,42 +392,71 @@ class Journal:
         assert moved is not None
         return moved
 
-    def authorized_transition(
-        self,
-        *,
+    def authorized_retrieve(
+        self, *, agent_key_id: str, nonce: str, operation_id: str, now: Timestamp
+    ) -> bytes:
+        """Retrieve atomically (I1g, F2): in one transaction, re-check revocation, check that the
+        response is available, consume the nonce, record the retrieval and read the exact bytes.
+
+        If the response cannot be returned, nothing commits and the nonce is not consumed."""
+        with self._write() as conn:
+            if revocation_in(conn, agent_key_id) is not None:
+                raise KeyRevoked(agent_key_id)
+            row = conn.execute(
+                "SELECT state, response FROM integration_operations WHERE operation_id = ?",
+                (operation_id,),
+            ).fetchone()
+            if row is None:
+                raise StateRefused(operation_id, None)
+            state = OperationState(str(row[0]))
+            if state not in RESPONSE_AVAILABLE or not isinstance(row[1], bytes):
+                raise StateRefused(operation_id, state)
+            self._consume(conn, agent_key_id, nonce, operation_id, "retrieve", now)
+            conn.execute(
+                "UPDATE integration_operations SET state = ?, updated_at = ?, "
+                "retrieved_at = COALESCE(retrieved_at, ?) WHERE operation_id = ?",
+                (OperationState.RETRIEVED.value, now.value, now.value, operation_id),
+            )
+            return bytes(row[1])
+
+    def authorized_acknowledge(
+        self, *, agent_key_id: str, nonce: str, operation_id: str, now: Timestamp
+    ) -> None:
+        """Acknowledge atomically: re-check revocation, require a retrieved response, consume
+        the nonce and delete the retained bytes, in one transaction."""
+        with self._write() as conn:
+            if revocation_in(conn, agent_key_id) is not None:
+                raise KeyRevoked(agent_key_id)
+            row = conn.execute(
+                "SELECT state FROM integration_operations WHERE operation_id = ?",
+                (operation_id,),
+            ).fetchone()
+            if row is None:
+                raise StateRefused(operation_id, None)
+            state = OperationState(str(row[0]))
+            if state is not OperationState.RETRIEVED:
+                raise StateRefused(operation_id, state)
+            self._consume(conn, agent_key_id, nonce, operation_id, "acknowledge", now)
+            conn.execute(
+                "UPDATE integration_operations SET state = ?, updated_at = ?, response = NULL, "
+                "acknowledged_at = ? WHERE operation_id = ?",
+                (OperationState.ACKNOWLEDGED.value, now.value, now.value, operation_id),
+            )
+
+    @staticmethod
+    def _consume(
+        conn: sqlite3.Connection,
         agent_key_id: str,
         nonce: str,
-        action: str,
         operation_id: str,
-        expected: OperationState,
-        to: OperationState,
+        action: str,
         now: Timestamp,
-        **fields: object,
-    ) -> Operation:
-        """Consume an authorization nonce and apply the access it authorizes, in one transaction.
-
-        A reused nonce raises NonceReused; a state conflict raises JournalConflict and rolls the
-        nonce back, so only a successful access consumes it."""
-        changes = {**fields, "state": to.value, "updated_at": now.value}
-        unknown = set(changes) - set(_COLUMNS)
-        if unknown:
-            raise ValueError(f"unknown journal columns: {sorted(unknown)}")
-        sets = ", ".join(f"{name} = ?" for name in changes)
-        with self._write() as conn:
-            try:
-                conn.execute(
-                    "INSERT INTO integration_authorization_nonces (agent_key_id, nonce, "
-                    "operation_id, action, used_at) VALUES (?, ?, ?, ?, ?)",
-                    (agent_key_id, nonce, operation_id, action, now.value),
-                )
-            except sqlite3.IntegrityError:
-                raise NonceReused(operation_id) from None
-            updated = conn.execute(
-                f"UPDATE integration_operations SET {sets} WHERE operation_id = ? AND state = ?",
-                (*changes.values(), operation_id, expected.value),
+    ) -> None:
+        try:
+            conn.execute(
+                "INSERT INTO integration_authorization_nonces (agent_key_id, nonce, "
+                "operation_id, action, used_at) VALUES (?, ?, ?, ?, ?)",
+                (agent_key_id, nonce, operation_id, action, now.value),
             )
-            if updated.rowcount != 1:
-                raise JournalConflict(f"{operation_id}: expected {expected.value}")
-        moved = self.get(operation_id)
-        assert moved is not None
-        return moved
+        except sqlite3.IntegrityError:
+            raise NonceReused(operation_id) from None

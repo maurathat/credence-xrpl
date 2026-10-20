@@ -61,6 +61,7 @@ from credence.core.objects import (
 )
 from credence.core.primitives import (
     FacilityId,
+    KeyId,
     MicroTrlusd,
     Nonce,
     Purpose,
@@ -90,7 +91,7 @@ from credence.core.settlement_coordinator import (
     SignedPurchase,
     UnknownDeliveryCause,
 )
-from credence.core.signatures import KeyRegistry
+from credence.core.signatures import KeyRegistry, KeyStatus
 from credence.inference.gateway import (
     DeliveryCaptured,
     DeliveryNotAuthorized,
@@ -111,11 +112,14 @@ from credence.integration.journal import (
     IN_FLIGHT,
     RESPONSE_AVAILABLE,
     Journal,
+    KeyRevoked,
     NonceReused,
     Operation,
     OperationState,
+    StateRefused,
 )
 from credence.integration.ownership import ProcessOwnership
+from credence.integration.revocation import DurableKeyRegistry, RevocationStore
 
 S = OperationState
 DATABASE_FILE_MODE = 0o600
@@ -306,19 +310,33 @@ class IntegrationService:
         recover: bool = True,
         crash_hook: Callable[[str], None] | None = None,
         coordinator_fault: Callable[[str], None] | None = None,
+        operator: str = "integration-operator",
     ) -> None:
+        """`registry` is the operator's key registry. While the service is open, its `revoke`
+        persists the revocation in this database before it takes effect, and persisted
+        revocations override any registry supplied later (I1g, F1). `operator` names the trusted
+        administrative actor recorded with each revocation."""
         self._database = Path(database)
         self._ownership = ProcessOwnership.acquire(self._database)
+        # Serializes revocation commits with purchase admission (I1g, F1).
+        self._revocation_gate = threading.RLock()
+        self._durable_registry: DurableKeyRegistry | None = None
         try:
             _restrict(self._database)
+            revocations = RevocationStore(self._database)
+            revocations.all()  # fail closed on unreadable or malformed revocation state
+            self._durable_registry = DurableKeyRegistry(
+                registry, revocations, actor=operator, clock=clock, gate=self._revocation_gate
+            )
+            self._durable_registry.bind()
             self._ledger = ReservationLedger(self._database)
             self._coordinator = SettlementCoordinator(
-                self._ledger, registry, fault=coordinator_fault
+                self._ledger, self._durable_registry, fault=coordinator_fault
             )
             self._journal = Journal(self._database)
             self._gateway = Gateway(
                 ledger=self._ledger,
-                registry=registry,
+                registry=self._durable_registry,
                 gateway_key=gateway_key,
                 providers=providers,
                 clock=clock,
@@ -326,10 +344,11 @@ class IntegrationService:
             )
             self._accounting = AccountingView(self._ledger, self._coordinator)
         except BaseException:
-            self._ownership.release()
+            self._release()
             raise
         self._clock = clock
-        self._registry = registry
+        self._registry: KeyRegistry = self._durable_registry
+        self._revocations = revocations
         self._crash = crash_hook or (lambda point: None)
         self._locks: dict[str, threading.Lock] = {}
         self._locks_guard = threading.Lock()
@@ -337,13 +356,18 @@ class IntegrationService:
             try:
                 self.recover()
             except BaseException:
-                self._ownership.release()  # fail closed, and do not leave the database owned
+                self._release()  # fail closed, and do not leave the database owned
                 raise
 
     # --- lifecycle -----------------------------------------------------------------------
 
-    def close(self) -> None:
+    def _release(self) -> None:
+        if self._durable_registry is not None:
+            self._durable_registry.unbind()
         self._ownership.release()
+
+    def close(self) -> None:
+        self._release()
 
     def __enter__(self) -> IntegrationService:
         return self
@@ -510,7 +534,17 @@ class IntegrationService:
         )
         self._crash("after_intent")
 
-        reserved = self._coordinator.reserve(
+        with self._revocation_gate:  # a revocation committed first is seen by the policy check
+            signature = chosen.request_signature
+            if signature is not None:
+                assert self._durable_registry is not None
+                self._durable_registry.persisted_revocation(signature.key_id)  # fail closed
+            reserved = self._reserve(chosen)
+        self._crash("after_reserve")
+        return self._after_reserve(operation_id, reservation_id, chosen, reserved)
+
+    def _reserve(self, chosen: Purchase) -> ReserveResult:
+        return self._coordinator.reserve(
             SignedPurchase(
                 request=chosen.request,
                 request_signature=chosen.request_signature,
@@ -522,7 +556,14 @@ class IntegrationService:
             ),
             self._clock(),
         )
-        self._crash("after_reserve")
+
+    def _after_reserve(
+        self,
+        operation_id: str,
+        reservation_id: ReservationId,
+        chosen: Purchase,
+        reserved: ReserveResult,
+    ) -> PurchaseReport:
         if reserved.reservation is None:
             code = reserved.decision.record.reason_code
             op = self._journal.transition(
@@ -557,16 +598,25 @@ class IntegrationService:
             return self._release_undelivered(op, NoDeliveryReason.PROVIDER_NOT_CONNECTED)
 
         head = self._coordinator.chain_head(chosen.request.facility_id)
-        self._journal.transition(operation_id, S.RESERVED, S.EXECUTING, self._clock())
-        self._crash("after_executing_recorded")
-        try:
-            attempt = self._coordinator.begin_delivery(ref, self._clock())
-        except SettlementRefused as exc:
-            if exc.reason != "EXPIRED":
-                raise
-            return self._journal.transition(
-                operation_id, S.EXECUTING, S.EXPIRED, self._clock(), detail="EXPIRED"
-            )
+        # Admitted before a revocation, but not yet executing: a revocation committed first stops
+        # the provider call (I1g, F1). The gate orders this check against revocation commits.
+        with self._revocation_gate:
+            if self._agent_revoked(op):
+                return self._release_undelivered(
+                    op,
+                    NoDeliveryReason.ABANDONED_BEFORE_EXECUTION,
+                    detail="agent key revoked before execution",
+                )
+            self._journal.transition(operation_id, S.RESERVED, S.EXECUTING, self._clock())
+            self._crash("after_executing_recorded")
+            try:
+                attempt = self._coordinator.begin_delivery(ref, self._clock())
+            except SettlementRefused as exc:
+                if exc.reason != "EXPIRED":
+                    raise
+                return self._journal.transition(
+                    operation_id, S.EXECUTING, S.EXPIRED, self._clock(), detail="EXPIRED"
+                )
         self._crash("after_attempt_begun")
 
         try:
@@ -659,7 +709,18 @@ class IntegrationService:
             reason_code=None if record.reason_code is None else record.reason_code.value,
         )
 
-    def _release_undelivered(self, op: Operation, reason: NoDeliveryReason) -> Operation:
+    def _agent_revoked(self, op: Operation) -> bool:
+        if op.agent_key_id is None:
+            return True  # no agent key: nothing authorizes execution
+        assert self._durable_registry is not None
+        if self._durable_registry.persisted_revocation(KeyId(op.agent_key_id)):
+            return True
+        key = self._registry.lookup(KeyId(op.agent_key_id))
+        return key is None or key.status is not KeyStatus.CURRENT
+
+    def _release_undelivered(
+        self, op: Operation, reason: NoDeliveryReason, *, detail: str | None = None
+    ) -> Operation:
         try:
             self._coordinator.release_undelivered(self._reference(op), reason, self._clock())
         except SettlementRefused as exc:
@@ -669,7 +730,11 @@ class IntegrationService:
                 op.operation_id, op.state, S.EXPIRED, self._clock(), detail="EXPIRED"
             )
         return self._journal.transition(
-            op.operation_id, op.state, S.RELEASED_UNDELIVERED, self._clock(), detail=reason.value
+            op.operation_id,
+            op.state,
+            S.RELEASED_UNDELIVERED,
+            self._clock(),
+            detail=detail or reason.value,
         )
 
     # --- response retrieval --------------------------------------------------------------
@@ -691,53 +756,48 @@ class IntegrationService:
 
     def retrieve(self, authorization: ResponseAuthorization) -> bytes:
         """The response, only after accounting settlement, and only for a caller holding the
-        requesting agent's key (an agent-signed, single-use authorization for this operation)."""
+        requesting agent's key (an agent-signed, single-use authorization for this operation).
+
+        Atomic (I1g, F2): revocation, availability, nonce consumption, the retrieval record and
+        the read of the exact bytes are one transaction; a refusal consumes no nonce."""
         self._require_open()
         op = self._authorize(authorization, ResponseAction.RETRIEVE)
-        if op.state not in RESPONSE_AVAILABLE:
-            raise ResponseUnavailable(op.operation_id, op.state)
-        if not self._coordinator.receipt_settled(Sha256Digest(str(op.receipt_digest))):
+        if op.state in RESPONSE_AVAILABLE and not self._coordinator.receipt_settled(
+            Sha256Digest(str(op.receipt_digest))
+        ):
             raise JournalInconsistency(f"{op.operation_id}: journal settled, Core not settled")
-        now = self._clock()
-        fields: dict[str, object] = {} if op.retrieved_at else {"retrieved_at": now.value}
         try:
-            moved = self._journal.authorized_transition(
+            return self._journal.authorized_retrieve(
                 agent_key_id=authorization.agent_key_id.value,
                 nonce=authorization.nonce,
-                action=ResponseAction.RETRIEVE.value,
                 operation_id=op.operation_id,
-                expected=op.state,
-                to=S.RETRIEVED,
-                now=now,
-                **fields,
+                now=self._clock(),
             )
         except NonceReused:
             raise NotAuthorized("NONCE_REUSED") from None
-        response = moved.response
-        assert response is not None
-        return response
+        except KeyRevoked:
+            raise NotAuthorized("REVOKED_KEY") from None
+        except StateRefused as exc:
+            raise ResponseUnavailable(op.operation_id, exc.state or op.state) from None
 
     def acknowledge(self, authorization: ResponseAuthorization) -> None:
-        """The agent confirms it holds the response; only then is the retained copy deleted."""
+        """The agent confirms it holds the response; only then is the retained copy deleted.
+        Atomic like `retrieve`; acknowledgment requires a completed retrieval."""
         self._require_open()
         op = self._authorize(authorization, ResponseAction.ACKNOWLEDGE)
-        if op.state is not S.RETRIEVED:
-            raise ResponseUnavailable(op.operation_id, op.state)
-        now = self._clock()
         try:
-            self._journal.authorized_transition(
+            self._journal.authorized_acknowledge(
                 agent_key_id=authorization.agent_key_id.value,
                 nonce=authorization.nonce,
-                action=ResponseAction.ACKNOWLEDGE.value,
                 operation_id=op.operation_id,
-                expected=S.RETRIEVED,
-                to=S.ACKNOWLEDGED,
-                now=now,
-                response=None,
-                acknowledged_at=now.value,
+                now=self._clock(),
             )
         except NonceReused:
             raise NotAuthorized("NONCE_REUSED") from None
+        except KeyRevoked:
+            raise NotAuthorized("REVOKED_KEY") from None
+        except StateRefused as exc:
+            raise ResponseUnavailable(op.operation_id, exc.state or op.state) from None
 
     # --- recovery ------------------------------------------------------------------------
 
