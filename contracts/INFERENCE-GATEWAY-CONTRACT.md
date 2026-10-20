@@ -1,6 +1,6 @@
 # INFERENCE-GATEWAY-CONTRACT
 
-Owner: Inference (Claude Code). Status: Inference Checkpoint 3 (Nebius Tier 1 provider and the two-provider Qwen market added). Only the owner edits this file. Other workstreams file a request in `contracts/requests/`.
+Owner: Inference (Claude Code). Status: Inference Checkpoint 3 (Nebius Tier 1 provider and the two-provider Qwen market added), amended in Integration I1c (`Gateway.deliver`; `contracts/requests/0002-inference-gateway-deliver.md`, authorized by Maura on 2026-10-19; Inference review pending). Only the owner edits this file. Other workstreams file a request in `contracts/requests/`.
 
 This contract describes the in-process inference gateway in `credence/inference/`:
 - the gateway (`gateway.py`);
@@ -29,12 +29,13 @@ The code is authoritative. `tests/unit/test_inference_contract.py` checks the li
 
 ## Core dependency
 
-The gateway imports and calls Core (checkpoint C3A, commit `3b095aebe034afc76f9817e073d1125f93259b82`). It does not modify, copy or reimplement any of it:
+The gateway imports and calls Core (checkpoint C3A, commit `3b095aebe034afc76f9817e073d1125f93259b82`; on the integration branch, Core C3B as amended in I1c). It does not modify, copy or reimplement any of it:
 - objects: `credence.core.objects` (see `contracts/CORE-OBJECTS.md`);
 - billing: `credence.core.billing.total_cost`;
 - policy and reservation: `credence.core.reservation_ledger.ReservationLedger.reserve`, which runs `policy_engine.evaluate`;
 - signatures: `credence.core.signatures` `sign`, `policy_signature_facts`, `verifier_signature_facts` (see `contracts/SIGNATURES.md`);
-- verifier: `credence.core.verifier.verify` (see `contracts/POLICY-VERIFIER.md`).
+- verifier: `credence.core.verifier.verify` (see `contracts/POLICY-VERIFIER.md`);
+- delivery attempts (I1c, `deliver` only): `credence.core.settlement_coordinator.DeliveryAttempt` (see `contracts/SETTLEMENT-COORDINATOR.md`).
 
 ## Provider request boundary
 
@@ -168,6 +169,22 @@ Whether the receipt's tier matches the approved service class is the verifier's 
 The Checkpoint 1 gateway only reads `SettledReceipts` and never marks a receipt settled.
 
 Core checks `CHAIN_BROKEN` before `REPLAYED_RECEIPT`. So a settled receipt resubmitted after the head has moved past it is rejected as `CHAIN_BROKEN`. `REPLAYED_RECEIPT` is reached only when the settled fact is true while the head still precedes the receipt.
+
+## Integrated delivery (I1c)
+
+`Gateway.purchase` above is the standalone path and is unchanged. The integrated flow (`contracts/INTEGRATION-FLOW.md`) uses separate steps instead:
+- `Gateway.check_prompt(purchase)` runs step 1 alone and returns `Refused` or `None`.
+- `Gateway.connected(provider_id)` reports whether a provider with that ID is connected. It is read only.
+- `Gateway.deliver(purchase, reserved, attempt, *, previous_receipt_digest)` runs steps 4–7 for a reservation Core already made.
+  - `reserved` must be Core's accepting reservation for this exact request.
+  - `attempt` must be Core's recorded `DeliveryAttempt` for that reservation and request; otherwise `ValueError`.
+  - The receipt's `previous_receipt_digest` is the value supplied: Core's persisted chain head (`SettlementCoordinator.chain_head`).
+  - `deliver` returns `ProviderFailed` or `DeliveryCaptured`.
+
+What `deliver` does not do:
+- It reserves nothing and runs no verifier. Core's settlement coordinator verifies.
+- It neither reads nor moves the gateway's in-memory `ReceiptChain`.
+- `DeliveryCaptured` (reservation, accepting policy decision, evidence, exact response bytes) is not "verified" and does not make the response releasable. The response is released only after Core's accounting settlement. `DeliveryCaptured` is not part of `GatewayOutcome`.
 
 ## Signing responsibilities
 
@@ -416,7 +433,7 @@ Runtime observations are not deterministically regenerable. None of them holds a
 - `provider_a.py` and `provider_b_sidecar.py` remain Checkpoint 0 stubs. Provider A is implemented in `nebius.py`, and Provider B in `local_llama.py`, signing in process; there is no separate signing-sidecar process.
 - Tier 3, or any measurement of loaded weights.
 - ResearchBot.
-- Settlement: no settlement, reservation release, disputes, XRPL payments, LoanSet or LoanPay.
+- Settlement: the gateway performs no settlement, reservation release or dispute. In the integrated flow those belong to Core's settlement coordinator, driven by `credence/integration/` (`contracts/INTEGRATION-FLOW.md`). No XRPL payments, LoanSet or LoanPay.
 - Persistence: none for chain heads or settled receipts.
 - Interfaces: no rate limiting, HTTP or FastAPI API, or frontend.
 - Credentials beyond `NEBIUS_API_KEY` in the process environment.

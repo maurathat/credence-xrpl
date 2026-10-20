@@ -32,7 +32,7 @@
 
 ## Consequences
 
-- **Drawn amount (resolved in C3B, decision 0005).** The settlement coordinator must add settled amounts to the facility's drawn amount when it settles a reservation, because headroom counts only live held reservations. It does so in the same transaction, and the bare ledger `settle` is refused for accounted facilities.
+- **Drawn amount (resolved in C3B, decision 0007).** The settlement coordinator must add settled amounts to the facility's drawn amount when it settles a reservation, because headroom counts only live held reservations. It does so in the same transaction, and the bare ledger `settle` is refused for accounted facilities.
 - **Provider A and procurement (resolved in C2A).** As of C2, a profile that leaves precision or quantization unasserted could not satisfy any procurement class. Since C2A, it can satisfy a class that leaves those dimensions unconstrained. It still cannot satisfy a class that constrains them. This is how the plan's Provider A (Tier 1) qualifies on a general Tier 1 facility.
 
 ## Amendments

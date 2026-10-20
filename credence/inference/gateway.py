@@ -19,6 +19,11 @@ reservation stays held in every outcome; settlement, release and disputes belong
 
 Not in Checkpoint 1: quoting (the 402 step), network providers, settlement, persistence.
 
+Integration I1c (contracts/requests/0002) adds `deliver`: the provider-delivery step alone, for a
+reservation Core approved and for which Core recorded a delivery attempt. It builds and signs the
+evidence against a predecessor the caller supplies (Core's persisted chain head), runs no verifier,
+moves no receipt chain and does not make the response releasable. `purchase` is unchanged.
+
 Owner: Inference.
 """
 
@@ -53,7 +58,8 @@ from credence.core.primitives import (
     Sha256Digest,
     Timestamp,
 )
-from credence.core.reservation_ledger import PurchaseContext, ReservationLedger
+from credence.core.reservation_ledger import PurchaseContext, ReservationLedger, ReserveResult
+from credence.core.settlement_coordinator import DeliveryAttempt
 from credence.core.signatures import (
     KeyRegistry,
     policy_signature_facts,
@@ -218,6 +224,27 @@ type GatewayOutcome = (
 )
 
 
+@dataclass(frozen=True)
+class DeliveryCaptured:
+    """`deliver` only: the provider delivered and the gateway built and signed the evidence.
+
+    Not verified and not settled. The response must not be released on this outcome alone."""
+
+    reservation: Reservation
+    policy_decision: PolicyDecision
+    evidence: DeliveryEvidence
+    response: bytes
+
+    def __post_init__(self) -> None:
+        if self.policy_decision.record.outcome is not DecisionOutcome.ACCEPT:
+            raise ValueError(
+                "DeliveryCaptured needs the accepting policy decision behind its reservation"
+            )
+
+
+type DeliveryOutcome = ProviderFailed | DeliveryCaptured
+
+
 class _MalformedResult(ValueError):
     pass
 
@@ -261,8 +288,12 @@ class Gateway:
     def chain(self) -> ReceiptChain:
         return self._chain
 
-    def purchase(self, purchase: Purchase) -> GatewayOutcome:
-        """Run one purchase end to end. See the module docstring for the order of steps."""
+    def connected(self, provider_id: ProviderId) -> bool:
+        """Whether a provider with this ID is connected to the gateway."""
+        return provider_id in self._providers
+
+    def check_prompt(self, purchase: Purchase) -> Refused | None:
+        """The prompt check of step 1: `Refused`, or None when the prompt matches the request."""
         try:
             prompt_digest = payload_digest(purchase.prompt)
         except PayloadError as exc:
@@ -272,6 +303,13 @@ class Gateway:
                 GatewayRefusal.PROMPT_DIGEST_MISMATCH,
                 "the prompt does not hash to the signed request's prompt_digest",
             )
+        return None
+
+    def purchase(self, purchase: Purchase) -> GatewayOutcome:
+        """Run one purchase end to end. See the module docstring for the order of steps."""
+        refused = self.check_prompt(purchase)
+        if refused is not None:
+            return refused
 
         facts = policy_signature_facts(
             purchase.request, purchase.request_signature, purchase.facility, self._registry
@@ -292,6 +330,65 @@ class Gateway:
         if reserved.reservation is None:
             return PolicyRejected(reserved.decision)
         reservation, policy = reserved.reservation, reserved.decision
+
+        # The predecessor is read after the provider returns, as in Checkpoint 1.
+        executed = self._execute(
+            purchase, reservation, policy, lambda: self._chain.head(purchase.request.facility_id)
+        )
+        if isinstance(executed, ProviderFailed):
+            return executed
+        evidence, response = executed
+
+        decision = self.verify_delivery(evidence, response)
+        if not decision.accepted:
+            return DeliveryRejected(reservation, policy, evidence, decision)
+        self._chain.advance(
+            purchase.request.facility_id,
+            evidence.receipt.previous_receipt_digest,
+            evidence.receipt.digest(),
+        )
+        return DeliveryVerified(reservation, policy, evidence, decision, response)
+
+    def deliver(
+        self,
+        purchase: Purchase,
+        reserved: ReserveResult,
+        attempt: DeliveryAttempt,
+        *,
+        previous_receipt_digest: Sha256Digest | None,
+    ) -> DeliveryOutcome:
+        """Integrated delivery step: call the provider and build the signed evidence.
+
+        `reserved` is Core's accepted reservation for this exact request, and `attempt` is Core's
+        recorded delivery attempt for it. `previous_receipt_digest` is Core's persisted chain head.
+        No reservation, no verifier, no chain movement; the outcome is not a release decision.
+        """
+        reservation = reserved.reservation
+        if reservation is None or reserved.decision.record.outcome is not DecisionOutcome.ACCEPT:
+            raise ValueError("deliver needs Core's accepted reservation")
+        if (
+            attempt.reservation_id != reservation.reservation_id
+            or attempt.request_digest != purchase.request.digest()
+        ):
+            raise ValueError("deliver needs Core's delivery attempt for this reservation")
+        if self.check_prompt(purchase) is not None:
+            raise ValueError("deliver needs a prompt that matches the signed request")
+        executed = self._execute(
+            purchase, reservation, reserved.decision, lambda: previous_receipt_digest
+        )
+        if isinstance(executed, ProviderFailed):
+            return executed
+        evidence, response = executed
+        return DeliveryCaptured(reservation, reserved.decision, evidence, response)
+
+    def _execute(
+        self,
+        purchase: Purchase,
+        reservation: Reservation,
+        policy: PolicyDecision,
+        previous_receipt_digest: Callable[[], Sha256Digest | None],
+    ) -> ProviderFailed | tuple[DeliveryEvidence, bytes]:
+        """Steps 4-7: find the provider, execute, check the result, build and sign the evidence."""
 
         def failed(kind: ProviderFailureKind, detail: str) -> ProviderFailed:
             return ProviderFailed(reservation, policy, kind, detail)
@@ -320,19 +417,13 @@ class Gateway:
         completed_at = self._clock()
 
         try:
-            evidence = self._evidence(purchase, provider, result, started_at, completed_at)
+            evidence = self._evidence(
+                purchase, provider, result, started_at, completed_at, previous_receipt_digest()
+            )
         except _MalformedResult as exc:
             return failed(ProviderFailureKind.PROVIDER_MALFORMED_RESPONSE, str(exc))
-
-        decision = self.verify_delivery(evidence, result.response)
-        if not decision.accepted:
-            return DeliveryRejected(reservation, policy, evidence, decision)
-        self._chain.advance(
-            purchase.request.facility_id,
-            evidence.receipt.previous_receipt_digest,
-            evidence.receipt.digest(),
-        )
-        return DeliveryVerified(reservation, policy, evidence, decision, result.response)
+        assert isinstance(result, ProviderResult)  # _evidence refused anything else
+        return evidence, result.response
 
     def select(self, candidates: Sequence[Purchase]) -> Selection:
         """Core's dry-run qualification of every candidate, and the cheapest qualifying one."""
@@ -389,6 +480,7 @@ class Gateway:
         result: object,
         started_at: Timestamp,
         completed_at: Timestamp,
+        previous_receipt_digest: Sha256Digest | None,
     ) -> DeliveryEvidence:
         """Build and sign the receipt from the provider's raw result. Refuses a malformed result."""
         if not isinstance(result, ProviderResult):
@@ -437,7 +529,7 @@ class Gateway:
                 provider_attestation_digest=(
                     None if attestation is None else attestation.body.digest()
                 ),
-                previous_receipt_digest=self._chain.head(purchase.request.facility_id),
+                previous_receipt_digest=previous_receipt_digest,
             )
         except DomainError as exc:
             raise _MalformedResult(f"cannot build a receipt from the result: {exc}") from None

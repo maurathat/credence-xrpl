@@ -1,4 +1,6 @@
-# 0005. Credence Core C3B: atomic settlement coordinator
+# 0007. Credence Core C3B: atomic settlement coordinator
+
+_Renumbered from 0005 in Integration I1c (Maura, 2026-10-19), because Inference's local Llama decision already used 0005. Content unchanged._
 
 - Status: Accepted
 - Date: 2026-10-19

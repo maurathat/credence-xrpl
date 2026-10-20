@@ -37,7 +37,7 @@ These are the Credence Core C3A signature vectors (`contracts/SIGNATURES.md`, de
 
 ## c3b/
 
-These are the Credence Core C3B settlement fixtures (`contracts/SETTLEMENT-COORDINATOR.md`, decision 0005).
+These are the Credence Core C3B settlement fixtures (`contracts/SETTLEMENT-COORDINATOR.md`, decision 0007).
 
 - **Content.** Each file is a transcript of one scripted scenario run through the real coordinator on a fresh SQLite database: successful settlement, rejected settlement, duplicate settlement, expiration, and rollback at each fault point. It records decision digests, outcomes, refusals, and the final drawn, held, headroom, chain head and dispute rows.
 - **Regenerate:** `uv run python vectors/build_c3b_settlement_fixtures.py`. It uses the C3B test helpers in `tests/unit` and the deterministic C3A TEST keys.

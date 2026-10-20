@@ -208,15 +208,28 @@ def test_billed_amount_mismatch_is_terminal(w: World) -> None:
 
 
 def test_broken_chain_wrong_and_missing_predecessor(w: World) -> None:
+    """I1c: CHAIN_BROKEN alone is not terminal. The hold stays (expiry bounds it), drawn and the
+    chain are unchanged, and the authenticated evidence is kept byte for byte."""
     p1, r1 = w.reserve(1)
     first = settle_ok(w, p1, r1)
+    drawn = w.drawn()
     p2, r2 = w.reserve(2)
     wrong = delivery(p2, r2.reservation_id, previous=OTHER)  # type: ignore[attr-defined]
-    assert rejected(w, wrong) == (SettlementOutcome.DELIVERY_FAILED, R.CHAIN_BROKEN)
+    assert rejected(w, wrong) == (SettlementOutcome.REJECTED_SUBMISSION, R.CHAIN_BROKEN)
     p3, r3 = w.reserve(3)
     missing = delivery(p3, r3.reservation_id, previous=None)  # type: ignore[attr-defined]
-    assert rejected(w, missing) == (SettlementOutcome.DELIVERY_FAILED, R.CHAIN_BROKEN)
+    assert rejected(w, missing) == (SettlementOutcome.REJECTED_SUBMISSION, R.CHAIN_BROKEN)
     assert w.head() == first.receipt.digest()  # rejected receipts never advance the chain
+    assert w.status(r2) is ReservationStatus.HELD and w.status(r3) is ReservationStatus.HELD
+    assert w.drawn() == drawn
+    for sub in (wrong, missing):
+        ((kind, reason, evidence),) = w.coord.dispute_evidence(sub.receipt.digest())
+        assert (kind, reason) == ("rejected_submission", "CHAIN_BROKEN")
+        assert evidence.receipt == sub.receipt.canonical_bytes()
+        assert sub.gateway_signature is not None and sub.provider_attestation is not None
+        assert evidence.gateway_signature == sub.gateway_signature.canonical_bytes()
+        assert evidence.provider_attestation == sub.provider_attestation.canonical_bytes()
+        assert evidence.delivered_response_digest == sub.delivered_response_digest
 
 
 def test_sequential_chain_settles_in_order(w: World) -> None:
@@ -238,7 +251,8 @@ def test_in_flight_receipts_on_one_facility_conflict(w: World) -> None:
     assert (
         w.coord.settle(first, NOW.plus_seconds(5)).outcome is SettlementOutcome.ACCOUNTING_SETTLED
     )
-    assert rejected(w, second) == (SettlementOutcome.DELIVERY_FAILED, R.CHAIN_BROKEN)
+    assert rejected(w, second) == (SettlementOutcome.REJECTED_SUBMISSION, R.CHAIN_BROKEN)
+    assert w.status(r2) is ReservationStatus.HELD  # I1c: not released on CHAIN_BROKEN alone
 
 
 def test_replayed_receipt(w: World) -> None:

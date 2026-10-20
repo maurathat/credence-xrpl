@@ -17,8 +17,9 @@ Facility accounting (C3B): a facility registered in `facility_accounts` has an a
 limit and drawn amount, maintained only by the settlement coordinator. For such a facility,
 `reserve` refuses a Facility whose limit or drawn differs from the stored row (stale or conflicting
 accounting), and the bare `settle` here refuses outright: settlement must go through the
-coordinator, which updates drawn in the same transaction. Unregistered facilities keep the C2
-behaviour.
+coordinator, which updates drawn in the same transaction. Since Integration I1c the bare `release`
+refuses too: a hold on an accounted facility is released only through the coordinator's audited
+paths. Unregistered facilities keep the C2 behaviour.
 
 The database must be a file path (each operation opens its own connection).
 
@@ -357,10 +358,8 @@ class ReservationLedger:
             if row is None:
                 raise ReservationStateError("NOT_FOUND", reservation_id.value)
             status, expires_at, facility_id = row
-            if (
-                to is ReservationStatus.SETTLED
-                and self.facility_account(conn, FacilityId(facility_id)) is not None
-            ):
+            if self.facility_account(conn, FacilityId(facility_id)) is not None:
+                # Accounted facility: settle and release go through the settlement coordinator.
                 raise ReservationStateError("USE_SETTLEMENT_COORDINATOR", reservation_id.value)
             if status != ReservationStatus.HELD.value:
                 raise ReservationStateError("NOT_HELD", reservation_id.value)
@@ -394,6 +393,8 @@ class ReservationLedger:
         return self._transition(reservation_id, now, to=ReservationStatus.SETTLED)
 
     def release(self, reservation_id: ReservationId, now: Timestamp) -> Reservation:
-        """Release a held reservation. The settlement coordinator releases only on an
-        authenticated terminal delivery failure, never on an unauthenticated submission."""
+        """Release a held reservation on an unregistered facility.
+
+        Refused for a registered (accounted) facility: the settlement coordinator releases those,
+        only on an authenticated terminal delivery failure or an audited no-delivery release."""
         return self._transition(reservation_id, now, to=ReservationStatus.RELEASED)

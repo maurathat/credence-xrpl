@@ -1,0 +1,764 @@
+"""Integrated purchase service: Inference delivery connected to Core accounting settlement.
+
+The lifecycle is in contracts/INTEGRATION-FLOW.md. In short, for one purchase:
+
+     1. this process owns the database (ProcessOwnership);
+     2. the facility's in-process purchase lock is held until the operation is settled or
+        terminally reconciled (one in-flight purchase per facility);
+     3. the facility must be registered;
+     4. its authoritative exposure is read;
+     5. one signed purchase per offer is built against the stored drawn amount;
+     6. Core qualifies every offer and the cheapest qualifying one is chosen;
+     7. the intent is journaled, then Core reserves (SettlementCoordinator.reserve);
+     8. the reservation is journaled;
+     9. Core's persisted chain head is read;
+    10. the journal records EXECUTING, Core records the delivery attempt, then the provider runs
+        with no SQLite transaction open;
+    11. the gateway builds and signs the evidence (Gateway.deliver);
+    12. the evidence and exact response bytes are journaled;
+    13. Core settles (SettlementCoordinator.settle), which alone advances the chain;
+    14. only after accounting settlement is the response available to the authorized agent;
+    15. it is retained until the agent acknowledges it.
+
+Accounting settlement is not XRPL settlement: no XRPL transaction exists here.
+
+Recovery reconciles each in-flight journal entry with Core's reservation, attempt and settlement
+records before anything else, and never re-executes a provider request, charges twice, releases a
+hold whose delivery may have happened, or fabricates a receipt.
+
+Owner: Integration (San Antonio).
+"""
+
+from __future__ import annotations
+
+import hashlib
+import os
+import threading
+from collections.abc import Callable, Iterable, Iterator
+from contextlib import contextmanager
+from dataclasses import dataclass, replace
+from enum import Enum
+from pathlib import Path
+from types import TracebackType
+
+from nacl.signing import SigningKey
+
+from credence.core.billing import max_total_cost_value
+from credence.core.objects import (
+    ExecutionProfile,
+    Facility,
+    ProcurementClass,
+    PurchaseRequest,
+    Quote,
+    ServiceClass,
+    SignedObject,
+)
+from credence.core.primitives import (
+    MicroTrlusd,
+    Nonce,
+    Purpose,
+    ReservationId,
+    ReservationStatus,
+    Sha256Digest,
+    Timestamp,
+)
+from credence.core.reservation_ledger import (
+    ReservationLedger,
+    ReservationStateError,
+    ReserveResult,
+    reservation_id_for,
+)
+from credence.core.settlement_coordinator import (
+    DeliverySubmission,
+    NoDeliveryReason,
+    PurchaseReference,
+    SettlementCoordinator,
+    SettlementOutcome,
+    SettlementRefused,
+    SignedPurchase,
+    UnknownDeliveryCause,
+)
+from credence.core.signatures import KeyRegistry
+from credence.inference.gateway import (
+    DeliveryCaptured,
+    Gateway,
+    ProviderFailed,
+    ProviderFailureKind,
+    Purchase,
+)
+from credence.inference.payload import PayloadError, payload_digest
+from credence.inference.provider import InferenceProvider
+from credence.integration.journal import (
+    IN_FLIGHT,
+    RESPONSE_AVAILABLE,
+    Journal,
+    Operation,
+    OperationState,
+)
+from credence.integration.ownership import ProcessOwnership
+
+S = OperationState
+DATABASE_FILE_MODE = 0o600
+
+# Interruption points, in lifecycle order (tests only). A hook may raise to simulate a crash.
+CRASH_POINTS = (
+    "after_intent",
+    "after_reserve",
+    "after_executing_recorded",
+    "after_attempt_begun",
+    "after_provider_returned",
+    "after_evidence_stored",
+    "after_settle_committed",
+)
+
+_UNKNOWN_CAUSE = {
+    ProviderFailureKind.PROVIDER_UNAVAILABLE: UnknownDeliveryCause.PROVIDER_UNAVAILABLE,
+    ProviderFailureKind.PROVIDER_EXECUTION_ERROR: UnknownDeliveryCause.PROVIDER_EXECUTION_ERROR,
+    ProviderFailureKind.PROVIDER_MALFORMED_RESPONSE: (
+        UnknownDeliveryCause.PROVIDER_MALFORMED_RESPONSE
+    ),
+}
+
+
+class Refusal(Enum):
+    """Refused before any journal entry, reservation or provider call."""
+
+    UNREGISTERED_FACILITY = "UNREGISTERED_FACILITY"
+    FACILITY_LIMIT_MISMATCH = "FACILITY_LIMIT_MISMATCH"
+    FACILITY_BUSY = "FACILITY_BUSY"
+    PROMPT_NOT_UTF8 = "PROMPT_NOT_UTF8"
+    NO_OFFERS = "NO_OFFERS"
+    IDEMPOTENCY_CONFLICT = "IDEMPOTENCY_CONFLICT"
+
+
+class ServiceClosed(RuntimeError):
+    pass
+
+
+class JournalInconsistency(RuntimeError):
+    """The journal contradicts Core's authoritative records. Fail closed: nothing is changed."""
+
+
+class ResponseUnavailable(RuntimeError):
+    def __init__(self, operation_id: str, state: OperationState) -> None:
+        super().__init__(f"{operation_id}: no response available in state {state.value}")
+        self.state = state
+
+
+class NotAuthorized(RuntimeError):
+    pass
+
+
+class UnknownOperation(KeyError):
+    pass
+
+
+@dataclass(frozen=True)
+class Offer:
+    quote: Quote
+    service_class: ServiceClass
+    execution_profile: ExecutionProfile
+
+
+@dataclass(frozen=True)
+class Job:
+    """One inference job for one facility. `facility` supplies the terms; Core's stored accounting
+    supplies drawn. `idempotency_key` names the job: resubmitting it never buys twice."""
+
+    idempotency_key: str
+    facility: Facility
+    procurement_classes: tuple[ProcurementClass, ...]
+    offers: tuple[Offer, ...]
+    prompt: bytes
+    request_expires_at: Timestamp
+
+
+AgentSigner = Callable[[PurchaseRequest], SignedObject]
+
+
+@dataclass(frozen=True)
+class PurchaseRefused:
+    refusal: Refusal
+    detail: str
+
+
+@dataclass(frozen=True)
+class PurchaseReport:
+    """The journaled state of an operation. Never carries the response."""
+
+    operation_id: str
+    state: OperationState
+    detail: str | None
+    reservation_id: str | None
+    provider_id: str | None
+    receipt_digest: str | None
+    reason_code: str | None
+
+    @classmethod
+    def of(cls, op: Operation) -> PurchaseReport:
+        return cls(
+            operation_id=op.operation_id,
+            state=op.state,
+            detail=op.detail,
+            reservation_id=op.reservation_id,
+            provider_id=op.provider_id,
+            receipt_digest=op.receipt_digest,
+            reason_code=op.reason_code,
+        )
+
+
+@dataclass(frozen=True)
+class Reconciliation:
+    operation_id: str
+    before: OperationState
+    after: OperationState
+
+
+def operation_id_for(idempotency_key: str) -> str:
+    return "op-" + hashlib.sha256(idempotency_key.encode("utf-8")).hexdigest()[:32]
+
+
+def nonce_for(idempotency_key: str, offer_index: int) -> Nonce:
+    material = f"credence-integration-nonce\x00{idempotency_key}\x00{offer_index}".encode()
+    return Nonce(hashlib.sha256(material).hexdigest()[:32])
+
+
+def _restrict(path: Path) -> None:
+    fd = os.open(path, os.O_RDWR | os.O_CREAT, DATABASE_FILE_MODE)
+    try:
+        os.fchmod(fd, DATABASE_FILE_MODE)
+    finally:
+        os.close(fd)
+
+
+class IntegrationService:
+    """The single process that serves one integration database."""
+
+    def __init__(
+        self,
+        database: Path,
+        *,
+        registry: KeyRegistry,
+        gateway_key: SigningKey,
+        providers: Iterable[InferenceProvider],
+        clock: Callable[[], Timestamp],
+        recover: bool = True,
+        crash_hook: Callable[[str], None] | None = None,
+        coordinator_fault: Callable[[str], None] | None = None,
+    ) -> None:
+        self._database = Path(database)
+        self._ownership = ProcessOwnership.acquire(self._database)
+        try:
+            _restrict(self._database)
+            self._ledger = ReservationLedger(self._database)
+            self._coordinator = SettlementCoordinator(
+                self._ledger, registry, fault=coordinator_fault
+            )
+            self._journal = Journal(self._database)
+            self._gateway = Gateway(
+                ledger=self._ledger,
+                registry=registry,
+                gateway_key=gateway_key,
+                providers=providers,
+                clock=clock,
+            )
+        except BaseException:
+            self._ownership.release()
+            raise
+        self._clock = clock
+        self._crash = crash_hook or (lambda point: None)
+        self._locks: dict[str, threading.Lock] = {}
+        self._locks_guard = threading.Lock()
+        if recover:
+            try:
+                self.recover()
+            except BaseException:
+                self._ownership.release()  # fail closed, and do not leave the database owned
+                raise
+
+    # --- lifecycle -----------------------------------------------------------------------
+
+    def close(self) -> None:
+        self._ownership.release()
+
+    def __enter__(self) -> IntegrationService:
+        return self
+
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc: BaseException | None,
+        tb: TracebackType | None,
+    ) -> None:
+        self.close()
+
+    def _require_open(self) -> None:
+        if not self._ownership.held:
+            raise ServiceClosed(str(self._database))
+
+    @contextmanager
+    def _facility_lock(self, facility_id: str) -> Iterator[None]:
+        with self._locks_guard:
+            lock = self._locks.setdefault(facility_id, threading.Lock())
+        with lock:
+            yield
+
+    # --- read-only views -----------------------------------------------------------------
+
+    @property
+    def coordinator(self) -> SettlementCoordinator:
+        return self._coordinator
+
+    @property
+    def gateway(self) -> Gateway:
+        return self._gateway
+
+    @property
+    def ledger(self) -> ReservationLedger:
+        return self._ledger
+
+    def operation(self, operation_id: str) -> PurchaseReport:
+        op = self._journal.get(operation_id)
+        if op is None:
+            raise UnknownOperation(operation_id)
+        return PurchaseReport.of(op)
+
+    def journal_entry(self, operation_id: str) -> Operation:
+        op = self._journal.get(operation_id)
+        if op is None:
+            raise UnknownOperation(operation_id)
+        return op
+
+    def pending_operations(self) -> list[Operation]:
+        """Operations not yet settled or terminally reconciled (what recover() would act on)."""
+        return self._journal.in_flight()
+
+    def register_facility(self, facility: Facility) -> None:
+        self._require_open()
+        self._coordinator.register_facility(facility)
+
+    # --- purchase ------------------------------------------------------------------------
+
+    def purchase(self, job: Job, signer: AgentSigner) -> PurchaseReport | PurchaseRefused:
+        """Run one job through the integrated lifecycle. The response is never returned here."""
+        self._require_open()
+        if not job.offers:
+            return PurchaseRefused(Refusal.NO_OFFERS, "a job needs at least one offer")
+        try:
+            prompt_digest = payload_digest(job.prompt)
+        except PayloadError as exc:
+            return PurchaseRefused(Refusal.PROMPT_NOT_UTF8, str(exc))
+        fid = job.facility.facility_id.value
+        with self._facility_lock(fid):
+            existing = self._journal.by_key(job.idempotency_key)
+            if existing is not None:
+                if (existing.facility_id, existing.prompt_digest) != (fid, prompt_digest.value):
+                    return PurchaseRefused(
+                        Refusal.IDEMPOTENCY_CONFLICT,
+                        f"{job.idempotency_key} names a different job",
+                    )
+                return PurchaseReport.of(existing)  # replay: never executes again
+            if self._journal.in_flight(fid):
+                return PurchaseRefused(
+                    Refusal.FACILITY_BUSY, f"{fid} has an unreconciled operation; run recover()"
+                )
+            return self._purchase_locked(job, signer, prompt_digest)
+
+    def _purchase_locked(
+        self, job: Job, signer: AgentSigner, prompt_digest: Sha256Digest
+    ) -> PurchaseReport | PurchaseRefused:
+        facility_id = job.facility.facility_id
+        try:
+            exposure = self._coordinator.exposure(facility_id, self._clock())
+        except SettlementRefused as exc:
+            if exc.reason == "UNACCOUNTED_FACILITY":
+                return PurchaseRefused(Refusal.UNREGISTERED_FACILITY, facility_id.value)
+            raise
+        if exposure.limit != job.facility.limit_micro_trlusd:
+            return PurchaseRefused(
+                Refusal.FACILITY_LIMIT_MISMATCH,
+                f"stored limit {exposure.limit.value}, presented "
+                f"{job.facility.limit_micro_trlusd.value}",
+            )
+        facility = replace(job.facility, drawn_micro_trlusd=exposure.drawn)
+
+        candidates = []
+        for index, offer in enumerate(job.offers):
+            request = PurchaseRequest(
+                facility_id=facility_id,
+                provider_id=offer.quote.provider_id,
+                quote_id=offer.quote.quote_id,
+                purpose=Purpose.INFERENCE,
+                max_total_cost_micro_trlusd=MicroTrlusd(max_total_cost_value(offer.quote)),
+                prompt_digest=prompt_digest,
+                nonce=nonce_for(job.idempotency_key, index),
+                expires_at=job.request_expires_at,
+            )
+            candidates.append(
+                Purchase(
+                    request=request,
+                    request_signature=signer(request),
+                    prompt=job.prompt,
+                    facility=facility,
+                    quote=offer.quote,
+                    service_class=offer.service_class,
+                    execution_profile=offer.execution_profile,
+                    procurement_classes=job.procurement_classes,
+                )
+            )
+
+        now = self._clock()
+        operation_id = operation_id_for(job.idempotency_key)
+        selection = self._gateway.select(candidates)
+        if selection.chosen is None:
+            reasons = sorted(
+                {q.reason_code.value for q in selection.qualifications if q.reason_code}
+            )
+            op = self._journal.create(
+                {
+                    "operation_id": operation_id,
+                    "idempotency_key": job.idempotency_key,
+                    "facility_id": facility_id.value,
+                    "prompt_digest": prompt_digest.value,
+                    "state": S.NO_QUALIFYING_OFFER.value,
+                    "detail": ",".join(reasons),
+                },
+                now,
+            )
+            return PurchaseReport.of(op)
+
+        chosen = selection.chosen.purchase
+        signature = chosen.request_signature
+        reservation_id = reservation_id_for(chosen.request)
+        self._journal.create(
+            {
+                "operation_id": operation_id,
+                "idempotency_key": job.idempotency_key,
+                "facility_id": facility_id.value,
+                "prompt_digest": prompt_digest.value,
+                "provider_id": chosen.request.provider_id.value,
+                "reservation_id": reservation_id.value,
+                "request_digest": chosen.request.digest().value,
+                "agent_key_id": None if signature is None else signature.key_id.value,
+                "request": chosen.request.canonical_bytes(),
+                "request_signature": None if signature is None else signature.canonical_bytes(),
+                "quote": chosen.quote.canonical_bytes(),
+                "service_class": chosen.service_class.canonical_bytes(),
+                "execution_profile": chosen.execution_profile.canonical_bytes(),
+                "state": S.INTENT.value,
+            },
+            now,
+        )
+        self._crash("after_intent")
+
+        reserved = self._coordinator.reserve(
+            SignedPurchase(
+                request=chosen.request,
+                request_signature=chosen.request_signature,
+                facility=chosen.facility,
+                quote=chosen.quote,
+                service_class=chosen.service_class,
+                execution_profile=chosen.execution_profile,
+                procurement_classes=chosen.procurement_classes,
+            ),
+            self._clock(),
+        )
+        self._crash("after_reserve")
+        if reserved.reservation is None:
+            code = reserved.decision.record.reason_code
+            op = self._journal.transition(
+                operation_id,
+                S.INTENT,
+                S.POLICY_REJECTED,
+                self._clock(),
+                reason_code=None if code is None else code.value,
+            )
+            return PurchaseReport.of(op)
+        assert reserved.reservation.reservation_id == reservation_id
+        self._journal.transition(operation_id, S.INTENT, S.RESERVED, self._clock())
+        return PurchaseReport.of(self._deliver_and_settle(operation_id, chosen, reserved))
+
+    def _reference(self, op: Operation) -> PurchaseReference:
+        request, quote = op.request(), op.quote()
+        service_class, profile = op.service_class(), op.execution_profile()
+        assert request is not None and quote is not None
+        assert service_class is not None and profile is not None and op.reservation_id
+        return PurchaseReference(
+            ReservationId(op.reservation_id), request, quote, service_class, profile
+        )
+
+    def _deliver_and_settle(
+        self, operation_id: str, chosen: Purchase, reserved: ReserveResult
+    ) -> Operation:
+        """From RESERVED: delivery attempt, provider call, evidence, settlement."""
+        op = self._journal.get(operation_id)
+        assert op is not None and reserved.reservation is not None
+        ref = self._reference(op)
+        if not self._gateway.connected(chosen.request.provider_id):
+            return self._release_undelivered(op, NoDeliveryReason.PROVIDER_NOT_CONNECTED)
+
+        head = self._coordinator.chain_head(chosen.request.facility_id)
+        self._journal.transition(operation_id, S.RESERVED, S.EXECUTING, self._clock())
+        self._crash("after_executing_recorded")
+        try:
+            attempt = self._coordinator.begin_delivery(ref, self._clock())
+        except SettlementRefused as exc:
+            if exc.reason != "EXPIRED":
+                raise
+            return self._journal.transition(
+                operation_id, S.EXECUTING, S.EXPIRED, self._clock(), detail="EXPIRED"
+            )
+        self._crash("after_attempt_begun")
+
+        outcome = self._gateway.deliver(chosen, reserved, attempt, previous_receipt_digest=head)
+        self._crash("after_provider_returned")
+        if isinstance(outcome, ProviderFailed):
+            self._coordinator.record_unknown_delivery(
+                ref.reservation_id, _UNKNOWN_CAUSE[outcome.kind], self._clock()
+            )
+            return self._journal.transition(
+                operation_id, S.EXECUTING, S.UNKNOWN, self._clock(), detail=outcome.kind.value
+            )
+        assert isinstance(outcome, DeliveryCaptured)
+        evidence = outcome.evidence
+        self._journal.transition(
+            operation_id,
+            S.EXECUTING,
+            S.DELIVERED,
+            self._clock(),
+            receipt=evidence.receipt.canonical_bytes(),
+            gateway_signature=evidence.gateway_signature.canonical_bytes(),
+            provider_attestation=(
+                None
+                if evidence.provider_attestation is None
+                else evidence.provider_attestation.canonical_bytes()
+            ),
+            provider_signature=(
+                None
+                if evidence.provider_signature is None
+                else evidence.provider_signature.canonical_bytes()
+            ),
+            receipt_digest=evidence.receipt.digest().value,
+            response_digest=payload_digest(outcome.response).value,
+            response=outcome.response,
+        )
+        self._crash("after_evidence_stored")
+        return self._settle(operation_id)
+
+    def _submission(self, op: Operation) -> DeliverySubmission:
+        ref = self._reference(op)
+        receipt, gateway_signature = op.receipt(), op.gateway_signature()
+        assert receipt is not None and gateway_signature is not None and op.response is not None
+        return DeliverySubmission(
+            reservation_id=ref.reservation_id,
+            receipt=receipt,
+            gateway_signature=gateway_signature,
+            provider_attestation=op.provider_attestation(),
+            provider_signature=op.provider_signature(),
+            delivered_response_digest=payload_digest(op.response),
+            request=ref.request,
+            quote=ref.quote,
+            service_class=ref.service_class,
+            execution_profile=ref.execution_profile,
+        )
+
+    def _settle(self, operation_id: str) -> Operation:
+        """From DELIVERED: submit the stored evidence to Core."""
+        op = self._journal.get(operation_id)
+        assert op is not None and op.state is S.DELIVERED
+        try:
+            result = self._coordinator.settle(self._submission(op), self._clock())
+        except SettlementRefused as exc:
+            if exc.reason == "EXPIRED":
+                return self._journal.transition(
+                    operation_id, S.DELIVERED, S.LATE, self._clock(), detail="EXPIRED"
+                )
+            return self._journal.transition(
+                operation_id, S.DELIVERED, S.DISPUTED, self._clock(), detail=exc.reason
+            )
+        self._crash("after_settle_committed")
+        record = result.verifier_record
+        to = {
+            SettlementOutcome.ACCOUNTING_SETTLED: S.SETTLED,
+            SettlementOutcome.DELIVERY_FAILED: S.DELIVERY_FAILED,
+            SettlementOutcome.REJECTED_SUBMISSION: S.DISPUTED,
+        }[result.outcome]
+        return self._journal.transition(
+            operation_id,
+            S.DELIVERED,
+            to,
+            self._clock(),
+            settlement_outcome=result.outcome.value,
+            verifier_decision_digest=record.digest().value,
+            reason_code=None if record.reason_code is None else record.reason_code.value,
+        )
+
+    def _release_undelivered(self, op: Operation, reason: NoDeliveryReason) -> Operation:
+        try:
+            self._coordinator.release_undelivered(self._reference(op), reason, self._clock())
+        except SettlementRefused as exc:
+            if exc.reason != "EXPIRED":
+                raise
+            return self._journal.transition(
+                op.operation_id, op.state, S.EXPIRED, self._clock(), detail="EXPIRED"
+            )
+        return self._journal.transition(
+            op.operation_id, op.state, S.RELEASED_UNDELIVERED, self._clock(), detail=reason.value
+        )
+
+    # --- response retrieval --------------------------------------------------------------
+
+    def retrieve(self, operation_id: str, agent_key_id: str) -> bytes:
+        """The response, only after accounting settlement and only for the requesting agent."""
+        self._require_open()
+        op = self._journal.get(operation_id)
+        if op is None:
+            raise UnknownOperation(operation_id)
+        if op.agent_key_id is None or op.agent_key_id != agent_key_id:
+            raise NotAuthorized(operation_id)
+        if op.state not in RESPONSE_AVAILABLE:
+            raise ResponseUnavailable(operation_id, op.state)
+        if not self._coordinator.receipt_settled(Sha256Digest(str(op.receipt_digest))):
+            raise JournalInconsistency(f"{operation_id}: journal settled, Core not settled")
+        response = op.response
+        assert response is not None
+        if op.state is S.SETTLED:
+            self._journal.transition(
+                operation_id,
+                S.SETTLED,
+                S.RETRIEVED,
+                self._clock(),
+                retrieved_at=self._clock().value,
+            )
+        return response
+
+    def acknowledge(self, operation_id: str, agent_key_id: str) -> None:
+        """The agent confirms it holds the response; only then is the retained copy deleted."""
+        self._require_open()
+        op = self._journal.get(operation_id)
+        if op is None:
+            raise UnknownOperation(operation_id)
+        if op.agent_key_id is None or op.agent_key_id != agent_key_id:
+            raise NotAuthorized(operation_id)
+        if op.state is not S.RETRIEVED:
+            raise ResponseUnavailable(operation_id, op.state)
+        now = self._clock()
+        self._journal.transition(
+            operation_id,
+            S.RETRIEVED,
+            S.ACKNOWLEDGED,
+            now,
+            response=None,
+            acknowledged_at=now.value,
+        )
+
+    # --- recovery ------------------------------------------------------------------------
+
+    def recover(self) -> list[Reconciliation]:
+        """Reconcile every in-flight operation with Core's records, oldest first."""
+        self._require_open()
+        for op in self._journal.in_states(RESPONSE_AVAILABLE):
+            digest = op.receipt_digest
+            if digest is None or not self._coordinator.receipt_settled(Sha256Digest(digest)):
+                raise JournalInconsistency(f"{op.operation_id}: journal settled, Core not settled")
+        done = []
+        for op in self._journal.in_flight():
+            with self._facility_lock(op.facility_id):
+                current = self._journal.get(op.operation_id)
+                assert current is not None
+                if current.state not in IN_FLIGHT:
+                    continue
+                after = self._recover_one(current)
+                done.append(Reconciliation(op.operation_id, current.state, after.state))
+        return done
+
+    def _reservation_status(self, op: Operation) -> tuple[ReservationStatus, str | None] | None:
+        assert op.reservation_id is not None
+        rid = ReservationId(op.reservation_id)
+        try:
+            reservation = self._ledger.get(rid)
+        except ReservationStateError as exc:
+            if exc.reason == "NOT_FOUND":
+                return None
+            raise
+        return reservation.status, self._ledger.release_reason(rid)
+
+    def _recover_one(self, op: Operation) -> Operation:
+        now = self._clock
+        if op.state is S.INTENT:
+            status = self._reservation_status(op)
+            if status is None:
+                return self._journal.transition(
+                    op.operation_id, S.INTENT, S.ABANDONED, now(), detail="no reservation in Core"
+                )
+            if status[0] is ReservationStatus.SETTLED:
+                raise JournalInconsistency(f"{op.operation_id}: settled with no evidence")
+            op = self._journal.transition(op.operation_id, S.INTENT, S.RESERVED, now())
+
+        if op.state in (S.RESERVED, S.EXECUTING):
+            assert op.reservation_id is not None
+            attempt = self._coordinator.delivery_attempt(ReservationId(op.reservation_id))
+            status = self._reservation_status(op)
+            assert status is not None
+            if attempt is None:
+                # Core never authorized execution, so no provider was called.
+                if status[0] is ReservationStatus.HELD:
+                    return self._release_undelivered(
+                        op, NoDeliveryReason.ABANDONED_BEFORE_EXECUTION
+                    )
+                if status == (ReservationStatus.RELEASED, "expired"):
+                    return self._journal.transition(
+                        op.operation_id, op.state, S.EXPIRED, now(), detail="EXPIRED"
+                    )
+                if status[0] is ReservationStatus.RELEASED and self._released_undelivered(op):
+                    return self._journal.transition(
+                        op.operation_id,
+                        op.state,
+                        S.RELEASED_UNDELIVERED,
+                        now(),
+                        detail="reconciled with Core",
+                    )
+                raise JournalInconsistency(f"{op.operation_id}: {status} with no attempt")
+            if status[0] is ReservationStatus.SETTLED:
+                raise JournalInconsistency(f"{op.operation_id}: settled with no evidence")
+            # The provider may have executed and nothing was captured: unknown, never retried.
+            self._coordinator.record_unknown_delivery(
+                attempt.reservation_id, UnknownDeliveryCause.INTERRUPTED, now()
+            )
+            return self._journal.transition(
+                op.operation_id, op.state, S.UNKNOWN, now(), detail="interrupted"
+            )
+
+        assert op.state is S.DELIVERED
+        digest = Sha256Digest(str(op.receipt_digest))
+        if self._coordinator.receipt_settled(digest):
+            return self._journal.transition(
+                op.operation_id,
+                S.DELIVERED,
+                S.SETTLED,
+                now(),
+                settlement_outcome=SettlementOutcome.ACCOUNTING_SETTLED.value,
+                detail="reconciled with Core",
+            )
+        for kind, _, _, receipt, _, reason, _ in self._coordinator.disputes():
+            if receipt == digest.value:
+                to = S.DELIVERY_FAILED if kind == "delivery_failure" else S.DISPUTED
+                return self._journal.transition(
+                    op.operation_id,
+                    S.DELIVERED,
+                    to,
+                    now(),
+                    reason_code=reason,
+                    detail="reconciled with Core",
+                )
+        if any(d.receipt_digest == digest for d in self._coordinator.late_delivery_disputes()):
+            return self._journal.transition(
+                op.operation_id, S.DELIVERED, S.LATE, now(), detail="reconciled with Core"
+            )
+        return self._settle(op.operation_id)  # evidence is durable: submit it now
+
+    def _released_undelivered(self, op: Operation) -> bool:
+        return any(
+            r.reservation_id.value == op.reservation_id
+            for r in self._coordinator.no_delivery_releases()
+        )

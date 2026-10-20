@@ -1,6 +1,6 @@
 # POLICY-VERIFIER
 
-Owner: Credence Core (Claude Code). Status: checkpoint C2, amended in C2A (unconstrained precision and quantization) and C3B (facility accounting guards on the ledger). Only the owner edits this file. Other workstreams file a request in `contracts/requests/`.
+Owner: Credence Core (Claude Code). Status: checkpoint C2, amended in C2A (unconstrained precision and quantization), C3B (facility accounting guards on the ledger) and Integration I1c (the bare release is refused for registered facilities). Only the owner edits this file. Other workstreams file a request in `contracts/requests/`.
 
 This contract describes the decision layer implemented in `credence/core/`:
 - the policy engine (`policy_engine.py`);
@@ -167,7 +167,7 @@ Only digests are compared. No prompt or response text is involved.
 - **Live window.** A reservation is live while `now < expires_at`. Headroom counts only live `held` reservations.
 - **Expire.** `expire(now)` sets `released` with release reason `expired`. That reason is stored outside the canonical object.
 - **Settle.** `settle(id, now)` moves a live `held` reservation to `settled`. At or after `expires_at`, it releases the hold as expired and refuses. For a facility registered in `facility_accounts` (C3B) it refuses outright (`USE_SETTLEMENT_COORDINATOR`): only the settlement coordinator may settle, because it updates drawn in the same transaction.
-- **Release.** `release(id, now)` moves `held` to `released`, with release reason `released`.
+- **Release.** `release(id, now)` moves `held` to `released`, with release reason `released`. For a registered facility it refuses outright (`USE_SETTLEMENT_COORDINATOR`, Integration I1c): the settlement coordinator releases those, only through its audited paths.
 - **Drawn amount.** For a registered facility the stored drawn amount is authoritative, and the settlement coordinator adds each settled charge to it (`contracts/SETTLEMENT-COORDINATOR.md`). `reserve` refuses a `Facility` whose limit or drawn differs from the stored row (`STALE_FACILITY_ACCOUNTING`). Unregistered facilities keep the C2 behaviour. The ledger does not move money and is not escrow.
 - **In-transaction use.** `write_transaction()` and `reserve_in_transaction(conn, context, now)` let the settlement coordinator run the same reserve step inside its own `BEGIN IMMEDIATE` transaction.
 

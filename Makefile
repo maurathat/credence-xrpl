@@ -4,13 +4,13 @@ CREDENCE_API_BASE_URL ?= http://127.0.0.1:8000
 GITLEAKS_IMAGE := ghcr.io/gitleaks/gitleaks:v8.21.2
 COMPOSE := docker compose -f infra/rippled/docker-compose.yml
 
-.PHONY: setup test test-unit test-conformance test-integration lint typecheck secrets ledger-up ledger-down web
+.PHONY: setup test test-unit test-conformance test-integration test-integration-offline lint typecheck secrets ledger-up ledger-down web
 
 setup:
 	git submodule update --init third_party/custody
 	uv sync --locked
 
-test: test-unit test-conformance
+test: test-unit test-conformance test-integration-offline
 
 test-unit:
 	uv run pytest tests/unit
@@ -18,14 +18,20 @@ test-unit:
 test-conformance:
 	uv run pytest tests/conformance
 
-# Exit code 5 means "no tests collected", expected until the XRPL workstream adds tests.
+# Exit code 5 means "no tests collected".
 test-integration:
 	uv run pytest tests/integration; rc=$$?; [ $$rc -eq 0 ] || [ $$rc -eq 5 ]
+
+# Required in CI: integration tests that need no rippled or Speculos (the `integration` marker).
+# Real-model tests stay opt-in: they skip unless CREDENCE_LOCAL_LLAMA=1 or CREDENCE_LOCAL_QWEN=1.
+test-integration-offline:
+	uv run pytest tests/integration -m "not integration"
 
 lint:
 	uv run ruff check .
 	uv run ruff format --check .
 	uv run python scripts/check_large_files.py
+	uv run python scripts/check_decision_numbers.py
 
 typecheck:
 	uv run mypy
