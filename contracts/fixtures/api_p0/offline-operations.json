@@ -1,0 +1,2832 @@
+{
+  "id": "api-p0-offline-operations",
+  "kind": "controlled-offline-transcripts",
+  "regenerable": true,
+  "baseline": "a3ec0a31f262e325061761e72c3b11246e2a400d",
+  "provenance": "Real IntegrationService runs over the I1 offline test world: real NebiusProvider adapter over a FAKE transport (synthetic reply), FAKE signing provider standing in for local Qwen, TEST keys (NOT FOR PRODUCTION), deterministic clock, temporary SQLite. No network, model, Nebius call or XRPL.",
+  "quote_provenance": "configured DEMO prices in micro-tRLUSD (tRLUSD is a test token); not Nebius's billed price",
+  "accounting_note": "Accounting settlement is not XRPL settlement. Drawn is Credence's record of verified spending, not confirmed loan principal. No XRPL transaction exists.",
+  "interruption_points": [
+    "after_intent",
+    "after_reserve",
+    "after_executing_recorded",
+    "after_attempt_begun",
+    "after_provider_returned",
+    "after_evidence_stored",
+    "after_settle_committed"
+  ],
+  "registry": [
+    {
+      "key_id": "ed25519:8eb04a6e6270b38255541f977baeb77f3d0b69c44011fb876ff2a32985acf4f1",
+      "role": "agent",
+      "subject": "r3Zdu6biBrNYcvs4zre45udj6WW18yoJst"
+    },
+    {
+      "key_id": "ed25519:9f309c7b8e7fa1a43f79c7fbcaf10b60c98332debedc3d2f94d3f43c2f2fd08f",
+      "role": "gateway",
+      "subject": "credence-gateway"
+    },
+    {
+      "key_id": "ed25519:57d7d0ce71fe78e0a56f129d061198957a53e3f2763a817b6394a64506839828",
+      "role": "provider",
+      "subject": "local-qwen-provider"
+    }
+  ],
+  "runs": [
+    {
+      "run_id": "scenario-a-settled",
+      "title": "Scenario A: general facility, accounting settled, retrieved, acknowledged",
+      "summary": "Both providers qualify; the cheaper Nebius offer is chosen; its Tier 1 delivery settles in Core accounting; the agent retrieves and acknowledges.",
+      "harness": "none: a normal IntegrationService run",
+      "procurement_preset": "scenario-a-general",
+      "facility": {
+        "object_type": "credence.facility",
+        "schema_version": "1",
+        "facility_id": "facility-market-general",
+        "borrower_account": "r3Zdu6biBrNYcvs4zre45udj6WW18yoJst",
+        "xrpl_loan_id": null,
+        "limit_micro_trlusd": 10000000,
+        "drawn_micro_trlusd": 0,
+        "term_seconds": 86400,
+        "maturity_at": "2026-12-31T00:00:00Z",
+        "spread_bps": 600,
+        "allowed_providers": [
+          "local-qwen-provider",
+          "nebius-token-factory"
+        ],
+        "allowed_procurement_classes": [
+          "sha256:938a6124e2b7730978181c09d7d3f885efc8e68f81a269d1acf8b8aad1440d5a"
+        ],
+        "minimum_evidence_tier": 1,
+        "purpose": "inference",
+        "owner_approval_digest": "sha256:64e44243a815046fb80a13b31a52721dfde76f6626733bab7500aa561bf0688b",
+        "status": "active"
+      },
+      "procurement_class": {
+        "object_type": "credence.procurement_class",
+        "schema_version": "1",
+        "model_family": "qwen3-30b-a3b-instruct-2507",
+        "allowed_precisions": null,
+        "allowed_quantizations": null,
+        "minimum_evidence_tier": 1,
+        "delivery_mode": "interactive",
+        "allowed_jurisdictions": [
+          "FI",
+          "US"
+        ],
+        "allowed_data_residencies": [
+          "FI",
+          "US"
+        ],
+        "allowed_providers": [
+          "local-qwen-provider",
+          "nebius-token-factory"
+        ]
+      },
+      "operation": {
+        "operation_id": "op-63884ae66d4686e638ecc05c3015b076",
+        "idempotency_key": "product-p0-scenario-a-settled",
+        "facility_id": "facility-market-general",
+        "prompt_digest": "sha256:de5489baab771f5fc2a02b38a422fc327b9ebf47e7530037cf0f9564afd52f1d",
+        "state": "acknowledged",
+        "detail": null,
+        "provider_id": "nebius-token-factory",
+        "reservation_id": "reservation-71c23e6a77d13886f99a090d1b33932a",
+        "request_digest": "sha256:71c23e6a77d13886f99a090d1b33932a94efd5214145f7253423e54ae81f513b",
+        "agent_key_id": "ed25519:8eb04a6e6270b38255541f977baeb77f3d0b69c44011fb876ff2a32985acf4f1",
+        "agent_subject": "r3Zdu6biBrNYcvs4zre45udj6WW18yoJst",
+        "receipt_digest": "sha256:4a4903a5067b8cc627096aa3b791960ad658b00b49fb4045f61acea4a83b1a24",
+        "response_digest": "sha256:7c05ba472f2492192ac6244b2bc2dc264da4e7ebc5dab5ee235e60106da80650",
+        "settlement_outcome": "accounting_settled",
+        "verifier_decision_digest": "sha256:a8521b62b104d243590a122b71ee56926adc9c1926579c3a38a4d7e36413e28e",
+        "reason_code": null,
+        "created_at": "2026-10-24T15:00:01Z",
+        "updated_at": "2026-10-24T15:00:16Z",
+        "retrieved_at": "2026-10-24T15:00:14Z",
+        "acknowledged_at": "2026-10-24T15:00:16Z",
+        "objects": {
+          "purchase_request": {
+            "object_type": "credence.purchase_request",
+            "schema_version": "1",
+            "facility_id": "facility-market-general",
+            "provider_id": "nebius-token-factory",
+            "quote_id": "quote-nebius-token-factory-0001",
+            "purpose": "inference",
+            "max_total_cost_micro_trlusd": 86,
+            "prompt_digest": "sha256:de5489baab771f5fc2a02b38a422fc327b9ebf47e7530037cf0f9564afd52f1d",
+            "nonce": "6ec40ef003ba9bab68359b56d6fdec9a",
+            "expires_at": "2026-12-31T00:00:00Z"
+          },
+          "purchase_request_signature": {
+            "object_type": "credence.signed_object",
+            "schema_version": "1",
+            "object_digest": "sha256:71c23e6a77d13886f99a090d1b33932a94efd5214145f7253423e54ae81f513b",
+            "key_id": "ed25519:8eb04a6e6270b38255541f977baeb77f3d0b69c44011fb876ff2a32985acf4f1",
+            "signature": "6ad98d4e7ef5d447dc51f2206ebe2f114621220f6dfed27740d24e26f20e9b58dcc5b52c33e8a77b1db0a72f907a84e304461f7b0c01a52e852736fcc7de2308"
+          },
+          "quote": {
+            "object_type": "credence.quote",
+            "schema_version": "1",
+            "quote_id": "quote-nebius-token-factory-0001",
+            "provider_id": "nebius-token-factory",
+            "service_class_digest": "sha256:4317c030672f5a53906e191a611b13879fc3ca01ab656f43c309f93c5ed0d610",
+            "input_price_per_million_micro_trlusd": 20000,
+            "output_price_per_million_micro_trlusd": 60000,
+            "max_input_tokens": 4096,
+            "max_output_tokens": 64,
+            "valid_until": "2026-12-31T00:00:00Z"
+          },
+          "service_class": {
+            "object_type": "credence.service_class",
+            "schema_version": "1",
+            "execution_profile_digest": "sha256:19e83ca9f20aca42c5301a260507b0e29004b7c9331a010f4af99f584a08113f",
+            "model_family": "qwen3-30b-a3b-instruct-2507",
+            "delivery_mode": "interactive",
+            "service_tier": "base",
+            "jurisdiction": "FI",
+            "data_residency": [
+              "FI"
+            ],
+            "residency_region": null,
+            "evidence_tier": 1,
+            "latency_p95_ms": null,
+            "availability_bps": null
+          },
+          "execution_profile": {
+            "object_type": "credence.execution_profile",
+            "schema_version": "1",
+            "model_identifier": "Qwen/Qwen3-30B-A3B-Instruct-2507",
+            "model_artifact_digest": null,
+            "tokenizer_digest": null,
+            "adapter_digest": null,
+            "chat_template_digest": null,
+            "runtime": null,
+            "precision": null,
+            "quantization": null,
+            "context_min_tokens": 8192,
+            "sampling": {
+              "temperature_milli": 0,
+              "seed_policy": "provider",
+              "seed": null
+            }
+          },
+          "receipt": {
+            "object_type": "credence.delivery_receipt",
+            "schema_version": "1",
+            "purchase_request_digest": "sha256:71c23e6a77d13886f99a090d1b33932a94efd5214145f7253423e54ae81f513b",
+            "execution_profile_digest": "sha256:19e83ca9f20aca42c5301a260507b0e29004b7c9331a010f4af99f584a08113f",
+            "provider_id": "nebius-token-factory",
+            "response_digest": "sha256:7c05ba472f2492192ac6244b2bc2dc264da4e7ebc5dab5ee235e60106da80650",
+            "input_token_count": 21,
+            "output_token_count": 6,
+            "price_micro_trlusd": 2,
+            "started_at": "2026-10-24T15:00:08Z",
+            "completed_at": "2026-10-24T15:00:09Z",
+            "nonce": "6ec40ef003ba9bab68359b56d6fdec9a",
+            "evidence_tier": 1,
+            "provider_attestation_digest": null,
+            "previous_receipt_digest": null
+          },
+          "gateway_signature": {
+            "object_type": "credence.signed_object",
+            "schema_version": "1",
+            "object_digest": "sha256:4a4903a5067b8cc627096aa3b791960ad658b00b49fb4045f61acea4a83b1a24",
+            "key_id": "ed25519:9f309c7b8e7fa1a43f79c7fbcaf10b60c98332debedc3d2f94d3f43c2f2fd08f",
+            "signature": "1a9b124ff9863e22e56e064392a902c8554f1b7f01f70a7f332830d2bc7d922f74e9402c0de1524be82a487e11c1b199d487a9ca1ce3566738a1f68d92a20f0e"
+          },
+          "provider_attestation": null,
+          "provider_signature": null
+        }
+      },
+      "steps": [
+        {
+          "step": "after_intent",
+          "note": "interruption point reached",
+          "at": "2026-10-24T15:00:03Z",
+          "journal_state": "intent",
+          "core": {
+            "exposure": {
+              "limit_micro_trlusd": 10000000,
+              "drawn_micro_trlusd": 0,
+              "held_micro_trlusd": 0,
+              "headroom_micro_trlusd": 10000000
+            },
+            "reservation_status": null,
+            "release_reason": null,
+            "delivery_attempt": null,
+            "chain_head": null,
+            "receipt_accounting_settled": null
+          },
+          "response_retained": false,
+          "response_available_to_agent": false
+        },
+        {
+          "step": "after_reserve",
+          "note": "interruption point reached",
+          "at": "2026-10-24T15:00:04Z",
+          "journal_state": "intent",
+          "core": {
+            "exposure": {
+              "limit_micro_trlusd": 10000000,
+              "drawn_micro_trlusd": 0,
+              "held_micro_trlusd": 86,
+              "headroom_micro_trlusd": 9999914
+            },
+            "reservation_status": "held",
+            "release_reason": null,
+            "delivery_attempt": null,
+            "chain_head": null,
+            "receipt_accounting_settled": null
+          },
+          "response_retained": false,
+          "response_available_to_agent": false
+        },
+        {
+          "step": "after_executing_recorded",
+          "note": "interruption point reached",
+          "at": "2026-10-24T15:00:06Z",
+          "journal_state": "executing",
+          "core": {
+            "exposure": {
+              "limit_micro_trlusd": 10000000,
+              "drawn_micro_trlusd": 0,
+              "held_micro_trlusd": 86,
+              "headroom_micro_trlusd": 9999914
+            },
+            "reservation_status": "held",
+            "release_reason": null,
+            "delivery_attempt": null,
+            "chain_head": null,
+            "receipt_accounting_settled": null
+          },
+          "response_retained": false,
+          "response_available_to_agent": false
+        },
+        {
+          "step": "after_attempt_begun",
+          "note": "interruption point reached",
+          "at": "2026-10-24T15:00:07Z",
+          "journal_state": "executing",
+          "core": {
+            "exposure": {
+              "limit_micro_trlusd": 10000000,
+              "drawn_micro_trlusd": 0,
+              "held_micro_trlusd": 86,
+              "headroom_micro_trlusd": 9999914
+            },
+            "reservation_status": "held",
+            "release_reason": null,
+            "delivery_attempt": {
+              "begun_at": "2026-10-24T15:00:06Z",
+              "execution_claimed_at": null,
+              "unknown_cause": null
+            },
+            "chain_head": null,
+            "receipt_accounting_settled": null
+          },
+          "response_retained": false,
+          "response_available_to_agent": false
+        },
+        {
+          "step": "after_provider_returned",
+          "note": "interruption point reached",
+          "at": "2026-10-24T15:00:10Z",
+          "journal_state": "executing",
+          "core": {
+            "exposure": {
+              "limit_micro_trlusd": 10000000,
+              "drawn_micro_trlusd": 0,
+              "held_micro_trlusd": 86,
+              "headroom_micro_trlusd": 9999914
+            },
+            "reservation_status": "held",
+            "release_reason": null,
+            "delivery_attempt": {
+              "begun_at": "2026-10-24T15:00:06Z",
+              "execution_claimed_at": "2026-10-24T15:00:07Z",
+              "unknown_cause": null
+            },
+            "chain_head": null,
+            "receipt_accounting_settled": null
+          },
+          "response_retained": false,
+          "response_available_to_agent": false
+        },
+        {
+          "step": "after_evidence_stored",
+          "note": "interruption point reached",
+          "at": "2026-10-24T15:00:11Z",
+          "journal_state": "delivered",
+          "core": {
+            "exposure": {
+              "limit_micro_trlusd": 10000000,
+              "drawn_micro_trlusd": 0,
+              "held_micro_trlusd": 86,
+              "headroom_micro_trlusd": 9999914
+            },
+            "reservation_status": "held",
+            "release_reason": null,
+            "delivery_attempt": {
+              "begun_at": "2026-10-24T15:00:06Z",
+              "execution_claimed_at": "2026-10-24T15:00:07Z",
+              "unknown_cause": null
+            },
+            "chain_head": null,
+            "receipt_accounting_settled": false
+          },
+          "response_retained": true,
+          "response_available_to_agent": false
+        },
+        {
+          "step": "after_settle_committed",
+          "note": "interruption point reached",
+          "at": "2026-10-24T15:00:12Z",
+          "journal_state": "delivered",
+          "core": {
+            "exposure": {
+              "limit_micro_trlusd": 10000000,
+              "drawn_micro_trlusd": 2,
+              "held_micro_trlusd": 0,
+              "headroom_micro_trlusd": 9999998
+            },
+            "reservation_status": "settled",
+            "release_reason": null,
+            "delivery_attempt": {
+              "begun_at": "2026-10-24T15:00:06Z",
+              "execution_claimed_at": "2026-10-24T15:00:07Z",
+              "unknown_cause": null
+            },
+            "chain_head": "sha256:4a4903a5067b8cc627096aa3b791960ad658b00b49fb4045f61acea4a83b1a24",
+            "receipt_accounting_settled": true
+          },
+          "response_retained": true,
+          "response_available_to_agent": false
+        },
+        {
+          "step": "purchase_returned",
+          "note": "IntegrationService.purchase returned",
+          "at": "2026-10-24T15:00:13Z",
+          "journal_state": "settled",
+          "core": {
+            "exposure": {
+              "limit_micro_trlusd": 10000000,
+              "drawn_micro_trlusd": 2,
+              "held_micro_trlusd": 0,
+              "headroom_micro_trlusd": 9999998
+            },
+            "reservation_status": "settled",
+            "release_reason": null,
+            "delivery_attempt": {
+              "begun_at": "2026-10-24T15:00:06Z",
+              "execution_claimed_at": "2026-10-24T15:00:07Z",
+              "unknown_cause": null
+            },
+            "chain_head": "sha256:4a4903a5067b8cc627096aa3b791960ad658b00b49fb4045f61acea4a83b1a24",
+            "receipt_accounting_settled": true
+          },
+          "response_retained": true,
+          "response_available_to_agent": true
+        },
+        {
+          "step": "retrieved",
+          "note": "agent-signed retrieve authorization accepted (TEST agent key, outside the UI)",
+          "at": "2026-10-24T15:00:15Z",
+          "journal_state": "retrieved",
+          "core": {
+            "exposure": {
+              "limit_micro_trlusd": 10000000,
+              "drawn_micro_trlusd": 2,
+              "held_micro_trlusd": 0,
+              "headroom_micro_trlusd": 9999998
+            },
+            "reservation_status": "settled",
+            "release_reason": null,
+            "delivery_attempt": {
+              "begun_at": "2026-10-24T15:00:06Z",
+              "execution_claimed_at": "2026-10-24T15:00:07Z",
+              "unknown_cause": null
+            },
+            "chain_head": "sha256:4a4903a5067b8cc627096aa3b791960ad658b00b49fb4045f61acea4a83b1a24",
+            "receipt_accounting_settled": true
+          },
+          "response_retained": true,
+          "response_available_to_agent": true,
+          "response_utf8": "Synthetic Nebius-shaped reply."
+        },
+        {
+          "step": "acknowledged",
+          "note": "agent-signed acknowledge authorization accepted; response bytes deleted",
+          "at": "2026-10-24T15:00:17Z",
+          "journal_state": "acknowledged",
+          "core": {
+            "exposure": {
+              "limit_micro_trlusd": 10000000,
+              "drawn_micro_trlusd": 2,
+              "held_micro_trlusd": 0,
+              "headroom_micro_trlusd": 9999998
+            },
+            "reservation_status": "settled",
+            "release_reason": null,
+            "delivery_attempt": {
+              "begun_at": "2026-10-24T15:00:06Z",
+              "execution_claimed_at": "2026-10-24T15:00:07Z",
+              "unknown_cause": null
+            },
+            "chain_head": "sha256:4a4903a5067b8cc627096aa3b791960ad658b00b49fb4045f61acea4a83b1a24",
+            "receipt_accounting_settled": true
+          },
+          "response_retained": false,
+          "response_available_to_agent": false
+        }
+      ],
+      "core_records": {
+        "settlement_disputes": [],
+        "late_delivery_disputes": [],
+        "no_delivery_releases": []
+      }
+    },
+    {
+      "run_id": "scenario-b-settled",
+      "title": "Scenario B: controlled facility (Q8_0, Tier 2), accounting settled",
+      "summary": "Core rejects Nebius (PROFILE_NOT_ALLOWED); the local Qwen offer is chosen; its Tier 2 delivery settles in Core accounting; the agent retrieves and acknowledges.",
+      "harness": "none: a normal IntegrationService run",
+      "procurement_preset": "scenario-b-controlled",
+      "facility": {
+        "object_type": "credence.facility",
+        "schema_version": "1",
+        "facility_id": "facility-market-controlled",
+        "borrower_account": "r3Zdu6biBrNYcvs4zre45udj6WW18yoJst",
+        "xrpl_loan_id": null,
+        "limit_micro_trlusd": 10000000,
+        "drawn_micro_trlusd": 0,
+        "term_seconds": 86400,
+        "maturity_at": "2026-12-31T00:00:00Z",
+        "spread_bps": 600,
+        "allowed_providers": [
+          "local-qwen-provider",
+          "nebius-token-factory"
+        ],
+        "allowed_procurement_classes": [
+          "sha256:3ca51bb38d11b255ba53bc397160f9ec995c2001d8f1b7a1a7cb98c8b89c94f1"
+        ],
+        "minimum_evidence_tier": 2,
+        "purpose": "inference",
+        "owner_approval_digest": "sha256:e8944d03deecaf7c06bd0534ec53cccd622671e5f7c1ae57e35d2e05879fa072",
+        "status": "active"
+      },
+      "procurement_class": {
+        "object_type": "credence.procurement_class",
+        "schema_version": "1",
+        "model_family": "qwen3-30b-a3b-instruct-2507",
+        "allowed_precisions": null,
+        "allowed_quantizations": [
+          "Q8_0"
+        ],
+        "minimum_evidence_tier": 2,
+        "delivery_mode": "interactive",
+        "allowed_jurisdictions": [
+          "FI",
+          "US"
+        ],
+        "allowed_data_residencies": [
+          "FI",
+          "US"
+        ],
+        "allowed_providers": [
+          "local-qwen-provider",
+          "nebius-token-factory"
+        ]
+      },
+      "operation": {
+        "operation_id": "op-0cd319aca780978ddae8fea55f52308c",
+        "idempotency_key": "product-p0-scenario-b-settled",
+        "facility_id": "facility-market-controlled",
+        "prompt_digest": "sha256:de5489baab771f5fc2a02b38a422fc327b9ebf47e7530037cf0f9564afd52f1d",
+        "state": "acknowledged",
+        "detail": null,
+        "provider_id": "local-qwen-provider",
+        "reservation_id": "reservation-90154fbde1ecb897b5fabc59bd2b5b70",
+        "request_digest": "sha256:90154fbde1ecb897b5fabc59bd2b5b70088f6584324bc46b93272b7ad6d040a9",
+        "agent_key_id": "ed25519:8eb04a6e6270b38255541f977baeb77f3d0b69c44011fb876ff2a32985acf4f1",
+        "agent_subject": "r3Zdu6biBrNYcvs4zre45udj6WW18yoJst",
+        "receipt_digest": "sha256:4c5c9ca4e6d6e594a3c2307e0dcbaa533c07de9af1269395980b098a45cb6100",
+        "response_digest": "sha256:251601de640014f36a8004ae4b796ff307febcd3008f15eb6aed983a10fa4a21",
+        "settlement_outcome": "accounting_settled",
+        "verifier_decision_digest": "sha256:4c487919112b55fe98734359bbbc47221f2eacb92fcee50bd19e745019922364",
+        "reason_code": null,
+        "created_at": "2026-10-24T15:00:01Z",
+        "updated_at": "2026-10-24T15:00:16Z",
+        "retrieved_at": "2026-10-24T15:00:14Z",
+        "acknowledged_at": "2026-10-24T15:00:16Z",
+        "objects": {
+          "purchase_request": {
+            "object_type": "credence.purchase_request",
+            "schema_version": "1",
+            "facility_id": "facility-market-controlled",
+            "provider_id": "local-qwen-provider",
+            "quote_id": "quote-local-qwen-provider-0001",
+            "purpose": "inference",
+            "max_total_cost_micro_trlusd": 436,
+            "prompt_digest": "sha256:de5489baab771f5fc2a02b38a422fc327b9ebf47e7530037cf0f9564afd52f1d",
+            "nonce": "f3a6f385803a26f04c555607940152d2",
+            "expires_at": "2026-12-31T00:00:00Z"
+          },
+          "purchase_request_signature": {
+            "object_type": "credence.signed_object",
+            "schema_version": "1",
+            "object_digest": "sha256:90154fbde1ecb897b5fabc59bd2b5b70088f6584324bc46b93272b7ad6d040a9",
+            "key_id": "ed25519:8eb04a6e6270b38255541f977baeb77f3d0b69c44011fb876ff2a32985acf4f1",
+            "signature": "07faeedb9e8811f4d34469a5bfc2b81b01c98a6d1e845238cf14d526cbb50de422f751b44b07fed819b28b5f5026f38e89c5161fbc6ff514a173cc8381f6480c"
+          },
+          "quote": {
+            "object_type": "credence.quote",
+            "schema_version": "1",
+            "quote_id": "quote-local-qwen-provider-0001",
+            "provider_id": "local-qwen-provider",
+            "service_class_digest": "sha256:6bcc6d7e35ce0ed397da99b693cf8a6e8357f48ae164efde5cf07cc5268c84e0",
+            "input_price_per_million_micro_trlusd": 100000,
+            "output_price_per_million_micro_trlusd": 400000,
+            "max_input_tokens": 4096,
+            "max_output_tokens": 64,
+            "valid_until": "2026-12-31T00:00:00Z"
+          },
+          "service_class": {
+            "object_type": "credence.service_class",
+            "schema_version": "1",
+            "execution_profile_digest": "sha256:31459ca7269204b70263f5f8fd3169b822a1e29ea05aec7747545f823343eac1",
+            "model_family": "qwen3-30b-a3b-instruct-2507",
+            "delivery_mode": "interactive",
+            "service_tier": "base",
+            "jurisdiction": "US",
+            "data_residency": [
+              "US"
+            ],
+            "residency_region": null,
+            "evidence_tier": 2,
+            "latency_p95_ms": null,
+            "availability_bps": null
+          },
+          "execution_profile": {
+            "object_type": "credence.execution_profile",
+            "schema_version": "1",
+            "model_identifier": "ollama:qwen3:30b-a3b-instruct-2507-q8_0",
+            "model_artifact_digest": "sha256:da17ea1e24268d63d8c5f876acc6a428a389f45e3d0d016ebdaaf3e1aed81c32",
+            "tokenizer_digest": null,
+            "adapter_digest": null,
+            "chat_template_digest": null,
+            "runtime": "ollama 0.34.2",
+            "precision": null,
+            "quantization": "Q8_0",
+            "context_min_tokens": 8192,
+            "sampling": {
+              "temperature_milli": 0,
+              "seed_policy": "fixed",
+              "seed": 42
+            }
+          },
+          "receipt": {
+            "object_type": "credence.delivery_receipt",
+            "schema_version": "1",
+            "purchase_request_digest": "sha256:90154fbde1ecb897b5fabc59bd2b5b70088f6584324bc46b93272b7ad6d040a9",
+            "execution_profile_digest": "sha256:31459ca7269204b70263f5f8fd3169b822a1e29ea05aec7747545f823343eac1",
+            "provider_id": "local-qwen-provider",
+            "response_digest": "sha256:251601de640014f36a8004ae4b796ff307febcd3008f15eb6aed983a10fa4a21",
+            "input_token_count": 14,
+            "output_token_count": 16,
+            "price_micro_trlusd": 9,
+            "started_at": "2026-10-24T15:00:08Z",
+            "completed_at": "2026-10-24T15:00:09Z",
+            "nonce": "f3a6f385803a26f04c555607940152d2",
+            "evidence_tier": 2,
+            "provider_attestation_digest": "sha256:99216991cfde7eb343a4954dc0da320492535b63de2067c48b02c70665dcf04f",
+            "previous_receipt_digest": null
+          },
+          "gateway_signature": {
+            "object_type": "credence.signed_object",
+            "schema_version": "1",
+            "object_digest": "sha256:4c5c9ca4e6d6e594a3c2307e0dcbaa533c07de9af1269395980b098a45cb6100",
+            "key_id": "ed25519:9f309c7b8e7fa1a43f79c7fbcaf10b60c98332debedc3d2f94d3f43c2f2fd08f",
+            "signature": "96f3db28554d343c33eab75757c94de80c6eed5f8c508fdd0ab83908323bfcbbfa75abb9fa9d61c735bca49e3b30828bf1cac8e3f6192dc77e8f53c3fad53d0f"
+          },
+          "provider_attestation": {
+            "object_type": "credence.provider_attestation",
+            "schema_version": "1",
+            "purchase_request_digest": "sha256:90154fbde1ecb897b5fabc59bd2b5b70088f6584324bc46b93272b7ad6d040a9",
+            "execution_profile_digest": "sha256:31459ca7269204b70263f5f8fd3169b822a1e29ea05aec7747545f823343eac1",
+            "response_digest": "sha256:251601de640014f36a8004ae4b796ff307febcd3008f15eb6aed983a10fa4a21",
+            "input_token_count": 14,
+            "output_token_count": 16
+          },
+          "provider_signature": {
+            "object_type": "credence.signed_object",
+            "schema_version": "1",
+            "object_digest": "sha256:99216991cfde7eb343a4954dc0da320492535b63de2067c48b02c70665dcf04f",
+            "key_id": "ed25519:57d7d0ce71fe78e0a56f129d061198957a53e3f2763a817b6394a64506839828",
+            "signature": "513f627f3c22601b738386f898350cecec50f4034489eb2678b57ccccd5c4ea56bd3584778a440ca95750f01547992e3c8c38f9a9535248ec1490a3a440e1b03"
+          }
+        }
+      },
+      "steps": [
+        {
+          "step": "after_intent",
+          "note": "interruption point reached",
+          "at": "2026-10-24T15:00:03Z",
+          "journal_state": "intent",
+          "core": {
+            "exposure": {
+              "limit_micro_trlusd": 10000000,
+              "drawn_micro_trlusd": 0,
+              "held_micro_trlusd": 0,
+              "headroom_micro_trlusd": 10000000
+            },
+            "reservation_status": null,
+            "release_reason": null,
+            "delivery_attempt": null,
+            "chain_head": null,
+            "receipt_accounting_settled": null
+          },
+          "response_retained": false,
+          "response_available_to_agent": false
+        },
+        {
+          "step": "after_reserve",
+          "note": "interruption point reached",
+          "at": "2026-10-24T15:00:04Z",
+          "journal_state": "intent",
+          "core": {
+            "exposure": {
+              "limit_micro_trlusd": 10000000,
+              "drawn_micro_trlusd": 0,
+              "held_micro_trlusd": 436,
+              "headroom_micro_trlusd": 9999564
+            },
+            "reservation_status": "held",
+            "release_reason": null,
+            "delivery_attempt": null,
+            "chain_head": null,
+            "receipt_accounting_settled": null
+          },
+          "response_retained": false,
+          "response_available_to_agent": false
+        },
+        {
+          "step": "after_executing_recorded",
+          "note": "interruption point reached",
+          "at": "2026-10-24T15:00:06Z",
+          "journal_state": "executing",
+          "core": {
+            "exposure": {
+              "limit_micro_trlusd": 10000000,
+              "drawn_micro_trlusd": 0,
+              "held_micro_trlusd": 436,
+              "headroom_micro_trlusd": 9999564
+            },
+            "reservation_status": "held",
+            "release_reason": null,
+            "delivery_attempt": null,
+            "chain_head": null,
+            "receipt_accounting_settled": null
+          },
+          "response_retained": false,
+          "response_available_to_agent": false
+        },
+        {
+          "step": "after_attempt_begun",
+          "note": "interruption point reached",
+          "at": "2026-10-24T15:00:07Z",
+          "journal_state": "executing",
+          "core": {
+            "exposure": {
+              "limit_micro_trlusd": 10000000,
+              "drawn_micro_trlusd": 0,
+              "held_micro_trlusd": 436,
+              "headroom_micro_trlusd": 9999564
+            },
+            "reservation_status": "held",
+            "release_reason": null,
+            "delivery_attempt": {
+              "begun_at": "2026-10-24T15:00:06Z",
+              "execution_claimed_at": null,
+              "unknown_cause": null
+            },
+            "chain_head": null,
+            "receipt_accounting_settled": null
+          },
+          "response_retained": false,
+          "response_available_to_agent": false
+        },
+        {
+          "step": "after_provider_returned",
+          "note": "interruption point reached",
+          "at": "2026-10-24T15:00:10Z",
+          "journal_state": "executing",
+          "core": {
+            "exposure": {
+              "limit_micro_trlusd": 10000000,
+              "drawn_micro_trlusd": 0,
+              "held_micro_trlusd": 436,
+              "headroom_micro_trlusd": 9999564
+            },
+            "reservation_status": "held",
+            "release_reason": null,
+            "delivery_attempt": {
+              "begun_at": "2026-10-24T15:00:06Z",
+              "execution_claimed_at": "2026-10-24T15:00:07Z",
+              "unknown_cause": null
+            },
+            "chain_head": null,
+            "receipt_accounting_settled": null
+          },
+          "response_retained": false,
+          "response_available_to_agent": false
+        },
+        {
+          "step": "after_evidence_stored",
+          "note": "interruption point reached",
+          "at": "2026-10-24T15:00:11Z",
+          "journal_state": "delivered",
+          "core": {
+            "exposure": {
+              "limit_micro_trlusd": 10000000,
+              "drawn_micro_trlusd": 0,
+              "held_micro_trlusd": 436,
+              "headroom_micro_trlusd": 9999564
+            },
+            "reservation_status": "held",
+            "release_reason": null,
+            "delivery_attempt": {
+              "begun_at": "2026-10-24T15:00:06Z",
+              "execution_claimed_at": "2026-10-24T15:00:07Z",
+              "unknown_cause": null
+            },
+            "chain_head": null,
+            "receipt_accounting_settled": false
+          },
+          "response_retained": true,
+          "response_available_to_agent": false
+        },
+        {
+          "step": "after_settle_committed",
+          "note": "interruption point reached",
+          "at": "2026-10-24T15:00:12Z",
+          "journal_state": "delivered",
+          "core": {
+            "exposure": {
+              "limit_micro_trlusd": 10000000,
+              "drawn_micro_trlusd": 9,
+              "held_micro_trlusd": 0,
+              "headroom_micro_trlusd": 9999991
+            },
+            "reservation_status": "settled",
+            "release_reason": null,
+            "delivery_attempt": {
+              "begun_at": "2026-10-24T15:00:06Z",
+              "execution_claimed_at": "2026-10-24T15:00:07Z",
+              "unknown_cause": null
+            },
+            "chain_head": "sha256:4c5c9ca4e6d6e594a3c2307e0dcbaa533c07de9af1269395980b098a45cb6100",
+            "receipt_accounting_settled": true
+          },
+          "response_retained": true,
+          "response_available_to_agent": false
+        },
+        {
+          "step": "purchase_returned",
+          "note": "IntegrationService.purchase returned",
+          "at": "2026-10-24T15:00:13Z",
+          "journal_state": "settled",
+          "core": {
+            "exposure": {
+              "limit_micro_trlusd": 10000000,
+              "drawn_micro_trlusd": 9,
+              "held_micro_trlusd": 0,
+              "headroom_micro_trlusd": 9999991
+            },
+            "reservation_status": "settled",
+            "release_reason": null,
+            "delivery_attempt": {
+              "begun_at": "2026-10-24T15:00:06Z",
+              "execution_claimed_at": "2026-10-24T15:00:07Z",
+              "unknown_cause": null
+            },
+            "chain_head": "sha256:4c5c9ca4e6d6e594a3c2307e0dcbaa533c07de9af1269395980b098a45cb6100",
+            "receipt_accounting_settled": true
+          },
+          "response_retained": true,
+          "response_available_to_agent": true
+        },
+        {
+          "step": "retrieved",
+          "note": "agent-signed retrieve authorization accepted (TEST agent key, outside the UI)",
+          "at": "2026-10-24T15:00:15Z",
+          "journal_state": "retrieved",
+          "core": {
+            "exposure": {
+              "limit_micro_trlusd": 10000000,
+              "drawn_micro_trlusd": 9,
+              "held_micro_trlusd": 0,
+              "headroom_micro_trlusd": 9999991
+            },
+            "reservation_status": "settled",
+            "release_reason": null,
+            "delivery_attempt": {
+              "begun_at": "2026-10-24T15:00:06Z",
+              "execution_claimed_at": "2026-10-24T15:00:07Z",
+              "unknown_cause": null
+            },
+            "chain_head": "sha256:4c5c9ca4e6d6e594a3c2307e0dcbaa533c07de9af1269395980b098a45cb6100",
+            "receipt_accounting_settled": true
+          },
+          "response_retained": true,
+          "response_available_to_agent": true,
+          "response_utf8": "Synthetic response from local-qwen-provider to a 56-byte prompt."
+        },
+        {
+          "step": "acknowledged",
+          "note": "agent-signed acknowledge authorization accepted; response bytes deleted",
+          "at": "2026-10-24T15:00:17Z",
+          "journal_state": "acknowledged",
+          "core": {
+            "exposure": {
+              "limit_micro_trlusd": 10000000,
+              "drawn_micro_trlusd": 9,
+              "held_micro_trlusd": 0,
+              "headroom_micro_trlusd": 9999991
+            },
+            "reservation_status": "settled",
+            "release_reason": null,
+            "delivery_attempt": {
+              "begun_at": "2026-10-24T15:00:06Z",
+              "execution_claimed_at": "2026-10-24T15:00:07Z",
+              "unknown_cause": null
+            },
+            "chain_head": "sha256:4c5c9ca4e6d6e594a3c2307e0dcbaa533c07de9af1269395980b098a45cb6100",
+            "receipt_accounting_settled": true
+          },
+          "response_retained": false,
+          "response_available_to_agent": false
+        }
+      ],
+      "core_records": {
+        "settlement_disputes": [],
+        "late_delivery_disputes": [],
+        "no_delivery_releases": []
+      }
+    },
+    {
+      "run_id": "rejected-no-qualifying-offer",
+      "title": "Rejected: no qualifying offer",
+      "summary": "The facility allows only Nebius but its procurement class requires Q8_0 at Tier 2. Core rejects both offers; nothing is reserved and no provider is called.",
+      "harness": "none: a normal IntegrationService run",
+      "procurement_preset": null,
+      "facility": {
+        "object_type": "credence.facility",
+        "schema_version": "1",
+        "facility_id": "facility-market-controlled-nebius-only",
+        "borrower_account": "r3Zdu6biBrNYcvs4zre45udj6WW18yoJst",
+        "xrpl_loan_id": null,
+        "limit_micro_trlusd": 10000000,
+        "drawn_micro_trlusd": 0,
+        "term_seconds": 86400,
+        "maturity_at": "2026-12-31T00:00:00Z",
+        "spread_bps": 600,
+        "allowed_providers": [
+          "nebius-token-factory"
+        ],
+        "allowed_procurement_classes": [
+          "sha256:3ca51bb38d11b255ba53bc397160f9ec995c2001d8f1b7a1a7cb98c8b89c94f1"
+        ],
+        "minimum_evidence_tier": 2,
+        "purpose": "inference",
+        "owner_approval_digest": "sha256:e8944d03deecaf7c06bd0534ec53cccd622671e5f7c1ae57e35d2e05879fa072",
+        "status": "active"
+      },
+      "procurement_class": {
+        "object_type": "credence.procurement_class",
+        "schema_version": "1",
+        "model_family": "qwen3-30b-a3b-instruct-2507",
+        "allowed_precisions": null,
+        "allowed_quantizations": [
+          "Q8_0"
+        ],
+        "minimum_evidence_tier": 2,
+        "delivery_mode": "interactive",
+        "allowed_jurisdictions": [
+          "FI",
+          "US"
+        ],
+        "allowed_data_residencies": [
+          "FI",
+          "US"
+        ],
+        "allowed_providers": [
+          "local-qwen-provider",
+          "nebius-token-factory"
+        ]
+      },
+      "operation": {
+        "operation_id": "op-42cca8855d4a153434c41a6baf9a99b9",
+        "idempotency_key": "product-p0-rejected-no-qualifying-offer",
+        "facility_id": "facility-market-controlled-nebius-only",
+        "prompt_digest": "sha256:de5489baab771f5fc2a02b38a422fc327b9ebf47e7530037cf0f9564afd52f1d",
+        "state": "no_qualifying_offer",
+        "detail": "PROFILE_NOT_ALLOWED,PROVIDER_NOT_ALLOWED",
+        "provider_id": null,
+        "reservation_id": null,
+        "request_digest": null,
+        "agent_key_id": null,
+        "agent_subject": null,
+        "receipt_digest": null,
+        "response_digest": null,
+        "settlement_outcome": null,
+        "verifier_decision_digest": null,
+        "reason_code": null,
+        "created_at": "2026-10-24T15:00:01Z",
+        "updated_at": "2026-10-24T15:00:01Z",
+        "retrieved_at": null,
+        "acknowledged_at": null,
+        "objects": {
+          "purchase_request": null,
+          "purchase_request_signature": null,
+          "quote": null,
+          "service_class": null,
+          "execution_profile": null,
+          "receipt": null,
+          "gateway_signature": null,
+          "provider_attestation": null,
+          "provider_signature": null
+        }
+      },
+      "steps": [
+        {
+          "step": "purchase_returned",
+          "note": "IntegrationService.purchase returned",
+          "at": "2026-10-24T15:00:03Z",
+          "journal_state": "no_qualifying_offer",
+          "core": {
+            "exposure": {
+              "limit_micro_trlusd": 10000000,
+              "drawn_micro_trlusd": 0,
+              "held_micro_trlusd": 0,
+              "headroom_micro_trlusd": 10000000
+            },
+            "reservation_status": null,
+            "release_reason": null,
+            "delivery_attempt": null,
+            "chain_head": null,
+            "receipt_accounting_settled": null
+          },
+          "response_retained": false,
+          "response_available_to_agent": false
+        }
+      ],
+      "core_records": {
+        "settlement_disputes": [],
+        "late_delivery_disputes": [],
+        "no_delivery_releases": []
+      }
+    },
+    {
+      "run_id": "released-provider-not-connected",
+      "title": "Released: chosen provider not connected",
+      "summary": "Core reserves for Nebius, but this process has no Nebius connection. No delivery attempt exists, so Core releases the hold with an audit record.",
+      "harness": "none: a normal IntegrationService run",
+      "procurement_preset": null,
+      "facility": {
+        "object_type": "credence.facility",
+        "schema_version": "1",
+        "facility_id": "facility-market-general",
+        "borrower_account": "r3Zdu6biBrNYcvs4zre45udj6WW18yoJst",
+        "xrpl_loan_id": null,
+        "limit_micro_trlusd": 10000000,
+        "drawn_micro_trlusd": 0,
+        "term_seconds": 86400,
+        "maturity_at": "2026-12-31T00:00:00Z",
+        "spread_bps": 600,
+        "allowed_providers": [
+          "local-qwen-provider",
+          "nebius-token-factory"
+        ],
+        "allowed_procurement_classes": [
+          "sha256:938a6124e2b7730978181c09d7d3f885efc8e68f81a269d1acf8b8aad1440d5a"
+        ],
+        "minimum_evidence_tier": 1,
+        "purpose": "inference",
+        "owner_approval_digest": "sha256:64e44243a815046fb80a13b31a52721dfde76f6626733bab7500aa561bf0688b",
+        "status": "active"
+      },
+      "procurement_class": {
+        "object_type": "credence.procurement_class",
+        "schema_version": "1",
+        "model_family": "qwen3-30b-a3b-instruct-2507",
+        "allowed_precisions": null,
+        "allowed_quantizations": null,
+        "minimum_evidence_tier": 1,
+        "delivery_mode": "interactive",
+        "allowed_jurisdictions": [
+          "FI",
+          "US"
+        ],
+        "allowed_data_residencies": [
+          "FI",
+          "US"
+        ],
+        "allowed_providers": [
+          "local-qwen-provider",
+          "nebius-token-factory"
+        ]
+      },
+      "operation": {
+        "operation_id": "op-c9fd01c3ffcc21530ba4a107b38e8480",
+        "idempotency_key": "product-p0-released-provider-not-connected",
+        "facility_id": "facility-market-general",
+        "prompt_digest": "sha256:de5489baab771f5fc2a02b38a422fc327b9ebf47e7530037cf0f9564afd52f1d",
+        "state": "released_undelivered",
+        "detail": "provider_not_connected",
+        "provider_id": "nebius-token-factory",
+        "reservation_id": "reservation-7978d99836a5a7be4bbc4b8bae3dd00c",
+        "request_digest": "sha256:7978d99836a5a7be4bbc4b8bae3dd00cfeb810dd1ce1164acc17903415568599",
+        "agent_key_id": "ed25519:8eb04a6e6270b38255541f977baeb77f3d0b69c44011fb876ff2a32985acf4f1",
+        "agent_subject": "r3Zdu6biBrNYcvs4zre45udj6WW18yoJst",
+        "receipt_digest": null,
+        "response_digest": null,
+        "settlement_outcome": null,
+        "verifier_decision_digest": null,
+        "reason_code": null,
+        "created_at": "2026-10-24T15:00:01Z",
+        "updated_at": "2026-10-24T15:00:06Z",
+        "retrieved_at": null,
+        "acknowledged_at": null,
+        "objects": {
+          "purchase_request": {
+            "object_type": "credence.purchase_request",
+            "schema_version": "1",
+            "facility_id": "facility-market-general",
+            "provider_id": "nebius-token-factory",
+            "quote_id": "quote-nebius-token-factory-0001",
+            "purpose": "inference",
+            "max_total_cost_micro_trlusd": 86,
+            "prompt_digest": "sha256:de5489baab771f5fc2a02b38a422fc327b9ebf47e7530037cf0f9564afd52f1d",
+            "nonce": "0c5b975b061e644bf39869ab45afa38e",
+            "expires_at": "2026-12-31T00:00:00Z"
+          },
+          "purchase_request_signature": {
+            "object_type": "credence.signed_object",
+            "schema_version": "1",
+            "object_digest": "sha256:7978d99836a5a7be4bbc4b8bae3dd00cfeb810dd1ce1164acc17903415568599",
+            "key_id": "ed25519:8eb04a6e6270b38255541f977baeb77f3d0b69c44011fb876ff2a32985acf4f1",
+            "signature": "d53eefc6d3987411f0301682889466dc9df92e9c0e072ac58055a00ac9864f48b50157f8d8b57d998731182a4f3db67122e58d77064e18f0edac37c2fb4d0400"
+          },
+          "quote": {
+            "object_type": "credence.quote",
+            "schema_version": "1",
+            "quote_id": "quote-nebius-token-factory-0001",
+            "provider_id": "nebius-token-factory",
+            "service_class_digest": "sha256:4317c030672f5a53906e191a611b13879fc3ca01ab656f43c309f93c5ed0d610",
+            "input_price_per_million_micro_trlusd": 20000,
+            "output_price_per_million_micro_trlusd": 60000,
+            "max_input_tokens": 4096,
+            "max_output_tokens": 64,
+            "valid_until": "2026-12-31T00:00:00Z"
+          },
+          "service_class": {
+            "object_type": "credence.service_class",
+            "schema_version": "1",
+            "execution_profile_digest": "sha256:19e83ca9f20aca42c5301a260507b0e29004b7c9331a010f4af99f584a08113f",
+            "model_family": "qwen3-30b-a3b-instruct-2507",
+            "delivery_mode": "interactive",
+            "service_tier": "base",
+            "jurisdiction": "FI",
+            "data_residency": [
+              "FI"
+            ],
+            "residency_region": null,
+            "evidence_tier": 1,
+            "latency_p95_ms": null,
+            "availability_bps": null
+          },
+          "execution_profile": {
+            "object_type": "credence.execution_profile",
+            "schema_version": "1",
+            "model_identifier": "Qwen/Qwen3-30B-A3B-Instruct-2507",
+            "model_artifact_digest": null,
+            "tokenizer_digest": null,
+            "adapter_digest": null,
+            "chat_template_digest": null,
+            "runtime": null,
+            "precision": null,
+            "quantization": null,
+            "context_min_tokens": 8192,
+            "sampling": {
+              "temperature_milli": 0,
+              "seed_policy": "provider",
+              "seed": null
+            }
+          },
+          "receipt": null,
+          "gateway_signature": null,
+          "provider_attestation": null,
+          "provider_signature": null
+        }
+      },
+      "steps": [
+        {
+          "step": "after_intent",
+          "note": "interruption point reached",
+          "at": "2026-10-24T15:00:03Z",
+          "journal_state": "intent",
+          "core": {
+            "exposure": {
+              "limit_micro_trlusd": 10000000,
+              "drawn_micro_trlusd": 0,
+              "held_micro_trlusd": 0,
+              "headroom_micro_trlusd": 10000000
+            },
+            "reservation_status": null,
+            "release_reason": null,
+            "delivery_attempt": null,
+            "chain_head": null,
+            "receipt_accounting_settled": null
+          },
+          "response_retained": false,
+          "response_available_to_agent": false
+        },
+        {
+          "step": "after_reserve",
+          "note": "interruption point reached",
+          "at": "2026-10-24T15:00:04Z",
+          "journal_state": "intent",
+          "core": {
+            "exposure": {
+              "limit_micro_trlusd": 10000000,
+              "drawn_micro_trlusd": 0,
+              "held_micro_trlusd": 86,
+              "headroom_micro_trlusd": 9999914
+            },
+            "reservation_status": "held",
+            "release_reason": null,
+            "delivery_attempt": null,
+            "chain_head": null,
+            "receipt_accounting_settled": null
+          },
+          "response_retained": false,
+          "response_available_to_agent": false
+        },
+        {
+          "step": "purchase_returned",
+          "note": "IntegrationService.purchase returned",
+          "at": "2026-10-24T15:00:07Z",
+          "journal_state": "released_undelivered",
+          "core": {
+            "exposure": {
+              "limit_micro_trlusd": 10000000,
+              "drawn_micro_trlusd": 0,
+              "held_micro_trlusd": 0,
+              "headroom_micro_trlusd": 10000000
+            },
+            "reservation_status": "released",
+            "release_reason": "released",
+            "delivery_attempt": null,
+            "chain_head": null,
+            "receipt_accounting_settled": null
+          },
+          "response_retained": false,
+          "response_available_to_agent": false
+        }
+      ],
+      "core_records": {
+        "settlement_disputes": [],
+        "late_delivery_disputes": [],
+        "no_delivery_releases": [
+          {
+            "reservation_id": "reservation-7978d99836a5a7be4bbc4b8bae3dd00c",
+            "reason": "provider_not_connected",
+            "released_at": "2026-10-24T15:00:05Z"
+          }
+        ]
+      }
+    },
+    {
+      "run_id": "unknown-provider-failure",
+      "title": "Unknown: provider failed after the attempt began",
+      "summary": "The attempt was recorded and claimed, then the Nebius adapter reported a provider execution error. Core cannot rule out a chargeable execution: unknown, never retried, the hold stays until expiry.",
+      "harness": "fake Nebius transport returns a reply without choices or usage",
+      "procurement_preset": null,
+      "facility": {
+        "object_type": "credence.facility",
+        "schema_version": "1",
+        "facility_id": "facility-market-general",
+        "borrower_account": "r3Zdu6biBrNYcvs4zre45udj6WW18yoJst",
+        "xrpl_loan_id": null,
+        "limit_micro_trlusd": 10000000,
+        "drawn_micro_trlusd": 0,
+        "term_seconds": 86400,
+        "maturity_at": "2026-12-31T00:00:00Z",
+        "spread_bps": 600,
+        "allowed_providers": [
+          "local-qwen-provider",
+          "nebius-token-factory"
+        ],
+        "allowed_procurement_classes": [
+          "sha256:938a6124e2b7730978181c09d7d3f885efc8e68f81a269d1acf8b8aad1440d5a"
+        ],
+        "minimum_evidence_tier": 1,
+        "purpose": "inference",
+        "owner_approval_digest": "sha256:64e44243a815046fb80a13b31a52721dfde76f6626733bab7500aa561bf0688b",
+        "status": "active"
+      },
+      "procurement_class": {
+        "object_type": "credence.procurement_class",
+        "schema_version": "1",
+        "model_family": "qwen3-30b-a3b-instruct-2507",
+        "allowed_precisions": null,
+        "allowed_quantizations": null,
+        "minimum_evidence_tier": 1,
+        "delivery_mode": "interactive",
+        "allowed_jurisdictions": [
+          "FI",
+          "US"
+        ],
+        "allowed_data_residencies": [
+          "FI",
+          "US"
+        ],
+        "allowed_providers": [
+          "local-qwen-provider",
+          "nebius-token-factory"
+        ]
+      },
+      "operation": {
+        "operation_id": "op-dbdfe7406faa322291c68f7aa3e60ba4",
+        "idempotency_key": "product-p0-unknown-provider-failure",
+        "facility_id": "facility-market-general",
+        "prompt_digest": "sha256:de5489baab771f5fc2a02b38a422fc327b9ebf47e7530037cf0f9564afd52f1d",
+        "state": "unknown",
+        "detail": "PROVIDER_EXECUTION_ERROR",
+        "provider_id": "nebius-token-factory",
+        "reservation_id": "reservation-1cf4ce2de3b71207e59e835d25382365",
+        "request_digest": "sha256:1cf4ce2de3b71207e59e835d25382365df6816e6ff8f3608c2a1e04050da0c4e",
+        "agent_key_id": "ed25519:8eb04a6e6270b38255541f977baeb77f3d0b69c44011fb876ff2a32985acf4f1",
+        "agent_subject": "r3Zdu6biBrNYcvs4zre45udj6WW18yoJst",
+        "receipt_digest": null,
+        "response_digest": null,
+        "settlement_outcome": null,
+        "verifier_decision_digest": null,
+        "reason_code": null,
+        "created_at": "2026-10-24T15:00:01Z",
+        "updated_at": "2026-10-24T15:00:10Z",
+        "retrieved_at": null,
+        "acknowledged_at": null,
+        "objects": {
+          "purchase_request": {
+            "object_type": "credence.purchase_request",
+            "schema_version": "1",
+            "facility_id": "facility-market-general",
+            "provider_id": "nebius-token-factory",
+            "quote_id": "quote-nebius-token-factory-0001",
+            "purpose": "inference",
+            "max_total_cost_micro_trlusd": 86,
+            "prompt_digest": "sha256:de5489baab771f5fc2a02b38a422fc327b9ebf47e7530037cf0f9564afd52f1d",
+            "nonce": "6a7bd7e7cc9c7b7110dd459c5eef7819",
+            "expires_at": "2026-12-31T00:00:00Z"
+          },
+          "purchase_request_signature": {
+            "object_type": "credence.signed_object",
+            "schema_version": "1",
+            "object_digest": "sha256:1cf4ce2de3b71207e59e835d25382365df6816e6ff8f3608c2a1e04050da0c4e",
+            "key_id": "ed25519:8eb04a6e6270b38255541f977baeb77f3d0b69c44011fb876ff2a32985acf4f1",
+            "signature": "124ecd136df92157fa2238c2caa011f4007a604dc1f83f68e1b8545edb9a4cad3b91eecc033d307941c212b4cc72420c7d89b0aed458319cfae18001a4a2570c"
+          },
+          "quote": {
+            "object_type": "credence.quote",
+            "schema_version": "1",
+            "quote_id": "quote-nebius-token-factory-0001",
+            "provider_id": "nebius-token-factory",
+            "service_class_digest": "sha256:4317c030672f5a53906e191a611b13879fc3ca01ab656f43c309f93c5ed0d610",
+            "input_price_per_million_micro_trlusd": 20000,
+            "output_price_per_million_micro_trlusd": 60000,
+            "max_input_tokens": 4096,
+            "max_output_tokens": 64,
+            "valid_until": "2026-12-31T00:00:00Z"
+          },
+          "service_class": {
+            "object_type": "credence.service_class",
+            "schema_version": "1",
+            "execution_profile_digest": "sha256:19e83ca9f20aca42c5301a260507b0e29004b7c9331a010f4af99f584a08113f",
+            "model_family": "qwen3-30b-a3b-instruct-2507",
+            "delivery_mode": "interactive",
+            "service_tier": "base",
+            "jurisdiction": "FI",
+            "data_residency": [
+              "FI"
+            ],
+            "residency_region": null,
+            "evidence_tier": 1,
+            "latency_p95_ms": null,
+            "availability_bps": null
+          },
+          "execution_profile": {
+            "object_type": "credence.execution_profile",
+            "schema_version": "1",
+            "model_identifier": "Qwen/Qwen3-30B-A3B-Instruct-2507",
+            "model_artifact_digest": null,
+            "tokenizer_digest": null,
+            "adapter_digest": null,
+            "chat_template_digest": null,
+            "runtime": null,
+            "precision": null,
+            "quantization": null,
+            "context_min_tokens": 8192,
+            "sampling": {
+              "temperature_milli": 0,
+              "seed_policy": "provider",
+              "seed": null
+            }
+          },
+          "receipt": null,
+          "gateway_signature": null,
+          "provider_attestation": null,
+          "provider_signature": null
+        }
+      },
+      "steps": [
+        {
+          "step": "after_intent",
+          "note": "interruption point reached",
+          "at": "2026-10-24T15:00:03Z",
+          "journal_state": "intent",
+          "core": {
+            "exposure": {
+              "limit_micro_trlusd": 10000000,
+              "drawn_micro_trlusd": 0,
+              "held_micro_trlusd": 0,
+              "headroom_micro_trlusd": 10000000
+            },
+            "reservation_status": null,
+            "release_reason": null,
+            "delivery_attempt": null,
+            "chain_head": null,
+            "receipt_accounting_settled": null
+          },
+          "response_retained": false,
+          "response_available_to_agent": false
+        },
+        {
+          "step": "after_reserve",
+          "note": "interruption point reached",
+          "at": "2026-10-24T15:00:04Z",
+          "journal_state": "intent",
+          "core": {
+            "exposure": {
+              "limit_micro_trlusd": 10000000,
+              "drawn_micro_trlusd": 0,
+              "held_micro_trlusd": 86,
+              "headroom_micro_trlusd": 9999914
+            },
+            "reservation_status": "held",
+            "release_reason": null,
+            "delivery_attempt": null,
+            "chain_head": null,
+            "receipt_accounting_settled": null
+          },
+          "response_retained": false,
+          "response_available_to_agent": false
+        },
+        {
+          "step": "after_executing_recorded",
+          "note": "interruption point reached",
+          "at": "2026-10-24T15:00:06Z",
+          "journal_state": "executing",
+          "core": {
+            "exposure": {
+              "limit_micro_trlusd": 10000000,
+              "drawn_micro_trlusd": 0,
+              "held_micro_trlusd": 86,
+              "headroom_micro_trlusd": 9999914
+            },
+            "reservation_status": "held",
+            "release_reason": null,
+            "delivery_attempt": null,
+            "chain_head": null,
+            "receipt_accounting_settled": null
+          },
+          "response_retained": false,
+          "response_available_to_agent": false
+        },
+        {
+          "step": "after_attempt_begun",
+          "note": "interruption point reached",
+          "at": "2026-10-24T15:00:07Z",
+          "journal_state": "executing",
+          "core": {
+            "exposure": {
+              "limit_micro_trlusd": 10000000,
+              "drawn_micro_trlusd": 0,
+              "held_micro_trlusd": 86,
+              "headroom_micro_trlusd": 9999914
+            },
+            "reservation_status": "held",
+            "release_reason": null,
+            "delivery_attempt": {
+              "begun_at": "2026-10-24T15:00:06Z",
+              "execution_claimed_at": null,
+              "unknown_cause": null
+            },
+            "chain_head": null,
+            "receipt_accounting_settled": null
+          },
+          "response_retained": false,
+          "response_available_to_agent": false
+        },
+        {
+          "step": "after_provider_returned",
+          "note": "interruption point reached",
+          "at": "2026-10-24T15:00:09Z",
+          "journal_state": "executing",
+          "core": {
+            "exposure": {
+              "limit_micro_trlusd": 10000000,
+              "drawn_micro_trlusd": 0,
+              "held_micro_trlusd": 86,
+              "headroom_micro_trlusd": 9999914
+            },
+            "reservation_status": "held",
+            "release_reason": null,
+            "delivery_attempt": {
+              "begun_at": "2026-10-24T15:00:06Z",
+              "execution_claimed_at": "2026-10-24T15:00:07Z",
+              "unknown_cause": null
+            },
+            "chain_head": null,
+            "receipt_accounting_settled": null
+          },
+          "response_retained": false,
+          "response_available_to_agent": false
+        },
+        {
+          "step": "purchase_returned",
+          "note": "IntegrationService.purchase returned",
+          "at": "2026-10-24T15:00:11Z",
+          "journal_state": "unknown",
+          "core": {
+            "exposure": {
+              "limit_micro_trlusd": 10000000,
+              "drawn_micro_trlusd": 0,
+              "held_micro_trlusd": 86,
+              "headroom_micro_trlusd": 9999914
+            },
+            "reservation_status": "held",
+            "release_reason": null,
+            "delivery_attempt": {
+              "begun_at": "2026-10-24T15:00:06Z",
+              "execution_claimed_at": "2026-10-24T15:00:07Z",
+              "unknown_cause": "provider_execution_error"
+            },
+            "chain_head": null,
+            "receipt_accounting_settled": null
+          },
+          "response_retained": false,
+          "response_available_to_agent": false
+        }
+      ],
+      "core_records": {
+        "settlement_disputes": [],
+        "late_delivery_disputes": [],
+        "no_delivery_releases": []
+      }
+    },
+    {
+      "run_id": "interrupted-after-attempt",
+      "title": "Interrupted after the delivery attempt: unknown",
+      "summary": "The process dies after Core recorded the attempt. Recovery marks the attempt unknown (interrupted); nothing is charged or released.",
+      "harness": "simulated process death at after_attempt_begun (I1 test harness)",
+      "procurement_preset": null,
+      "facility": {
+        "object_type": "credence.facility",
+        "schema_version": "1",
+        "facility_id": "facility-market-general",
+        "borrower_account": "r3Zdu6biBrNYcvs4zre45udj6WW18yoJst",
+        "xrpl_loan_id": null,
+        "limit_micro_trlusd": 10000000,
+        "drawn_micro_trlusd": 0,
+        "term_seconds": 86400,
+        "maturity_at": "2026-12-31T00:00:00Z",
+        "spread_bps": 600,
+        "allowed_providers": [
+          "local-qwen-provider",
+          "nebius-token-factory"
+        ],
+        "allowed_procurement_classes": [
+          "sha256:938a6124e2b7730978181c09d7d3f885efc8e68f81a269d1acf8b8aad1440d5a"
+        ],
+        "minimum_evidence_tier": 1,
+        "purpose": "inference",
+        "owner_approval_digest": "sha256:64e44243a815046fb80a13b31a52721dfde76f6626733bab7500aa561bf0688b",
+        "status": "active"
+      },
+      "procurement_class": {
+        "object_type": "credence.procurement_class",
+        "schema_version": "1",
+        "model_family": "qwen3-30b-a3b-instruct-2507",
+        "allowed_precisions": null,
+        "allowed_quantizations": null,
+        "minimum_evidence_tier": 1,
+        "delivery_mode": "interactive",
+        "allowed_jurisdictions": [
+          "FI",
+          "US"
+        ],
+        "allowed_data_residencies": [
+          "FI",
+          "US"
+        ],
+        "allowed_providers": [
+          "local-qwen-provider",
+          "nebius-token-factory"
+        ]
+      },
+      "operation": {
+        "operation_id": "op-6d71f873b657724b9464a6572ae94de5",
+        "idempotency_key": "product-p0-interrupted-after-attempt",
+        "facility_id": "facility-market-general",
+        "prompt_digest": "sha256:de5489baab771f5fc2a02b38a422fc327b9ebf47e7530037cf0f9564afd52f1d",
+        "state": "unknown",
+        "detail": "interrupted",
+        "provider_id": "nebius-token-factory",
+        "reservation_id": "reservation-82a7b25d4b6338536308a6f44df25fc3",
+        "request_digest": "sha256:82a7b25d4b6338536308a6f44df25fc34e12f84461de9aceb10d2632ffa6e2a4",
+        "agent_key_id": "ed25519:8eb04a6e6270b38255541f977baeb77f3d0b69c44011fb876ff2a32985acf4f1",
+        "agent_subject": "r3Zdu6biBrNYcvs4zre45udj6WW18yoJst",
+        "receipt_digest": null,
+        "response_digest": null,
+        "settlement_outcome": null,
+        "verifier_decision_digest": null,
+        "reason_code": null,
+        "created_at": "2026-10-24T15:00:01Z",
+        "updated_at": "2026-10-24T15:00:08Z",
+        "retrieved_at": null,
+        "acknowledged_at": null,
+        "objects": {
+          "purchase_request": {
+            "object_type": "credence.purchase_request",
+            "schema_version": "1",
+            "facility_id": "facility-market-general",
+            "provider_id": "nebius-token-factory",
+            "quote_id": "quote-nebius-token-factory-0001",
+            "purpose": "inference",
+            "max_total_cost_micro_trlusd": 86,
+            "prompt_digest": "sha256:de5489baab771f5fc2a02b38a422fc327b9ebf47e7530037cf0f9564afd52f1d",
+            "nonce": "ee19033d9a1c410054b8025fadc5b949",
+            "expires_at": "2026-12-31T00:00:00Z"
+          },
+          "purchase_request_signature": {
+            "object_type": "credence.signed_object",
+            "schema_version": "1",
+            "object_digest": "sha256:82a7b25d4b6338536308a6f44df25fc34e12f84461de9aceb10d2632ffa6e2a4",
+            "key_id": "ed25519:8eb04a6e6270b38255541f977baeb77f3d0b69c44011fb876ff2a32985acf4f1",
+            "signature": "e7419059b19d47ca5b90ac39eb9e1dfa71801f7a0ef218c8796c3388d4784523b8eabd0a81f80f0d8de9da3da405651dc07978bae029336498e0756131a6920e"
+          },
+          "quote": {
+            "object_type": "credence.quote",
+            "schema_version": "1",
+            "quote_id": "quote-nebius-token-factory-0001",
+            "provider_id": "nebius-token-factory",
+            "service_class_digest": "sha256:4317c030672f5a53906e191a611b13879fc3ca01ab656f43c309f93c5ed0d610",
+            "input_price_per_million_micro_trlusd": 20000,
+            "output_price_per_million_micro_trlusd": 60000,
+            "max_input_tokens": 4096,
+            "max_output_tokens": 64,
+            "valid_until": "2026-12-31T00:00:00Z"
+          },
+          "service_class": {
+            "object_type": "credence.service_class",
+            "schema_version": "1",
+            "execution_profile_digest": "sha256:19e83ca9f20aca42c5301a260507b0e29004b7c9331a010f4af99f584a08113f",
+            "model_family": "qwen3-30b-a3b-instruct-2507",
+            "delivery_mode": "interactive",
+            "service_tier": "base",
+            "jurisdiction": "FI",
+            "data_residency": [
+              "FI"
+            ],
+            "residency_region": null,
+            "evidence_tier": 1,
+            "latency_p95_ms": null,
+            "availability_bps": null
+          },
+          "execution_profile": {
+            "object_type": "credence.execution_profile",
+            "schema_version": "1",
+            "model_identifier": "Qwen/Qwen3-30B-A3B-Instruct-2507",
+            "model_artifact_digest": null,
+            "tokenizer_digest": null,
+            "adapter_digest": null,
+            "chat_template_digest": null,
+            "runtime": null,
+            "precision": null,
+            "quantization": null,
+            "context_min_tokens": 8192,
+            "sampling": {
+              "temperature_milli": 0,
+              "seed_policy": "provider",
+              "seed": null
+            }
+          },
+          "receipt": null,
+          "gateway_signature": null,
+          "provider_attestation": null,
+          "provider_signature": null
+        }
+      },
+      "steps": [
+        {
+          "step": "after_intent",
+          "note": "interruption point reached",
+          "at": "2026-10-24T15:00:03Z",
+          "journal_state": "intent",
+          "core": {
+            "exposure": {
+              "limit_micro_trlusd": 10000000,
+              "drawn_micro_trlusd": 0,
+              "held_micro_trlusd": 0,
+              "headroom_micro_trlusd": 10000000
+            },
+            "reservation_status": null,
+            "release_reason": null,
+            "delivery_attempt": null,
+            "chain_head": null,
+            "receipt_accounting_settled": null
+          },
+          "response_retained": false,
+          "response_available_to_agent": false
+        },
+        {
+          "step": "after_reserve",
+          "note": "interruption point reached",
+          "at": "2026-10-24T15:00:04Z",
+          "journal_state": "intent",
+          "core": {
+            "exposure": {
+              "limit_micro_trlusd": 10000000,
+              "drawn_micro_trlusd": 0,
+              "held_micro_trlusd": 86,
+              "headroom_micro_trlusd": 9999914
+            },
+            "reservation_status": "held",
+            "release_reason": null,
+            "delivery_attempt": null,
+            "chain_head": null,
+            "receipt_accounting_settled": null
+          },
+          "response_retained": false,
+          "response_available_to_agent": false
+        },
+        {
+          "step": "after_executing_recorded",
+          "note": "interruption point reached",
+          "at": "2026-10-24T15:00:06Z",
+          "journal_state": "executing",
+          "core": {
+            "exposure": {
+              "limit_micro_trlusd": 10000000,
+              "drawn_micro_trlusd": 0,
+              "held_micro_trlusd": 86,
+              "headroom_micro_trlusd": 9999914
+            },
+            "reservation_status": "held",
+            "release_reason": null,
+            "delivery_attempt": null,
+            "chain_head": null,
+            "receipt_accounting_settled": null
+          },
+          "response_retained": false,
+          "response_available_to_agent": false
+        },
+        {
+          "step": "after_attempt_begun",
+          "note": "interruption point reached",
+          "at": "2026-10-24T15:00:07Z",
+          "journal_state": "executing",
+          "core": {
+            "exposure": {
+              "limit_micro_trlusd": 10000000,
+              "drawn_micro_trlusd": 0,
+              "held_micro_trlusd": 86,
+              "headroom_micro_trlusd": 9999914
+            },
+            "reservation_status": "held",
+            "release_reason": null,
+            "delivery_attempt": {
+              "begun_at": "2026-10-24T15:00:06Z",
+              "execution_claimed_at": null,
+              "unknown_cause": null
+            },
+            "chain_head": null,
+            "receipt_accounting_settled": null
+          },
+          "response_retained": false,
+          "response_available_to_agent": false
+        },
+        {
+          "step": "process_interrupted",
+          "note": "simulated process death (I1 test harness)",
+          "at": "2026-10-24T15:00:07Z",
+          "journal_state": "executing",
+          "core": {
+            "exposure": {
+              "limit_micro_trlusd": 10000000,
+              "drawn_micro_trlusd": 0,
+              "held_micro_trlusd": 86,
+              "headroom_micro_trlusd": 9999914
+            },
+            "reservation_status": "held",
+            "release_reason": null,
+            "delivery_attempt": {
+              "begun_at": "2026-10-24T15:00:06Z",
+              "execution_claimed_at": null,
+              "unknown_cause": null
+            },
+            "chain_head": null,
+            "receipt_accounting_settled": null
+          },
+          "response_retained": false,
+          "response_available_to_agent": false
+        },
+        {
+          "step": "reopened",
+          "note": "new process; journal before recovery",
+          "at": "2026-10-24T15:00:07Z",
+          "journal_state": "executing",
+          "core": {
+            "exposure": {
+              "limit_micro_trlusd": 10000000,
+              "drawn_micro_trlusd": 0,
+              "held_micro_trlusd": 86,
+              "headroom_micro_trlusd": 9999914
+            },
+            "reservation_status": "held",
+            "release_reason": null,
+            "delivery_attempt": {
+              "begun_at": "2026-10-24T15:00:06Z",
+              "execution_claimed_at": null,
+              "unknown_cause": null
+            },
+            "chain_head": null,
+            "receipt_accounting_settled": null
+          },
+          "response_retained": false,
+          "response_available_to_agent": false
+        },
+        {
+          "step": "recovered",
+          "note": "IntegrationService.recover reconciled the journal with Core",
+          "at": "2026-10-24T15:00:09Z",
+          "journal_state": "unknown",
+          "core": {
+            "exposure": {
+              "limit_micro_trlusd": 10000000,
+              "drawn_micro_trlusd": 0,
+              "held_micro_trlusd": 86,
+              "headroom_micro_trlusd": 9999914
+            },
+            "reservation_status": "held",
+            "release_reason": null,
+            "delivery_attempt": {
+              "begun_at": "2026-10-24T15:00:06Z",
+              "execution_claimed_at": null,
+              "unknown_cause": "interrupted"
+            },
+            "chain_head": null,
+            "receipt_accounting_settled": null
+          },
+          "response_retained": false,
+          "response_available_to_agent": false,
+          "reconciliations": [
+            {
+              "before": "executing",
+              "after": "unknown"
+            }
+          ]
+        }
+      ],
+      "core_records": {
+        "settlement_disputes": [],
+        "late_delivery_disputes": [],
+        "no_delivery_releases": []
+      }
+    },
+    {
+      "run_id": "interrupted-before-attempt",
+      "title": "Interrupted before any attempt: released with audit",
+      "summary": "The process dies after Core reserved and before any delivery attempt. Recovery releases the hold (abandoned_before_execution).",
+      "harness": "simulated process death at after_reserve (I1 test harness)",
+      "procurement_preset": null,
+      "facility": {
+        "object_type": "credence.facility",
+        "schema_version": "1",
+        "facility_id": "facility-market-general",
+        "borrower_account": "r3Zdu6biBrNYcvs4zre45udj6WW18yoJst",
+        "xrpl_loan_id": null,
+        "limit_micro_trlusd": 10000000,
+        "drawn_micro_trlusd": 0,
+        "term_seconds": 86400,
+        "maturity_at": "2026-12-31T00:00:00Z",
+        "spread_bps": 600,
+        "allowed_providers": [
+          "local-qwen-provider",
+          "nebius-token-factory"
+        ],
+        "allowed_procurement_classes": [
+          "sha256:938a6124e2b7730978181c09d7d3f885efc8e68f81a269d1acf8b8aad1440d5a"
+        ],
+        "minimum_evidence_tier": 1,
+        "purpose": "inference",
+        "owner_approval_digest": "sha256:64e44243a815046fb80a13b31a52721dfde76f6626733bab7500aa561bf0688b",
+        "status": "active"
+      },
+      "procurement_class": {
+        "object_type": "credence.procurement_class",
+        "schema_version": "1",
+        "model_family": "qwen3-30b-a3b-instruct-2507",
+        "allowed_precisions": null,
+        "allowed_quantizations": null,
+        "minimum_evidence_tier": 1,
+        "delivery_mode": "interactive",
+        "allowed_jurisdictions": [
+          "FI",
+          "US"
+        ],
+        "allowed_data_residencies": [
+          "FI",
+          "US"
+        ],
+        "allowed_providers": [
+          "local-qwen-provider",
+          "nebius-token-factory"
+        ]
+      },
+      "operation": {
+        "operation_id": "op-1e4da4140a09e21bfbbae40ce34df518",
+        "idempotency_key": "product-p0-interrupted-before-attempt",
+        "facility_id": "facility-market-general",
+        "prompt_digest": "sha256:de5489baab771f5fc2a02b38a422fc327b9ebf47e7530037cf0f9564afd52f1d",
+        "state": "released_undelivered",
+        "detail": "abandoned_before_execution",
+        "provider_id": "nebius-token-factory",
+        "reservation_id": "reservation-c9e2af3b866da3a3878659c3546581a0",
+        "request_digest": "sha256:c9e2af3b866da3a3878659c3546581a080a13ef88b67218a023c38e287a63edf",
+        "agent_key_id": "ed25519:8eb04a6e6270b38255541f977baeb77f3d0b69c44011fb876ff2a32985acf4f1",
+        "agent_subject": "r3Zdu6biBrNYcvs4zre45udj6WW18yoJst",
+        "receipt_digest": null,
+        "response_digest": null,
+        "settlement_outcome": null,
+        "verifier_decision_digest": null,
+        "reason_code": null,
+        "created_at": "2026-10-24T15:00:01Z",
+        "updated_at": "2026-10-24T15:00:06Z",
+        "retrieved_at": null,
+        "acknowledged_at": null,
+        "objects": {
+          "purchase_request": {
+            "object_type": "credence.purchase_request",
+            "schema_version": "1",
+            "facility_id": "facility-market-general",
+            "provider_id": "nebius-token-factory",
+            "quote_id": "quote-nebius-token-factory-0001",
+            "purpose": "inference",
+            "max_total_cost_micro_trlusd": 86,
+            "prompt_digest": "sha256:de5489baab771f5fc2a02b38a422fc327b9ebf47e7530037cf0f9564afd52f1d",
+            "nonce": "60ad14eadd9692bc7b56e2387021cc72",
+            "expires_at": "2026-12-31T00:00:00Z"
+          },
+          "purchase_request_signature": {
+            "object_type": "credence.signed_object",
+            "schema_version": "1",
+            "object_digest": "sha256:c9e2af3b866da3a3878659c3546581a080a13ef88b67218a023c38e287a63edf",
+            "key_id": "ed25519:8eb04a6e6270b38255541f977baeb77f3d0b69c44011fb876ff2a32985acf4f1",
+            "signature": "bc75508951d03aa5bacdded6bc2c5e86b519fff98d89512e822244ca6081feb2fb1fcdb590ecd89557eb2d3e2887a2d9b26b3696d9c0a9bba345b0aee3dc170c"
+          },
+          "quote": {
+            "object_type": "credence.quote",
+            "schema_version": "1",
+            "quote_id": "quote-nebius-token-factory-0001",
+            "provider_id": "nebius-token-factory",
+            "service_class_digest": "sha256:4317c030672f5a53906e191a611b13879fc3ca01ab656f43c309f93c5ed0d610",
+            "input_price_per_million_micro_trlusd": 20000,
+            "output_price_per_million_micro_trlusd": 60000,
+            "max_input_tokens": 4096,
+            "max_output_tokens": 64,
+            "valid_until": "2026-12-31T00:00:00Z"
+          },
+          "service_class": {
+            "object_type": "credence.service_class",
+            "schema_version": "1",
+            "execution_profile_digest": "sha256:19e83ca9f20aca42c5301a260507b0e29004b7c9331a010f4af99f584a08113f",
+            "model_family": "qwen3-30b-a3b-instruct-2507",
+            "delivery_mode": "interactive",
+            "service_tier": "base",
+            "jurisdiction": "FI",
+            "data_residency": [
+              "FI"
+            ],
+            "residency_region": null,
+            "evidence_tier": 1,
+            "latency_p95_ms": null,
+            "availability_bps": null
+          },
+          "execution_profile": {
+            "object_type": "credence.execution_profile",
+            "schema_version": "1",
+            "model_identifier": "Qwen/Qwen3-30B-A3B-Instruct-2507",
+            "model_artifact_digest": null,
+            "tokenizer_digest": null,
+            "adapter_digest": null,
+            "chat_template_digest": null,
+            "runtime": null,
+            "precision": null,
+            "quantization": null,
+            "context_min_tokens": 8192,
+            "sampling": {
+              "temperature_milli": 0,
+              "seed_policy": "provider",
+              "seed": null
+            }
+          },
+          "receipt": null,
+          "gateway_signature": null,
+          "provider_attestation": null,
+          "provider_signature": null
+        }
+      },
+      "steps": [
+        {
+          "step": "after_intent",
+          "note": "interruption point reached",
+          "at": "2026-10-24T15:00:03Z",
+          "journal_state": "intent",
+          "core": {
+            "exposure": {
+              "limit_micro_trlusd": 10000000,
+              "drawn_micro_trlusd": 0,
+              "held_micro_trlusd": 0,
+              "headroom_micro_trlusd": 10000000
+            },
+            "reservation_status": null,
+            "release_reason": null,
+            "delivery_attempt": null,
+            "chain_head": null,
+            "receipt_accounting_settled": null
+          },
+          "response_retained": false,
+          "response_available_to_agent": false
+        },
+        {
+          "step": "after_reserve",
+          "note": "interruption point reached",
+          "at": "2026-10-24T15:00:04Z",
+          "journal_state": "intent",
+          "core": {
+            "exposure": {
+              "limit_micro_trlusd": 10000000,
+              "drawn_micro_trlusd": 0,
+              "held_micro_trlusd": 86,
+              "headroom_micro_trlusd": 9999914
+            },
+            "reservation_status": "held",
+            "release_reason": null,
+            "delivery_attempt": null,
+            "chain_head": null,
+            "receipt_accounting_settled": null
+          },
+          "response_retained": false,
+          "response_available_to_agent": false
+        },
+        {
+          "step": "process_interrupted",
+          "note": "simulated process death (I1 test harness)",
+          "at": "2026-10-24T15:00:04Z",
+          "journal_state": "intent",
+          "core": {
+            "exposure": {
+              "limit_micro_trlusd": 10000000,
+              "drawn_micro_trlusd": 0,
+              "held_micro_trlusd": 86,
+              "headroom_micro_trlusd": 9999914
+            },
+            "reservation_status": "held",
+            "release_reason": null,
+            "delivery_attempt": null,
+            "chain_head": null,
+            "receipt_accounting_settled": null
+          },
+          "response_retained": false,
+          "response_available_to_agent": false
+        },
+        {
+          "step": "reopened",
+          "note": "new process; journal before recovery",
+          "at": "2026-10-24T15:00:04Z",
+          "journal_state": "intent",
+          "core": {
+            "exposure": {
+              "limit_micro_trlusd": 10000000,
+              "drawn_micro_trlusd": 0,
+              "held_micro_trlusd": 86,
+              "headroom_micro_trlusd": 9999914
+            },
+            "reservation_status": "held",
+            "release_reason": null,
+            "delivery_attempt": null,
+            "chain_head": null,
+            "receipt_accounting_settled": null
+          },
+          "response_retained": false,
+          "response_available_to_agent": false
+        },
+        {
+          "step": "recovered",
+          "note": "IntegrationService.recover reconciled the journal with Core",
+          "at": "2026-10-24T15:00:07Z",
+          "journal_state": "released_undelivered",
+          "core": {
+            "exposure": {
+              "limit_micro_trlusd": 10000000,
+              "drawn_micro_trlusd": 0,
+              "held_micro_trlusd": 0,
+              "headroom_micro_trlusd": 10000000
+            },
+            "reservation_status": "released",
+            "release_reason": "released",
+            "delivery_attempt": null,
+            "chain_head": null,
+            "receipt_accounting_settled": null
+          },
+          "response_retained": false,
+          "response_available_to_agent": false,
+          "reconciliations": [
+            {
+              "before": "intent",
+              "after": "released_undelivered"
+            }
+          ]
+        }
+      ],
+      "core_records": {
+        "settlement_disputes": [],
+        "late_delivery_disputes": [],
+        "no_delivery_releases": [
+          {
+            "reservation_id": "reservation-c9e2af3b866da3a3878659c3546581a0",
+            "reason": "abandoned_before_execution",
+            "released_at": "2026-10-24T15:00:05Z"
+          }
+        ]
+      }
+    },
+    {
+      "run_id": "disputed-chain-broken",
+      "title": "Disputed: CHAIN_BROKEN at settlement",
+      "summary": "Evidence was captured, then Core's chain head moved. Settlement rejects CHAIN_BROKEN; the hold, the dispute and the exact evidence are kept.",
+      "harness": "simulated process death at after_evidence_stored, then Core's chain head moved out of band in SQLite (I1 test harness manipulation; cannot arise in the integrated path)",
+      "procurement_preset": null,
+      "facility": {
+        "object_type": "credence.facility",
+        "schema_version": "1",
+        "facility_id": "facility-market-general",
+        "borrower_account": "r3Zdu6biBrNYcvs4zre45udj6WW18yoJst",
+        "xrpl_loan_id": null,
+        "limit_micro_trlusd": 10000000,
+        "drawn_micro_trlusd": 0,
+        "term_seconds": 86400,
+        "maturity_at": "2026-12-31T00:00:00Z",
+        "spread_bps": 600,
+        "allowed_providers": [
+          "local-qwen-provider",
+          "nebius-token-factory"
+        ],
+        "allowed_procurement_classes": [
+          "sha256:938a6124e2b7730978181c09d7d3f885efc8e68f81a269d1acf8b8aad1440d5a"
+        ],
+        "minimum_evidence_tier": 1,
+        "purpose": "inference",
+        "owner_approval_digest": "sha256:64e44243a815046fb80a13b31a52721dfde76f6626733bab7500aa561bf0688b",
+        "status": "active"
+      },
+      "procurement_class": {
+        "object_type": "credence.procurement_class",
+        "schema_version": "1",
+        "model_family": "qwen3-30b-a3b-instruct-2507",
+        "allowed_precisions": null,
+        "allowed_quantizations": null,
+        "minimum_evidence_tier": 1,
+        "delivery_mode": "interactive",
+        "allowed_jurisdictions": [
+          "FI",
+          "US"
+        ],
+        "allowed_data_residencies": [
+          "FI",
+          "US"
+        ],
+        "allowed_providers": [
+          "local-qwen-provider",
+          "nebius-token-factory"
+        ]
+      },
+      "operation": {
+        "operation_id": "op-03455845d2543ab1550bf84d2beb017e",
+        "idempotency_key": "product-p0-disputed-chain-broken",
+        "facility_id": "facility-market-general",
+        "prompt_digest": "sha256:de5489baab771f5fc2a02b38a422fc327b9ebf47e7530037cf0f9564afd52f1d",
+        "state": "disputed",
+        "detail": null,
+        "provider_id": "nebius-token-factory",
+        "reservation_id": "reservation-b3e30b5413df7c0244ec9e6b34993982",
+        "request_digest": "sha256:b3e30b5413df7c0244ec9e6b349939825eb5bade3b15544af1b5ac18ec0df92a",
+        "agent_key_id": "ed25519:8eb04a6e6270b38255541f977baeb77f3d0b69c44011fb876ff2a32985acf4f1",
+        "agent_subject": "r3Zdu6biBrNYcvs4zre45udj6WW18yoJst",
+        "receipt_digest": "sha256:ee95b3a06d4447f3945017f2259ed77340559ee6583ce8b5eccf2b085a4270dc",
+        "response_digest": "sha256:7c05ba472f2492192ac6244b2bc2dc264da4e7ebc5dab5ee235e60106da80650",
+        "settlement_outcome": "rejected_submission",
+        "verifier_decision_digest": "sha256:3f96c0f62981c4b9d98dcbdfe451e3219084cfa3b5c1b2ef798b551718313233",
+        "reason_code": "CHAIN_BROKEN",
+        "created_at": "2026-10-24T15:00:01Z",
+        "updated_at": "2026-10-24T15:00:12Z",
+        "retrieved_at": null,
+        "acknowledged_at": null,
+        "objects": {
+          "purchase_request": {
+            "object_type": "credence.purchase_request",
+            "schema_version": "1",
+            "facility_id": "facility-market-general",
+            "provider_id": "nebius-token-factory",
+            "quote_id": "quote-nebius-token-factory-0001",
+            "purpose": "inference",
+            "max_total_cost_micro_trlusd": 86,
+            "prompt_digest": "sha256:de5489baab771f5fc2a02b38a422fc327b9ebf47e7530037cf0f9564afd52f1d",
+            "nonce": "eebfa2e8f787737a8613c4be5febe0e6",
+            "expires_at": "2026-12-31T00:00:00Z"
+          },
+          "purchase_request_signature": {
+            "object_type": "credence.signed_object",
+            "schema_version": "1",
+            "object_digest": "sha256:b3e30b5413df7c0244ec9e6b349939825eb5bade3b15544af1b5ac18ec0df92a",
+            "key_id": "ed25519:8eb04a6e6270b38255541f977baeb77f3d0b69c44011fb876ff2a32985acf4f1",
+            "signature": "0a4ac7b750d298c32a60e684c53e67dda7f3e2605c4741c8d9a6b1d7a762c2c4500ed810add5afd1c15718db33cb2fb7d6295ff5fd29a0916e5ef21e5e38010e"
+          },
+          "quote": {
+            "object_type": "credence.quote",
+            "schema_version": "1",
+            "quote_id": "quote-nebius-token-factory-0001",
+            "provider_id": "nebius-token-factory",
+            "service_class_digest": "sha256:4317c030672f5a53906e191a611b13879fc3ca01ab656f43c309f93c5ed0d610",
+            "input_price_per_million_micro_trlusd": 20000,
+            "output_price_per_million_micro_trlusd": 60000,
+            "max_input_tokens": 4096,
+            "max_output_tokens": 64,
+            "valid_until": "2026-12-31T00:00:00Z"
+          },
+          "service_class": {
+            "object_type": "credence.service_class",
+            "schema_version": "1",
+            "execution_profile_digest": "sha256:19e83ca9f20aca42c5301a260507b0e29004b7c9331a010f4af99f584a08113f",
+            "model_family": "qwen3-30b-a3b-instruct-2507",
+            "delivery_mode": "interactive",
+            "service_tier": "base",
+            "jurisdiction": "FI",
+            "data_residency": [
+              "FI"
+            ],
+            "residency_region": null,
+            "evidence_tier": 1,
+            "latency_p95_ms": null,
+            "availability_bps": null
+          },
+          "execution_profile": {
+            "object_type": "credence.execution_profile",
+            "schema_version": "1",
+            "model_identifier": "Qwen/Qwen3-30B-A3B-Instruct-2507",
+            "model_artifact_digest": null,
+            "tokenizer_digest": null,
+            "adapter_digest": null,
+            "chat_template_digest": null,
+            "runtime": null,
+            "precision": null,
+            "quantization": null,
+            "context_min_tokens": 8192,
+            "sampling": {
+              "temperature_milli": 0,
+              "seed_policy": "provider",
+              "seed": null
+            }
+          },
+          "receipt": {
+            "object_type": "credence.delivery_receipt",
+            "schema_version": "1",
+            "purchase_request_digest": "sha256:b3e30b5413df7c0244ec9e6b349939825eb5bade3b15544af1b5ac18ec0df92a",
+            "execution_profile_digest": "sha256:19e83ca9f20aca42c5301a260507b0e29004b7c9331a010f4af99f584a08113f",
+            "provider_id": "nebius-token-factory",
+            "response_digest": "sha256:7c05ba472f2492192ac6244b2bc2dc264da4e7ebc5dab5ee235e60106da80650",
+            "input_token_count": 21,
+            "output_token_count": 6,
+            "price_micro_trlusd": 2,
+            "started_at": "2026-10-24T15:00:08Z",
+            "completed_at": "2026-10-24T15:00:09Z",
+            "nonce": "eebfa2e8f787737a8613c4be5febe0e6",
+            "evidence_tier": 1,
+            "provider_attestation_digest": null,
+            "previous_receipt_digest": null
+          },
+          "gateway_signature": {
+            "object_type": "credence.signed_object",
+            "schema_version": "1",
+            "object_digest": "sha256:ee95b3a06d4447f3945017f2259ed77340559ee6583ce8b5eccf2b085a4270dc",
+            "key_id": "ed25519:9f309c7b8e7fa1a43f79c7fbcaf10b60c98332debedc3d2f94d3f43c2f2fd08f",
+            "signature": "dd10b016fef476330ecd50fc3003e6f247e46408f256d79c0aa7ac4f43e4f0f954cd32deb5cc1f14d41efd3901e1a4551e4c138f4b3e41aa6c3eaf67acc29e03"
+          },
+          "provider_attestation": null,
+          "provider_signature": null
+        }
+      },
+      "steps": [
+        {
+          "step": "after_intent",
+          "note": "interruption point reached",
+          "at": "2026-10-24T15:00:03Z",
+          "journal_state": "intent",
+          "core": {
+            "exposure": {
+              "limit_micro_trlusd": 10000000,
+              "drawn_micro_trlusd": 0,
+              "held_micro_trlusd": 0,
+              "headroom_micro_trlusd": 10000000
+            },
+            "reservation_status": null,
+            "release_reason": null,
+            "delivery_attempt": null,
+            "chain_head": null,
+            "receipt_accounting_settled": null
+          },
+          "response_retained": false,
+          "response_available_to_agent": false
+        },
+        {
+          "step": "after_reserve",
+          "note": "interruption point reached",
+          "at": "2026-10-24T15:00:04Z",
+          "journal_state": "intent",
+          "core": {
+            "exposure": {
+              "limit_micro_trlusd": 10000000,
+              "drawn_micro_trlusd": 0,
+              "held_micro_trlusd": 86,
+              "headroom_micro_trlusd": 9999914
+            },
+            "reservation_status": "held",
+            "release_reason": null,
+            "delivery_attempt": null,
+            "chain_head": null,
+            "receipt_accounting_settled": null
+          },
+          "response_retained": false,
+          "response_available_to_agent": false
+        },
+        {
+          "step": "after_executing_recorded",
+          "note": "interruption point reached",
+          "at": "2026-10-24T15:00:06Z",
+          "journal_state": "executing",
+          "core": {
+            "exposure": {
+              "limit_micro_trlusd": 10000000,
+              "drawn_micro_trlusd": 0,
+              "held_micro_trlusd": 86,
+              "headroom_micro_trlusd": 9999914
+            },
+            "reservation_status": "held",
+            "release_reason": null,
+            "delivery_attempt": null,
+            "chain_head": null,
+            "receipt_accounting_settled": null
+          },
+          "response_retained": false,
+          "response_available_to_agent": false
+        },
+        {
+          "step": "after_attempt_begun",
+          "note": "interruption point reached",
+          "at": "2026-10-24T15:00:07Z",
+          "journal_state": "executing",
+          "core": {
+            "exposure": {
+              "limit_micro_trlusd": 10000000,
+              "drawn_micro_trlusd": 0,
+              "held_micro_trlusd": 86,
+              "headroom_micro_trlusd": 9999914
+            },
+            "reservation_status": "held",
+            "release_reason": null,
+            "delivery_attempt": {
+              "begun_at": "2026-10-24T15:00:06Z",
+              "execution_claimed_at": null,
+              "unknown_cause": null
+            },
+            "chain_head": null,
+            "receipt_accounting_settled": null
+          },
+          "response_retained": false,
+          "response_available_to_agent": false
+        },
+        {
+          "step": "after_provider_returned",
+          "note": "interruption point reached",
+          "at": "2026-10-24T15:00:10Z",
+          "journal_state": "executing",
+          "core": {
+            "exposure": {
+              "limit_micro_trlusd": 10000000,
+              "drawn_micro_trlusd": 0,
+              "held_micro_trlusd": 86,
+              "headroom_micro_trlusd": 9999914
+            },
+            "reservation_status": "held",
+            "release_reason": null,
+            "delivery_attempt": {
+              "begun_at": "2026-10-24T15:00:06Z",
+              "execution_claimed_at": "2026-10-24T15:00:07Z",
+              "unknown_cause": null
+            },
+            "chain_head": null,
+            "receipt_accounting_settled": null
+          },
+          "response_retained": false,
+          "response_available_to_agent": false
+        },
+        {
+          "step": "after_evidence_stored",
+          "note": "interruption point reached",
+          "at": "2026-10-24T15:00:11Z",
+          "journal_state": "delivered",
+          "core": {
+            "exposure": {
+              "limit_micro_trlusd": 10000000,
+              "drawn_micro_trlusd": 0,
+              "held_micro_trlusd": 86,
+              "headroom_micro_trlusd": 9999914
+            },
+            "reservation_status": "held",
+            "release_reason": null,
+            "delivery_attempt": {
+              "begun_at": "2026-10-24T15:00:06Z",
+              "execution_claimed_at": "2026-10-24T15:00:07Z",
+              "unknown_cause": null
+            },
+            "chain_head": null,
+            "receipt_accounting_settled": false
+          },
+          "response_retained": true,
+          "response_available_to_agent": false
+        },
+        {
+          "step": "process_interrupted",
+          "note": "simulated process death (I1 test harness)",
+          "at": "2026-10-24T15:00:11Z",
+          "journal_state": "delivered",
+          "core": {
+            "exposure": {
+              "limit_micro_trlusd": 10000000,
+              "drawn_micro_trlusd": 0,
+              "held_micro_trlusd": 86,
+              "headroom_micro_trlusd": 9999914
+            },
+            "reservation_status": "held",
+            "release_reason": null,
+            "delivery_attempt": {
+              "begun_at": "2026-10-24T15:00:06Z",
+              "execution_claimed_at": "2026-10-24T15:00:07Z",
+              "unknown_cause": null
+            },
+            "chain_head": null,
+            "receipt_accounting_settled": false
+          },
+          "response_retained": true,
+          "response_available_to_agent": false
+        },
+        {
+          "step": "reopened",
+          "note": "new process; journal before recovery",
+          "at": "2026-10-24T15:00:11Z",
+          "journal_state": "delivered",
+          "core": {
+            "exposure": {
+              "limit_micro_trlusd": 10000000,
+              "drawn_micro_trlusd": 0,
+              "held_micro_trlusd": 86,
+              "headroom_micro_trlusd": 9999914
+            },
+            "reservation_status": "held",
+            "release_reason": null,
+            "delivery_attempt": {
+              "begun_at": "2026-10-24T15:00:06Z",
+              "execution_claimed_at": "2026-10-24T15:00:07Z",
+              "unknown_cause": null
+            },
+            "chain_head": "sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+            "receipt_accounting_settled": false
+          },
+          "response_retained": true,
+          "response_available_to_agent": false
+        },
+        {
+          "step": "recovered",
+          "note": "IntegrationService.recover reconciled the journal with Core",
+          "at": "2026-10-24T15:00:13Z",
+          "journal_state": "disputed",
+          "core": {
+            "exposure": {
+              "limit_micro_trlusd": 10000000,
+              "drawn_micro_trlusd": 0,
+              "held_micro_trlusd": 86,
+              "headroom_micro_trlusd": 9999914
+            },
+            "reservation_status": "held",
+            "release_reason": null,
+            "delivery_attempt": {
+              "begun_at": "2026-10-24T15:00:06Z",
+              "execution_claimed_at": "2026-10-24T15:00:07Z",
+              "unknown_cause": null
+            },
+            "chain_head": "sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+            "receipt_accounting_settled": false
+          },
+          "response_retained": true,
+          "response_available_to_agent": false,
+          "reconciliations": [
+            {
+              "before": "delivered",
+              "after": "disputed"
+            }
+          ]
+        }
+      ],
+      "core_records": {
+        "settlement_disputes": [
+          {
+            "kind": "rejected_submission",
+            "reservation_id": "reservation-b3e30b5413df7c0244ec9e6b34993982",
+            "facility_id": "facility-market-general",
+            "receipt_digest": "sha256:ee95b3a06d4447f3945017f2259ed77340559ee6583ce8b5eccf2b085a4270dc",
+            "verifier_decision_digest": "sha256:3f96c0f62981c4b9d98dcbdfe451e3219084cfa3b5c1b2ef798b551718313233",
+            "reason_code": "CHAIN_BROKEN",
+            "recorded_at": "2026-10-24T15:00:11Z"
+          }
+        ],
+        "late_delivery_disputes": [],
+        "no_delivery_releases": []
+      }
+    },
+    {
+      "run_id": "late-delivery",
+      "title": "Late: delivery outlived the reservation",
+      "summary": "The provider returned after the 600-second hold expired. The evidence is kept as a late-delivery dispute and never settled.",
+      "harness": "the test clock jumps 630 s while the provider runs",
+      "procurement_preset": null,
+      "facility": {
+        "object_type": "credence.facility",
+        "schema_version": "1",
+        "facility_id": "facility-market-general",
+        "borrower_account": "r3Zdu6biBrNYcvs4zre45udj6WW18yoJst",
+        "xrpl_loan_id": null,
+        "limit_micro_trlusd": 10000000,
+        "drawn_micro_trlusd": 0,
+        "term_seconds": 86400,
+        "maturity_at": "2026-12-31T00:00:00Z",
+        "spread_bps": 600,
+        "allowed_providers": [
+          "local-qwen-provider",
+          "nebius-token-factory"
+        ],
+        "allowed_procurement_classes": [
+          "sha256:938a6124e2b7730978181c09d7d3f885efc8e68f81a269d1acf8b8aad1440d5a"
+        ],
+        "minimum_evidence_tier": 1,
+        "purpose": "inference",
+        "owner_approval_digest": "sha256:64e44243a815046fb80a13b31a52721dfde76f6626733bab7500aa561bf0688b",
+        "status": "active"
+      },
+      "procurement_class": {
+        "object_type": "credence.procurement_class",
+        "schema_version": "1",
+        "model_family": "qwen3-30b-a3b-instruct-2507",
+        "allowed_precisions": null,
+        "allowed_quantizations": null,
+        "minimum_evidence_tier": 1,
+        "delivery_mode": "interactive",
+        "allowed_jurisdictions": [
+          "FI",
+          "US"
+        ],
+        "allowed_data_residencies": [
+          "FI",
+          "US"
+        ],
+        "allowed_providers": [
+          "local-qwen-provider",
+          "nebius-token-factory"
+        ]
+      },
+      "operation": {
+        "operation_id": "op-cec5b4a8e2db6344212db3d120333344",
+        "idempotency_key": "product-p0-late-delivery",
+        "facility_id": "facility-market-general",
+        "prompt_digest": "sha256:de5489baab771f5fc2a02b38a422fc327b9ebf47e7530037cf0f9564afd52f1d",
+        "state": "late",
+        "detail": "EXPIRED",
+        "provider_id": "nebius-token-factory",
+        "reservation_id": "reservation-f6ca0580dec5ab0a0a5db2def6b0ceae",
+        "request_digest": "sha256:f6ca0580dec5ab0a0a5db2def6b0ceae9f0fef6dccfd6d1d591ebe3f708ed3bf",
+        "agent_key_id": "ed25519:8eb04a6e6270b38255541f977baeb77f3d0b69c44011fb876ff2a32985acf4f1",
+        "agent_subject": "r3Zdu6biBrNYcvs4zre45udj6WW18yoJst",
+        "receipt_digest": "sha256:fd2071a9089e7986a6e933581c378d5f64f725611a492865ab5086359e1eeaf9",
+        "response_digest": "sha256:7c05ba472f2492192ac6244b2bc2dc264da4e7ebc5dab5ee235e60106da80650",
+        "settlement_outcome": null,
+        "verifier_decision_digest": null,
+        "reason_code": null,
+        "created_at": "2026-10-24T15:00:01Z",
+        "updated_at": "2026-10-24T15:10:42Z",
+        "retrieved_at": null,
+        "acknowledged_at": null,
+        "objects": {
+          "purchase_request": {
+            "object_type": "credence.purchase_request",
+            "schema_version": "1",
+            "facility_id": "facility-market-general",
+            "provider_id": "nebius-token-factory",
+            "quote_id": "quote-nebius-token-factory-0001",
+            "purpose": "inference",
+            "max_total_cost_micro_trlusd": 86,
+            "prompt_digest": "sha256:de5489baab771f5fc2a02b38a422fc327b9ebf47e7530037cf0f9564afd52f1d",
+            "nonce": "9126dae68eb9a7791dea0453be1131b2",
+            "expires_at": "2026-12-31T00:00:00Z"
+          },
+          "purchase_request_signature": {
+            "object_type": "credence.signed_object",
+            "schema_version": "1",
+            "object_digest": "sha256:f6ca0580dec5ab0a0a5db2def6b0ceae9f0fef6dccfd6d1d591ebe3f708ed3bf",
+            "key_id": "ed25519:8eb04a6e6270b38255541f977baeb77f3d0b69c44011fb876ff2a32985acf4f1",
+            "signature": "df23a6627e5d673b7d0f1682f8766e94f0a4bf2e00b98819a32f95a75e7fcb028fc83cdcfecfb1610e0e4129a8f43a75011afb12982403ce0829a4962cecde09"
+          },
+          "quote": {
+            "object_type": "credence.quote",
+            "schema_version": "1",
+            "quote_id": "quote-nebius-token-factory-0001",
+            "provider_id": "nebius-token-factory",
+            "service_class_digest": "sha256:4317c030672f5a53906e191a611b13879fc3ca01ab656f43c309f93c5ed0d610",
+            "input_price_per_million_micro_trlusd": 20000,
+            "output_price_per_million_micro_trlusd": 60000,
+            "max_input_tokens": 4096,
+            "max_output_tokens": 64,
+            "valid_until": "2026-12-31T00:00:00Z"
+          },
+          "service_class": {
+            "object_type": "credence.service_class",
+            "schema_version": "1",
+            "execution_profile_digest": "sha256:19e83ca9f20aca42c5301a260507b0e29004b7c9331a010f4af99f584a08113f",
+            "model_family": "qwen3-30b-a3b-instruct-2507",
+            "delivery_mode": "interactive",
+            "service_tier": "base",
+            "jurisdiction": "FI",
+            "data_residency": [
+              "FI"
+            ],
+            "residency_region": null,
+            "evidence_tier": 1,
+            "latency_p95_ms": null,
+            "availability_bps": null
+          },
+          "execution_profile": {
+            "object_type": "credence.execution_profile",
+            "schema_version": "1",
+            "model_identifier": "Qwen/Qwen3-30B-A3B-Instruct-2507",
+            "model_artifact_digest": null,
+            "tokenizer_digest": null,
+            "adapter_digest": null,
+            "chat_template_digest": null,
+            "runtime": null,
+            "precision": null,
+            "quantization": null,
+            "context_min_tokens": 8192,
+            "sampling": {
+              "temperature_milli": 0,
+              "seed_policy": "provider",
+              "seed": null
+            }
+          },
+          "receipt": {
+            "object_type": "credence.delivery_receipt",
+            "schema_version": "1",
+            "purchase_request_digest": "sha256:f6ca0580dec5ab0a0a5db2def6b0ceae9f0fef6dccfd6d1d591ebe3f708ed3bf",
+            "execution_profile_digest": "sha256:19e83ca9f20aca42c5301a260507b0e29004b7c9331a010f4af99f584a08113f",
+            "provider_id": "nebius-token-factory",
+            "response_digest": "sha256:7c05ba472f2492192ac6244b2bc2dc264da4e7ebc5dab5ee235e60106da80650",
+            "input_token_count": 21,
+            "output_token_count": 6,
+            "price_micro_trlusd": 2,
+            "started_at": "2026-10-24T15:00:08Z",
+            "completed_at": "2026-10-24T15:10:39Z",
+            "nonce": "9126dae68eb9a7791dea0453be1131b2",
+            "evidence_tier": 1,
+            "provider_attestation_digest": null,
+            "previous_receipt_digest": null
+          },
+          "gateway_signature": {
+            "object_type": "credence.signed_object",
+            "schema_version": "1",
+            "object_digest": "sha256:fd2071a9089e7986a6e933581c378d5f64f725611a492865ab5086359e1eeaf9",
+            "key_id": "ed25519:9f309c7b8e7fa1a43f79c7fbcaf10b60c98332debedc3d2f94d3f43c2f2fd08f",
+            "signature": "06fe2c7724bb6d1c7e7543d452d1d0a23773b5d086017b9f4f537c1789ab44cae8f26910b795313c3fe9ec60c55c64ebcff9b8bb4658540413d55ed1ce482104"
+          },
+          "provider_attestation": null,
+          "provider_signature": null
+        }
+      },
+      "steps": [
+        {
+          "step": "after_intent",
+          "note": "interruption point reached",
+          "at": "2026-10-24T15:00:03Z",
+          "journal_state": "intent",
+          "core": {
+            "exposure": {
+              "limit_micro_trlusd": 10000000,
+              "drawn_micro_trlusd": 0,
+              "held_micro_trlusd": 0,
+              "headroom_micro_trlusd": 10000000
+            },
+            "reservation_status": null,
+            "release_reason": null,
+            "delivery_attempt": null,
+            "chain_head": null,
+            "receipt_accounting_settled": null
+          },
+          "response_retained": false,
+          "response_available_to_agent": false
+        },
+        {
+          "step": "after_reserve",
+          "note": "interruption point reached",
+          "at": "2026-10-24T15:00:04Z",
+          "journal_state": "intent",
+          "core": {
+            "exposure": {
+              "limit_micro_trlusd": 10000000,
+              "drawn_micro_trlusd": 0,
+              "held_micro_trlusd": 86,
+              "headroom_micro_trlusd": 9999914
+            },
+            "reservation_status": "held",
+            "release_reason": null,
+            "delivery_attempt": null,
+            "chain_head": null,
+            "receipt_accounting_settled": null
+          },
+          "response_retained": false,
+          "response_available_to_agent": false
+        },
+        {
+          "step": "after_executing_recorded",
+          "note": "interruption point reached",
+          "at": "2026-10-24T15:00:06Z",
+          "journal_state": "executing",
+          "core": {
+            "exposure": {
+              "limit_micro_trlusd": 10000000,
+              "drawn_micro_trlusd": 0,
+              "held_micro_trlusd": 86,
+              "headroom_micro_trlusd": 9999914
+            },
+            "reservation_status": "held",
+            "release_reason": null,
+            "delivery_attempt": null,
+            "chain_head": null,
+            "receipt_accounting_settled": null
+          },
+          "response_retained": false,
+          "response_available_to_agent": false
+        },
+        {
+          "step": "after_attempt_begun",
+          "note": "interruption point reached",
+          "at": "2026-10-24T15:00:07Z",
+          "journal_state": "executing",
+          "core": {
+            "exposure": {
+              "limit_micro_trlusd": 10000000,
+              "drawn_micro_trlusd": 0,
+              "held_micro_trlusd": 86,
+              "headroom_micro_trlusd": 9999914
+            },
+            "reservation_status": "held",
+            "release_reason": null,
+            "delivery_attempt": {
+              "begun_at": "2026-10-24T15:00:06Z",
+              "execution_claimed_at": null,
+              "unknown_cause": null
+            },
+            "chain_head": null,
+            "receipt_accounting_settled": null
+          },
+          "response_retained": false,
+          "response_available_to_agent": false
+        },
+        {
+          "step": "after_provider_returned",
+          "note": "interruption point reached",
+          "at": "2026-10-24T15:10:40Z",
+          "journal_state": "executing",
+          "core": {
+            "exposure": {
+              "limit_micro_trlusd": 10000000,
+              "drawn_micro_trlusd": 0,
+              "held_micro_trlusd": 0,
+              "headroom_micro_trlusd": 10000000
+            },
+            "reservation_status": "held",
+            "release_reason": null,
+            "delivery_attempt": {
+              "begun_at": "2026-10-24T15:00:06Z",
+              "execution_claimed_at": "2026-10-24T15:00:07Z",
+              "unknown_cause": null
+            },
+            "chain_head": null,
+            "receipt_accounting_settled": null
+          },
+          "response_retained": false,
+          "response_available_to_agent": false
+        },
+        {
+          "step": "after_evidence_stored",
+          "note": "interruption point reached",
+          "at": "2026-10-24T15:10:41Z",
+          "journal_state": "delivered",
+          "core": {
+            "exposure": {
+              "limit_micro_trlusd": 10000000,
+              "drawn_micro_trlusd": 0,
+              "held_micro_trlusd": 0,
+              "headroom_micro_trlusd": 10000000
+            },
+            "reservation_status": "held",
+            "release_reason": null,
+            "delivery_attempt": {
+              "begun_at": "2026-10-24T15:00:06Z",
+              "execution_claimed_at": "2026-10-24T15:00:07Z",
+              "unknown_cause": null
+            },
+            "chain_head": null,
+            "receipt_accounting_settled": false
+          },
+          "response_retained": true,
+          "response_available_to_agent": false
+        },
+        {
+          "step": "purchase_returned",
+          "note": "IntegrationService.purchase returned",
+          "at": "2026-10-24T15:10:43Z",
+          "journal_state": "late",
+          "core": {
+            "exposure": {
+              "limit_micro_trlusd": 10000000,
+              "drawn_micro_trlusd": 0,
+              "held_micro_trlusd": 0,
+              "headroom_micro_trlusd": 10000000
+            },
+            "reservation_status": "released",
+            "release_reason": "expired",
+            "delivery_attempt": {
+              "begun_at": "2026-10-24T15:00:06Z",
+              "execution_claimed_at": "2026-10-24T15:00:07Z",
+              "unknown_cause": null
+            },
+            "chain_head": null,
+            "receipt_accounting_settled": false
+          },
+          "response_retained": true,
+          "response_available_to_agent": false
+        }
+      ],
+      "core_records": {
+        "settlement_disputes": [],
+        "late_delivery_disputes": [
+          {
+            "receipt_digest": "sha256:fd2071a9089e7986a6e933581c378d5f64f725611a492865ab5086359e1eeaf9",
+            "reservation_id": "reservation-f6ca0580dec5ab0a0a5db2def6b0ceae",
+            "expires_at": "2026-10-24T15:10:03Z",
+            "submitted_at": "2026-10-24T15:10:41Z"
+          }
+        ],
+        "no_delivery_releases": []
+      }
+    }
+  ]
+}

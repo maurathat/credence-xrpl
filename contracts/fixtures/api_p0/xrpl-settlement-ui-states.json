@@ -1,0 +1,68 @@
+{
+  "id": "api-p0-xrpl-settlement-ui-states",
+  "kind": "ui-state-fixtures",
+  "regenerable": false,
+  "fixture_notice": "UI STATE FIXTURES. No XRPL settlement is implemented or authorized at baseline a3ec0a3. None of these states was observed on any ledger; no transaction exists for any of them, and every hash, ledger index and result field is deliberately null.",
+  "states": [
+    {
+      "state": "not_submitted",
+      "label": "Not submitted",
+      "meaning": "No XRPL transaction has been built, signed or submitted for this purchase. This is the real state of every purchase at baseline a3ec0a3.",
+      "operator_action": "None. Accounting settlement, if any, is Credence's internal record only.",
+      "transaction_hash": null,
+      "ledger_index": null,
+      "last_ledger_sequence": null,
+      "engine_result": null
+    },
+    {
+      "state": "pending_confirmation",
+      "label": "Pending confirmation",
+      "meaning": "A signed transaction was submitted and is not yet in a validated ledger, and its last ledger sequence has not passed.",
+      "operator_action": "Wait. Do not resubmit or treat the payment as made.",
+      "transaction_hash": null,
+      "ledger_index": null,
+      "last_ledger_sequence": null,
+      "engine_result": null
+    },
+    {
+      "state": "validated_success",
+      "label": "Validated: success",
+      "meaning": "The transaction is in a validated ledger with a success result. Only this state would mean the provider payment is confirmed on XRPL.",
+      "operator_action": "None.",
+      "transaction_hash": null,
+      "ledger_index": null,
+      "last_ledger_sequence": null,
+      "engine_result": null
+    },
+    {
+      "state": "validated_failure",
+      "label": "Validated: failure",
+      "meaning": "The transaction is in a validated ledger with a failure result. The fee may be consumed; the payment did not happen.",
+      "operator_action": "Investigate the result code before any new transaction.",
+      "transaction_hash": null,
+      "ledger_index": null,
+      "last_ledger_sequence": null,
+      "engine_result": null
+    },
+    {
+      "state": "expired_not_included",
+      "label": "Expired: confirmed not included",
+      "meaning": "The last ledger sequence has passed and validated ledgers through it show the transaction was not included. It can never be included.",
+      "operator_action": "A new transaction may be prepared under a new policy decision.",
+      "transaction_hash": null,
+      "ledger_index": null,
+      "last_ledger_sequence": null,
+      "engine_result": null
+    },
+    {
+      "state": "unknown_reconciliation_required",
+      "label": "Unknown: reconciliation required",
+      "meaning": "Credence cannot establish whether the transaction was included (for example, contact lost before validation could be checked).",
+      "operator_action": "Reconcile against validated ledger history. Do not resubmit or release anything until resolved.",
+      "transaction_hash": null,
+      "ledger_index": null,
+      "last_ledger_sequence": null,
+      "engine_result": null
+    }
+  ]
+}
