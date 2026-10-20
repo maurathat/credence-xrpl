@@ -1,0 +1,349 @@
+{
+  "id": "market-selection-deterministic",
+  "kind": "deterministic-protocol-fixture",
+  "regenerable": true,
+  "routing_rule": "lowest max_total_cost among Core-accepted candidates, then provider ID, then quote ID",
+  "quote_provenance": "configured DEMO prices in micro-tRLUSD (tRLUSD is a test token); not Nebius's billed price",
+  "objects": {
+    "nebius_execution_profile": {
+      "object_type": "credence.execution_profile",
+      "schema_version": "1",
+      "model_identifier": "Qwen/Qwen3-30B-A3B-Instruct-2507",
+      "model_artifact_digest": null,
+      "tokenizer_digest": null,
+      "adapter_digest": null,
+      "chat_template_digest": null,
+      "runtime": null,
+      "precision": null,
+      "quantization": null,
+      "context_min_tokens": 8192,
+      "sampling": {
+        "temperature_milli": 0,
+        "seed_policy": "provider",
+        "seed": null
+      }
+    },
+    "nebius_service_class": {
+      "object_type": "credence.service_class",
+      "schema_version": "1",
+      "execution_profile_digest": "sha256:19e83ca9f20aca42c5301a260507b0e29004b7c9331a010f4af99f584a08113f",
+      "model_family": "qwen3-30b-a3b-instruct-2507",
+      "delivery_mode": "interactive",
+      "service_tier": "base",
+      "jurisdiction": "FI",
+      "data_residency": [
+        "FI"
+      ],
+      "residency_region": null,
+      "evidence_tier": 1,
+      "latency_p95_ms": null,
+      "availability_bps": null
+    },
+    "nebius_quote": {
+      "object_type": "credence.quote",
+      "schema_version": "1",
+      "quote_id": "quote-nebius-token-factory-0001",
+      "provider_id": "nebius-token-factory",
+      "service_class_digest": "sha256:4317c030672f5a53906e191a611b13879fc3ca01ab656f43c309f93c5ed0d610",
+      "input_price_per_million_micro_trlusd": 20000,
+      "output_price_per_million_micro_trlusd": 60000,
+      "max_input_tokens": 4096,
+      "max_output_tokens": 64,
+      "valid_until": "2026-12-31T00:00:00Z"
+    },
+    "local_execution_profile": {
+      "object_type": "credence.execution_profile",
+      "schema_version": "1",
+      "model_identifier": "ollama:qwen3:30b-a3b-instruct-2507-q8_0",
+      "model_artifact_digest": "sha256:da17ea1e24268d63d8c5f876acc6a428a389f45e3d0d016ebdaaf3e1aed81c32",
+      "tokenizer_digest": null,
+      "adapter_digest": null,
+      "chat_template_digest": null,
+      "runtime": "ollama 0.34.2",
+      "precision": null,
+      "quantization": "Q8_0",
+      "context_min_tokens": 8192,
+      "sampling": {
+        "temperature_milli": 0,
+        "seed_policy": "fixed",
+        "seed": 42
+      }
+    },
+    "local_service_class": {
+      "object_type": "credence.service_class",
+      "schema_version": "1",
+      "execution_profile_digest": "sha256:31459ca7269204b70263f5f8fd3169b822a1e29ea05aec7747545f823343eac1",
+      "model_family": "qwen3-30b-a3b-instruct-2507",
+      "delivery_mode": "interactive",
+      "service_tier": "base",
+      "jurisdiction": "US",
+      "data_residency": [
+        "US"
+      ],
+      "residency_region": null,
+      "evidence_tier": 2,
+      "latency_p95_ms": null,
+      "availability_bps": null
+    },
+    "local_quote": {
+      "object_type": "credence.quote",
+      "schema_version": "1",
+      "quote_id": "quote-local-qwen-provider-0001",
+      "provider_id": "local-qwen-provider",
+      "service_class_digest": "sha256:6bcc6d7e35ce0ed397da99b693cf8a6e8357f48ae164efde5cf07cc5268c84e0",
+      "input_price_per_million_micro_trlusd": 100000,
+      "output_price_per_million_micro_trlusd": 400000,
+      "max_input_tokens": 4096,
+      "max_output_tokens": 64,
+      "valid_until": "2026-12-31T00:00:00Z"
+    },
+    "general_procurement_class": {
+      "object_type": "credence.procurement_class",
+      "schema_version": "1",
+      "model_family": "qwen3-30b-a3b-instruct-2507",
+      "allowed_precisions": null,
+      "allowed_quantizations": null,
+      "minimum_evidence_tier": 1,
+      "delivery_mode": "interactive",
+      "allowed_jurisdictions": [
+        "FI",
+        "US"
+      ],
+      "allowed_data_residencies": [
+        "FI",
+        "US"
+      ],
+      "allowed_providers": [
+        "local-qwen-provider",
+        "nebius-token-factory"
+      ]
+    },
+    "controlled_procurement_class": {
+      "object_type": "credence.procurement_class",
+      "schema_version": "1",
+      "model_family": "qwen3-30b-a3b-instruct-2507",
+      "allowed_precisions": null,
+      "allowed_quantizations": [
+        "Q8_0"
+      ],
+      "minimum_evidence_tier": 2,
+      "delivery_mode": "interactive",
+      "allowed_jurisdictions": [
+        "FI",
+        "US"
+      ],
+      "allowed_data_residencies": [
+        "FI",
+        "US"
+      ],
+      "allowed_providers": [
+        "local-qwen-provider",
+        "nebius-token-factory"
+      ]
+    },
+    "general_facility": {
+      "object_type": "credence.facility",
+      "schema_version": "1",
+      "facility_id": "facility-market-general",
+      "borrower_account": "r3Zdu6biBrNYcvs4zre45udj6WW18yoJst",
+      "xrpl_loan_id": null,
+      "limit_micro_trlusd": 10000000,
+      "drawn_micro_trlusd": 0,
+      "term_seconds": 86400,
+      "maturity_at": "2026-12-31T00:00:00Z",
+      "spread_bps": 600,
+      "allowed_providers": [
+        "local-qwen-provider",
+        "nebius-token-factory"
+      ],
+      "allowed_procurement_classes": [
+        "sha256:938a6124e2b7730978181c09d7d3f885efc8e68f81a269d1acf8b8aad1440d5a"
+      ],
+      "minimum_evidence_tier": 1,
+      "purpose": "inference",
+      "owner_approval_digest": "sha256:64e44243a815046fb80a13b31a52721dfde76f6626733bab7500aa561bf0688b",
+      "status": "active"
+    },
+    "controlled_facility": {
+      "object_type": "credence.facility",
+      "schema_version": "1",
+      "facility_id": "facility-market-controlled",
+      "borrower_account": "r3Zdu6biBrNYcvs4zre45udj6WW18yoJst",
+      "xrpl_loan_id": null,
+      "limit_micro_trlusd": 10000000,
+      "drawn_micro_trlusd": 0,
+      "term_seconds": 86400,
+      "maturity_at": "2026-12-31T00:00:00Z",
+      "spread_bps": 600,
+      "allowed_providers": [
+        "local-qwen-provider",
+        "nebius-token-factory"
+      ],
+      "allowed_procurement_classes": [
+        "sha256:3ca51bb38d11b255ba53bc397160f9ec995c2001d8f1b7a1a7cb98c8b89c94f1"
+      ],
+      "minimum_evidence_tier": 2,
+      "purpose": "inference",
+      "owner_approval_digest": "sha256:e8944d03deecaf7c06bd0534ec53cccd622671e5f7c1ae57e35d2e05879fa072",
+      "status": "active"
+    }
+  },
+  "scenario_a_general": {
+    "qualifications": [
+      {
+        "provider_id": "nebius-token-factory",
+        "qualified": true,
+        "reason_code": null,
+        "max_total_cost_micro_trlusd": 86,
+        "purchase_request": {
+          "object_type": "credence.purchase_request",
+          "schema_version": "1",
+          "facility_id": "facility-market-general",
+          "provider_id": "nebius-token-factory",
+          "quote_id": "quote-nebius-token-factory-0001",
+          "purpose": "inference",
+          "max_total_cost_micro_trlusd": 86,
+          "prompt_digest": "sha256:de5489baab771f5fc2a02b38a422fc327b9ebf47e7530037cf0f9564afd52f1d",
+          "nonce": "0000000000000000000000000000000a",
+          "expires_at": "2026-12-31T00:00:00Z"
+        },
+        "dry_run_policy_decision": {
+          "object_type": "credence.decision_record",
+          "schema_version": "1",
+          "decision_stage": "policy",
+          "input_digests": [
+            "sha256:17f1fd7e4782c1353ef73ae47dfc97646c303bc8b99f40cb258de5a80a50bc03",
+            "sha256:b7bbaf15d4973f2950c3e61a857b7a46bf06655f2e8a0da065ba45527aefa07b",
+            "sha256:b76dbcb1f3d3b2ccf1bac174e0e61da79be5fade15f6b392e7433ae48a833625",
+            "sha256:4317c030672f5a53906e191a611b13879fc3ca01ab656f43c309f93c5ed0d610",
+            "sha256:19e83ca9f20aca42c5301a260507b0e29004b7c9331a010f4af99f584a08113f",
+            "sha256:938a6124e2b7730978181c09d7d3f885efc8e68f81a269d1acf8b8aad1440d5a"
+          ],
+          "outcome": "accept",
+          "reason_code": null,
+          "engine_version": "credence-core-policy-c2",
+          "decided_at": "2026-10-24T15:00:00Z",
+          "authorized_transaction_digest": null,
+          "authorized_transaction_digest_scheme": null
+        }
+      },
+      {
+        "provider_id": "local-qwen-provider",
+        "qualified": true,
+        "reason_code": null,
+        "max_total_cost_micro_trlusd": 436,
+        "purchase_request": {
+          "object_type": "credence.purchase_request",
+          "schema_version": "1",
+          "facility_id": "facility-market-general",
+          "provider_id": "local-qwen-provider",
+          "quote_id": "quote-local-qwen-provider-0001",
+          "purpose": "inference",
+          "max_total_cost_micro_trlusd": 436,
+          "prompt_digest": "sha256:de5489baab771f5fc2a02b38a422fc327b9ebf47e7530037cf0f9564afd52f1d",
+          "nonce": "0000000000000000000000000000000b",
+          "expires_at": "2026-12-31T00:00:00Z"
+        },
+        "dry_run_policy_decision": {
+          "object_type": "credence.decision_record",
+          "schema_version": "1",
+          "decision_stage": "policy",
+          "input_digests": [
+            "sha256:09e5bc55dc8110e54abb6a437cf2f15f3789e4cb41343ca6d0a6f19893e43065",
+            "sha256:b7bbaf15d4973f2950c3e61a857b7a46bf06655f2e8a0da065ba45527aefa07b",
+            "sha256:bf7786d25ef8b876056f5ad7dc6aa5200dc0c9ee5847e6faa14969412d48b7ff",
+            "sha256:6bcc6d7e35ce0ed397da99b693cf8a6e8357f48ae164efde5cf07cc5268c84e0",
+            "sha256:31459ca7269204b70263f5f8fd3169b822a1e29ea05aec7747545f823343eac1",
+            "sha256:938a6124e2b7730978181c09d7d3f885efc8e68f81a269d1acf8b8aad1440d5a"
+          ],
+          "outcome": "accept",
+          "reason_code": null,
+          "engine_version": "credence-core-policy-c2",
+          "decided_at": "2026-10-24T15:00:00Z",
+          "authorized_transaction_digest": null,
+          "authorized_transaction_digest_scheme": null
+        }
+      }
+    ],
+    "chosen_provider_id": "nebius-token-factory"
+  },
+  "scenario_b_controlled": {
+    "qualifications": [
+      {
+        "provider_id": "nebius-token-factory",
+        "qualified": false,
+        "reason_code": "PROFILE_NOT_ALLOWED",
+        "max_total_cost_micro_trlusd": 86,
+        "purchase_request": {
+          "object_type": "credence.purchase_request",
+          "schema_version": "1",
+          "facility_id": "facility-market-controlled",
+          "provider_id": "nebius-token-factory",
+          "quote_id": "quote-nebius-token-factory-0001",
+          "purpose": "inference",
+          "max_total_cost_micro_trlusd": 86,
+          "prompt_digest": "sha256:de5489baab771f5fc2a02b38a422fc327b9ebf47e7530037cf0f9564afd52f1d",
+          "nonce": "0000000000000000000000000000000a",
+          "expires_at": "2026-12-31T00:00:00Z"
+        },
+        "dry_run_policy_decision": {
+          "object_type": "credence.decision_record",
+          "schema_version": "1",
+          "decision_stage": "policy",
+          "input_digests": [
+            "sha256:088baaacb1b3a3c49e61151bba6bf8b12d9b1163623a9bd2784670b67cea1f20",
+            "sha256:c4367b5a2b4d22564b8bf52975184fda29d2cfd052ad2aeb670b0fc44e3cbd79",
+            "sha256:b76dbcb1f3d3b2ccf1bac174e0e61da79be5fade15f6b392e7433ae48a833625",
+            "sha256:4317c030672f5a53906e191a611b13879fc3ca01ab656f43c309f93c5ed0d610",
+            "sha256:19e83ca9f20aca42c5301a260507b0e29004b7c9331a010f4af99f584a08113f",
+            "sha256:3ca51bb38d11b255ba53bc397160f9ec995c2001d8f1b7a1a7cb98c8b89c94f1"
+          ],
+          "outcome": "reject",
+          "reason_code": "PROFILE_NOT_ALLOWED",
+          "engine_version": "credence-core-policy-c2",
+          "decided_at": "2026-10-24T15:00:01Z",
+          "authorized_transaction_digest": null,
+          "authorized_transaction_digest_scheme": null
+        }
+      },
+      {
+        "provider_id": "local-qwen-provider",
+        "qualified": true,
+        "reason_code": null,
+        "max_total_cost_micro_trlusd": 436,
+        "purchase_request": {
+          "object_type": "credence.purchase_request",
+          "schema_version": "1",
+          "facility_id": "facility-market-controlled",
+          "provider_id": "local-qwen-provider",
+          "quote_id": "quote-local-qwen-provider-0001",
+          "purpose": "inference",
+          "max_total_cost_micro_trlusd": 436,
+          "prompt_digest": "sha256:de5489baab771f5fc2a02b38a422fc327b9ebf47e7530037cf0f9564afd52f1d",
+          "nonce": "0000000000000000000000000000000b",
+          "expires_at": "2026-12-31T00:00:00Z"
+        },
+        "dry_run_policy_decision": {
+          "object_type": "credence.decision_record",
+          "schema_version": "1",
+          "decision_stage": "policy",
+          "input_digests": [
+            "sha256:ef6c9b50c875346b781caaa37e288c9f66aa014e38cf0f7053fb2bf7fe97fb77",
+            "sha256:c4367b5a2b4d22564b8bf52975184fda29d2cfd052ad2aeb670b0fc44e3cbd79",
+            "sha256:bf7786d25ef8b876056f5ad7dc6aa5200dc0c9ee5847e6faa14969412d48b7ff",
+            "sha256:6bcc6d7e35ce0ed397da99b693cf8a6e8357f48ae164efde5cf07cc5268c84e0",
+            "sha256:31459ca7269204b70263f5f8fd3169b822a1e29ea05aec7747545f823343eac1",
+            "sha256:3ca51bb38d11b255ba53bc397160f9ec995c2001d8f1b7a1a7cb98c8b89c94f1"
+          ],
+          "outcome": "accept",
+          "reason_code": null,
+          "engine_version": "credence-core-policy-c2",
+          "decided_at": "2026-10-24T15:00:01Z",
+          "authorized_transaction_digest": null,
+          "authorized_transaction_digest_scheme": null
+        }
+      }
+    ],
+    "chosen_provider_id": "local-qwen-provider"
+  }
+}

@@ -1,0 +1,300 @@
+{
+  "id": "local-qwen-tier2-observation",
+  "kind": "runtime-observation",
+  "regenerable": false,
+  "description": "One real Tier 2 purchase: local Qwen3 30B A3B Instruct 2507 (Ollama library Q8_0 GGUF) through the real gateway and Core engines. Artifact binding is not execution measurement: no GPU-memory, TEE or Tier 3 claim.",
+  "environment": {
+    "machine": "arm64",
+    "os": "macOS 26.6.2",
+    "chip": "Apple M4 Pro",
+    "memory_bytes": 68719476736,
+    "runtime": "ollama 0.34.2"
+  },
+  "artifact": {
+    "upstream_model_family": "Qwen3 30B A3B Instruct 2507 (Qwen)",
+    "local_execution_artifact": "Ollama library GGUF (Q8_0); not Qwen's original files",
+    "source": "registry.ollama.ai/library/qwen3:30b-a3b-instruct-2507-q8_0",
+    "manifest_sha256": "sha256:528dfe43328ba6235a38e89f6e8ead082a70eda6b45bcae9bbdeba0f38ac3f9b",
+    "layers": [
+      {
+        "media_type": "application/vnd.ollama.image.model",
+        "digest": "sha256:da17ea1e24268d63d8c5f876acc6a428a389f45e3d0d016ebdaaf3e1aed81c32",
+        "size": 32483931680
+      },
+      {
+        "media_type": "application/vnd.ollama.image.template",
+        "digest": "sha256:eade0a07cac7712787bbce23d12f9306adb4781d873d1df6e16f7840fa37afec",
+        "size": 1379
+      },
+      {
+        "media_type": "application/vnd.ollama.image.license",
+        "digest": "sha256:d18a5cc71b84bc4af394a31116bd3932b42241de70c77d2b76d69a314ec8aa12",
+        "size": 11338
+      },
+      {
+        "media_type": "application/vnd.ollama.image.params",
+        "digest": "sha256:0914c7781e001948488d937994217538375b4fd8c1466c5e7a625221abd3ea7a",
+        "size": 119
+      }
+    ],
+    "model_file_bytes": 32483931680,
+    "model_file_sha256": "sha256:da17ea1e24268d63d8c5f876acc6a428a389f45e3d0d016ebdaaf3e1aed81c32",
+    "gguf_general_file_type": 7,
+    "tensor_types": [
+      "F32",
+      "Q8_0"
+    ],
+    "template_file_sha256": "sha256:eade0a07cac7712787bbce23d12f9306adb4781d873d1df6e16f7840fa37afec",
+    "runtime_reported_template_sha256": "sha256:40c21f34cf67d8c760ef72f8ad3ae5afad514299d4b06e91dd9a8d705af7b541",
+    "chat_template_binding": "NOT ASSERTED: the runtime renders with the template embedded in the GGUF, not the manifest's template file (observation only)",
+    "models_dir_is_outside_repository": true
+  },
+  "service_location_provenance": "operator-supplied deployment fact: the execution machine physically operates in the United States (jurisdiction US, residency {US})",
+  "sampling": {
+    "temperature_milli": 0,
+    "seed": 42,
+    "context_tokens": 8192,
+    "max_output_tokens": 48
+  },
+  "registry": [
+    {
+      "key_id": "ed25519:8eb04a6e6270b38255541f977baeb77f3d0b69c44011fb876ff2a32985acf4f1",
+      "role": "agent",
+      "subject": "r3Zdu6biBrNYcvs4zre45udj6WW18yoJst",
+      "status": "current"
+    },
+    {
+      "key_id": "ed25519:9f309c7b8e7fa1a43f79c7fbcaf10b60c98332debedc3d2f94d3f43c2f2fd08f",
+      "role": "gateway",
+      "subject": "credence-gateway",
+      "status": "current"
+    },
+    {
+      "key_id": "ed25519:bcd16a401618ef82142ccf789494daf3d6d141e72c8ede7699b52f5612d7c04a",
+      "role": "provider",
+      "subject": "local-qwen-provider",
+      "status": "current"
+    }
+  ],
+  "provider_key_id": "ed25519:bcd16a401618ef82142ccf789494daf3d6d141e72c8ede7699b52f5612d7c04a",
+  "provider_key_origin": "generated at runtime for this run; never written",
+  "prompt_text": "Synthetic Credence test prompt: reply with exactly the word OK and nothing else.",
+  "response_text": null,
+  "objects": {
+    "facility": {
+      "object_type": "credence.facility",
+      "schema_version": "1",
+      "facility_id": "facility-local-qwen-tier2",
+      "borrower_account": "r3Zdu6biBrNYcvs4zre45udj6WW18yoJst",
+      "xrpl_loan_id": null,
+      "limit_micro_trlusd": 10000000,
+      "drawn_micro_trlusd": 0,
+      "term_seconds": 86400,
+      "maturity_at": "2026-12-31T00:00:00Z",
+      "spread_bps": 600,
+      "allowed_providers": [
+        "local-qwen-provider",
+        "nebius-token-factory"
+      ],
+      "allowed_procurement_classes": [
+        "sha256:3ca51bb38d11b255ba53bc397160f9ec995c2001d8f1b7a1a7cb98c8b89c94f1"
+      ],
+      "minimum_evidence_tier": 2,
+      "purpose": "inference",
+      "owner_approval_digest": "sha256:c5157007e87ee5d08e4c1346879aaaa64384ef41d78fb2972de55704892774e1",
+      "status": "active"
+    },
+    "procurement_class": {
+      "object_type": "credence.procurement_class",
+      "schema_version": "1",
+      "model_family": "qwen3-30b-a3b-instruct-2507",
+      "allowed_precisions": null,
+      "allowed_quantizations": [
+        "Q8_0"
+      ],
+      "minimum_evidence_tier": 2,
+      "delivery_mode": "interactive",
+      "allowed_jurisdictions": [
+        "FI",
+        "US"
+      ],
+      "allowed_data_residencies": [
+        "FI",
+        "US"
+      ],
+      "allowed_providers": [
+        "local-qwen-provider",
+        "nebius-token-factory"
+      ]
+    },
+    "service_class": {
+      "object_type": "credence.service_class",
+      "schema_version": "1",
+      "execution_profile_digest": "sha256:31459ca7269204b70263f5f8fd3169b822a1e29ea05aec7747545f823343eac1",
+      "model_family": "qwen3-30b-a3b-instruct-2507",
+      "delivery_mode": "interactive",
+      "service_tier": "base",
+      "jurisdiction": "US",
+      "data_residency": [
+        "US"
+      ],
+      "residency_region": null,
+      "evidence_tier": 2,
+      "latency_p95_ms": null,
+      "availability_bps": null
+    },
+    "execution_profile": {
+      "object_type": "credence.execution_profile",
+      "schema_version": "1",
+      "model_identifier": "ollama:qwen3:30b-a3b-instruct-2507-q8_0",
+      "model_artifact_digest": "sha256:da17ea1e24268d63d8c5f876acc6a428a389f45e3d0d016ebdaaf3e1aed81c32",
+      "tokenizer_digest": null,
+      "adapter_digest": null,
+      "chat_template_digest": null,
+      "runtime": "ollama 0.34.2",
+      "precision": null,
+      "quantization": "Q8_0",
+      "context_min_tokens": 8192,
+      "sampling": {
+        "temperature_milli": 0,
+        "seed_policy": "fixed",
+        "seed": 42
+      }
+    },
+    "quote": {
+      "object_type": "credence.quote",
+      "schema_version": "1",
+      "quote_id": "quote-local-qwen-0001",
+      "provider_id": "local-qwen-provider",
+      "service_class_digest": "sha256:6bcc6d7e35ce0ed397da99b693cf8a6e8357f48ae164efde5cf07cc5268c84e0",
+      "input_price_per_million_micro_trlusd": 100000,
+      "output_price_per_million_micro_trlusd": 400000,
+      "max_input_tokens": 4096,
+      "max_output_tokens": 48,
+      "valid_until": "2026-12-31T00:00:00Z"
+    },
+    "purchase_request": {
+      "object_type": "credence.purchase_request",
+      "schema_version": "1",
+      "facility_id": "facility-local-qwen-tier2",
+      "provider_id": "local-qwen-provider",
+      "quote_id": "quote-local-qwen-0001",
+      "purpose": "inference",
+      "max_total_cost_micro_trlusd": 430,
+      "prompt_digest": "sha256:23c814aa36cf933e08ff29050955e584ced416d7b2485f3c36451f0b15360f51",
+      "nonce": "00000000000000000000000000000001",
+      "expires_at": "2026-12-31T00:00:00Z"
+    },
+    "purchase_request_signature": {
+      "object_type": "credence.signed_object",
+      "schema_version": "1",
+      "object_digest": "sha256:91f6dd2aad3992dc8334dbc8c45df8ff2d53453851bc4d6aadfa579cbb798f09",
+      "key_id": "ed25519:8eb04a6e6270b38255541f977baeb77f3d0b69c44011fb876ff2a32985acf4f1",
+      "signature": "2fe5095e40a7e924bd9c95e24bda74aa5c504602150cd69e753a11ae0dfb8628c90063163f2e653e1cbed97bae89e6d523c548913741b5cd780c82fa48e4640e"
+    },
+    "provider_attestation": {
+      "object_type": "credence.provider_attestation",
+      "schema_version": "1",
+      "purchase_request_digest": "sha256:91f6dd2aad3992dc8334dbc8c45df8ff2d53453851bc4d6aadfa579cbb798f09",
+      "execution_profile_digest": "sha256:31459ca7269204b70263f5f8fd3169b822a1e29ea05aec7747545f823343eac1",
+      "response_digest": "sha256:565339bc4d33d72817b583024112eb7f5cdf3e5eef0252d6ec1b9c9a94e12bb3",
+      "input_token_count": 26,
+      "output_token_count": 2
+    },
+    "provider_attestation_signature": {
+      "object_type": "credence.signed_object",
+      "schema_version": "1",
+      "object_digest": "sha256:68e9b32730e7f9e08814ee5acc3fc298f4e54916380261ee1e3a0e439e3b5267",
+      "key_id": "ed25519:bcd16a401618ef82142ccf789494daf3d6d141e72c8ede7699b52f5612d7c04a",
+      "signature": "406f64e43883100e0674e65ac5fd9f64a8a24e3f24377ced54cb64c7f9f7251eab4866b9dc2bf37811b1ace4ed566c955fc3537ebb87d3fc653be3addf8f310a"
+    },
+    "delivery_receipt": {
+      "object_type": "credence.delivery_receipt",
+      "schema_version": "1",
+      "purchase_request_digest": "sha256:91f6dd2aad3992dc8334dbc8c45df8ff2d53453851bc4d6aadfa579cbb798f09",
+      "execution_profile_digest": "sha256:31459ca7269204b70263f5f8fd3169b822a1e29ea05aec7747545f823343eac1",
+      "provider_id": "local-qwen-provider",
+      "response_digest": "sha256:565339bc4d33d72817b583024112eb7f5cdf3e5eef0252d6ec1b9c9a94e12bb3",
+      "input_token_count": 26,
+      "output_token_count": 2,
+      "price_micro_trlusd": 4,
+      "started_at": "2026-10-18T05:28:28Z",
+      "completed_at": "2026-10-18T05:28:29Z",
+      "nonce": "00000000000000000000000000000001",
+      "evidence_tier": 2,
+      "provider_attestation_digest": "sha256:68e9b32730e7f9e08814ee5acc3fc298f4e54916380261ee1e3a0e439e3b5267",
+      "previous_receipt_digest": null
+    },
+    "gateway_signature": {
+      "object_type": "credence.signed_object",
+      "schema_version": "1",
+      "object_digest": "sha256:a4bd4554ac8e0642560f530655f5e6c4432627a1468a84f6c64e643d5747ac5a",
+      "key_id": "ed25519:9f309c7b8e7fa1a43f79c7fbcaf10b60c98332debedc3d2f94d3f43c2f2fd08f",
+      "signature": "45e35f07dc8c62797b32881ea72d041ef1514017c746f543b1695d64b1d38e287baa25acf11bf38c536f2fb070c8ef4e7ea46c426a7b5bbd4574ce92e10b5703"
+    },
+    "reservation": {
+      "object_type": "credence.reservation",
+      "schema_version": "1",
+      "reservation_id": "reservation-91f6dd2aad3992dc8334dbc8c45df8ff",
+      "facility_id": "facility-local-qwen-tier2",
+      "quote_id": "quote-local-qwen-0001",
+      "maximum_amount_micro_trlusd": 430,
+      "created_at": "2026-10-18T05:28:28Z",
+      "expires_at": "2026-10-18T05:38:28Z",
+      "status": "held"
+    },
+    "policy_decision": {
+      "object_type": "credence.decision_record",
+      "schema_version": "1",
+      "decision_stage": "policy",
+      "input_digests": [
+        "sha256:91f6dd2aad3992dc8334dbc8c45df8ff2d53453851bc4d6aadfa579cbb798f09",
+        "sha256:463bb638ce011abe814008eec8030268424000d9387411a3d95bc3ed9f318c0f",
+        "sha256:a94ea8d1a5ea1edf907e36fc2b6d701907371a82b177a03f493ece0b7b4cfa6c",
+        "sha256:6bcc6d7e35ce0ed397da99b693cf8a6e8357f48ae164efde5cf07cc5268c84e0",
+        "sha256:31459ca7269204b70263f5f8fd3169b822a1e29ea05aec7747545f823343eac1",
+        "sha256:3ca51bb38d11b255ba53bc397160f9ec995c2001d8f1b7a1a7cb98c8b89c94f1"
+      ],
+      "outcome": "accept",
+      "reason_code": null,
+      "engine_version": "credence-core-policy-c2",
+      "decided_at": "2026-10-18T05:28:28Z",
+      "authorized_transaction_digest": null,
+      "authorized_transaction_digest_scheme": null
+    },
+    "verifier_decision": {
+      "object_type": "credence.decision_record",
+      "schema_version": "1",
+      "decision_stage": "verifier",
+      "input_digests": [
+        "sha256:a4bd4554ac8e0642560f530655f5e6c4432627a1468a84f6c64e643d5747ac5a",
+        "sha256:91f6dd2aad3992dc8334dbc8c45df8ff2d53453851bc4d6aadfa579cbb798f09",
+        "sha256:a94ea8d1a5ea1edf907e36fc2b6d701907371a82b177a03f493ece0b7b4cfa6c",
+        "sha256:6bcc6d7e35ce0ed397da99b693cf8a6e8357f48ae164efde5cf07cc5268c84e0",
+        "sha256:31459ca7269204b70263f5f8fd3169b822a1e29ea05aec7747545f823343eac1",
+        "sha256:565339bc4d33d72817b583024112eb7f5cdf3e5eef0252d6ec1b9c9a94e12bb3",
+        "sha256:68e9b32730e7f9e08814ee5acc3fc298f4e54916380261ee1e3a0e439e3b5267"
+      ],
+      "outcome": "accept",
+      "reason_code": null,
+      "engine_version": "credence-core-verifier-c2",
+      "decided_at": "2026-10-18T05:28:29Z",
+      "authorized_transaction_digest": null,
+      "authorized_transaction_digest_scheme": null
+    }
+  },
+  "token_count_source": "provider_reported",
+  "runtime_timing_ns": {
+    "total_duration": 249313375,
+    "load_duration": 9774875,
+    "prompt_eval_duration": 206132000,
+    "eval_duration": 23115000
+  },
+  "observed": {
+    "outcome": "DeliveryVerified",
+    "receipt_digest": "sha256:a4bd4554ac8e0642560f530655f5e6c4432627a1468a84f6c64e643d5747ac5a",
+    "provider_attestation_digest": "sha256:68e9b32730e7f9e08814ee5acc3fc298f4e54916380261ee1e3a0e439e3b5267",
+    "repeat_run_same_response_digest": true,
+    "repeat_run_same_token_counts": true
+  }
+}

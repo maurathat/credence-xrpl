@@ -1,0 +1,57 @@
+{
+  "id": "nebius-model-detail",
+  "kind": "runtime-observation",
+  "regenerable": false,
+  "observed_at": "2026-10-16T18:40:59Z",
+  "endpoint": "GET https://api.tokenfactory.nebius.com/v1/models?verbose=true",
+  "requested_model_id": "Qwen/Qwen3-30B-A3B-Instruct-2507",
+  "exact_match_count": 1,
+  "entry": {
+    "id": "Qwen/Qwen3-30B-A3B-Instruct-2507",
+    "name": "Qwen3-30B-A3B-Instruct-2507",
+    "created": 1792176050,
+    "description": "Versatile 30B instruct model optimized for high-quality chat, reasoning, and coding.",
+    "context_length": 262144,
+    "architecture": {
+      "modality": "text->text",
+      "tokenizer": "Other"
+    },
+    "quantization": "fp8",
+    "pricing": {
+      "prompt": "0.0000001",
+      "completion": "0.0000003",
+      "image": "0",
+      "price_per_video_second": "0",
+      "request": "0",
+      "price_per_minute": "0",
+      "input_cache_read": null
+    },
+    "per_request_limits": {
+      "tokens_per_minute": 400000.0,
+      "requests_per_minute": 600.0,
+      "burst_ratio": 1.0
+    },
+    "object": "model",
+    "owned_by": "system",
+    "regions": [
+      {
+        "country_code": "FI",
+        "name": "eu-north1"
+      }
+    ],
+    "supported_features": [
+      "tools",
+      "json_mode",
+      "structured_outputs"
+    ],
+    "supported_sampling_parameters": [
+      "temperature",
+      "top_p",
+      "top_k",
+      "repetition_penalty",
+      "frequency_penalty",
+      "presence_penalty"
+    ]
+  },
+  "note": "catalog fields are Nebius declarations, not Credence evidence"
+}
