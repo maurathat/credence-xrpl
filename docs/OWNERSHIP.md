@@ -26,7 +26,7 @@ Changes to Core or Inference canonical contracts made on the integration branch 
 | `review/xrpl/` | XRPL review (independent) | Claude Code |
 | `vectors/` | Credence Core | Claude Code |
 | `tests/unit/`, `tests/conformance/`, `tests/integration/`, `tests/e2e/` | Each workstream for tests of its own area | — |
-| `tests/integration/test_i1_*`, `tests/integration/i1_world.py` | Integration (San Antonio) | Claude Code |
+| `tests/integration/test_i1_*`, `tests/integration/i1_world.py`, `tests/integration/i1_child.py` | Integration (San Antonio) | Claude Code |
 | `tests/attack/` | Red Team (read-only on all other code) | Codex |
 | `infra/rippled/` | XRPL Integration | Codex |
 | `infra/speculos/` | Ledger Integration | **TBD** |

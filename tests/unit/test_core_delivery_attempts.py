@@ -164,8 +164,12 @@ def test_invalid_release_attempts(w: World) -> None:
         refused(lambda: release(ref, "provider_not_connected", NOW))  # type: ignore[arg-type]
         == "INVALID_RELEASE_REASON"
     )
-    # settled reservations cannot be released
+    # I1e (Core finding C-1): a valid delivery cannot settle without Core's persisted attempt
     sub = delivery(p, ref.reservation_id, previous=None)
+    assert refused(lambda: w.coord.settle(sub, NOW.plus_seconds(5))) == "NO_DELIVERY_ATTEMPT"
+    assert w.drawn() == 0 and w.status(ref) is ReservationStatus.HELD
+    # with the attempt recorded it settles, and a settled reservation cannot be released
+    w.coord.begin_delivery(ref, NOW.plus_seconds(1))
     assert w.coord.settle(sub, NOW.plus_seconds(5)).outcome is SettlementOutcome.ACCOUNTING_SETTLED
     assert refused(lambda: release(ref, NoDeliveryReason.PROVIDER_NOT_CONNECTED, NOW)) == "NOT_HELD"
     # expired: lapses as expired, not as a no-delivery release
@@ -260,6 +264,7 @@ def test_unknown_delivery_keeps_the_hold_and_charges_nothing(w: World) -> None:
 
 def test_authenticated_late_delivery_is_disputed_with_evidence_never_settled(w: World) -> None:
     p, ref = w.reserve(1)
+    w.coord.begin_delivery(ref, NOW.plus_seconds(1))
     sub = delivery(p, ref.reservation_id, previous=None)
     late = w.expires_at(ref)
     assert refused(lambda: w.coord.settle(sub, late)) == "EXPIRED"
@@ -283,6 +288,7 @@ def test_authenticated_late_delivery_is_disputed_with_evidence_never_settled(w: 
 
 def test_late_delivery_after_an_expiry_sweep_is_still_disputed(w: World) -> None:
     p, ref = w.reserve(1)
+    w.coord.begin_delivery(ref, NOW.plus_seconds(1))
     late = w.expires_at(ref)
     assert w.ledger.expire(late) == (ref.reservation_id,)
     sub = delivery(p, ref.reservation_id, previous=None)
@@ -292,6 +298,7 @@ def test_late_delivery_after_an_expiry_sweep_is_still_disputed(w: World) -> None
 
 def test_unauthenticated_late_delivery_keeps_no_evidence(w: World) -> None:
     p, ref = w.reserve(1)
+    w.coord.begin_delivery(ref, NOW.plus_seconds(1))
     forged = delivery(p, ref.reservation_id, previous=None, gateway=ATTACKER)
     assert refused(lambda: w.coord.settle(forged, w.expires_at(ref))) == "EXPIRED"
     assert w.coord.late_delivery_disputes() == []
@@ -302,14 +309,196 @@ def test_unauthenticated_late_delivery_keeps_no_evidence(w: World) -> None:
 
 def test_only_authenticated_rejections_keep_evidence(w: World) -> None:
     p1, r1 = w.reserve(1)
+    w.coord.begin_delivery(r1, NOW.plus_seconds(1))
     over = delivery(p1, r1.reservation_id, previous=None, price_delta=1)
     assert w.coord.settle(over, NOW.plus_seconds(5)).outcome is SettlementOutcome.DELIVERY_FAILED
     ((kind, reason, evidence),) = w.coord.dispute_evidence(over.receipt.digest())
     assert (kind, reason) == ("delivery_failure", "BILLED_AMOUNT_MISMATCH")
     assert evidence.receipt == over.receipt.canonical_bytes()
     p2, r2 = w.reserve(2)
+    w.coord.begin_delivery(r2, NOW.plus_seconds(1))
     forged = delivery(p2, r2.reservation_id, previous=None, gateway=ATTACKER)
     result = w.coord.settle(forged, NOW.plus_seconds(5))
     assert result.outcome is SettlementOutcome.REJECTED_SUBMISSION
     assert w.coord.dispute_evidence(forged.receipt.digest()) == []
     assert len(w.coord.disputes()) == 2
+
+
+# --- I1e: authorized execution (Core findings C-1, C-2) -----------------------------------------
+
+
+def test_missing_attempt_late_delivery_is_refused_and_not_recorded(w: World) -> None:
+    """A late delivery Core never authorized keeps no evidence and is refused as unauthorized."""
+    p, ref = w.reserve(1)
+    sub = delivery(p, ref.reservation_id, previous=None)
+    late = w.expires_at(ref)
+    assert refused(lambda: w.coord.settle(sub, late)) == "NO_DELIVERY_ATTEMPT"
+    assert w.ledger.release_reason(ref.reservation_id) == "expired"  # expiry still committed
+    assert w.coord.late_delivery_disputes() == [] and w.drawn() == 0
+
+
+def test_claim_execution_requires_the_persisted_attempt(w: World) -> None:
+    from dataclasses import replace
+
+    from credence.core.settlement_coordinator import DeliveryAttempt
+
+    _, ref = w.reserve(1)
+    fabricated = DeliveryAttempt(
+        reservation_id=ref.reservation_id,
+        facility_id=ref.request.facility_id,
+        request_digest=ref.request.digest(),
+        begun_at=NOW,
+        unknown_cause=None,
+    )
+    assert refused(lambda: w.coord.claim_execution(fabricated, NOW)) == "NO_DELIVERY_ATTEMPT"
+    attempt = w.coord.begin_delivery(ref, NOW.plus_seconds(1))
+    assert refused(lambda: w.coord.claim_execution(fabricated, NOW)) == "ATTEMPT_MISMATCH"
+    forged = replace(attempt, request_digest=ref.quote.digest())
+    assert refused(lambda: w.coord.claim_execution(forged, NOW)) == "ATTEMPT_MISMATCH"
+    claimed = w.coord.claim_execution(attempt, NOW.plus_seconds(2))
+    assert claimed.execution_claimed_at == NOW.plus_seconds(2)
+    assert w.coord.delivery_attempt(ref.reservation_id) == claimed
+    assert (
+        refused(lambda: w.coord.claim_execution(attempt, NOW.plus_seconds(3)))
+        == "EXECUTION_ALREADY_CLAIMED"
+    )
+
+
+def test_claim_is_refused_after_unknown_release_or_expiry(w: World) -> None:
+    _, ref = w.reserve(1)
+    attempt = w.coord.begin_delivery(ref, NOW.plus_seconds(1))
+    w.coord.record_unknown_delivery(
+        ref.reservation_id, UnknownDeliveryCause.INTERRUPTED, NOW.plus_seconds(2)
+    )
+    assert (
+        refused(lambda: w.coord.claim_execution(attempt, NOW.plus_seconds(3)))
+        == "DELIVERY_OUTCOME_UNKNOWN"
+    )
+    _, late = w.reserve(2)
+    late_attempt = w.coord.begin_delivery(late, NOW.plus_seconds(1))
+    assert refused(lambda: w.coord.claim_execution(late_attempt, w.expires_at(late))) == "EXPIRED"
+    assert w.ledger.release_reason(late.reservation_id) == "expired"
+
+
+def test_settlement_needs_the_attempt_for_this_request(w: World) -> None:
+    import sqlite3
+
+    p, ref = w.reserve(1)
+    w.coord.begin_delivery(ref, NOW.plus_seconds(1))
+    with sqlite3.connect(w.path) as conn:  # tamper: the attempt names a different request
+        conn.execute(
+            "UPDATE delivery_attempts SET request_digest = ? WHERE reservation_id = ?",
+            (ref.quote.digest().value, ref.reservation_id.value),
+        )
+    sub = delivery(p, ref.reservation_id, previous=None)
+    assert refused(lambda: w.coord.settle(sub, NOW.plus_seconds(5))) == "ATTEMPT_MISMATCH"
+    assert w.drawn() == 0
+
+
+def test_forged_signature_cannot_reserve_or_consume_a_nonce_on_a_registered_facility(
+    w: World,
+) -> None:
+    """Core finding C-2: the bare ledger with caller-supplied facts is closed; the coordinator
+    computes facts itself, so a forged signature consumes neither headroom nor the nonce."""
+    forged = purchase(7, current_facility(w.coord, w.base), signer=ATTACKER)
+    context = PurchaseContext(
+        request=forged.request,
+        request_signature_valid=True,  # the lie the bare ledger used to accept
+        working_key_current=True,
+        facility=forged.facility,
+        quote=forged.quote,
+        service_class=forged.service_class,
+        execution_profile=forged.execution_profile,
+        procurement_classes=forged.procurement_classes,
+    )
+    for call in (
+        lambda: w.ledger.reserve(context, NOW),
+        lambda: _in_transaction(w, context),
+    ):
+        with pytest.raises(ReservationStateError) as exc:
+            call()
+        assert exc.value.reason == "USE_SETTLEMENT_COORDINATOR"
+    rejected = w.coord.reserve(forged, NOW)
+    assert rejected.reservation is None
+    assert rejected.decision.record.reason_code is not None
+    assert rejected.decision.record.reason_code.value == "SIG_INVALID"
+    assert w.held() == 0
+    assert not w.ledger.nonce_used(w.base.facility_id, forged.request.nonce)
+    # the legitimate agent's purchase with the same nonce still reserves
+    legit = purchase(7, current_facility(w.coord, w.base))
+    assert legit.request.nonce == forged.request.nonce
+    accepted = w.coord.reserve(legit, NOW)
+    assert accepted.reservation is not None and w.held() > 0
+
+
+def _in_transaction(w: World, context: PurchaseContext) -> None:
+    with w.ledger.write_transaction() as conn:
+        w.ledger.reserve_in_transaction(conn, context, NOW)
+
+
+def _race_once(path: Path) -> str:
+    """begin_delivery and release_undelivered start together on separate connections."""
+    import threading
+
+    w = World(path)
+    _, ref = w.reserve(1)
+    barrier = threading.Barrier(2)
+    outcomes: dict[str, str] = {}
+
+    def begin() -> None:
+        barrier.wait()
+        try:
+            w.coord.begin_delivery(ref, NOW.plus_seconds(1))
+            outcomes["begin"] = "ok"
+        except SettlementRefused as exc:
+            outcomes["begin"] = exc.reason
+
+    def release() -> None:
+        barrier.wait()
+        try:
+            w.coord.release_undelivered(
+                ref, NoDeliveryReason.ABANDONED_BEFORE_EXECUTION, NOW.plus_seconds(1)
+            )
+            outcomes["release"] = "ok"
+        except SettlementRefused as exc:
+            outcomes["release"] = exc.reason
+
+    threads = [threading.Thread(target=begin), threading.Thread(target=release)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join(timeout=30)
+    attempt = w.coord.delivery_attempt(ref.reservation_id)
+    if outcomes["begin"] == "ok":
+        assert outcomes["release"] == "DELIVERY_ATTEMPTED"
+        assert attempt is not None and w.status(ref) is ReservationStatus.HELD
+        assert w.coord.no_delivery_releases() == []
+        return "begin"
+    assert (outcomes["release"], outcomes["begin"]) == ("ok", "NOT_HELD")
+    assert attempt is None and w.status(ref) is ReservationStatus.RELEASED
+    assert len(w.coord.no_delivery_releases()) == 1
+    return "release"
+
+
+def test_begin_delivery_and_release_race_has_exactly_one_winner(tmp_path: Path) -> None:
+    """Both run in BEGIN IMMEDIATE transactions; exactly one wins in every round and the loser
+    sees the winner's committed state. Never both an attempt and a no-delivery release."""
+    winners = []
+    for round_ in range(40):
+        (tmp_path / f"race-{round_}").mkdir()
+        winners.append(_race_once(tmp_path / f"race-{round_}"))
+    assert set(winners) <= {"begin", "release"}
+
+
+def test_valid_signed_delivery_without_a_core_attempt_cannot_settle(w: World) -> None:
+    """Adversarial case 2 / Core finding C-1: a fully valid, gateway- and provider-signed Tier 2
+    delivery for a held reservation, but no persisted attempt. Before I1e it settled (drawn rose);
+    now it is refused before the verifier, charging nothing and recording no dispute."""
+    p, ref = w.reserve(1)
+    sub = delivery(p, ref.reservation_id, previous=None)
+    assert sub.gateway_signature is not None and sub.provider_signature is not None
+    assert refused(lambda: w.coord.settle(sub, NOW.plus_seconds(5))) == "NO_DELIVERY_ATTEMPT"
+    assert w.drawn() == 0 and w.coord.disputes() == []
+    assert w.coord.chain_head(w.base.facility_id) is None
+    assert not w.coord.receipt_settled(sub.receipt.digest())
+    assert w.status(ref) is ReservationStatus.HELD

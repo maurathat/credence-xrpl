@@ -17,8 +17,13 @@ The lifecycle is in contracts/INTEGRATION-FLOW.md. In short, for one purchase:
     11. the gateway builds and signs the evidence (Gateway.deliver);
     12. the evidence and exact response bytes are journaled;
     13. Core settles (SettlementCoordinator.settle), which alone advances the chain;
-    14. only after accounting settlement is the response available to the authorized agent;
-    15. it is retained until the agent acknowledges it.
+    14. only after accounting settlement is the response available, and only to a caller holding
+        the agent's private key (an agent-signed, single-use ResponseAuthorization);
+    15. it is retained until the agent acknowledges it, with a separate signed authorization.
+
+The service exposes no purchase-capable gateway, no ledger and no writable coordinator: reads go
+through `accounting` (AccountingView), and every provider call it makes is preceded by Core's
+committed `begin_delivery` and claimed through Core's delivery authority (I1e).
 
 Accounting settlement is not XRPL settlement: no XRPL transaction exists here.
 
@@ -50,10 +55,12 @@ from credence.core.objects import (
     ProcurementClass,
     PurchaseRequest,
     Quote,
+    Reservation,
     ServiceClass,
     SignedObject,
 )
 from credence.core.primitives import (
+    FacilityId,
     MicroTrlusd,
     Nonce,
     Purpose,
@@ -69,8 +76,13 @@ from credence.core.reservation_ledger import (
     reservation_id_for,
 )
 from credence.core.settlement_coordinator import (
+    DeliveryAttempt,
     DeliverySubmission,
+    EvidenceBytes,
+    FacilityExposure,
+    LateDeliveryDispute,
     NoDeliveryReason,
+    NoDeliveryRelease,
     PurchaseReference,
     SettlementCoordinator,
     SettlementOutcome,
@@ -81,6 +93,7 @@ from credence.core.settlement_coordinator import (
 from credence.core.signatures import KeyRegistry
 from credence.inference.gateway import (
     DeliveryCaptured,
+    DeliveryNotAuthorized,
     Gateway,
     ProviderFailed,
     ProviderFailureKind,
@@ -88,10 +101,17 @@ from credence.inference.gateway import (
 )
 from credence.inference.payload import PayloadError, payload_digest
 from credence.inference.provider import InferenceProvider
+from credence.integration.authorization import (
+    NotAuthorized,
+    ResponseAction,
+    ResponseAuthorization,
+    verify_response_authorization,
+)
 from credence.integration.journal import (
     IN_FLIGHT,
     RESPONSE_AVAILABLE,
     Journal,
+    NonceReused,
     Operation,
     OperationState,
 )
@@ -145,12 +165,53 @@ class ResponseUnavailable(RuntimeError):
         self.state = state
 
 
-class NotAuthorized(RuntimeError):
-    pass
-
-
 class UnknownOperation(KeyError):
     pass
+
+
+__all__ = ["NotAuthorized"]  # re-exported: retrieve and acknowledge raise it
+
+
+class AccountingView:
+    """Read-only access to Core's accounting records for one integration database.
+
+    No reserve, release, settle or provider call is reachable through it."""
+
+    def __init__(self, ledger: ReservationLedger, coordinator: SettlementCoordinator) -> None:
+        self.__ledger = ledger
+        self.__coordinator = coordinator
+
+    def exposure(self, facility_id: FacilityId, now: Timestamp) -> FacilityExposure:
+        return self.__coordinator.exposure(facility_id, now)
+
+    def chain_head(self, facility_id: FacilityId) -> Sha256Digest | None:
+        return self.__coordinator.chain_head(facility_id)
+
+    def receipt_settled(self, receipt_digest: Sha256Digest) -> bool:
+        return self.__coordinator.receipt_settled(receipt_digest)
+
+    def disputes(self) -> list[tuple[str, str, str, str, str, str, str]]:
+        return self.__coordinator.disputes()
+
+    def dispute_evidence(
+        self, receipt_digest: Sha256Digest
+    ) -> list[tuple[str, str, EvidenceBytes]]:
+        return self.__coordinator.dispute_evidence(receipt_digest)
+
+    def late_delivery_disputes(self) -> list[LateDeliveryDispute]:
+        return self.__coordinator.late_delivery_disputes()
+
+    def no_delivery_releases(self) -> list[NoDeliveryRelease]:
+        return self.__coordinator.no_delivery_releases()
+
+    def delivery_attempt(self, reservation_id: ReservationId) -> DeliveryAttempt | None:
+        return self.__coordinator.delivery_attempt(reservation_id)
+
+    def reservation(self, reservation_id: ReservationId) -> Reservation:
+        return self.__ledger.get(reservation_id)
+
+    def release_reason(self, reservation_id: ReservationId) -> str | None:
+        return self.__ledger.release_reason(reservation_id)
 
 
 @dataclass(frozen=True)
@@ -261,11 +322,14 @@ class IntegrationService:
                 gateway_key=gateway_key,
                 providers=providers,
                 clock=clock,
+                delivery_authority=self._coordinator,
             )
+            self._accounting = AccountingView(self._ledger, self._coordinator)
         except BaseException:
             self._ownership.release()
             raise
         self._clock = clock
+        self._registry = registry
         self._crash = crash_hook or (lambda point: None)
         self._locks: dict[str, threading.Lock] = {}
         self._locks_guard = threading.Lock()
@@ -306,16 +370,9 @@ class IntegrationService:
     # --- read-only views -----------------------------------------------------------------
 
     @property
-    def coordinator(self) -> SettlementCoordinator:
-        return self._coordinator
-
-    @property
-    def gateway(self) -> Gateway:
-        return self._gateway
-
-    @property
-    def ledger(self) -> ReservationLedger:
-        return self._ledger
+    def accounting(self) -> AccountingView:
+        """Read-only Core accounting. The service exposes no gateway, ledger or coordinator."""
+        return self._accounting
 
     def operation(self, operation_id: str) -> PurchaseReport:
         op = self._journal.get(operation_id)
@@ -429,6 +486,7 @@ class IntegrationService:
 
         chosen = selection.chosen.purchase
         signature = chosen.request_signature
+        signer_key = None if signature is None else self._registry.lookup(signature.key_id)
         reservation_id = reservation_id_for(chosen.request)
         self._journal.create(
             {
@@ -440,6 +498,7 @@ class IntegrationService:
                 "reservation_id": reservation_id.value,
                 "request_digest": chosen.request.digest().value,
                 "agent_key_id": None if signature is None else signature.key_id.value,
+                "agent_subject": None if signer_key is None else signer_key.subject,
                 "request": chosen.request.canonical_bytes(),
                 "request_signature": None if signature is None else signature.canonical_bytes(),
                 "quote": chosen.quote.canonical_bytes(),
@@ -510,7 +569,14 @@ class IntegrationService:
             )
         self._crash("after_attempt_begun")
 
-        outcome = self._gateway.deliver(chosen, reserved, attempt, previous_receipt_digest=head)
+        try:
+            outcome = self._gateway.deliver(chosen, reserved, attempt, previous_receipt_digest=head)
+        except DeliveryNotAuthorized as exc:
+            if exc.reason != "EXPIRED":
+                raise  # left EXECUTING: recovery treats it as unknown (fail closed)
+            return self._journal.transition(
+                operation_id, S.EXECUTING, S.EXPIRED, self._clock(), detail="EXPIRED"
+            )
         self._crash("after_provider_returned")
         if isinstance(outcome, ProviderFailed):
             self._coordinator.record_unknown_delivery(
@@ -608,49 +674,70 @@ class IntegrationService:
 
     # --- response retrieval --------------------------------------------------------------
 
-    def retrieve(self, operation_id: str, agent_key_id: str) -> bytes:
-        """The response, only after accounting settlement and only for the requesting agent."""
-        self._require_open()
-        op = self._journal.get(operation_id)
+    def _authorize(self, authorization: ResponseAuthorization, action: ResponseAction) -> Operation:
+        op = self._journal.get(authorization.operation_id)
         if op is None:
-            raise UnknownOperation(operation_id)
-        if op.agent_key_id is None or op.agent_key_id != agent_key_id:
-            raise NotAuthorized(operation_id)
+            raise NotAuthorized("UNKNOWN_OPERATION")
+        verify_response_authorization(
+            authorization,
+            action=action,
+            operation_id=op.operation_id,
+            agent_key_id=op.agent_key_id,
+            agent_subject=op.agent_subject,
+            registry=self._registry,
+            now=self._clock(),
+        )
+        return op
+
+    def retrieve(self, authorization: ResponseAuthorization) -> bytes:
+        """The response, only after accounting settlement, and only for a caller holding the
+        requesting agent's key (an agent-signed, single-use authorization for this operation)."""
+        self._require_open()
+        op = self._authorize(authorization, ResponseAction.RETRIEVE)
         if op.state not in RESPONSE_AVAILABLE:
-            raise ResponseUnavailable(operation_id, op.state)
+            raise ResponseUnavailable(op.operation_id, op.state)
         if not self._coordinator.receipt_settled(Sha256Digest(str(op.receipt_digest))):
-            raise JournalInconsistency(f"{operation_id}: journal settled, Core not settled")
-        response = op.response
-        assert response is not None
-        if op.state is S.SETTLED:
-            self._journal.transition(
-                operation_id,
-                S.SETTLED,
-                S.RETRIEVED,
-                self._clock(),
-                retrieved_at=self._clock().value,
+            raise JournalInconsistency(f"{op.operation_id}: journal settled, Core not settled")
+        now = self._clock()
+        fields: dict[str, object] = {} if op.retrieved_at else {"retrieved_at": now.value}
+        try:
+            moved = self._journal.authorized_transition(
+                agent_key_id=authorization.agent_key_id.value,
+                nonce=authorization.nonce,
+                action=ResponseAction.RETRIEVE.value,
+                operation_id=op.operation_id,
+                expected=op.state,
+                to=S.RETRIEVED,
+                now=now,
+                **fields,
             )
+        except NonceReused:
+            raise NotAuthorized("NONCE_REUSED") from None
+        response = moved.response
+        assert response is not None
         return response
 
-    def acknowledge(self, operation_id: str, agent_key_id: str) -> None:
+    def acknowledge(self, authorization: ResponseAuthorization) -> None:
         """The agent confirms it holds the response; only then is the retained copy deleted."""
         self._require_open()
-        op = self._journal.get(operation_id)
-        if op is None:
-            raise UnknownOperation(operation_id)
-        if op.agent_key_id is None or op.agent_key_id != agent_key_id:
-            raise NotAuthorized(operation_id)
+        op = self._authorize(authorization, ResponseAction.ACKNOWLEDGE)
         if op.state is not S.RETRIEVED:
-            raise ResponseUnavailable(operation_id, op.state)
+            raise ResponseUnavailable(op.operation_id, op.state)
         now = self._clock()
-        self._journal.transition(
-            operation_id,
-            S.RETRIEVED,
-            S.ACKNOWLEDGED,
-            now,
-            response=None,
-            acknowledged_at=now.value,
-        )
+        try:
+            self._journal.authorized_transition(
+                agent_key_id=authorization.agent_key_id.value,
+                nonce=authorization.nonce,
+                action=ResponseAction.ACKNOWLEDGE.value,
+                operation_id=op.operation_id,
+                expected=S.RETRIEVED,
+                to=S.ACKNOWLEDGED,
+                now=now,
+                response=None,
+                acknowledged_at=now.value,
+            )
+        except NonceReused:
+            raise NotAuthorized("NONCE_REUSED") from None
 
     # --- recovery ------------------------------------------------------------------------
 

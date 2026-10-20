@@ -31,7 +31,6 @@ from pathlib import Path
 
 import pytest
 from i1_world import (
-    AGENT_KEY_ID,
     CONTROLLED,
     CONTROLLED_FACILITY,
     GENERAL_FACILITY,
@@ -48,15 +47,17 @@ from i1_world import (
     job,
     market_world,
     open_service,
+    retrieve,
     stale,
 )
 
 from credence.core.objects import DecisionRecord
 from credence.core.primitives import MicroTrlusd, ReservationId, ReservationStatus, Sha256Digest
-from credence.core.reservation_ledger import ReservationStateError
+from credence.core.reservation_ledger import ReservationLedger, ReservationStateError
 from credence.core.settlement_coordinator import (
     NoDeliveryReason,
     PurchaseReference,
+    SettlementCoordinator,
     SettlementRefused,
 )
 from credence.inference.receipt_state import ReceiptChain
@@ -84,6 +85,17 @@ def no_network(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
     yield
 
 
+@pytest.fixture(autouse=True)
+def gateway_chain_untouched(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The integrated path never reads or advances the gateway's in-memory receipt chain."""
+
+    def boom(*args: object) -> None:
+        raise AssertionError("integrated path touched the gateway's in-memory receipt chain")
+
+    monkeypatch.setattr(ReceiptChain, "advance", boom)
+    monkeypatch.setattr(ReceiptChain, "head", boom)
+
+
 def settled_report(report: object) -> PurchaseReport:
     assert isinstance(report, PurchaseReport), report
     assert report.state is S.SETTLED, report
@@ -106,7 +118,7 @@ def previous_of(service: IntegrationService, report: PurchaseReport) -> Sha256Di
 def test_fixed_p1_stale_facility_is_refreshed_from_core_before_signing(tmp_path: Path) -> None:
     service = open_service(tmp_path / "i.sqlite3", market_world(), register=(GENERAL_FACILITY,))
     settled_report(service.purchase(job(1), agent_signer))
-    drawn = service.coordinator.exposure(FID, NOW).drawn
+    drawn = service.accounting.exposure(FID, NOW).drawn
     assert drawn.value > 0
     second = settled_report(service.purchase(job(2, stale(GENERAL_FACILITY)), agent_signer))
     # the policy decision behind the reservation was made against Core's stored drawn amount
@@ -115,11 +127,12 @@ def test_fixed_p1_stale_facility_is_refreshed_from_core_before_signing(tmp_path:
             "SELECT decision_record_digest FROM reservations WHERE reservation_id = ?",
             (second.reservation_id,),
         ).fetchone()
-    policy_bytes = service.ledger.decision_record_bytes(policy_digest)
-    assert policy_bytes is not None
+        (policy_bytes,) = conn.execute(
+            "SELECT canonical FROM decision_records WHERE digest = ?", (policy_digest,)
+        ).fetchone()
     policy = DecisionRecord.from_canonical(json.loads(policy_bytes))
     assert policy.input_digests[1] == replace(GENERAL_FACILITY, drawn_micro_trlusd=drawn).digest()
-    assert service.coordinator.exposure(FID, NOW).drawn.value > drawn.value
+    assert service.accounting.exposure(FID, NOW).drawn.value > drawn.value
     # a facility whose terms disagree with Core's stored limit is refused, never signed
     wrong = replace(GENERAL_FACILITY, limit_micro_trlusd=MicroTrlusd(1))
     refused = service.purchase(job(3, wrong), agent_signer)
@@ -142,13 +155,12 @@ def test_fixed_p2_chain_moves_only_on_core_settlement_and_reply_follows_it(tmp_p
     service.close()
     reopened = open_service(db, world, recover=False)
     # delivered and verified-able, but not settled: no chain movement, no reply
-    assert reopened.coordinator.chain_head(FID) is None
-    assert reopened.gateway.chain.head(FID) is None
+    assert reopened.accounting.chain_head(FID) is None
     with pytest.raises(ResponseUnavailable):
-        reopened.retrieve(pending.operation_id, AGENT_KEY_ID)
+        retrieve(reopened, pending.operation_id)
     reopened.recover()
-    assert reopened.coordinator.chain_head(FID) == Sha256Digest(str(pending.receipt_digest))
-    assert reopened.retrieve(pending.operation_id, AGENT_KEY_ID) == pending.response
+    assert reopened.accounting.chain_head(FID) == Sha256Digest(str(pending.receipt_digest))
+    assert retrieve(reopened, pending.operation_id) == pending.response
 
 
 def test_fixed_p2_chain_broken_keeps_the_hold_the_dispute_and_the_evidence(tmp_path: Path) -> None:
@@ -174,17 +186,17 @@ def test_fixed_p2_chain_broken_keeps_the_hold_the_dispute_and_the_evidence(tmp_p
     op = reopened.journal_entry(pending.operation_id)
     assert op.state is S.DISPUTED and op.reason_code == "CHAIN_BROKEN"
     rid = ReservationId(str(op.reservation_id))
-    assert reopened.ledger.get(rid).status is ReservationStatus.HELD  # not released
-    assert reopened.coordinator.exposure(FID, NOW).drawn.value == 0  # not charged
-    assert reopened.coordinator.chain_head(FID) == Sha256Digest(foreign)  # not advanced
+    assert reopened.accounting.reservation(rid).status is ReservationStatus.HELD  # not released
+    assert reopened.accounting.exposure(FID, NOW).drawn.value == 0  # not charged
+    assert reopened.accounting.chain_head(FID) == Sha256Digest(foreign)  # not advanced
     digest = Sha256Digest(str(op.receipt_digest))
-    ((kind, reason, evidence),) = reopened.coordinator.dispute_evidence(digest)
+    ((kind, reason, evidence),) = reopened.accounting.dispute_evidence(digest)
     assert (kind, reason) == ("rejected_submission", "CHAIN_BROKEN")
     receipt = op.receipt()
     assert receipt is not None and evidence.receipt == receipt.canonical_bytes()
     assert op.response == pending.response  # the delivered reply is retained, not released
     with pytest.raises(ResponseUnavailable):
-        reopened.retrieve(op.operation_id, AGENT_KEY_ID)
+        retrieve(reopened, op.operation_id)
 
 
 # --- chain divergence -----------------------------------------------------------------------------
@@ -205,7 +217,7 @@ def test_fixed_chain_divergence_receipts_chain_to_core_after_a_dispute(tmp_path:
     assert service.operation(operation_id_for("job-facility-market-general-2")).state is S.UNKNOWN
     third = settled_report(service.purchase(job(3), agent_signer))
     assert previous_of(service, third) == receipt_digest(service, first)
-    assert service.coordinator.chain_head(FID) == receipt_digest(service, third)
+    assert service.accounting.chain_head(FID) == receipt_digest(service, third)
 
 
 # --- gateway restart ------------------------------------------------------------------------------
@@ -219,7 +231,6 @@ def test_fixed_gateway_restart_chains_to_cores_persisted_head(tmp_path: Path) ->
     first = settled_report(service.purchase(job(1), agent_signer))
     service.close()
     restarted = open_service(db, world, clock=clock)
-    assert restarted.gateway.chain.head(FID) is None  # fresh process memory
     second = settled_report(restarted.purchase(job(2), agent_signer))
     assert previous_of(restarted, second) == receipt_digest(restarted, first)
 
@@ -272,19 +283,13 @@ def test_fixed_concurrent_same_facility_purchases_are_serialized_and_both_settle
     digests = {receipt_digest(service, r) for r in reports}
     assert previous.count(None) == 1  # exactly one first receipt; the rest form one chain
     assert {p for p in previous if p is not None} <= digests
-    assert service.coordinator.disputes() == []
-    exposure = service.coordinator.exposure(CONTROLLED_FACILITY.facility_id, NOW)
+    assert service.accounting.disputes() == []
+    exposure = service.accounting.exposure(CONTROLLED_FACILITY.facility_id, NOW)
     assert exposure.held.value == 0
 
 
-def test_fixed_concurrent_purchases_never_touch_the_gateway_chain(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    def boom(*args: object) -> None:
-        raise AssertionError("the integrated path must never read or advance the gateway chain")
-
-    monkeypatch.setattr(ReceiptChain, "advance", boom)
-    monkeypatch.setattr(ReceiptChain, "head", boom)
+def test_fixed_concurrent_purchases_never_touch_the_gateway_chain(tmp_path: Path) -> None:
+    """The autouse guard makes any read or advance of the gateway's chain fail."""
     world = market_world()
     service = open_service(tmp_path / "i.sqlite3", world, register=(CONTROLLED_FACILITY,))
     results = _concurrently(service, [1, 2], CONTROLLED_FACILITY, CONTROLLED)
@@ -322,17 +327,19 @@ def test_fixed_p6_provider_not_connected_is_released_through_core_with_audit(
     )
     report = service.purchase(job(1, CONTROLLED_FACILITY, CONTROLLED), agent_signer)
     assert isinstance(report, PurchaseReport) and report.state is S.RELEASED_UNDELIVERED
-    (audit,) = service.coordinator.no_delivery_releases()
+    (audit,) = service.accounting.no_delivery_releases()
     assert audit.reservation_id.value == report.reservation_id
     assert audit.reason is NoDeliveryReason.PROVIDER_NOT_CONNECTED
-    assert service.coordinator.exposure(CONTROLLED_FACILITY.facility_id, NOW).held.value == 0
-    assert service.coordinator.delivery_attempt(ReservationId(str(report.reservation_id))) is None
+    assert service.accounting.exposure(CONTROLLED_FACILITY.facility_id, NOW).held.value == 0
+    assert service.accounting.delivery_attempt(ReservationId(str(report.reservation_id))) is None
     # the bare ledger release is no longer an unaudited bypass
     service2 = open_service(tmp_path / "j.sqlite3", market_world(), register=(CONTROLLED_FACILITY,))
     blocked = service2.purchase(job(2, CONTROLLED_FACILITY, CONTROLLED), agent_signer)
     assert isinstance(blocked, PurchaseReport)
     with pytest.raises(ReservationStateError, match="USE_SETTLEMENT_COORDINATOR"):
-        service2.ledger.release(ReservationId(str(blocked.reservation_id)), NOW)
+        ReservationLedger(tmp_path / "j.sqlite3").release(
+            ReservationId(str(blocked.reservation_id)), NOW
+        )
 
 
 # --- late delivery --------------------------------------------------------------------------------
@@ -350,17 +357,17 @@ def test_fixed_late_delivery_is_disputed_with_evidence_never_settled(tmp_path: P
     assert isinstance(report, PurchaseReport) and report.state is S.LATE
     op = service.journal_entry(report.operation_id)
     rid = ReservationId(str(op.reservation_id))
-    assert service.ledger.release_reason(rid) == "expired"
-    assert service.coordinator.exposure(FID, clock()).drawn.value == 0
+    assert service.accounting.release_reason(rid) == "expired"
+    assert service.accounting.exposure(FID, clock()).drawn.value == 0
     assert count(db, "SELECT COUNT(*) FROM accounting_settlements") == 0
-    (late,) = service.coordinator.late_delivery_disputes()
+    (late,) = service.accounting.late_delivery_disputes()
     receipt = op.receipt()
     assert receipt is not None
     assert late.receipt_digest == receipt.digest()
     assert late.evidence.receipt == receipt.canonical_bytes()
     assert op.response is not None and database_contains(db, op.response)  # retained, not released
     with pytest.raises(ResponseUnavailable):
-        service.retrieve(report.operation_id, AGENT_KEY_ID)
+        retrieve(service, report.operation_id)
     assert slow.calls == 1
 
 
@@ -386,7 +393,68 @@ def test_invalid_release_attempts_through_core_are_refused_after_delivery_began(
         ReservationId(str(op.reservation_id)), request, quote, service_class, profile
     )
     with pytest.raises(SettlementRefused, match="DELIVERY_ATTEMPTED"):
-        service.coordinator.release_undelivered(
+        SettlementCoordinator(ReservationLedger(db), world.registry()).release_undelivered(
             ref, NoDeliveryReason.ABANDONED_BEFORE_EXECUTION, NOW.plus_seconds(30)
         )
-    assert service.ledger.get(ref.reservation_id).status is ReservationStatus.HELD
+    assert service.accounting.reservation(ref.reservation_id).status is ReservationStatus.HELD
+
+
+# --- I1e: R3, the standalone gateway bypass (Inference finding I-2) -------------------------------
+
+
+def test_r3_service_exposes_no_purchase_reserve_or_release_bypass(tmp_path: Path) -> None:
+    service = open_service(tmp_path / "i.sqlite3", market_world(), register=(GENERAL_FACILITY,))
+    public = {name for name in dir(service) if not name.startswith("_")}
+    assert public == {
+        "accounting",
+        "acknowledge",
+        "close",
+        "journal_entry",
+        "operation",
+        "pending_operations",
+        "purchase",
+        "recover",
+        "register_facility",
+        "retrieve",
+    }
+    view = {name for name in dir(service.accounting) if not name.startswith("_")}
+    assert view == {
+        "chain_head",
+        "delivery_attempt",
+        "dispute_evidence",
+        "disputes",
+        "exposure",
+        "late_delivery_disputes",
+        "no_delivery_releases",
+        "receipt_settled",
+        "release_reason",
+        "reservation",
+    }
+
+
+def test_r3_standalone_gateway_on_the_accounted_database_is_refused(tmp_path: Path) -> None:
+    """R3: a standalone gateway built on the integration's accounted ledger neither reserves nor
+    calls a provider, so no delivered inference can be falsely released afterwards."""
+    from inference_world import GATEWAY_KEY, StepClock
+    from market_world import GENERAL, candidates
+
+    from credence.inference.gateway import Gateway, GatewayRefusal, Refused
+
+    world = market_world()
+    db = tmp_path / "i.sqlite3"
+    service = open_service(db, world, register=(GENERAL_FACILITY,))
+    standalone = Gateway(
+        ledger=ReservationLedger(db),
+        registry=world.registry(),
+        gateway_key=GATEWAY_KEY,
+        providers=(world.nebius, world.local),
+        clock=StepClock(),
+    )
+    outcome = standalone.purchase(candidates(GENERAL_FACILITY, GENERAL)[0])
+    assert isinstance(outcome, Refused)
+    assert outcome.refusal is GatewayRefusal.ACCOUNTED_FACILITY
+    assert world.nebius_transport.posts == [] and world.local.calls == 0
+    assert count(db, "SELECT COUNT(*) FROM reservations") == 0
+    assert service.accounting.no_delivery_releases() == []
+    # the supported path still works on the same database
+    settled_report(service.purchase(job(1), agent_signer))

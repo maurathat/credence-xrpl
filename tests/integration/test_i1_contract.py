@@ -4,7 +4,7 @@ import ast
 import re
 from pathlib import Path
 
-from credence.integration import journal, service
+from credence.integration import authorization, journal, service
 
 ROOT = Path(__file__).resolve().parents[2]
 TEXT = (ROOT / "contracts" / "INTEGRATION-FLOW.md").read_text()
@@ -59,3 +59,21 @@ def test_integration_has_no_network_or_xrpl_dependency() -> None:
         assert not roots & {"xrpl", "socket", "urllib", "http", "requests", "httpx"}
         assert not {name for name in imported if name.startswith("credence.xrpl")}
         assert "SettlementRecord" not in source
+
+
+def test_not_authorized_codes_match_source() -> None:
+    raised: set[str] = set()
+    for module in (authorization, service):
+        tree = ast.parse(Path(module.__file__).read_text())  # type: ignore[arg-type]
+        for node in ast.walk(tree):
+            if (
+                isinstance(node, ast.Call)
+                and isinstance(node.func, ast.Name)
+                and node.func.id == "NotAuthorized"
+                and node.args
+                and isinstance(node.args[0], ast.Constant)
+            ):
+                raised.add(str(node.args[0].value))
+    assert set(listed("Response authorization", "`NotAuthorized` codes: ")) == raised
+    assert authorization.AUTHORIZATION_DOMAIN in TEXT
+    assert str(authorization.MAX_LIFETIME_SECONDS) in section("Response authorization")

@@ -25,6 +25,7 @@ from credence.core.primitives import (
     MicroTrlusd,
     Nonce,
     ReasonCode,
+    ReservationId,
     ReservationStatus,
     Sha256Digest,
 )
@@ -32,6 +33,7 @@ from credence.core.reservation_ledger import ReservationLedger, ReservationState
 from credence.core.settlement_coordinator import (
     FAULT_POINTS,
     DeliverySubmission,
+    PurchaseReference,
     SettlementCoordinator,
     SettlementOutcome,
     SettlementRefused,
@@ -43,8 +45,14 @@ OTHER = Sha256Digest.from_hex("cd" * 32)
 R = ReasonCode
 
 
+def reference(p: SignedPurchase, reservation_id: ReservationId) -> PurchaseReference:
+    return PurchaseReference(
+        reservation_id, p.request, p.quote, p.service_class, p.execution_profile
+    )
+
+
 class World:
-    """One registered facility on a fresh database."""
+    """One registered facility on a fresh database. Each reservation gets its delivery attempt."""
 
     def __init__(self, tmp_path: Path, base: Facility | None = None, **kwargs: object) -> None:
         self.path = tmp_path / "settlement.sqlite3"
@@ -57,6 +65,8 @@ class World:
         result = self.coord.reserve(p, NOW)
         assert result.decision.accepted, result.decision.record.reason_code
         assert result.reservation is not None
+        # I1e: settlement needs Core's persisted delivery attempt, recorded before delivery.
+        self.coord.begin_delivery(reference(p, result.reservation.reservation_id), NOW)
         return p, result.reservation
 
     def drawn(self) -> int:
@@ -378,9 +388,9 @@ def test_stale_or_conflicting_facility_accounting_is_refused(w: World) -> None:
     with pytest.raises(ReservationStateError) as exc:
         w.coord.reserve(stale, NOW)
     assert exc.value.reason == "STALE_FACILITY_ACCOUNTING"
-    with pytest.raises(ReservationStateError) as exc:  # the bare C2 ledger path is guarded too
+    with pytest.raises(ReservationStateError) as exc:  # I1e: the bare C2 path is closed outright
         w.ledger.reserve(_context(purchase(3, w.base)), NOW)
-    assert exc.value.reason == "STALE_FACILITY_ACCOUNTING"
+    assert exc.value.reason == "USE_SETTLEMENT_COORDINATOR"
     raised = purchase(
         4, replace(current_facility(w.coord, w.base), limit_micro_trlusd=MicroTrlusd(10**9))
     )

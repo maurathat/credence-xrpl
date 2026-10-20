@@ -41,6 +41,7 @@ from credence.core.reservation_ledger import ReservationLedger  # noqa: E402
 from credence.core.settlement_coordinator import (  # noqa: E402
     FAULT_POINTS,
     DeliverySubmission,
+    PurchaseReference,
     SettlementCoordinator,
     SettlementRefused,
 )
@@ -68,6 +69,18 @@ class Run:
         p = purchase(index, current_facility(self.coord, self.base), quote=ACCOUNTING_QUOTE)
         result = self.coord.reserve(p, NOW)
         assert result.reservation is not None
+        # Integration I1e: settlement needs Core's persisted delivery attempt. Recording it is not
+        # a transcript step, so the C3B transcripts are unchanged.
+        self.coord.begin_delivery(
+            PurchaseReference(
+                result.reservation.reservation_id,
+                p.request,
+                p.quote,
+                p.service_class,
+                p.execution_profile,
+            ),
+            NOW,
+        )
         self.steps.append(
             {
                 "action": "reserve",

@@ -121,6 +121,7 @@ CREATE TABLE IF NOT EXISTS delivery_attempts (
     facility_id TEXT NOT NULL,
     request_digest TEXT NOT NULL,
     begun_at TEXT NOT NULL,
+    execution_claimed_at TEXT,
     unknown_cause TEXT CHECK (unknown_cause IN (
         'provider_unavailable', 'provider_execution_error', 'provider_malformed_response',
         'interrupted'
@@ -274,13 +275,27 @@ class FacilityExposure:
 
 @dataclass(frozen=True)
 class DeliveryAttempt:
-    """Core's durable record that a provider may be called for this reservation."""
+    """Core's durable record that a provider may be called for this reservation.
+
+    `execution_claimed_at` is set once, by `claim_execution`, immediately before the gateway calls
+    the provider. A recorded attempt is not a provider execution; a claim is the supported
+    interface's last committed step before one."""
 
     reservation_id: ReservationId
     facility_id: FacilityId
     request_digest: Sha256Digest
     begun_at: Timestamp
     unknown_cause: UnknownDeliveryCause | None
+    execution_claimed_at: Timestamp | None = None
+
+    def same_attempt(self, other: DeliveryAttempt) -> bool:
+        """Same reservation, facility, request and begin time (state fields aside)."""
+        return (
+            self.reservation_id,
+            self.facility_id,
+            self.request_digest,
+            self.begun_at,
+        ) == (other.reservation_id, other.facility_id, other.request_digest, other.begun_at)
 
 
 @dataclass(frozen=True)
@@ -502,8 +517,8 @@ class SettlementCoordinator:
     @staticmethod
     def _attempt(conn: sqlite3.Connection, rid: str) -> DeliveryAttempt | None:
         row = conn.execute(
-            "SELECT reservation_id, facility_id, request_digest, begun_at, unknown_cause "
-            "FROM delivery_attempts WHERE reservation_id = ?",
+            "SELECT reservation_id, facility_id, request_digest, begun_at, unknown_cause, "
+            "execution_claimed_at FROM delivery_attempts WHERE reservation_id = ?",
             (rid,),
         ).fetchone()
         if row is None:
@@ -514,6 +529,7 @@ class SettlementCoordinator:
             request_digest=Sha256Digest(str(row[2])),
             begun_at=Timestamp(str(row[3])),
             unknown_cause=None if row[4] is None else UnknownDeliveryCause(str(row[4])),
+            execution_claimed_at=None if row[5] is None else Timestamp(str(row[5])),
         )
 
     # --- reserve -------------------------------------------------------------------------
@@ -536,7 +552,9 @@ class SettlementCoordinator:
         with self._ledger.write_transaction() as conn:
             if ReservationLedger.facility_account(conn, purchase.facility.facility_id) is None:
                 raise SettlementRefused("UNACCOUNTED_FACILITY", purchase.facility.facility_id.value)
-            return self._ledger.reserve_in_transaction(conn, context, now)
+            # The facts in `context` were computed above from the signed request; this internal
+            # path is the only way to reserve on a registered facility.
+            return self._ledger._reserve_accounted(conn, context, now)
 
     # --- shared checks -------------------------------------------------------------------
 
@@ -637,6 +655,60 @@ class SettlementCoordinator:
             unknown_cause=None,
         )
 
+    def claim_execution(self, attempt: DeliveryAttempt, now: Timestamp) -> DeliveryAttempt:
+        """Authorize exactly one provider call under Core's persisted attempt (I1e).
+
+        The supplied attempt is only an identifier: it must equal the persisted record (no
+        fabricated attempt), the attempt must be unclaimed and not marked unknown, and the
+        reservation must be held and live. The claim commits before the caller calls the provider.
+        """
+        rid = attempt.reservation_id.value
+        expired = False
+        with self._ledger.write_transaction() as conn:
+            persisted = self._attempt(conn, rid)
+            if persisted is None:
+                raise SettlementRefused("NO_DELIVERY_ATTEMPT", rid)
+            if not persisted.same_attempt(attempt):
+                raise SettlementRefused("ATTEMPT_MISMATCH", rid)
+            if persisted.unknown_cause is not None:
+                raise SettlementRefused("DELIVERY_OUTCOME_UNKNOWN", rid)
+            if persisted.execution_claimed_at is not None:
+                raise SettlementRefused("EXECUTION_ALREADY_CLAIMED", rid)
+            row = conn.execute(
+                "SELECT status, expires_at FROM reservations WHERE reservation_id = ?", (rid,)
+            ).fetchone()
+            if row is None or row[0] != ReservationStatus.HELD.value:
+                raise SettlementRefused("NOT_HELD", rid)
+            if not now.value < row[1]:
+                conn.execute(
+                    "UPDATE reservations SET status = 'released', release_reason = 'expired' "
+                    "WHERE reservation_id = ?",
+                    (rid,),
+                )
+                expired = True
+            else:
+                conn.execute(
+                    "UPDATE delivery_attempts SET execution_claimed_at = ? "
+                    "WHERE reservation_id = ? AND execution_claimed_at IS NULL",
+                    (now.value, rid),
+                )
+                claimed = self._attempt(conn, rid)
+        if expired:
+            raise SettlementRefused("EXPIRED", rid)
+        assert claimed is not None
+        return claimed
+
+    @staticmethod
+    def _attempt_refusal(
+        attempt: DeliveryAttempt | None, facility_id: FacilityId, request_digest: Sha256Digest
+    ) -> str | None:
+        """Settlement and late-delivery handling need Core's persisted attempt for this request."""
+        if attempt is None:
+            return "NO_DELIVERY_ATTEMPT"
+        if attempt.facility_id != facility_id or attempt.request_digest != request_digest:
+            return "ATTEMPT_MISMATCH"
+        return None
+
     def release_undelivered(
         self, ref: PurchaseReference, reason: NoDeliveryReason, now: Timestamp
     ) -> None:
@@ -704,14 +776,10 @@ class SettlementCoordinator:
 
     def settle(self, submission: DeliverySubmission, now: Timestamp) -> SettlementResult:
         """Verify one delivery and settle its reservation in accounting, atomically."""
-        expired = False
         with self._ledger.write_transaction() as conn:
             result = self._settle_in(conn, submission, now)
-            if result is None:
-                expired = True
-        if expired:
-            raise SettlementRefused("EXPIRED", submission.reservation_id.value)
-        assert result is not None
+        if isinstance(result, str):  # committed (an expiry release); then refused
+            raise SettlementRefused(result, submission.reservation_id.value)
         return result
 
     def _record_late(
@@ -722,19 +790,27 @@ class SettlementCoordinator:
         policy_digest: str,
         expires_at: str,
         now: Timestamp,
-    ) -> None:
-        """Keep an authenticated late delivery's evidence. Never settles, never moves drawn."""
+    ) -> str:
+        """Keep an authenticated late delivery's evidence. Never settles, never moves drawn.
+
+        Returns the refusal to raise: `EXPIRED`, or for an accounted facility `NO_DELIVERY_ATTEMPT`
+        or `ATTEMPT_MISMATCH` when Core never authorized this delivery (nothing is recorded)."""
         facility_id = FacilityId(facility_value)
         if ReservationLedger.facility_account(conn, facility_id) is None:
-            return
+            return "EXPIRED"
+        refusal = self._attempt_refusal(
+            self._attempt(conn, sub.reservation_id.value), facility_id, sub.request.digest()
+        )
+        if refusal is not None:
+            return refusal
         try:
             policy = self._approved_policy(conn, policy_digest, sub.reservation_id.value)
         except SettlementRefused:
-            return
+            return "EXPIRED"
         if not self._is_approved(
             policy, facility_id, sub.request, sub.quote, sub.service_class, sub.execution_profile
         ):
-            return
+            return "EXPIRED"
         facts = verifier_signature_facts(
             sub.receipt,
             sub.gateway_signature,
@@ -743,7 +819,7 @@ class SettlementCoordinator:
             self._registry,
         )
         if not _authenticated(sub.receipt, facts, policy.input_digests[0]):
-            return
+            return "EXPIRED"
         evidence = _evidence(sub)
         conn.execute(
             "INSERT OR IGNORE INTO late_delivery_disputes (receipt_digest, reservation_id, "
@@ -763,10 +839,12 @@ class SettlementCoordinator:
                 evidence.delivered_response_digest.value,
             ),
         )
+        return "EXPIRED"
 
     def _settle_in(
         self, conn: sqlite3.Connection, sub: DeliverySubmission, now: Timestamp
-    ) -> SettlementResult | None:
+    ) -> SettlementResult | str:
+        """A result, or a refusal reason to raise after the transaction commits."""
         rid = sub.reservation_id.value
         row = conn.execute(
             "SELECT facility_id, maximum_amount_micro_trlusd, expires_at, status, "
@@ -779,8 +857,7 @@ class SettlementCoordinator:
         late = not now.value < expires_at
         if status == ReservationStatus.RELEASED.value and release_reason == "expired" and late:
             # Already lapsed (for example by another reserve's expiry sweep): still a late delivery.
-            self._record_late(conn, sub, str(facility_value), policy_digest, expires_at, now)
-            return None  # the caller raises EXPIRED
+            return self._record_late(conn, sub, str(facility_value), policy_digest, expires_at, now)
         if status != ReservationStatus.HELD.value:
             raise SettlementRefused("NOT_HELD", rid)
         if late:
@@ -789,8 +866,7 @@ class SettlementCoordinator:
                 "WHERE reservation_id = ?",
                 (rid,),
             )
-            self._record_late(conn, sub, str(facility_value), policy_digest, expires_at, now)
-            return None  # committed as expired; the caller raises EXPIRED
+            return self._record_late(conn, sub, str(facility_value), policy_digest, expires_at, now)
         facility_id = FacilityId(str(facility_value))
         account = ReservationLedger.facility_account(conn, facility_id)
         if account is None:
@@ -803,6 +879,10 @@ class SettlementCoordinator:
             policy, facility_id, sub.request, sub.quote, sub.service_class, sub.execution_profile
         ):
             raise SettlementRefused("WRONG_PURCHASE", rid)
+        # I1e: only a delivery Core authorized (a persisted attempt for this request) can settle.
+        refusal = self._attempt_refusal(self._attempt(conn, rid), facility_id, sub.request.digest())
+        if refusal is not None:
+            raise SettlementRefused(refusal, rid)
 
         facts = verifier_signature_facts(
             sub.receipt,

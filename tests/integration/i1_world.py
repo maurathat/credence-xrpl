@@ -8,9 +8,11 @@ Owner: Integration (San Antonio).
 
 from __future__ import annotations
 
+import hashlib
 import sqlite3
 import sys
 import threading
+import weakref
 from collections.abc import Callable, Sequence
 from dataclasses import replace
 from pathlib import Path
@@ -32,6 +34,7 @@ from market_world import (  # noqa: E402
     MarketWorld,
     market_world,
 )
+from nacl.signing import SigningKey  # noqa: E402
 
 from credence.core.objects import (  # noqa: E402
     Facility,
@@ -40,12 +43,24 @@ from credence.core.objects import (  # noqa: E402
     SignedObject,
 )
 from credence.core.primitives import MicroTrlusd, ProviderId, Timestamp  # noqa: E402
-from credence.core.signatures import key_id_for, sign  # noqa: E402
+from credence.core.signatures import (  # noqa: E402
+    KeyRegistry,
+    KeyRole,
+    KeyStatus,
+    RegisteredKey,
+    key_id_for,
+    sign,
+)
 from credence.inference.provider import (  # noqa: E402
     AttestationCapability,
     InferenceProvider,
     ProviderRequest,
     ProviderResult,
+)
+from credence.integration.authorization import (  # noqa: E402
+    ResponseAction,
+    ResponseAuthorization,
+    sign_response_authorization,
 )
 from credence.integration.service import IntegrationService, Job, Offer  # noqa: E402
 
@@ -63,8 +78,22 @@ OFFERS = (
     Offer(LOCAL_QUOTE, LOCAL_SERVICE, LOCAL_PROFILE),
 )
 AGENT_KEY_ID = key_id_for(AGENT_KEY.verify_key).value
-OTHER_KEY_ID = key_id_for(GATEWAY_KEY.verify_key).value  # registered, but not the agent's key
 TTL_SECONDS = 600
+# A second registered agent (TEST key, NOT FOR PRODUCTION) speaking for another borrower.
+AGENT_B_KEY = SigningKey(
+    hashlib.sha256(b"CREDENCE I1E TEST KEY - NOT FOR PRODUCTION - agent-b").digest()
+)
+AGENT_B_SUBJECT = "rAgentBSyntheticBorrowerXXXXXXXXXX"
+
+
+def registry_with_agent_b(world: MarketWorld) -> KeyRegistry:
+    registry = world.registry()
+    registry.register(
+        RegisteredKey(
+            key_id_for(AGENT_B_KEY.verify_key), KeyRole.AGENT, AGENT_B_SUBJECT, KeyStatus.CURRENT
+        )
+    )
+    return registry
 
 
 def agent_signer(request: PurchaseRequest) -> SignedObject:
@@ -104,6 +133,35 @@ class Clock:
     def advance(self, seconds: int) -> None:
         with self._lock:
             self._next = self._next.plus_seconds(seconds)
+
+    def peek(self) -> Timestamp:
+        with self._lock:
+            return self._next
+
+
+_CLOCKS: weakref.WeakKeyDictionary[IntegrationService, Clock] = weakref.WeakKeyDictionary()
+
+
+def authorize(
+    service: IntegrationService,
+    operation_id: str,
+    action: ResponseAction,
+    *,
+    key: SigningKey = AGENT_KEY,
+    lifetime: int = 120,
+    nonce: str | None = None,
+) -> ResponseAuthorization:
+    """An agent-signed, single-use authorization valid for `lifetime` seconds of service time."""
+    expires_at = _CLOCKS[service].peek().plus_seconds(lifetime)
+    return sign_response_authorization(key, operation_id, action, expires_at, nonce=nonce)
+
+
+def retrieve(service: IntegrationService, operation_id: str) -> bytes:
+    return service.retrieve(authorize(service, operation_id, ResponseAction.RETRIEVE))
+
+
+def acknowledge(service: IntegrationService, operation_id: str) -> None:
+    service.acknowledge(authorize(service, operation_id, ResponseAction.ACKNOWLEDGE))
 
 
 class SimulatedCrash(BaseException):
@@ -212,17 +270,20 @@ def open_service(
     recover: bool = True,
     crash_hook: Callable[[str], None] | None = None,
     coordinator_fault: Callable[[str], None] | None = None,
+    registry: KeyRegistry | None = None,
 ) -> IntegrationService:
+    clock = Clock() if clock is None else clock
     service = IntegrationService(
         db,
-        registry=world.registry(),
+        registry=world.registry() if registry is None else registry,
         gateway_key=GATEWAY_KEY,
         providers=(world.nebius, world.local) if providers is None else providers,
-        clock=Clock() if clock is None else clock,
+        clock=clock,
         recover=recover,
         crash_hook=crash_hook,
         coordinator_fault=coordinator_fault,
     )
+    _CLOCKS[service] = clock
     for facility in register:
         service.register_facility(facility)
     return service

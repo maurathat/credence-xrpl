@@ -1,6 +1,6 @@
 # INFERENCE-GATEWAY-CONTRACT
 
-Owner: Inference (Claude Code). Status: Inference Checkpoint 3 (Nebius Tier 1 provider and the two-provider Qwen market added), amended in Integration I1c (`Gateway.deliver`; `contracts/requests/0002-inference-gateway-deliver.md`, authorized by Maura on 2026-10-19; Inference review pending). Only the owner edits this file. Other workstreams file a request in `contracts/requests/`.
+Owner: Inference (Claude Code). Status: Inference Checkpoint 3 (Nebius Tier 1 provider and the two-provider Qwen market added), amended in Integration I1c (`Gateway.deliver`; `contracts/requests/0002-inference-gateway-deliver.md`) and I1e (Core-authorized delivery, accounted facilities refused by `purchase`; `contracts/requests/0004-inference-authorized-delivery.md`), authorized by Maura on 2026-10-19; Inference review pending. Only the owner edits this file. Other workstreams file a request in `contracts/requests/`.
 
 This contract describes the in-process inference gateway in `credence/inference/`:
 - the gateway (`gateway.py`);
@@ -102,7 +102,7 @@ Plaintext boundary:
 
 1. **Prompt check.** Digest the prompt. If it is not UTF-8, return `Refused` with `PROMPT_NOT_UTF8`. If it differs from `request.prompt_digest`, return `Refused` with `PROMPT_DIGEST_MISMATCH`. Either way there is no Core call, no reservation and no provider call.
 2. **Signature facts.** Call `policy_signature_facts` on the request and its signature (C3A).
-3. **Reserve.** Call `ReservationLedger.reserve`, which runs the C2 policy engine. On reject, return `PolicyRejected` with the policy decision. The provider is never called.
+3. **Reserve.** Call `ReservationLedger.reserve`, which runs the C2 policy engine. On reject, return `PolicyRejected` with the policy decision. If the facility is registered in Core's settlement coordinator, the ledger refuses (`USE_SETTLEMENT_COORDINATOR`) and `purchase` returns `Refused` with `ACCOUNTED_FACILITY`. In either case the provider is never called.
 4. **Find the provider** named by `request.provider_id`. If none is connected, return `ProviderFailed` with `PROVIDER_UNAVAILABLE`.
 5. **Execute.** Read `started_at` from the clock, call `provider.execute(ProviderRequest)`, then read `completed_at`.
 6. **Check the result's shape.** On failure, return `ProviderFailed` with `PROVIDER_MALFORMED_RESPONSE`.
@@ -170,21 +170,24 @@ The Checkpoint 1 gateway only reads `SettledReceipts` and never marks a receipt 
 
 Core checks `CHAIN_BROKEN` before `REPLAYED_RECEIPT`. So a settled receipt resubmitted after the head has moved past it is rejected as `CHAIN_BROKEN`. `REPLAYED_RECEIPT` is reached only when the settled fact is true while the head still precedes the receipt.
 
-## Integrated delivery (I1c)
+## Integrated delivery (I1c, enforced in I1e)
 
-`Gateway.purchase` above is the standalone path and is unchanged. The integrated flow (`contracts/INTEGRATION-FLOW.md`) uses separate steps instead:
+`Gateway.purchase` above is the standalone path. **It is for unaccounted facilities only.** On a facility registered in Core's settlement coordinator, the ledger refuses its reservation, and `purchase` returns `Refused` with `ACCOUNTED_FACILITY` before any reservation, provider call or chain movement. Accounted facilities are bought through the integrated flow (`contracts/INTEGRATION-FLOW.md`), which uses these steps instead:
 - `Gateway.check_prompt(purchase)` runs step 1 alone and returns `Refused` or `None`.
 - `Gateway.connected(provider_id)` reports whether a provider with that ID is connected. It is read only.
-- `Gateway.deliver(purchase, reserved, attempt, *, previous_receipt_digest)` runs steps 4–7 for a reservation Core already made.
-  - `reserved` must be Core's accepting reservation for this exact request.
-  - `attempt` must be Core's recorded `DeliveryAttempt` for that reservation and request; otherwise `ValueError`.
+- `Gateway.deliver(purchase, reserved, attempt, *, previous_receipt_digest)` runs steps 4–7 for a reservation Core already made:
+  - `reserved` must be Core's accepting reservation for this exact request, and `attempt` must name Core's delivery attempt for it (same reservation and request); otherwise `ValueError`.
+  - **Core authorizes the call.** The gateway must be constructed with a `delivery_authority` (Core's `SettlementCoordinator`). Immediately before calling the provider, `deliver` asks it to claim the attempt (`claim_execution`). The supplied `DeliveryAttempt` is only an identifier: Core checks it against its persisted record. The record must exist and match exactly, be unclaimed and not marked unknown, and its reservation must be held and live.
+  - **Fail closed.** With no authority configured, `deliver` raises `DeliveryNotAuthorized` (`NO_DELIVERY_AUTHORITY`). If Core refuses the claim, it raises `DeliveryNotAuthorized` with Core's reason, for example `NO_DELIVERY_ATTEMPT` for a fabricated attempt, `ATTEMPT_MISMATCH` or `EXECUTION_ALREADY_CLAIMED`. Either way no provider is called. One attempt authorizes one provider call.
   - The receipt's `previous_receipt_digest` is the value supplied: Core's persisted chain head (`SettlementCoordinator.chain_head`).
-  - `deliver` returns `ProviderFailed` or `DeliveryCaptured`.
+  - `deliver` returns `ProviderFailed` (including when no provider is connected; then nothing is claimed) or `DeliveryCaptured`.
 
 What `deliver` does not do:
 - It reserves nothing and runs no verifier. Core's settlement coordinator verifies.
 - It neither reads nor moves the gateway's in-memory `ReceiptChain`.
 - `DeliveryCaptured` (reservation, accepting policy decision, evidence, exact response bytes) is not "verified" and does not make the response releasable. The response is released only after Core's accounting settlement. `DeliveryCaptured` is not part of `GatewayOutcome`.
+
+What these steps do not guarantee: they bind callers of the gateway and of Core's coordinator. A program that calls a provider adapter directly is outside them, and Credence does not claim otherwise. Such a delivery has no Core attempt, so Core will not settle it.
 
 ## Signing responsibilities
 
@@ -200,7 +203,7 @@ The gateway's key must be registered in the C3A key registry under the `gateway`
 
 | Outcome | When | Reservation | Provider called |
 | --- | --- | --- | --- |
-| `Refused` | Prompt check failed | None created | No |
+| `Refused` | Prompt check failed, or the facility is accounted (`ACCOUNTED_FACILITY`) | None created | No |
 | `PolicyRejected` | Core policy rejected | None created | No |
 | `ProviderFailed` | Operational provider failure | Held | Possibly |
 | `DeliveryRejected` | Core verifier rejected | Held | Yes |
@@ -210,7 +213,7 @@ The gateway's key must be registered in the C3A key registry under the `gateway`
 
 ## Failure behaviour
 
-Gateway refusal codes: `PROMPT_NOT_UTF8`, `PROMPT_DIGEST_MISMATCH`.
+Gateway refusal codes: `PROMPT_NOT_UTF8`, `PROMPT_DIGEST_MISMATCH`, `ACCOUNTED_FACILITY`.
 
 Provider failure kinds: `PROVIDER_UNAVAILABLE`, `PROVIDER_EXECUTION_ERROR`, `PROVIDER_MALFORMED_RESPONSE`.
 

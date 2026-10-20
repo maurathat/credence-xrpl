@@ -15,8 +15,10 @@ spend the last headroom. A reservation is live while now < expires_at. Headroom 
 
 Facility accounting (C3B): a facility registered in `facility_accounts` has an authoritative stored
 limit and drawn amount, maintained only by the settlement coordinator. For such a facility,
-`reserve` refuses a Facility whose limit or drawn differs from the stored row (stale or conflicting
-accounting), and the bare `settle` here refuses outright: settlement must go through the
+the coordinator's internal reserve step refuses a Facility whose limit or drawn differs from the
+stored row (stale or conflicting accounting). Since Integration I1e the public `reserve` and
+`reserve_in_transaction` refuse a registered facility outright: they take caller-supplied signature
+facts, which only the coordinator may compute. The bare `settle` here refuses outright: settlement must go through the
 coordinator, which updates drawn in the same transaction. Since Integration I1c the bare `release`
 refuses too: a hold on an accounted facility is released only through the coordinator's audited
 paths. Unregistered facilities keep the C2 behaviour.
@@ -256,6 +258,10 @@ class ReservationLedger:
 
         Reading headroom and nonce use, deciding, and writing the reservation, the used nonce and
         the decision record are one BEGIN IMMEDIATE transaction.
+
+        Unregistered facilities only. `PurchaseContext` carries caller-supplied signature facts,
+        so a registered (accounted) facility is refused (`USE_SETTLEMENT_COORDINATOR`): the
+        settlement coordinator reserves those, computing the facts itself from signed objects.
         """
         with self._write() as conn:
             return self.reserve_in_transaction(conn, context, now)
@@ -281,7 +287,32 @@ class ReservationLedger:
     def reserve_in_transaction(
         self, conn: sqlite3.Connection, context: PurchaseContext, now: Timestamp
     ) -> ReserveResult:
-        """`reserve`, inside a transaction the caller opened with `write_transaction`."""
+        """`reserve`, inside a transaction the caller opened with `write_transaction`.
+
+        Unregistered facilities only (`USE_SETTLEMENT_COORDINATOR` otherwise), as for `reserve`.
+        """
+        facility_id = context.facility.facility_id
+        if self.facility_account(conn, facility_id) is not None:
+            raise ReservationStateError("USE_SETTLEMENT_COORDINATOR", facility_id.value)
+        return self._reserve_step(conn, context, now)
+
+    def _reserve_accounted(
+        self, conn: sqlite3.Connection, context: PurchaseContext, now: Timestamp
+    ) -> ReserveResult:
+        """Internal to the settlement coordinator (Integration I1e). Not a public interface.
+
+        The coordinator calls this inside its own BEGIN IMMEDIATE transaction for a registered
+        facility, after computing the signature facts in `context` itself from the signed request
+        and the key registry. No other caller may use it: it trusts those facts.
+        """
+        if self.facility_account(conn, context.facility.facility_id) is None:
+            # The coordinator refuses unregistered facilities before calling this.
+            raise ValueError("internal accounted reserve needs a registered facility")
+        return self._reserve_step(conn, context, now)
+
+    def _reserve_step(
+        self, conn: sqlite3.Connection, context: PurchaseContext, now: Timestamp
+    ) -> ReserveResult:
         facility_id = context.facility.facility_id
         account = self.facility_account(conn, facility_id)
         if account is not None and account != (

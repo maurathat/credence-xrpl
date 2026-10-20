@@ -19,7 +19,6 @@ from pathlib import Path
 
 import pytest
 from i1_world import (
-    AGENT_KEY_ID,
     CONTROLLED,
     CONTROLLED_FACILITY,
     GENERAL,
@@ -27,12 +26,14 @@ from i1_world import (
     NOW,
     SimulatedCrash,
     WriteLockProbe,
+    acknowledge,
     agent_signer,
     count,
     crash_at,
     job,
     market_world,
     open_service,
+    retrieve,
 )
 
 from credence.core.billing import max_total_cost_value
@@ -47,6 +48,7 @@ from credence.core.primitives import (
 from credence.core.settlement_coordinator import FAULT_POINTS
 from credence.inference.local_llama import LOCAL_QWEN_PROVIDER_ID
 from credence.inference.nebius import NEBIUS_PROVIDER_ID
+from credence.inference.receipt_state import ReceiptChain
 from credence.integration.journal import OperationState as S
 from credence.integration.service import (
     IntegrationService,
@@ -65,11 +67,22 @@ def no_network(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
     yield
 
 
+@pytest.fixture(autouse=True)
+def gateway_chain_untouched(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The integrated path never reads or advances the gateway's in-memory receipt chain."""
+
+    def boom(*args: object) -> None:
+        raise AssertionError("integrated path touched the gateway's in-memory receipt chain")
+
+    monkeypatch.setattr(ReceiptChain, "advance", boom)
+    monkeypatch.setattr(ReceiptChain, "head", boom)
+
+
 def settled(service: IntegrationService, report: object) -> tuple[PurchaseReport, bytes]:
     assert isinstance(report, PurchaseReport), report
     assert report.state is S.SETTLED, report
-    response = service.retrieve(report.operation_id, AGENT_KEY_ID)
-    service.acknowledge(report.operation_id, AGENT_KEY_ID)
+    response = retrieve(service, report.operation_id)
+    acknowledge(service, report.operation_id)
     return report, response
 
 
@@ -115,12 +128,11 @@ def test_scenarios_settle_in_accounting_end_to_end(
         assert receipt.previous_receipt_digest == previous
         assert response  # exact bytes were held until retrieval
         drawn += receipt.price_micro_trlusd.value
-        exposure = service.coordinator.exposure(fid, receipt.completed_at)
+        exposure = service.accounting.exposure(fid, receipt.completed_at)
         assert (exposure.drawn.value, exposure.held.value) == (drawn, 0)
-        assert service.coordinator.chain_head(fid) == receipt.digest()
-        assert service.gateway.chain.head(fid) is None  # the gateway's own chain is never used
+        assert service.accounting.chain_head(fid) == receipt.digest()
         previous = receipt.digest()
-    assert service.coordinator.disputes() == []
+    assert service.accounting.disputes() == []
     if scenario == "A":
         assert len(world.nebius_transport.posts) == 2 and world.local.calls == 0
     else:
@@ -139,7 +151,7 @@ def test_repeated_sequential_purchases_chain_and_account_exactly(tmp_path: Path)
     assert [r.previous_receipt_digest for r in receipts] == [None] + [
         r.digest() for r in receipts[:-1]
     ]
-    exposure = service.coordinator.exposure(fid, receipts[-1].completed_at)
+    exposure = service.accounting.exposure(fid, receipts[-1].completed_at)
     assert exposure.drawn.value == sum(r.price_micro_trlusd.value for r in receipts)
     assert exposure.held.value == 0
     assert count(tmp_path / "i.sqlite3", "SELECT COUNT(*) FROM accounting_settlements") == 8
@@ -173,13 +185,13 @@ def test_response_is_suppressed_until_accounting_settlement(tmp_path: Path) -> N
     reopened = open_service(db, world, recover=False)
     (op,) = [reopened.journal_entry(o.operation_id) for o in reopened.pending_operations()]
     assert op.state is S.DELIVERED and op.response is not None
-    assert not reopened.coordinator.receipt_settled(Sha256Digest(str(op.receipt_digest)))
+    assert not reopened.accounting.receipt_settled(Sha256Digest(str(op.receipt_digest)))
     with pytest.raises(ResponseUnavailable):
-        reopened.retrieve(op.operation_id, AGENT_KEY_ID)
+        retrieve(reopened, op.operation_id)
     # recovery settles from the durable evidence; only then is the response released
     reopened.recover()
     assert reopened.operation(op.operation_id).state is S.SETTLED
-    assert reopened.retrieve(op.operation_id, AGENT_KEY_ID) == op.response
+    assert retrieve(reopened, op.operation_id) == op.response
 
 
 @pytest.mark.parametrize("point", FAULT_POINTS)
@@ -197,9 +209,9 @@ def test_settlement_is_atomic_and_settles_once_after_recovery(tmp_path: Path, po
     (op,) = service.pending_operations()
     assert op.state is S.DELIVERED
     rid = ReservationId(str(op.reservation_id))
-    assert service.ledger.get(rid).status is ReservationStatus.HELD
-    assert service.coordinator.exposure(GENERAL_FACILITY.facility_id, NOW).drawn.value == 0
-    assert service.coordinator.chain_head(GENERAL_FACILITY.facility_id) is None
+    assert service.accounting.reservation(rid).status is ReservationStatus.HELD
+    assert service.accounting.exposure(GENERAL_FACILITY.facility_id, NOW).drawn.value == 0
+    assert service.accounting.chain_head(GENERAL_FACILITY.facility_id) is None
     service.close()
 
     reopened = open_service(db, world)  # recovery resubmits the stored evidence
@@ -207,6 +219,6 @@ def test_settlement_is_atomic_and_settles_once_after_recovery(tmp_path: Path, po
     assert count(db, "SELECT COUNT(*) FROM accounting_settlements") == 1
     receipt = reopened.journal_entry(op.operation_id).receipt()
     assert receipt is not None
-    exposure = reopened.coordinator.exposure(GENERAL_FACILITY.facility_id, receipt.completed_at)
+    exposure = reopened.accounting.exposure(GENERAL_FACILITY.facility_id, receipt.completed_at)
     assert exposure.drawn == receipt.price_micro_trlusd
     assert world.nebius_transport.posts and len(world.nebius_transport.posts) == 1

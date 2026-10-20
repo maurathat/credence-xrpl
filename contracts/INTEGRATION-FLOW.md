@@ -1,8 +1,8 @@
 # INTEGRATION-FLOW
 
-Owner: Integration (San Antonio, Claude Code). Status: Integration I1c. Only the owner edits this file. Other workstreams file a request in `contracts/requests/`.
+Owner: Integration (San Antonio, Claude Code). Status: Integration I1c, remediated in I1e. Only the owner edits this file. Other workstreams file a request in `contracts/requests/`.
 
-This contract describes `credence/integration/` as implemented. The code is authoritative. `tests/integration/test_i1_contract.py` checks the lists below against the code. The decision is `docs/decisions/0008-integration-i1c-inference-accounting.md`.
+This contract describes `credence/integration/` as implemented. The code is authoritative. `tests/integration/test_i1_contract.py` checks the lists below against the code. The decisions are `docs/decisions/0008-integration-i1c-inference-accounting.md` and `docs/decisions/0009-integration-i1e-security-remediation.md`. What a recorded attempt, a claimed execution, provider execution, captured evidence, verified delivery, accounting settlement and XRPL settlement each mean is set out in `contracts/SETTLEMENT-COORDINATOR.md`, "What each record means".
 
 It connects Inference delivery (`contracts/INFERENCE-GATEWAY-CONTRACT.md`, `Gateway.deliver`) to Core accounting settlement (`contracts/SETTLEMENT-COORDINATOR.md`).
 
@@ -14,7 +14,9 @@ It connects Inference delivery (`contracts/INFERENCE-GATEWAY-CONTRACT.md`, `Gate
 | --- | --- |
 | Core (`credence/core/`) | Reservation, policy, delivery attempts, the verifier, accounting settlement, the persisted receipt chain, disputes, no-delivery release, late-delivery evidence |
 | Inference (`credence/inference/`) | Provider calls, the receipt and signed evidence (`Gateway.deliver`), market qualification and routing |
-| Integration (`credence/integration/`) | Process ownership, per-facility serialization, the operation journal, response retention and release, recovery, and the API used by the agent |
+| Integration (`credence/integration/`) | Process ownership, per-facility serialization, the operation journal, response retention and release, response authorization, recovery, and the API used by the agent |
+
+**The API surface is narrow.** `IntegrationService` has no purchase-capable gateway, no ledger and no writable coordinator. Reads go through `accounting` (`AccountingView`), which exposes only exposure, chain head, settlement, dispute, evidence, attempt, release and reservation lookups.
 
 ## Lifecycle
 
@@ -35,14 +37,15 @@ It connects Inference delivery (`contracts/INFERENCE-GATEWAY-CONTRACT.md`, `Gate
 10. **Durable intent before chargeable execution.** In order:
     - the journal records `executing`;
     - Core records the delivery attempt (`begin_delivery`);
+    - the gateway (`Gateway.deliver`, holding Core's delivery authority) claims that persisted attempt (`claim_execution`), one claim per attempt;
     - only then is the provider called.
 
-    If the chosen provider is not connected, there is no attempt: Core releases the hold with audit (`released_undelivered`). No SQLite transaction is open during the provider call.
+    If the chosen provider is not connected, there is no attempt: Core releases the hold with audit (`released_undelivered`). No SQLite transaction is open during the provider call. A refused claim calls no provider. An expired claim ends as `expired`; any other refusal is left `executing` and reconciled as `unknown`.
 11. **Evidence.** The gateway builds and signs the receipt on Core's chain head (`Gateway.deliver`), with no verifier and no chain movement.
 12. **Captured.** The exact evidence and the exact response bytes are journaled as `delivered`.
 13. **Settlement.** The evidence is submitted to `SettlementCoordinator.settle`. Only Core's committed settlement advances the chain.
-14. **Release.** Only on `accounting_settled` does the operation become `settled`, and only then can the authorized agent retrieve the response (`retrieve`, which records `retrieved`).
-15. **Retention.** The response is kept until the agent acknowledges it (`acknowledge`, which records `acknowledged` and deletes the bytes).
+14. **Release.** Only on `accounting_settled` does the operation become `settled`. Only then can the agent retrieve the response (`retrieve`, which records `retrieved`), and only with an agent-signed authorization (see "Response authorization").
+15. **Retention.** The response is kept until the agent acknowledges it, with a separate signed authorization (`acknowledge`, which records `acknowledged` and deletes the bytes).
 
 A provider failure after the attempt began is `unknown`; it is never retried and never released. Settlement outcomes map as follows:
 - a terminal verifier failure is `delivery_failed`;
@@ -78,6 +81,27 @@ Response available to the authorized agent: `settled`, `retrieved`.
 | `disputed` | Other rejection (for example `CHAIN_BROKEN`) or refusal | Held until expiry; dispute and evidence |
 | `late` | Submitted at or after `expires_at` | Released as expired; late-delivery dispute and evidence |
 
+## Response authorization
+
+Knowing an operation ID and an agent's public key ID is not enough. `retrieve` and `acknowledge` each take a `ResponseAuthorization`: an Ed25519 signature by the agent's key over this statement:
+
+- the domain string `credence/integration/response-authorization/v1`, length-prefixed. It is distinct from C3A's `credence/signature/v1`, so an authorization is never a signature over a canonical object, or the reverse;
+- followed by the Kessai canonical form (JCS, RFC 8785, + NFC) of `protocol` (`credence.integration.response_authorization`), `version` (`1`), `operation_id`, `action` (`retrieve` or `acknowledge`), `agent_key_id`, `nonce` (128 random bits as 32 hex digits) and `expires_at`.
+
+It is accepted only if all of these hold:
+- the action and operation are the ones requested;
+- the nonce is well formed;
+- it has not expired, and expires at most 300 seconds ahead;
+- the key is in the current trusted registry, is an `agent` key, and is `current` (not revoked);
+- the signature verifies;
+- the key, and its subject, are the ones that signed the operation's purchase request.
+
+Each nonce is single-use per agent key, across actions, operations, processes and restarts. It is consumed in `integration_authorization_nonces` in the same transaction as the access it authorizes, so a refused access does not consume it.
+
+So a retrieval authorization cannot acknowledge, an authorization for one operation cannot open another, and a replay is refused. A refusal raises `NotAuthorized` with a code and carries no authorization material. Nothing is logged.
+
+`NotAuthorized` codes: `MALFORMED_AUTHORIZATION`, `WRONG_ACTION`, `WRONG_OPERATION`, `MALFORMED_NONCE`, `AUTHORIZATION_EXPIRED`, `AUTHORIZATION_TOO_LONG`, `UNKNOWN_KEY`, `BAD_SIGNATURE`, `WRONG_ROLE`, `REVOKED_KEY`, `WRONG_AGENT`, `UNKNOWN_OPERATION`, `NONCE_REUSED`.
+
 ## Journal
 
 The `integration_operations` table lives in the same SQLite database as Core's tables. It is operational, not a canonical object. Each write is one short `BEGIN IMMEDIATE` transaction, and each state change is a compare-and-set.
@@ -85,14 +109,14 @@ The `integration_operations` table lives in the same SQLite database as Core's t
 It holds:
 - the operation ID (derived from the idempotency key) and the idempotency key;
 - facility, prompt digest, provider, reservation and request digest;
-- the agent key ID;
+- the agent key ID and its registry subject at purchase time;
 - the exact signed request and the approved quote, service class and execution profile;
 - the exact receipt, gateway signature, attestation and provider signature;
 - receipt and response digests, and the exact response bytes;
 - the settlement outcome, verifier decision digest and reason code;
 - the state, timestamps, and retrieval and acknowledgment times.
 
-Prompts, credentials and private keys are never stored.
+Prompts, credentials and private keys are never stored. Consumed authorization nonces are kept in `integration_authorization_nonces`.
 
 ## Response retention
 
@@ -133,9 +157,12 @@ Interruption points are tested at each of:
   - nothing is charged;
   - it is routed to reconciliation.
 
-  The providers expose no idempotency or result lookup, so a paid execution may have happened that Credence cannot account for. This includes a crash after `begin_delivery` but before the provider call, which is reported as `unknown` even though no call was made.
+  The providers expose no idempotency or result lookup, so a paid execution may have happened that Credence cannot account for.
+
+  A crash after `begin_delivery` but before the claim is also reported as `unknown`. The absence of a claim does show the supported gateway made no call, but the release rule still requires no attempt at all; it was not widened in I1e. The same conservative classification applies to failures a provider adapter raises before sending anything (for example a missing or malformed Nebius credential). This fails closed.
 - **`unknown` holds lapse by expiry.** That frees headroom. If the provider did execute, the cost is outside Credence's accounting until reconciled by hand.
 - **Ownership is advisory.** It binds every `IntegrationService`. Code that opens the SQLite file directly is not prevented.
+- **Enforced interfaces only.** Provider execution is authorized by Core only through the supported interfaces: Core's coordinator, `Gateway.deliver` with Core's authority, and this service. A program that calls a provider adapter directly, or writes the SQLite file, is outside them. Credence does not claim execution is impossible there; such a delivery has no Core attempt and cannot settle.
 
 ## Refusals
 

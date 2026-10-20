@@ -83,6 +83,7 @@ CREATE TABLE IF NOT EXISTS integration_operations (
     reservation_id TEXT,
     request_digest TEXT,
     agent_key_id TEXT,
+    agent_subject TEXT,
     request BLOB,
     request_signature BLOB,
     quote BLOB,
@@ -107,6 +108,14 @@ CREATE TABLE IF NOT EXISTS integration_operations (
 );
 CREATE INDEX IF NOT EXISTS integration_operations_by_facility
     ON integration_operations (facility_id, state);
+CREATE TABLE IF NOT EXISTS integration_authorization_nonces (
+    agent_key_id TEXT NOT NULL,
+    nonce TEXT NOT NULL,
+    operation_id TEXT NOT NULL,
+    action TEXT NOT NULL CHECK (action IN ('retrieve', 'acknowledge')),
+    used_at TEXT NOT NULL,
+    PRIMARY KEY (agent_key_id, nonce)
+);
 """
 
 _COLUMNS = (
@@ -118,6 +127,7 @@ _COLUMNS = (
     "reservation_id",
     "request_digest",
     "agent_key_id",
+    "agent_subject",
     "request",
     "request_signature",
     "quote",
@@ -144,6 +154,10 @@ _COLUMNS = (
 
 class JournalConflict(RuntimeError):
     """A compare-and-set transition found the operation in an unexpected state."""
+
+
+class NonceReused(RuntimeError):
+    """An authorization nonce was already consumed (persisted; survives restarts)."""
 
 
 def _decode[T: CanonicalObject](cls: type[T], data: object) -> T | None:
@@ -199,6 +213,10 @@ class Operation:
     @property
     def agent_key_id(self) -> str | None:
         return self._text("agent_key_id")
+
+    @property
+    def agent_subject(self) -> str | None:
+        return self._text("agent_subject")
 
     @property
     def receipt_digest(self) -> str | None:
@@ -356,6 +374,46 @@ class Journal:
                     f"{operation_id}: expected {sorted(s.value for s in allowed)}, moving to "
                     f"{to.value}"
                 )
+        moved = self.get(operation_id)
+        assert moved is not None
+        return moved
+
+    def authorized_transition(
+        self,
+        *,
+        agent_key_id: str,
+        nonce: str,
+        action: str,
+        operation_id: str,
+        expected: OperationState,
+        to: OperationState,
+        now: Timestamp,
+        **fields: object,
+    ) -> Operation:
+        """Consume an authorization nonce and apply the access it authorizes, in one transaction.
+
+        A reused nonce raises NonceReused; a state conflict raises JournalConflict and rolls the
+        nonce back, so only a successful access consumes it."""
+        changes = {**fields, "state": to.value, "updated_at": now.value}
+        unknown = set(changes) - set(_COLUMNS)
+        if unknown:
+            raise ValueError(f"unknown journal columns: {sorted(unknown)}")
+        sets = ", ".join(f"{name} = ?" for name in changes)
+        with self._write() as conn:
+            try:
+                conn.execute(
+                    "INSERT INTO integration_authorization_nonces (agent_key_id, nonce, "
+                    "operation_id, action, used_at) VALUES (?, ?, ?, ?, ?)",
+                    (agent_key_id, nonce, operation_id, action, now.value),
+                )
+            except sqlite3.IntegrityError:
+                raise NonceReused(operation_id) from None
+            updated = conn.execute(
+                f"UPDATE integration_operations SET {sets} WHERE operation_id = ? AND state = ?",
+                (*changes.values(), operation_id, expected.value),
+            )
+            if updated.rowcount != 1:
+                raise JournalConflict(f"{operation_id}: expected {expected.value}")
         moved = self.get(operation_id)
         assert moved is not None
         return moved

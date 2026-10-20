@@ -34,11 +34,13 @@ from credence.core.settlement_coordinator import (
 )
 from credence.inference.gateway import (
     DeliveryCaptured,
+    DeliveryNotAuthorized,
     Gateway,
     GatewayRefusal,
     ProviderFailed,
     ProviderFailureKind,
     Purchase,
+    Refused,
 )
 from credence.inference.payload import payload_digest
 from credence.inference.receipt_state import ReceiptChain
@@ -57,7 +59,9 @@ def no_network(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
 
 
 class Rig:
-    def __init__(self, tmp_path: Path, world: MarketWorld, *providers: object) -> None:
+    def __init__(
+        self, tmp_path: Path, world: MarketWorld, *providers: object, authority: bool = True
+    ) -> None:
         ledger = ReservationLedger(tmp_path / "db.sqlite3")
         self.coordinator = SettlementCoordinator(ledger, world.registry())
         self.chain = ReceiptChain()
@@ -68,6 +72,7 @@ class Rig:
             providers=providers or (world.nebius, world.local),  # type: ignore[arg-type]
             clock=StepClock(),
             chain=self.chain,
+            delivery_authority=self.coordinator if authority else None,
         )
 
     def reserve(self, purchase: Purchase) -> tuple[ReserveResult, DeliveryAttempt]:
@@ -171,3 +176,122 @@ def test_connected_and_check_prompt(tmp_path: Path) -> None:
     assert refused is not None and refused.refusal is GatewayRefusal.PROMPT_DIGEST_MISMATCH
     refused = rig.gateway.check_prompt(replace(nebius, prompt=b"\xff"))
     assert refused is not None and refused.refusal is GatewayRefusal.PROMPT_NOT_UTF8
+
+
+# --- I1e: authorized execution (Inference findings I-1, I-2) ------------------------------------
+
+
+def test_r2_fabricated_attempt_is_refused_before_any_provider_call(tmp_path: Path) -> None:
+    """Inference finding I-1, reproduction R2: reserve, fabricate a DeliveryAttempt with the
+    reservation ID and request digest, pass it to deliver, then release as undelivered.
+
+    Before I1e the provider ran (1 call), Core had no attempt, the release succeeded and the
+    signed receipt could no longer settle. Now no provider is called, so the release is true."""
+    from credence.core.settlement_coordinator import NoDeliveryReason
+
+    world = market_world()
+    rig = Rig(tmp_path, world)
+    rig.coordinator.register_facility(GENERAL_FACILITY)
+    nebius = candidates(GENERAL_FACILITY, GENERAL)[0]
+    reserved = rig.coordinator.reserve(
+        SignedPurchase(
+            nebius.request,
+            nebius.request_signature,
+            nebius.facility,
+            nebius.quote,
+            nebius.service_class,
+            nebius.execution_profile,
+            nebius.procurement_classes,
+        ),
+        NOW,
+    )
+    assert reserved.reservation is not None
+    fabricated = DeliveryAttempt(
+        reservation_id=reserved.reservation.reservation_id,
+        facility_id=nebius.request.facility_id,
+        request_digest=nebius.request.digest(),
+        begun_at=NOW,
+        unknown_cause=None,
+    )
+    with pytest.raises(DeliveryNotAuthorized) as exc:
+        rig.gateway.deliver(nebius, reserved, fabricated, previous_receipt_digest=None)
+    assert exc.value.reason == "NO_DELIVERY_ATTEMPT"
+    assert world.nebius_transport.posts == []  # refused before any provider call
+    assert rig.coordinator.delivery_attempt(reserved.reservation.reservation_id) is None
+    rig.coordinator.release_undelivered(
+        PurchaseReference(
+            reserved.reservation.reservation_id,
+            nebius.request,
+            nebius.quote,
+            nebius.service_class,
+            nebius.execution_profile,
+        ),
+        NoDeliveryReason.ABANDONED_BEFORE_EXECUTION,
+        NOW.plus_seconds(5),
+    )  # true: nothing was delivered
+
+
+def test_fabricated_attempt_differing_from_cores_record_is_refused(tmp_path: Path) -> None:
+    world = market_world()
+    rig = Rig(tmp_path, world)
+    rig.coordinator.register_facility(GENERAL_FACILITY)
+    nebius = candidates(GENERAL_FACILITY, GENERAL)[0]
+    reserved, attempt = rig.reserve(nebius)
+    forged = replace(attempt, begun_at=attempt.begun_at.plus_seconds(-1))
+    with pytest.raises(DeliveryNotAuthorized) as exc:
+        rig.gateway.deliver(nebius, reserved, forged, previous_receipt_digest=None)
+    assert exc.value.reason == "ATTEMPT_MISMATCH"
+    assert world.nebius_transport.posts == []
+
+
+def test_deliver_without_core_authority_fails_closed(tmp_path: Path) -> None:
+    world = market_world()
+    rig = Rig(tmp_path, world, authority=False)
+    rig.coordinator.register_facility(GENERAL_FACILITY)
+    nebius = candidates(GENERAL_FACILITY, GENERAL)[0]
+    reserved, attempt = rig.reserve(nebius)  # a genuine attempt, but the gateway cannot claim it
+    with pytest.raises(DeliveryNotAuthorized) as exc:
+        rig.gateway.deliver(nebius, reserved, attempt, previous_receipt_digest=None)
+    assert exc.value.reason == "NO_DELIVERY_AUTHORITY"
+    assert world.nebius_transport.posts == []
+
+
+def test_one_attempt_authorizes_one_provider_call(tmp_path: Path) -> None:
+    world = market_world()
+    rig = Rig(tmp_path, world)
+    rig.coordinator.register_facility(GENERAL_FACILITY)
+    nebius = candidates(GENERAL_FACILITY, GENERAL)[0]
+    reserved, attempt = rig.reserve(nebius)
+    assert isinstance(
+        rig.gateway.deliver(nebius, reserved, attempt, previous_receipt_digest=None),
+        DeliveryCaptured,
+    )
+    with pytest.raises(DeliveryNotAuthorized) as exc:
+        rig.gateway.deliver(nebius, reserved, attempt, previous_receipt_digest=None)
+    assert exc.value.reason == "EXECUTION_ALREADY_CLAIMED"
+    assert len(world.nebius_transport.posts) == 1
+
+
+def test_standalone_purchase_refuses_an_accounted_facility(tmp_path: Path) -> None:
+    """Inference finding I-2, reproduction R3, at the gateway: the standalone path neither
+    reserves nor calls a provider on a registered facility."""
+    world = market_world()
+    rig = Rig(tmp_path, world)
+    rig.coordinator.register_facility(GENERAL_FACILITY)
+    outcome = rig.gateway.purchase(candidates(GENERAL_FACILITY, GENERAL)[0])
+    assert isinstance(outcome, Refused)
+    assert outcome.refusal is GatewayRefusal.ACCOUNTED_FACILITY
+    assert world.nebius_transport.posts == []
+    assert rig.coordinator.exposure(GENERAL_FACILITY.facility_id, NOW).held.value == 0
+    assert rig.chain.head(GENERAL_FACILITY.facility_id) is None
+    market = rig.gateway.purchase_best(candidates(GENERAL_FACILITY, GENERAL, 2))
+    assert isinstance(market.outcome, Refused)
+    assert market.outcome.refusal is GatewayRefusal.ACCOUNTED_FACILITY
+    assert world.nebius_transport.posts == [] and world.local.calls == 0
+
+
+def test_standalone_purchase_still_works_on_an_unaccounted_ledger(tmp_path: Path) -> None:
+    world = market_world()
+    rig = Rig(tmp_path, world)
+    outcome = rig.gateway.purchase(candidates(GENERAL_FACILITY, GENERAL)[0])
+    assert type(outcome).__name__ == "DeliveryVerified"

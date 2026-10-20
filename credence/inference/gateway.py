@@ -22,7 +22,12 @@ Not in Checkpoint 1: quoting (the 402 step), network providers, settlement, pers
 Integration I1c (contracts/requests/0002) adds `deliver`: the provider-delivery step alone, for a
 reservation Core approved and for which Core recorded a delivery attempt. It builds and signs the
 evidence against a predecessor the caller supplies (Core's persisted chain head), runs no verifier,
-moves no receipt chain and does not make the response releasable. `purchase` is unchanged.
+moves no receipt chain and does not make the response releasable.
+
+Integration I1e (contracts/requests/0004): `deliver` calls a provider only after Core's delivery
+authority has claimed the persisted attempt (one claim per attempt); a caller-constructed attempt
+is not authority, and with no authority configured `deliver` fails closed. Standalone `purchase`
+refuses an accounted (registered) facility before any provider call (`ACCOUNTED_FACILITY`).
 
 Owner: Inference.
 """
@@ -32,7 +37,7 @@ from __future__ import annotations
 from collections.abc import Callable, Iterable, Sequence
 from dataclasses import dataclass
 from enum import Enum
-from typing import TYPE_CHECKING, NoReturn
+from typing import TYPE_CHECKING, NoReturn, Protocol
 
 from nacl.signing import SigningKey
 
@@ -58,8 +63,13 @@ from credence.core.primitives import (
     Sha256Digest,
     Timestamp,
 )
-from credence.core.reservation_ledger import PurchaseContext, ReservationLedger, ReserveResult
-from credence.core.settlement_coordinator import DeliveryAttempt
+from credence.core.reservation_ledger import (
+    PurchaseContext,
+    ReservationLedger,
+    ReservationStateError,
+    ReserveResult,
+)
+from credence.core.settlement_coordinator import DeliveryAttempt, SettlementRefused
 from credence.core.signatures import (
     KeyRegistry,
     policy_signature_facts,
@@ -139,6 +149,7 @@ class GatewayRefusal(Enum):
 
     PROMPT_NOT_UTF8 = "PROMPT_NOT_UTF8"
     PROMPT_DIGEST_MISMATCH = "PROMPT_DIGEST_MISMATCH"
+    ACCOUNTED_FACILITY = "ACCOUNTED_FACILITY"
 
 
 class ProviderFailureKind(Enum):
@@ -249,6 +260,21 @@ class _MalformedResult(ValueError):
     pass
 
 
+class DeliveryAuthority(Protocol):
+    """Core's authority over provider execution (SettlementCoordinator.claim_execution)."""
+
+    def claim_execution(self, attempt: DeliveryAttempt, now: Timestamp) -> DeliveryAttempt: ...
+
+
+class DeliveryNotAuthorized(RuntimeError):
+    """`deliver` refused before any provider call. `reason` is a code: NO_DELIVERY_AUTHORITY, or
+    the refusal from Core's claim (for example NO_DELIVERY_ATTEMPT or ATTEMPT_MISMATCH)."""
+
+    def __init__(self, reason: str) -> None:
+        super().__init__(reason)
+        self.reason = reason
+
+
 # --- gateway -----------------------------------------------------------------------------------
 
 
@@ -271,6 +297,7 @@ class Gateway:
         clock: Callable[[], Timestamp],
         chain: ReceiptChain | None = None,
         settled: SettledReceipts | None = None,
+        delivery_authority: DeliveryAuthority | None = None,
     ) -> None:
         self._ledger = ledger
         self._registry = registry
@@ -283,6 +310,7 @@ class Gateway:
         self._clock = clock
         self._chain = ReceiptChain() if chain is None else chain
         self._settled: SettledReceipts = InMemorySettledReceipts() if settled is None else settled
+        self._authority = delivery_authority
 
     @property
     def chain(self) -> ReceiptChain:
@@ -306,7 +334,10 @@ class Gateway:
         return None
 
     def purchase(self, purchase: Purchase) -> GatewayOutcome:
-        """Run one purchase end to end. See the module docstring for the order of steps."""
+        """Run one purchase end to end. See the module docstring for the order of steps.
+
+        Standalone (unaccounted) facilities only: a registered facility is refused with
+        `ACCOUNTED_FACILITY` before any reservation or provider call."""
         refused = self.check_prompt(purchase)
         if refused is not None:
             return refused
@@ -314,26 +345,38 @@ class Gateway:
         facts = policy_signature_facts(
             purchase.request, purchase.request_signature, purchase.facility, self._registry
         )
-        reserved = self._ledger.reserve(
-            PurchaseContext(
-                request=purchase.request,
-                request_signature_valid=facts.request_signature_valid,
-                working_key_current=facts.working_key_current,
-                facility=purchase.facility,
-                quote=purchase.quote,
-                service_class=purchase.service_class,
-                execution_profile=purchase.execution_profile,
-                procurement_classes=purchase.procurement_classes,
-            ),
-            self._clock(),
-        )
+        try:
+            reserved = self._ledger.reserve(
+                PurchaseContext(
+                    request=purchase.request,
+                    request_signature_valid=facts.request_signature_valid,
+                    working_key_current=facts.working_key_current,
+                    facility=purchase.facility,
+                    quote=purchase.quote,
+                    service_class=purchase.service_class,
+                    execution_profile=purchase.execution_profile,
+                    procurement_classes=purchase.procurement_classes,
+                ),
+                self._clock(),
+            )
+        except ReservationStateError as exc:
+            if exc.reason != "USE_SETTLEMENT_COORDINATOR":
+                raise
+            return Refused(
+                GatewayRefusal.ACCOUNTED_FACILITY,
+                "registered facility: purchases go through the integrated flow",
+            )
         if reserved.reservation is None:
             return PolicyRejected(reserved.decision)
         reservation, policy = reserved.reservation, reserved.decision
 
         # The predecessor is read after the provider returns, as in Checkpoint 1.
         executed = self._execute(
-            purchase, reservation, policy, lambda: self._chain.head(purchase.request.facility_id)
+            purchase,
+            reservation,
+            policy,
+            lambda: self._chain.head(purchase.request.facility_id),
+            authorize=None,
         )
         if isinstance(executed, ProviderFailed):
             return executed
@@ -359,10 +402,17 @@ class Gateway:
     ) -> DeliveryOutcome:
         """Integrated delivery step: call the provider and build the signed evidence.
 
-        `reserved` is Core's accepted reservation for this exact request, and `attempt` is Core's
-        recorded delivery attempt for it. `previous_receipt_digest` is Core's persisted chain head.
+        `reserved` is Core's accepted reservation for this exact request, and `attempt` names
+        Core's persisted delivery attempt for it. The attempt is only an identifier: immediately
+        before the provider call, Core's delivery authority claims the persisted attempt (it must
+        exist, match exactly, be unclaimed, not unknown, and its reservation held and live). With
+        no authority configured, or if Core refuses the claim, `DeliveryNotAuthorized` is raised
+        and no provider is called. `previous_receipt_digest` is Core's persisted chain head.
         No reservation, no verifier, no chain movement; the outcome is not a release decision.
         """
+        if self._authority is None:
+            raise DeliveryNotAuthorized("NO_DELIVERY_AUTHORITY")
+        authority = self._authority
         reservation = reserved.reservation
         if reservation is None or reserved.decision.record.outcome is not DecisionOutcome.ACCEPT:
             raise ValueError("deliver needs Core's accepted reservation")
@@ -373,8 +423,19 @@ class Gateway:
             raise ValueError("deliver needs Core's delivery attempt for this reservation")
         if self.check_prompt(purchase) is not None:
             raise ValueError("deliver needs a prompt that matches the signed request")
+
+        def authorize() -> None:
+            try:
+                authority.claim_execution(attempt, self._clock())
+            except SettlementRefused as exc:
+                raise DeliveryNotAuthorized(exc.reason) from None
+
         executed = self._execute(
-            purchase, reservation, reserved.decision, lambda: previous_receipt_digest
+            purchase,
+            reservation,
+            reserved.decision,
+            lambda: previous_receipt_digest,
+            authorize=authorize,
         )
         if isinstance(executed, ProviderFailed):
             return executed
@@ -387,8 +448,13 @@ class Gateway:
         reservation: Reservation,
         policy: PolicyDecision,
         previous_receipt_digest: Callable[[], Sha256Digest | None],
+        *,
+        authorize: Callable[[], None] | None,
     ) -> ProviderFailed | tuple[DeliveryEvidence, bytes]:
-        """Steps 4-7: find the provider, execute, check the result, build and sign the evidence."""
+        """Steps 4-7: find the provider, execute, check the result, build and sign the evidence.
+
+        `authorize`, when given, runs after the provider is found and before it is called; it
+        raises to refuse the call."""
 
         def failed(kind: ProviderFailureKind, detail: str) -> ProviderFailed:
             return ProviderFailed(reservation, policy, kind, detail)
@@ -399,6 +465,8 @@ class Gateway:
                 ProviderFailureKind.PROVIDER_UNAVAILABLE,
                 f"no provider connected for {purchase.request.provider_id.value}",
             )
+        if authorize is not None:
+            authorize()
         started_at = self._clock()
         try:
             result = provider.execute(

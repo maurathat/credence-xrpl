@@ -1,6 +1,6 @@
 # 0008. Integration I1c: inference delivery with atomic facility accounting
 
-- Status: Accepted for the integration branch. Core and Inference owner review of their contract changes is pending.
+- Status: Accepted for the integration branch, amended by decision 0009 (Integration I1e security remediation). Core and Inference owner review of their contract changes is pending.
 - Date: 2026-10-19
 - Owner: Integration (San Antonio)
 - Source: Maura's I1c authorization and approved architecture (I0 decisions D0–D6) of 2026-10-19. Requests: `contracts/requests/0001-core-settlement-delivery-attempts.md`, `contracts/requests/0002-inference-gateway-deliver.md`. Contract: `contracts/INTEGRATION-FLOW.md`.
@@ -16,6 +16,7 @@
 3. **Durable intent before chargeable execution, as Core state.**
    - Core records a delivery attempt (`begin_delivery`) before any provider call.
    - The no-delivery release is permitted only when Core has no attempt for the reservation. The trusted evidence is Core's own record, not a caller's claim.
+   - **Corrected in decision 0009:** in I1c this did not hold through every exposed path. A fabricated `DeliveryAttempt` passed to `Gateway.deliver`, or the standalone `Gateway.purchase` reached through the service, could call a provider with no Core attempt, after which a no-delivery release was falsely accepted. Decision 0009 enforces the boundary.
    - A signed gateway failure statement was not used, because it would need a new canonical object.
 4. **Unknown outcomes fail closed.**
    - A provider failure or interruption after the attempt is `unknown`.
@@ -27,7 +28,7 @@
    - Every authenticated rejection keeps its exact canonical evidence (`dispute_evidence`).
    - Authenticated late deliveries keep it in `late_delivery_disputes`, which is separate from the verifier-rejection rows. The C3B transcripts in `vectors/c3b/` therefore regenerate unchanged.
 7. **The bare ledger `release` is refused for registered facilities**, like the bare `settle`.
-8. **The response is released only after accounting settlement.**
+8. **The response is released only after accounting settlement.** (In I1c, retrieval and acknowledgment were authorized by public key ID alone. Decision 0009 replaces that with an agent-signed authorization.)
    - It is retained in the journal, in the same database, until the authorized agent acknowledges it.
    - This is hackathon scope only: synthetic content, a `0600` file, and not production-grade confidentiality.
 9. **The journal is in the same SQLite file as Core.**
