@@ -2,4 +2,6 @@
 
 Owner: XRPL spike workstream (Codex).
 
-Reserved for the XRPL network spike. Empty at Checkpoint 0.
+Checkpoint X0 is isolated offline payment and settlement preparation. See
+`X0-READINESS.md` for preserved historical findings, supported boundaries,
+test evidence, dependencies, and the proposed live integration seam.
