@@ -168,13 +168,17 @@ def test_f1_unrelated_keys_are_unaffected(tmp_path: Path) -> None:
     assert retrieve(reopened, op) and env.settled(reopened, 2)
 
 
-def test_f1_closing_the_service_unbinds_the_registry(tmp_path: Path) -> None:
+def test_f1_closing_the_service_never_reverts_to_silent_in_memory_revoke(tmp_path: Path) -> None:
+    """I1i: after close, revoke raises RevocationNotPersisted instead of silently reverting to
+    Core's in-memory method (see test_i1_revocation_lifecycle.py for the full lifecycle)."""
     env = Env(tmp_path)
     registry = env.world.registry()
     service = env.open(registry)
     assert "revoke" in vars(registry)
     service.close()
-    assert "revoke" not in vars(registry)  # back to Core's own method
+    assert "revoke" in vars(registry)  # still overridden: not Core's silent method
+    with pytest.raises(RevocationNotPersisted):
+        registry.revoke(A)
 
 
 def test_f1_persistence_failure_still_refuses_in_this_process(

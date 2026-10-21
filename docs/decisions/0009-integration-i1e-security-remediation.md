@@ -1,6 +1,6 @@
 # 0009. Integration I1e: close authorization and accounting bypasses
 
-- Status: Accepted for the integration branch, amended for I1g (§7–§10). **Provisionally blocked for acceptance** until independent Core and Inference owner reviews approve the final I1g commit.
+- Status: Accepted for the integration branch, amended for I1g (§7–§10) and I1i (§11). **Provisionally blocked for acceptance** until independent Core and Inference owner reviews approve the final I1g commit.
 - Date: 2026-10-19
 - Owner: Integration (San Antonio)
 - Source: Maura's I1e authorization, and the I1d owner reviews of commit `cfc6224`:
@@ -56,6 +56,16 @@
 10. **Atomic retrieval (I1g, Inference finding F2).**
    - Retrieval reads the exact response bytes in the same transaction that re-checks revocation and availability, consumes the nonce and records the retrieval. Acknowledgment is atomic in the same way.
    - A refusal consumes nothing, and the reachable `AssertionError` is gone.
+
+11. **Revocation lifecycle closure (I1i, 2026-10-20; Inference I1h finding, Core and Inference nested-write finding).**
+   - A revocation never appears successful unless committed.
+   - After `close()`, the bound registry's `revoke` raises `RevocationNotPersisted` (the key is marked revoked in that object only) instead of silently reverting to Core's in-memory method. This survives repeated closes and is replaced, not stacked, by a later binding.
+   - Trusted offline administrative revocation: `revoke_key(database, key_id, operator)`, plus a command-line form.
+     - Trust: the calling OS user owns the existing owner-only database and holds its exclusive ownership lock.
+     - It never creates a database, is idempotent and irreversible, reports success only after commit, and fails loudly.
+     - `via` widens to `offline_admin`; I1g tables are upgraded in place.
+   - `DurableKeyRegistry.lookup` performs no database I/O on any branch. An unexpected in-memory revocation is refused in-process, not persisted from inside Core's write transactions. This removes the 31 s nested busy-timeout stall.
+   - Frozen Core `KeyRegistry`, C3A/C3B formats and Core settlement rules are unchanged.
 
 ## Consequences
 

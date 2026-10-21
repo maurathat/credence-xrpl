@@ -1,6 +1,6 @@
 # INTEGRATION-FLOW
 
-Owner: Integration (San Antonio, Claude Code). Status: Integration I1c, remediated in I1e and I1g. Only the owner edits this file. Other workstreams file a request in `contracts/requests/`.
+Owner: Integration (San Antonio, Claude Code). Status: Integration I1c, remediated in I1e, I1g and I1i. Only the owner edits this file. Other workstreams file a request in `contracts/requests/`.
 
 This contract describes `credence/integration/` as implemented. The code is authoritative. `tests/integration/test_i1_contract.py` checks the lists below against the code. The decisions are `docs/decisions/0008-integration-i1c-inference-accounting.md` and `docs/decisions/0009-integration-i1e-security-remediation.md`. What a recorded attempt, a claimed execution, provider execution, captured evidence, verified delivery, accounting settlement and XRPL settlement each mean is set out in `contracts/SETTLEMENT-COORDINATOR.md`, "What each record means".
 
@@ -108,24 +108,46 @@ So a retrieval authorization cannot acknowledge, an authorization for one operat
 
 `NotAuthorized` codes: `MALFORMED_AUTHORIZATION`, `WRONG_ACTION`, `WRONG_OPERATION`, `MALFORMED_NONCE`, `AUTHORIZATION_EXPIRED`, `AUTHORIZATION_TOO_LONG`, `UNKNOWN_KEY`, `BAD_SIGNATURE`, `WRONG_ROLE`, `REVOKED_KEY`, `WRONG_AGENT`, `UNKNOWN_OPERATION`, `NONCE_REUSED`.
 
-## Key revocation (I1g, finding F1)
+## Key revocation (I1g finding F1, lifecycle closed in I1i)
 
-Revocation is durable and fail-closed. It survives restarts and overrides any registry supplied later.
+A revocation never appears successful unless it is committed to `integration_key_revocations`. These cases are distinct:
 
-- **Record.** `integration_key_revocations` holds the key ID, the revocation time, the trusted administrative actor (the `operator` the service was opened with), and how it was made. It is in the same database. A record never expires and is never deleted.
-- **Authority.** The service gives Core and the gateway a `DurableKeyRegistry`. Keys come from the operator's registry; a persisted revocation reports the key as `revoked` whatever that registry says. Re-registering the key, or a freshly built registry that lists it as current, does not restore it.
-- **The existing workflow is routed through persistence.** While the service is open, `KeyRegistry.revoke(key_id)` on the registry it was opened with commits the revocation record before the revocation takes effect. A revocation already present in that registry when the service opens is persisted at open. Closing the service restores Core's own `revoke` on that object.
-- **No public revocation operation.** Revoking requires the operator's in-process registry object. Agents and remote callers cannot revoke.
+| Case | What happens | Durable? |
+| --- | --- | --- |
+| Core in-memory revocation: `KeyRegistry.revoke` on a registry never bound to a service | Changes that object only | No. It is not a Credence administrative operation |
+| Durable bound revocation: `revoke` on the operator's registry while its service is open | Commits the record, then marks the key revoked, then returns | Yes |
+| Revocation attempted after the service closed: `revoke` on that registry after `close()` | Marks the key revoked in that object (fail closed in-process) and raises `RevocationNotPersisted`; nothing is committed. Closing twice keeps this. Binding the same object to a new service persists what it marks | No, and the operator is told so |
+| Trusted offline administrative revocation: `revoke_key(database, key_id, operator)` | Commits the record with no service running; success means committed | Yes |
+| Durable state on restart | Persisted revocations override any registry supplied later, including a fresh one listing the key as current, and re-registration | — |
+| Unexpected in-process revocation: a key revoked in the supplied registry with no record (for example `KeyRegistry.revoke(registry, key_id)`, which bypasses the binding) | Refused at once in this process; not persisted | No |
+
+- **Record.** `integration_key_revocations` holds the key ID, the revocation time, the trusted administrative actor, and how it was made (`via`: `key_registry_revoke` or `offline_admin`).
+  - For a bound revocation the actor is the `operator` the service was opened with. For an offline one it is the operator name plus the OS user ID.
+  - It is in the same database. A record never expires and is never deleted, and revoking again keeps the first record.
+  - An I1g database is upgraded in place on first use, keeping its records.
+- **`lookup` performs no persistence and no database I/O on any branch.** Core calls it inside its own write transactions (settlement verifies signatures in-transaction). It reads an in-memory mirror of the persisted revocations and the set of keys refused in this process. Persistence happens only in the bound `revoke`, at binding (when the service opens), or in `revoke_key`, never inside Core's transactions.
+- **Authority.** The service gives Core and the gateway a `DurableKeyRegistry`. Keys come from the operator's registry; a revoked key is reported `revoked` whatever that registry says.
+- **One binding at a time.** A registry bound to an open service cannot be bound by another (`RegistryAlreadyBound`). A later service's binding replaces the closed one's, and a stale `close()` of the earlier service does not disturb it.
+- **Trusted offline revocation.** `revoke_key` (command line: `python -m credence.integration.revocation --database PATH --key-id ed25519:... --operator NAME`) runs only when all of these hold:
+  - the database already exists (it is never created: `DATABASE_MISSING`) and is an integration database (`NOT_AN_INTEGRATION_DATABASE`);
+  - it is owned by the calling OS user (`NOT_OWNER`) and is owner-only (`INSECURE_PERMISSIONS`);
+  - the caller takes its exclusive ownership lock (`OwnershipError` while a service runs).
+
+  It fails loudly (`RevocationNotPersisted`) if the commit fails. It is not an HTTP endpoint, and agents and remote callers cannot revoke.
+- **Emergency revocation.**
+  - While the service runs: call `revoke` on the operator registry it was opened with. It returns only after the commit.
+  - During downtime: run `revoke_key` as the OS user owning the database (the command above). Exit status 0 means committed; any refusal exits 2 with the reason. The next service start refuses the key whatever registry it is given.
 - **Fail closed.**
-  - An unreadable or malformed revocation record refuses opening the service, purchase admission, retrieval and acknowledgment (`RevocationStateError`).
-  - If a revocation cannot be persisted, the key is still refused in this process and `RevocationNotPersisted` is raised.
+  - An unreadable or malformed revocation record refuses opening the service, purchase admission, retrieval, acknowledgment and offline revocation (`RevocationStateError`).
+  - A failed bound persistence raises `RevocationNotPersisted` and the key stays refused in-process.
 - **Ordering.**
   - Retrieval and acknowledgment re-read the revocation row inside their access transaction, so a revocation committed first refuses them (`REVOKED_KEY`) without consuming a nonce.
-  - Purchase admission (Core's reservation) and the pre-execution check below run under the same in-process gate as revocation commits.
+  - Purchase admission (Core's reservation) and the pre-execution check below run under the same in-process gate as bound revocation commits. Offline revocation cannot race a running service; it needs the ownership lock.
 - **Purchases already admitted when a revocation commits.**
   - Not yet executing (no Core delivery attempt): the provider is not called. The hold is released through Core's audited no-delivery release, and the operation ends `released_undelivered` with detail `agent key revoked before execution`.
   - Executing (Core recorded the attempt): the delivery may be payable, so it continues to accounting settlement. The revoked key cannot retrieve the response, which stays retained (see Known failure windows).
-- A revoked agent key's new purchases are refused before any reservation: Core qualifies no offer (`KEY_REVOKED`).
+- **New purchases by a revoked agent key are refused before any provider call.** Core qualifies no offer (`KEY_REVOKED`). If the revocation lands between qualification and reservation, Core's reservation rejects it (`policy_rejected`, `KEY_REVOKED`).
+- **A revoked gateway or provider key** makes affected settlements fail verification (`RECEIPT_SIG_INVALID`, a dispute with the hold kept). Nothing is settled or falsely released, and nothing is re-executed.
 
 ## Journal
 
@@ -187,7 +209,7 @@ Interruption points are tested at each of:
   A crash after `begin_delivery` but before the claim is also reported as `unknown`. The absence of a claim does show the supported gateway made no call, but the release rule still requires no attempt at all; it was not widened in I1e. The same conservative classification applies to failures a provider adapter raises before sending anything (for example a missing or malformed Nebius credential). This fails closed.
 - **`unknown` holds lapse by expiry.** That frees headroom. If the provider did execute, the cost is outside Credence's accounting until reconciled by hand.
 - **A revoked key strands its settled response.** Retrieval needs the purchasing key, by design, so a response settled for a key that is later revoked stays retained but unreadable until an operator handles it.
-- **Revocations made before the service opens.** These are read from the operator's registry through its internal key table, because Core's `KeyRegistry` exposes no listing. While the service is open, `revoke` on that registry is replaced by an instance-level override; Core's class is unchanged.
+- **Revocations in the operator's registry before binding.** These are read through the registry's internal key table, because Core's `KeyRegistry` exposes no listing. From binding on, `revoke` on that registry is an instance-level override (durable while open, raising after close); Core's class is unchanged. A Core in-memory revocation on a registry that is never bound is not durable.
 - **Ownership is advisory.** It binds every `IntegrationService`. Code that opens the SQLite file directly is not prevented.
 - **Enforced interfaces only.** Provider execution is authorized by Core only through the supported interfaces: Core's coordinator, `Gateway.deliver` with Core's authority, and this service. A program that calls a provider adapter directly, or writes the SQLite file, is outside them. Credence does not claim execution is impossible there; such a delivery has no Core attempt and cannot settle.
 
