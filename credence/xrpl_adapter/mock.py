@@ -7,6 +7,7 @@ import threading
 from credence.xrpl_adapter.types import (
     LookupResult,
     LookupUnavailable,
+    SettlementEvent,
     SubmissionResponse,
     SubmissionTransportError,
     ValidatedLedgerObservation,
@@ -15,6 +16,8 @@ from credence.xrpl_adapter.types import (
 
 class DeterministicMockTransport:
     """Submission, lookup, and validated-ledger seams with no network access."""
+
+    offline_only = True
 
     def __init__(self, *, ledger: ValidatedLedgerObservation) -> None:
         self._lock = threading.Lock()
@@ -54,9 +57,35 @@ class DeterministicMockTransport:
             raise outcome
         return outcome
 
-    def validated_ledger(self) -> ValidatedLedgerObservation:
+    def validated_ledger(self, account: str) -> ValidatedLedgerObservation:
         with self._lock:
             outcome = self._ledger
         if isinstance(outcome, Exception):
             raise outcome
         return outcome
+
+
+class DeterministicSettlementConsumer:
+    """Idempotent offline outbox consumer with deterministic crash injection."""
+
+    def __init__(self) -> None:
+        self.applied: dict[str, bytes] = {}
+        self._failures_before_apply = 0
+        self._failures_after_apply = 0
+
+    def fail_before_apply(self, count: int = 1) -> None:
+        self._failures_before_apply += count
+
+    def fail_after_apply(self, count: int = 1) -> None:
+        self._failures_after_apply += count
+
+    def apply(self, event: SettlementEvent) -> None:
+        if self._failures_before_apply:
+            self._failures_before_apply -= 1
+            raise RuntimeError("injected failure before durable consumer application")
+        prior = self.applied.setdefault(event.event_id, event.payload)
+        if prior != event.payload:
+            raise RuntimeError("event identity was replayed with contradictory payload")
+        if self._failures_after_apply:
+            self._failures_after_apply -= 1
+            raise RuntimeError("injected failure after durable consumer application")

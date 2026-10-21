@@ -53,6 +53,15 @@ class SubmissionDisposition(Enum):
     TRANSPORT_ERROR = "TRANSPORT_ERROR"
 
 
+class VerificationDisposition(Enum):
+    """Classification produced from structured trusted-ledger evidence."""
+
+    PROVISIONAL = "PROVISIONAL"
+    UNRESOLVED = "UNRESOLVED"
+    VALIDATED_SUCCESS = "VALIDATED_SUCCESS"
+    VALIDATED_FAILURE = "VALIDATED_FAILURE"
+
+
 @dataclass(frozen=True)
 class Asset:
     """An issued asset with both its product label and XRPL wire identity."""
@@ -66,9 +75,13 @@ class Asset:
 class PaymentRequest:
     """Authorized intent used to prepare one provider Payment.
 
-    ``payment_authorization_id`` is intentionally distinct from any ordinary
-    procurement authorization. ``earliest_ledger_sequence`` bounds the history
-    that must be complete before non-inclusion can be proven.
+    ``payment_authorization_id`` is an identifier, not proof that Core authorized
+    a payment. X1 must bind it to an immutable Core settlement and approved
+    unsigned-transaction digest before live submission is enabled.
+
+    ``earliest_ledger_sequence`` is a caller hint retained for compatibility and
+    audit only. It cannot prove non-inclusion. X0s derives the authoritative
+    history anchor from a trusted validated-ledger observation before broadcast.
     """
 
     operation_id: str
@@ -115,25 +128,81 @@ class SubmissionResponse:
 
 
 @dataclass(frozen=True)
+class LedgerRange:
+    """One continuous inclusive range of validated ledgers held by a source."""
+
+    first: int
+    last: int
+
+
+@dataclass(frozen=True)
 class ValidatedLedgerObservation:
-    """Validated-ledger progress plus the node's complete history range."""
+    """Trusted-source ledger progress, identity, history, and sender state.
+
+    This observation is a statement by a configured trusted ledger source. It
+    is not independently verified cryptographic consensus proof.
+    """
 
     ledger_index: int
     complete_history_min: int | None
     complete_history_max: int | None
     history_complete: bool
+    ledger_hash: str | None = None
+    source_id: str | None = None
+    complete_history_ranges: tuple[LedgerRange, ...] = ()
+    account: str | None = None
+    account_sequence: int | None = None
+    available_tickets: tuple[int, ...] | None = None
+
+    def has_trusted_identity(self) -> bool:
+        return bool(
+            self.ledger_index > 0
+            and isinstance(self.ledger_hash, str)
+            and len(self.ledger_hash) == 64
+            and all(character in "0123456789ABCDEFabcdef" for character in self.ledger_hash)
+            and isinstance(self.source_id, str)
+            and self.source_id.strip()
+        )
+
+    def account_state_matches(
+        self,
+        *,
+        account: str,
+        sequence: int | None,
+        ticket_sequence: int | None,
+    ) -> bool:
+        if self.account != account:
+            return False
+        if sequence is not None:
+            return self.account_sequence == sequence
+        return bool(
+            ticket_sequence is not None
+            and self.available_tickets is not None
+            and ticket_sequence in self.available_tickets
+        )
 
     def proves_non_inclusion(self, *, earliest: int, last: int) -> bool:
-        return bool(
-            self.ledger_index > last
+        if not (
+            self.has_trusted_identity()
+            and self.ledger_index > last
             and self.history_complete
-            and self.complete_history_min is not None
-            and self.complete_history_max is not None
-            and 0 < self.complete_history_min <= self.complete_history_max
-            and self.complete_history_max <= self.ledger_index
-            and self.complete_history_min <= earliest
-            and self.complete_history_max >= last
-        )
+            and 0 < earliest <= last
+            and self.complete_history_ranges
+        ):
+            return False
+        ranges = sorted(self.complete_history_ranges, key=lambda item: (item.first, item.last))
+        covered_through = earliest - 1
+        for ledger_range in ranges:
+            if not (0 < ledger_range.first <= ledger_range.last <= self.ledger_index):
+                return False
+            if ledger_range.last < earliest or ledger_range.first > last:
+                continue
+            if ledger_range.first > covered_through + 1:
+                return False
+            covered_through = max(covered_through, ledger_range.last)
+            if covered_through >= last:
+                return True
+        return False
 
 
 @dataclass(frozen=True)
@@ -168,9 +237,16 @@ class LookupResult:
 
 @dataclass(frozen=True)
 class VerificationResult:
-    success: bool
+    disposition: VerificationDisposition
     result_code: str
     detail: str
+    ledger_index: int | None = None
+    ledger_hash: str | None = None
+    delivered_amount_micro_units: int | None = None
+
+    @property
+    def success(self) -> bool:
+        return self.disposition is VerificationDisposition.VALIDATED_SUCCESS
 
 
 @dataclass(frozen=True)
@@ -205,10 +281,30 @@ class PaymentRecord:
     final_detail: str | None
     final_evidence: bytes | None
     validated_ledger_index: int | None
+    validated_ledger_hash: str | None
+    verified_delivered_amount_micro_units: int | None
+    evidence_verification_version: int
+    submission_anchor_ledger_index: int | None
+    submission_anchor_ledger_hash: str | None
+    submission_anchor_source_id: str | None
     settlement_status: str | None
     settlement_effect_claimed: bool
     created_at: str
     updated_at: str
+
+
+@dataclass(frozen=True)
+class SettlementEvent:
+    """Durable append-only notification of one verified XRPL settlement."""
+
+    event_id: str
+    operation_id: str
+    payment_authorization_id: str
+    transaction_hash: str
+    payload: bytes
+    delivery_attempts: int
+    created_at: str
+    delivered_at: str | None
 
 
 class TransactionPreparer(Protocol):
@@ -220,6 +316,8 @@ class SignedTransactionInspector(Protocol):
 
 
 class SubmissionTransport(Protocol):
+    offline_only: bool
+
     def submit(self, signed_transaction: bytes, transaction_hash: str) -> SubmissionResponse: ...
 
 
@@ -228,11 +326,17 @@ class HashLookup(Protocol):
 
 
 class ValidatedLedgerObserver(Protocol):
-    def validated_ledger(self) -> ValidatedLedgerObservation: ...
+    def validated_ledger(self, account: str) -> ValidatedLedgerObservation: ...
 
 
 class ResultVerifier(Protocol):
     def verify(self, expected: PaymentRecord, observed: LedgerPayment) -> VerificationResult: ...
+
+
+class SettlementEventConsumer(Protocol):
+    """Idempotent consumer; return only after the destination durably applies the event."""
+
+    def apply(self, event: SettlementEvent) -> None: ...
 
 
 class Reconciler(Protocol):

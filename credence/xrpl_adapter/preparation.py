@@ -5,7 +5,7 @@ from __future__ import annotations
 import hashlib
 from decimal import Decimal, InvalidOperation
 
-from xrpl.core.addresscodec import is_valid_classic_address
+from xrpl.core.addresscodec import decode_classic_address, is_valid_classic_address
 from xrpl.core.binarycodec import decode
 
 from credence.xrpl_adapter.types import (
@@ -74,7 +74,7 @@ class OfflinePaymentPreparer:
         if not request.operation_id.strip():
             raise PreparationError("operation_id must not be empty")
         if not request.payment_authorization_id.strip():
-            raise PreparationError("payment execution authorization is required")
+            raise PreparationError("payment authorization identifier is required")
         if not is_valid_classic_address(request.account):
             raise PreparationError("account must be a valid XRPL classic address")
         if not is_valid_classic_address(request.destination):
@@ -108,7 +108,7 @@ class OfflinePaymentPreparer:
 
 
 class XrplSignedPaymentInspector:
-    """Decode signed Payment bytes with xrpl-py and expose the bound fields."""
+    """Structurally inspect Payment bytes; this does not verify signatures."""
 
     def inspect_payment(self, signed_transaction: bytes) -> ParsedSignedPayment:
         try:
@@ -124,13 +124,29 @@ class XrplSignedPaymentInspector:
             )
         if decoded.get("Flags", 0) not in (0, "0"):
             raise SignedTransactionError("signed Payment contains unauthorized flags")
-        has_single_signature = bool(decoded.get("SigningPubKey")) and bool(
-            decoded.get("TxnSignature")
-        )
+        signing_public_key = decoded.get("SigningPubKey")
+        transaction_signature = decoded.get("TxnSignature")
+        has_single_signature = bool(signing_public_key) and bool(transaction_signature)
         signers = decoded.get("Signers")
         has_multisignatures = isinstance(signers, list) and bool(signers)
-        if not (has_single_signature or has_multisignatures):
-            raise SignedTransactionError("transaction has no signed authorization")
+        if has_single_signature and has_multisignatures:
+            raise SignedTransactionError(
+                "single-signature and multi-signature forms cannot be mixed"
+            )
+        if has_multisignatures:
+            assert isinstance(signers, list)
+            if signing_public_key != "" or transaction_signature is not None:
+                raise SignedTransactionError(
+                    "multi-signature Payment requires empty SigningPubKey and no TxnSignature"
+                )
+            _validate_multisignature_structure(signers)
+        elif has_single_signature:
+            if not isinstance(signing_public_key, str) or not isinstance(
+                transaction_signature, str
+            ):
+                raise SignedTransactionError("single-signature fields are malformed")
+        else:
+            raise SignedTransactionError("transaction has no structural signing fields")
 
         amount = decoded.get("Amount")
         if not isinstance(amount, dict):
@@ -160,6 +176,37 @@ class XrplSignedPaymentInspector:
             sequence=sequence,
             ticket_sequence=ticket,
         )
+
+
+def _validate_multisignature_structure(signers: list[object]) -> None:
+    accounts: list[str] = []
+    for entry in signers:
+        if not isinstance(entry, dict) or set(entry) != {"Signer"}:
+            raise SignedTransactionError("multi-signature Payment contains a malformed signer")
+        signer = entry["Signer"]
+        if not isinstance(signer, dict):
+            raise SignedTransactionError("multi-signature Payment contains a malformed signer")
+        account = signer.get("Account")
+        signing_public_key = signer.get("SigningPubKey")
+        signature = signer.get("TxnSignature")
+        if (
+            not isinstance(account, str)
+            or not account
+            or not isinstance(signing_public_key, str)
+            or not signing_public_key
+            or not isinstance(signature, str)
+            or not signature
+        ):
+            raise SignedTransactionError("multi-signature Payment contains empty signer fields")
+        if not is_valid_classic_address(account):
+            raise SignedTransactionError(
+                "multi-signature Payment contains an invalid signer account"
+            )
+        accounts.append(account)
+    if len(set(accounts)) != len(accounts):
+        raise SignedTransactionError("multi-signature Payment contains duplicate signer accounts")
+    if accounts != sorted(accounts, key=decode_classic_address):
+        raise SignedTransactionError("multi-signature Payment signers are not canonically sorted")
 
 
 def _decoded_text(decoded: dict[str, object], name: str) -> str:

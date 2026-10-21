@@ -1,9 +1,9 @@
-# Checkpoint X0 — payment and settlement readiness
+# Checkpoint X0/X0s — offline payment and settlement readiness
 
 ## Outcome
 
-X0 implements and tests an isolated, durable XRPL Payment submission and
-reconciliation adapter. It made no live XRPL calls, submitted no live
+X0 implements and X0s remediates an isolated, durable XRPL Payment submission
+and reconciliation adapter. It made no live XRPL calls, submitted no live
 transactions, moved no funds, created no loans, and changed no Core accounting
 semantics.
 
@@ -54,16 +54,20 @@ Reusable findings, preserved without reclassification:
 The contract is `contracts/XRPL-ADAPTER-CONTRACT.md`. The implementation is in
 `credence/xrpl_adapter/`:
 
-- `OfflinePaymentPreparer` validates the distinct payment execution
-  authorization and every security/economic field.
-- `XrplSignedPaymentInspector` decodes the exact signed Payment with xrpl-py
-  and compares it to the authorized intent before persistence.
+- `OfflinePaymentPreparer` validates the recorded payment identifiers and
+  security/economic fields. An identifier is not proof of Core authorization.
+- `XrplSignedPaymentInspector` decodes the exact Payment with xrpl-py, rejects
+  contradictory signing structures, and compares recorded fields before
+  persistence. It does not cryptographically verify signatures, signer identity
+  or SignerList quorum.
 - `PaymentJournal` stores exact signed bytes, the XRPL hash derived from those
-  bytes, account Sequence or TicketSequence, LastLedgerSequence, attempts,
-  provisional status, final evidence, and the one-time settlement-effect bit.
+  bytes, account Sequence or TicketSequence, a trusted pre-broadcast ledger
+  anchor, LastLedgerSequence, attempts, raw and verified final evidence, a
+  durable settlement-event outbox, and the legacy one-time settlement bit.
 - `PaymentService` implements submission, timeout handling, hash lookup,
-  complete-history expiry, exact-byte resubmission, restart reconciliation,
-  validated result verification, and one-time `XRPL_SETTLED` claiming.
+  anchored complete-history expiry, exact-byte resubmission, restart
+  reconciliation, structured evidence verification, and restart-safe outbox
+  delivery to an idempotent consumer.
 - `ReadOnlyPaymentStatus` exposes status and attempts without journal mutation.
 - `DeterministicMockTransport` supplies offline submission, lookup, and ledger
   observations.
@@ -77,9 +81,10 @@ Not constructed or submitted: `LoanSet` and `LoanPay`. Their names are present
 at the integration seam so future work cannot silently pass a loan action
 through the Payment implementation.
 
-Unsupported: every other XRPL transaction type. X0 also does not provide a
-live rippled transport, key custody, signing, Vault lifecycle, lending
-lifecycle, or repayment scheduler.
+Unsupported: every other XRPL transaction type. X0s explicitly rejects live
+transport and does not provide a rippled transport, key custody, cryptographic
+signing or verification, SignerList quorum validation, Core authorization
+binding, Vault lifecycle, lending lifecycle, or repayment scheduler.
 
 ## Amendment dependencies
 
@@ -102,19 +107,24 @@ use. X0 makes no claim about another server or network.
 
 ## Security and accounting dependencies
 
-- The signer boundary must supply exact signed bytes for the already-authorized
-  Payment. The adapter holds no private signing material.
+- The signer boundary supplies exact Payment bytes. X0s checks their structure
+  and recorded fields but does not establish cryptographic authorization. The
+  adapter holds no private signing material. Fixtures using `TxnSignature="AA"`
+  are explicitly noncryptographic mock data.
 - Payment execution authorization must remain separate from procurement
   authorization.
 - Core remains authoritative for inference verification, reservations, and
   accounting settlement. X0 neither imports IntegrationService internals nor
   changes settlement meaning.
-- The integration caller may apply a payment effect only after the atomic
-  `claim_xrpl_settlement` returns true. It returns true once, only for verified
-  `VALIDATED_SUCCESS` with `XRPL_SETTLED` recorded.
-- A real transport must normalize full validated transaction and metadata
-  evidence, including delivered amount, without treating submit-time
-  `tesSUCCESS` as final.
+- Verified success atomically creates a deterministic settlement outbox event.
+  Delivery is retried after restart and the destination must apply `event_id`
+  idempotently. The legacy atomic local claim does not by itself guarantee a
+  downstream effect across databases.
+- A later real transport must preserve a versioned evidence envelope containing
+  the exact transaction blob, metadata result, delivered amount and ledger
+  identity. X0s parses and cross-checks that evidence rather than trusting its
+  normalized fields. The configured ledger source remains a trust boundary,
+  not cryptographic consensus proof.
 - A real node used for expiry must expose complete ledger-history coverage for
   the signed transaction's possible inclusion window. A higher validated
   ledger alone is insufficient.
@@ -136,10 +146,12 @@ use. X0 makes no claim about another server or network.
 11. recorded hash inconsistent with signed bytes; and
 12. failed submission with outcome still unknown.
 
-Additional tests cover authorized-field binding, XRPL hash equivalence with
-xrpl-py, journal uniqueness, unsafe input rejection, owner-only database mode,
-read-only status access, and the absence of a SQLite write lock during
-transport submission.
+Additional X0s tests cover contradictory and missing evidence with later
+recovery, forged history starts, continuous range coverage, source disagreement,
+sequence and ticket consumption, restart expiry, each outbox crash/replay
+window, structural signing contradictions, XRPL hash equivalence, journal
+uniqueness, owner-only database mode, and the absence of a SQLite write lock
+during transport submission.
 
 ## Smallest viable live hackathon feature
 
@@ -149,12 +161,14 @@ settlement:
 
 1. ResearchBot and the Credence policy signer authorize one direct tRLUSD
    Payment to the expected provider.
-2. The X0 journal persists and verifies the signed bytes before broadcast.
-3. A new real transport submits those exact bytes.
+2. X1 cryptographically verifies the two expected signers, validated SignerList
+   quorum, immutable Core settlement and authorized unsigned-transaction digest.
+3. The journal persists the exact signed bytes before a separately authorized
+   real transport submits them.
 4. Reconciliation proves the final result by the original hash and validates
    destination, asset, amount, delivered amount, account, fee, sequence, and
    ledger evidence.
-5. The integration consumes the one-time `XRPL_SETTLED` claim.
+5. The integration idempotently consumes the durable `XRPL_SETTLED` outbox event.
 
 That feature should be a separately authorized hackathon checkpoint. LoanPay
 and new on-ledger lending behavior should remain outside its scope until their

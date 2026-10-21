@@ -12,10 +12,12 @@ from credence.xrpl_adapter.adapter import (
 from credence.xrpl_adapter.types import (
     Asset,
     LedgerPayment,
+    LedgerRange,
     LookupDisposition,
     LookupResult,
     PaymentRecord,
     PaymentRequest,
+    SettlementEvent,
     SubmissionResponse,
     TransactionState,
     TransactionType,
@@ -25,6 +27,7 @@ from credence.xrpl_adapter.types import (
 __all__ = [
     "Asset",
     "LedgerPayment",
+    "LedgerRange",
     "LookupDisposition",
     "LookupResult",
     "OfflinePaymentPreparer",
@@ -34,6 +37,7 @@ __all__ = [
     "PaymentResultVerifier",
     "PaymentService",
     "ReadOnlyPaymentStatus",
+    "SettlementEvent",
     "SubmissionResponse",
     "TransactionState",
     "TransactionType",
