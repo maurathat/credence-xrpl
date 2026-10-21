@@ -62,12 +62,92 @@ The UI names the lifecycle `intent → reserved → executing → delivered → 
 | --- | --- | --- |
 | Procurement qualification and reason codes; receipt digests; gateway and provider signatures; attestation, request and profile bindings | Lifecycle transitions, exposure, chain heads, disputes and releases; the live Nebius Tier 1 and local Qwen Tier 2 receipts of 2026-10-19 | Quote prices (configured demo); XRPL settlement states other than `not_submitted` |
 
-## Backend dependencies for replacing the adapter
+## Integration mapping (for the accepted IntegrationService)
 
-The UI depends only on the routes above. Connecting the accepted integration (I1g/I1h) means serving them from the live service, with these additions, none of which exists today:
+The routes, request bodies and response shapes above stay as they are. Connecting the accepted integration (I1g/I1h) changes only what serves them. Below, each route is mapped to the backend calls that exist at baseline `a3ec0a3`; names are from `credence/integration/service.py`, `credence/integration/authorization.py` and `credence/core/settlement_coordinator.py`. If the accepted commit renames or changes them, this section must be re-checked against it before any wiring.
 
-- `submitPurchase`: a supported entry point for a signed purchase from an authenticated agent session. Today `IntegrationService.purchase` takes an in-process signer, and it sets each request's maximum to the quote maximum; a buyer price cap would need to be carried.
-- `getOperation` and `getAccountingExposure`: live reads of `IntegrationService.operation` and `AccountingView.exposure`, plus a per-step history that the journal does not keep (it keeps only the current state and timestamps).
-- `retrieveAuthorizedResponse`: forward the agent-signed `ResponseAuthorization` unchanged to `IntegrationService.retrieve` and `acknowledge`. The API must not hold or create agent keys.
-- `getPaymentStatus`: an XRPL settlement record. None is implemented (`SettlementState.XRPL_SETTLED` is reserved).
-- `listProviders`: a live quote source and availability check. Quotes are configured demo values.
+Where a backend capability is missing, it is listed as a **gap**. The adapter must not stand in for one. Until the backend provides it, the route keeps its current P0 answer (`not_available`, `501`, `not_submitted`).
+
+Every route answers errors as `{"error": CODE, "detail": text}`. Codes are passed through from the backend unchanged; the API never invents a decision code.
+
+### Signed purchase submission: `POST /v0/purchases`
+
+| | |
+| --- | --- |
+| Backend call | `IntegrationService.purchase(job: Job, signer: AgentSigner) -> PurchaseReport \| PurchaseRefused` |
+| `Job` | `idempotency_key: str`, `facility: Facility`, `procurement_classes: tuple[ProcurementClass, ...]`, `offers: tuple[Offer(quote, service_class, execution_profile), ...]`, `prompt: bytes`, `request_expires_at: Timestamp` |
+| Response, success | `PurchaseReport`: `operation_id`, `state` (`OperationState`), `detail`, `reservation_id`, `provider_id`, `receipt_digest`, `reason_code`. Never the response bytes |
+| Response, refusal | `PurchaseRefused(refusal: Refusal, detail)` → HTTP 409 for `FACILITY_BUSY` and `IDEMPOTENCY_CONFLICT`, 422 for `PROMPT_NOT_UTF8`, `NO_OFFERS`, `FACILITY_LIMIT_MISMATCH` and `UNREGISTERED_FACILITY`, with `error` = the `Refusal` value |
+| Replay | Resubmitting an `idempotency_key` returns the journaled `PurchaseReport` and never buys again; the API returns it with HTTP 200 |
+| Policy outcomes | `no_qualifying_offer` and `policy_rejected` are states in a 200 `PurchaseReport`, not HTTP errors |
+| Other errors | `ServiceClosed` → 503 `SERVICE_UNAVAILABLE`; `JournalInconsistency` → 500 `JOURNAL_INCONSISTENCY` (the service has failed closed; nothing is retried). `OwnershipError` is raised when the service opens, not per request: the API must refuse to start rather than serve |
+
+Proposed request body, for when the gaps below are closed: `{idempotency_key, facility_id, prompt, procurement_class_digests, quote_ids, request_expires_at, signatures: [SignedObject per prepared PurchaseRequest]}`. The `ProcurementBody` of the dry run is not a purchase request.
+
+**Gaps (no backend capability exists):**
+
+1. **Remote agent signing.** `signer` is an in-process callable that the service calls once per offer, inside the facility lock, after reading Core's exposure. An agent behind HTTP cannot answer it. Closing this needs an Integration interface change: for example a prepare step that returns the unsigned `PurchaseRequest` per offer, and a submit step that accepts the agent's `SignedObject`s and verifies each is over exactly the prepared request. The API must not hold or create agent keys.
+2. **Buyer price cap.** The service sets each request's `max_total_cost_micro_trlusd` to the quote maximum. A cap the agent chose cannot be carried, so the UI marks the cap preview-only.
+3. **Offers and facility source.** `Job` takes the `Facility`, procurement classes and offers from the caller. A server-side source of current quotes and stored facility terms is needed; `AccountingView` exposes only `limit`, `drawn` and `held`.
+4. **Authentication.** The agent session that may call this route is not defined.
+
+### Live operation reads: `GET /v0/operations`, `GET /v0/operations/{id}`
+
+| | |
+| --- | --- |
+| Backend call | `IntegrationService.operation(id) -> PurchaseReport`; `IntegrationService.journal_entry(id) -> Operation` for detail (canonical request, quote, service class, profile, receipt, signatures, `settlement_outcome`, `verifier_decision_digest`, timestamps) |
+| Mapping | `state` → `state`; `OUTCOME_CLASS` and `STATE_TEXT` from `credence/api/explanations.py`; `lifecycle[].reached` from the linear order of the journal's compare-and-set transitions |
+| Errors | `UnknownOperation` → 404 `UNKNOWN_OPERATION` |
+| Must not expose | `Operation.response` (the response bytes): only `retrieve` releases them |
+
+**Gaps:** the journal keeps only the current state and `created_at`, `updated_at`, `retrieved_at` and `acknowledged_at`, so `steps[]` (the per-step history) cannot be served live; the live route returns a single current step. There is no listing method for all operations: `pending_operations()` returns only in-flight ones.
+
+### Exposure: `GET /v0/operations/{id}/exposure`
+
+| | |
+| --- | --- |
+| Backend call | `IntegrationService.accounting.exposure(facility_id, now) -> FacilityExposure(limit, drawn, held)`; `headroom` is its property `limit - drawn - held` |
+| Mapping | `limit_micro_trlusd`, `drawn_micro_trlusd`, `held_micro_trlusd`, `headroom_micro_trlusd` (integers, micro-tRLUSD) |
+| Errors | `SettlementRefused("UNACCOUNTED_FACILITY")` → 404 `UNREGISTERED_FACILITY` |
+
+**Gaps:** facility terms (minimum tier, allowed providers, status, maturity) are not readable through `AccountingView`. No exposure history is kept, so the live `timeline` would have one point.
+
+### Agent-signed retrieve and acknowledge: `POST /v0/operations/{id}/response`
+
+| | |
+| --- | --- |
+| Request body | The agent's `ResponseAuthorization`, unchanged: `{operation_id, action: "retrieve" \| "acknowledge", agent_key_id, nonce (32 lower-case hex), expires_at, signature (hex)}`. Signed outside the browser over `credence/integration/response-authorization/v1` and the Kessai canonical statement |
+| Backend call | `action = retrieve` → `IntegrationService.retrieve(authorization) -> bytes`; `action = acknowledge` → `IntegrationService.acknowledge(authorization) -> None` |
+| Response | retrieve: 200 with the response bytes (`application/octet-stream`); acknowledge: 204 |
+| Errors | `NotAuthorized(code)` → 403 with `error` = the code (`MALFORMED_AUTHORIZATION`, `WRONG_ACTION`, `WRONG_OPERATION`, `MALFORMED_NONCE`, `AUTHORIZATION_EXPIRED`, `AUTHORIZATION_TOO_LONG`, `UNKNOWN_KEY`, `BAD_SIGNATURE`, `WRONG_ROLE`, `REVOKED_KEY`, `WRONG_AGENT`, `UNKNOWN_OPERATION`, `NONCE_REUSED`); `ResponseUnavailable(state)` → 409 `RESPONSE_UNAVAILABLE` with the state; `JournalInconsistency` → 500 |
+| Must not | Log, store or echo the authorization, or retry it: each nonce is single-use |
+
+The client's `retrieveAuthorizedResponse(operationId, authorization)` already forwards the authorization unchanged. The `action` field selects retrieve or acknowledge. No gap other than authentication of the session.
+
+### Receipt evidence: `GET /v0/receipts/{digest}`
+
+| | |
+| --- | --- |
+| Backend calls | `journal_entry(id)`: `receipt()`, `gateway_signature()`, `provider_attestation()`, `provider_signature()`, `request()`, `execution_profile()`, `receipt_digest`, `response_digest`, `settlement_outcome`, `verifier_decision_digest`, `reason_code`. `accounting`: `receipt_settled(digest)`, `chain_head(facility_id)`, `dispute_evidence(digest)`, `late_delivery_disputes()` |
+| Checks | Unchanged: recomputed with Core's `digest()` and `verify_signed` |
+| Errors | Unknown digest → 404 `UNKNOWN_RECEIPT` |
+
+**Gaps:** there is no lookup from receipt digest to operation (the journal is keyed by operation), and no list of receipts. The trusted `KeyRegistry` is private to the service, so signature checks need a published read-only key list. The full verifier `DecisionRecord` is stored by Core and readable through `ReservationLedger.decision_record_bytes(digest)`, but `AccountingView` does not expose it, and the service does not expose its ledger.
+
+### XRPL reconciliation status: `GET /v0/operations/{id}/payment`
+
+| | |
+| --- | --- |
+| Today | Always `{"xrpl": {"state": "not_submitted", "transaction_hash": null}}`. True at this baseline: no XRPL transaction is built, signed or submitted |
+| Target states | `not_submitted`, `pending_confirmation`, `validated_success`, `validated_failure`, `expired_not_included`, `unknown_reconciliation_required` (the fixture vocabulary). `validated_success` is the only state that may be shown as a confirmed payment |
+| Target schema | `{state, transaction_hash, ledger_index, last_ledger_sequence, engine_result, settlement_record_digest}`, all null until observed |
+
+**Gap:** everything. `SettlementState.XRPL_SETTLED` is reserved and unimplemented, `credence/xrpl_adapter` is a Checkpoint 0 stub, and `contracts/XRPL-ADAPTER-CONTRACT.md` is a placeholder. The canonical `credence.settlement_record` needs a real `xrpl_transaction_hash`, so none can be created. The UI keeps showing `not_submitted` until the XRPL workstream defines a reconciliation read.
+
+### Providers: `GET /v0/providers`
+
+**Gap:** there is no live quote source or availability check; quotes stay configured demo values.
+
+### Raising these gaps
+
+The gaps above need interface changes owned by Integration (San Antonio), Inference and XRPL Integration. They are not filed as interface change requests yet, because the accepted I1g/I1h commit may already change these interfaces. File them in `contracts/requests/` against the accepted commit.
