@@ -1,20 +1,11 @@
-"""Smoke test: credence.api imports, and every stub raises NotImplementedError."""
+"""Smoke test: credence.api imports and builds its app (Product P0 replaced the Checkpoint 0 stub)."""
 
 import importlib
-import inspect
 
-import pytest
-
-MODULES = [
-    "credence.api.app",
-]
+from fastapi import FastAPI
 
 
-@pytest.mark.parametrize("name", MODULES)
-def test_imports_and_stubs_raise(name: str) -> None:
-    module = importlib.import_module(name)
+def test_app_imports_and_builds() -> None:
+    module = importlib.import_module("credence.api.app")
     assert module.__doc__
-    for _, fn in inspect.getmembers(module, inspect.isfunction):
-        if fn.__module__ == name:
-            with pytest.raises(NotImplementedError):
-                fn()
+    assert isinstance(module.create_app(), FastAPI)
