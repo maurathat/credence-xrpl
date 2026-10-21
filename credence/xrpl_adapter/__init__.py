@@ -13,6 +13,7 @@ from credence.xrpl_adapter.types import (
     Asset,
     LedgerPayment,
     LedgerRange,
+    LegacyJournalUnsupported,
     LookupDisposition,
     LookupResult,
     PaymentRecord,
@@ -21,6 +22,7 @@ from credence.xrpl_adapter.types import (
     SubmissionResponse,
     TransactionState,
     TransactionType,
+    UnsupportedJournalSchema,
     ValidatedLedgerObservation,
 )
 
@@ -28,6 +30,7 @@ __all__ = [
     "Asset",
     "LedgerPayment",
     "LedgerRange",
+    "LegacyJournalUnsupported",
     "LookupDisposition",
     "LookupResult",
     "OfflinePaymentPreparer",
@@ -41,6 +44,7 @@ __all__ = [
     "SubmissionResponse",
     "TransactionState",
     "TransactionType",
+    "UnsupportedJournalSchema",
     "ValidatedLedgerObservation",
     "XrplSignedPaymentInspector",
     "transaction_hash",

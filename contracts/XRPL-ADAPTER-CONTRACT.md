@@ -2,12 +2,13 @@
 
 Owner: XRPL Integration (Codex)
 
-Status: X0s offline payment-integrity remediation. Only the owner edits this file;
+Status: X0t offline legacy-journal boundary. Only the owner edits this file;
 other workstreams file a request in `contracts/requests/`.
 
 ## Boundary
 
-The adapter records four independent facts. None implies another:
+The adapter records four independent facts in a correctly initialized X0s
+journal. None implies another:
 
 1. inference delivery was verified;
 2. Core accounting settlement completed;
@@ -63,10 +64,22 @@ event is inserted atomically with verified success. Exactly-once economic effect
 across a second database requires the destination to apply `event_id`
 idempotently; the local claim bit alone is insufficient.
 
-Schema version 2 adds anchor, verified-evidence and outbox storage. Terminal X0
-rows without evidence verification version 1 are reopened as `UNKNOWN` with
-`X0S_REVERIFICATION_REQUIRED`; their retained evidence must be reconciled again
-before settlement status or an outbox event can exist.
+Schema version 2 includes anchor, verified-evidence and outbox storage. X0t does
+not automatically migrate original X0 payment journals. Before any schema write,
+`PaymentJournal` distinguishes a genuinely empty database, the complete X0
+table/column/index/foreign-key signature, and the complete version-2 signature.
+An X0 journal, including one with no payment rows, is preserved and refused with
+`LEGACY_JOURNAL_UNSUPPORTED`. Unknown versions and ambiguous, corrupt or partly
+migrated schemas are preserved and refused with `UNSUPPORTED_JOURNAL_SCHEMA`.
+Only a missing or genuinely empty database is initialized directly at version 2.
+
+Legacy recovery or migration requires separate authorization and is not part of
+X0t. Initialization never clears a legacy settlement claim, reopens a terminal
+payment, synthesizes an outbox event, submits a transaction or imports rows into
+another database. Until an approved recovery procedure exists, the legacy
+journal and its evidence remain the historical record. The payment-reliability
+guarantees in this contract apply only to correctly initialized version-2
+journals.
 
 Uniqueness is enforced for operation ID, payment-authorization ID, transaction
 hash, `(account, Sequence)`, and `(account, TicketSequence)`. Every write is a
@@ -92,7 +105,10 @@ unavailable, or ledger history cannot prove non-inclusion.
 - A found but unvalidated transaction remains `PENDING_CONFIRMATION`.
 - A validated non-`tesSUCCESS` result is `VALIDATED_FAILURE`.
 - Valid evidence for `tesSUCCESS` with the wrong delivered asset or amount is
-  `VALIDATED_FAILURE` and never `XRPL_SETTLED`. A contradiction between the
+  `VALIDATED_FAILURE` and never `XRPL_SETTLED`. This classification blocks the
+  expected settlement effect; it does not prove that no funds moved. X1 must
+  route an unexpected-delivery `tesSUCCESS` as a transferred-funds exception,
+  distinct from an unsuccessful ledger result. A contradiction between the
   evidence transaction and normalized or recorded fields remains `UNKNOWN`.
 - Expiry requires validated-ledger progress beyond LastLedgerSequence and a
   trusted pre-broadcast anchor plus continuous history ranges covering the full
@@ -120,3 +136,9 @@ Core authorization binding, custody, a real rippled transport and live
 transaction execution require the separately authorized X1 checkpoint. Test
 fixtures using `TxnSignature="AA"` are deliberately noncryptographic mock data
 and are not evidence of valid XRPL authorization.
+
+X1 must also replace the self-declared `offline_only` marker with an enforceable
+transport boundary, remove direct journal methods from live settlement
+authority, and define one settlement-effect authority path. Outbox delivery is
+at-least-once: a non-idempotent consumer can apply an event twice, so the live
+consumer must enforce `event_id` idempotency in its own durable transaction.

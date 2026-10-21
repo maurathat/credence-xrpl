@@ -379,5 +379,26 @@ class JournalConflict(RuntimeError):
     pass
 
 
+class JournalOpenRefused(RuntimeError):
+    """A journal cannot be opened without an explicitly authorized recovery."""
+
+    code = "JOURNAL_OPEN_REFUSED"
+
+    def __init__(self, detail: str) -> None:
+        super().__init__(f"{self.code}: {detail}")
+
+
+class LegacyJournalUnsupported(JournalOpenRefused):
+    """The original X0 journal is preserved but unsupported by X0s/X0t."""
+
+    code = "LEGACY_JOURNAL_UNSUPPORTED"
+
+
+class UnsupportedJournalSchema(JournalOpenRefused):
+    """The journal schema is unknown, inconsistent, or only partly initialized."""
+
+    code = "UNSUPPORTED_JOURNAL_SCHEMA"
+
+
 class DuplicateFinancialOperation(RuntimeError):
     pass

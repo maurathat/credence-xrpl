@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
+import shutil
 import sqlite3
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import replace
@@ -32,12 +34,14 @@ from credence.xrpl_adapter.types import (
     DuplicateFinancialOperation,
     LedgerPayment,
     LedgerRange,
+    LegacyJournalUnsupported,
     LookupDisposition,
     LookupResult,
     LookupUnavailable,
     PaymentRecord,
     PaymentRequest,
     PreparationError,
+    PreparedPayment,
     SignedTransactionError,
     SubmissionDisposition,
     SubmissionResponse,
@@ -45,6 +49,7 @@ from credence.xrpl_adapter.types import (
     TransactionHashMismatch,
     TransactionState,
     TransactionType,
+    UnsupportedJournalSchema,
     ValidatedLedgerObservation,
 )
 
@@ -54,6 +59,7 @@ WRONG_DESTINATION = encode_classic_address(bytes(range(3, 23)))
 ISSUER = encode_classic_address(bytes(range(2, 22)))
 OTHER_ISSUER = encode_classic_address(bytes(range(4, 24)))
 ASSET = Asset(label="tRLUSD", currency_code=TRLUSD_WIRE_CODE, issuer=ISSUER)
+LEGACY_FIXTURES = Path(__file__).parents[1] / "fixtures" / "xrpl"
 
 
 def payment_request(operation_id: str = "operation-1", *, sequence: int = 10) -> PaymentRequest:
@@ -878,18 +884,137 @@ def test_live_transport_is_explicitly_disabled(tmp_path: Path) -> None:
         service_for(tmp_path / "payments.db", transport)
 
 
-def test_schema_migration_reopens_unverified_x0_terminal_state(tmp_path: Path) -> None:
-    database = tmp_path / "payments.db"
-    transport = DeterministicMockTransport(ledger=ledger_before_expiry())
-    _, _, record = prepared(database, transport)
+def journal_snapshot(database: Path) -> tuple[str, tuple[str, ...]]:
+    digest = hashlib.sha256(database.read_bytes()).hexdigest()
+    uri = f"{database.resolve().as_uri()}?mode=ro"
+    with sqlite3.connect(uri, uri=True) as connection:
+        logical_contents = tuple(connection.iterdump())
+    return digest, logical_contents
+
+
+def test_genuine_x0_journal_is_refused_without_any_state_change(tmp_path: Path) -> None:
+    database = tmp_path / "legacy.db"
+    shutil.copyfile(LEGACY_FIXTURES / "x0_v1_journal.fixture", database)
+    os.chmod(database, 0o640)
+    before = journal_snapshot(database)
+    before_mode = database.stat().st_mode & 0o777
+    before_files = tuple(tmp_path.iterdir())
+
+    for _ in range(3):
+        with pytest.raises(
+            LegacyJournalUnsupported, match=r"^LEGACY_JOURNAL_UNSUPPORTED:"
+        ) as refusal:
+            PaymentJournal(database)
+        assert refusal.value.code == "LEGACY_JOURNAL_UNSUPPORTED"
+        assert journal_snapshot(database) == before
+        assert database.stat().st_mode & 0o777 == before_mode
+        assert tuple(tmp_path.iterdir()) == before_files
+
+    with sqlite3.connect(f"{database.resolve().as_uri()}?mode=ro", uri=True) as connection:
+        rows = connection.execute(
+            """SELECT operation_id, state, settlement_status, settlement_effect_claimed,
+                      signed_transaction, transaction_hash, final_evidence
+               FROM xrpl_payment_transactions ORDER BY operation_id"""
+        ).fetchall()
+        tables = {
+            row[0]
+            for row in connection.execute("SELECT name FROM sqlite_master WHERE type = 'table'")
+        }
+
+    assert [(row[0], row[1]) for row in rows] == [
+        ("legacy-expired", "EXPIRED_NOT_INCLUDED"),
+        ("legacy-failure", "VALIDATED_FAILURE"),
+        ("legacy-pending", "PENDING_CONFIRMATION"),
+        ("legacy-success", "VALIDATED_SUCCESS"),
+    ]
+    claimed = next(row for row in rows if row[0] == "legacy-success")
+    assert claimed[2:4] == ("XRPL_SETTLED", 1)
+    assert all(row[4] and row[5] for row in rows)
+    assert all(row[6] for row in rows if row[1] != "PENDING_CONFIRMATION")
+    assert "xrpl_settlement_outbox" not in tables
+
+
+def test_empty_genuine_x0_journal_is_still_refused(tmp_path: Path) -> None:
+    database = tmp_path / "legacy-empty.db"
+    shutil.copyfile(LEGACY_FIXTURES / "x0_v1_empty_journal.fixture", database)
+    before = journal_snapshot(database)
+
+    with pytest.raises(LegacyJournalUnsupported):
+        PaymentJournal(database)
+
+    assert journal_snapshot(database) == before
+
+
+def test_x0_schema_explicitly_marked_version_one_is_refused(tmp_path: Path) -> None:
+    database = tmp_path / "legacy-version-one.db"
+    shutil.copyfile(LEGACY_FIXTURES / "x0_v1_empty_journal.fixture", database)
+    with sqlite3.connect(database) as connection:
+        connection.execute("PRAGMA user_version = 1")
+    before = journal_snapshot(database)
+
+    with pytest.raises(LegacyJournalUnsupported):
+        PaymentJournal(database)
+
+    assert journal_snapshot(database) == before
+
+
+@pytest.mark.parametrize("precreate_empty_file", [False, True])
+def test_genuinely_empty_database_initializes_directly_at_version_two(
+    tmp_path: Path, precreate_empty_file: bool
+) -> None:
+    database = tmp_path / "new.db"
+    if precreate_empty_file:
+        database.touch()
+
+    journal = PaymentJournal(database)
+
+    with sqlite3.connect(database) as connection:
+        assert connection.execute("PRAGMA user_version").fetchone()[0] == 2
+        assert {
+            row[0]
+            for row in connection.execute("SELECT name FROM sqlite_master WHERE type = 'table'")
+        } == {
+            "xrpl_payment_transactions",
+            "xrpl_submission_attempts",
+            "xrpl_settlement_outbox",
+        }
+    assert journal.list_nonterminal() == ()
+
+
+def test_valid_version_two_journal_reopens_normally(tmp_path: Path) -> None:
+    database = tmp_path / "current.db"
+    first = PaymentJournal(database)
+    request = payment_request()
+    expected = first.persist_signed(PreparedPayment(request), signed_blob(request))
+
+    reopened = PaymentJournal(database)
+
+    assert reopened.get(expected.operation_id) == expected
+
+
+def test_unknown_schema_version_fails_closed_without_changes(tmp_path: Path) -> None:
+    database = tmp_path / "unknown.db"
+    PaymentJournal(database)
+    with sqlite3.connect(database) as connection:
+        connection.execute("PRAGMA user_version = 99")
+    before = journal_snapshot(database)
+
+    with pytest.raises(UnsupportedJournalSchema, match=r"^UNSUPPORTED_JOURNAL_SCHEMA:"):
+        PaymentJournal(database)
+
+    assert journal_snapshot(database) == before
+
+
+def test_partially_migrated_x0_schema_fails_closed_without_changes(tmp_path: Path) -> None:
+    database = tmp_path / "partial.db"
+    shutil.copyfile(LEGACY_FIXTURES / "x0_v1_empty_journal.fixture", database)
     with sqlite3.connect(database) as connection:
         connection.execute(
-            """UPDATE xrpl_payment_transactions
-               SET state = 'VALIDATED_SUCCESS', settlement_status = 'XRPL_SETTLED'
-               WHERE operation_id = ?""",
-            (record.operation_id,),
+            "ALTER TABLE xrpl_payment_transactions ADD COLUMN validated_ledger_hash TEXT"
         )
-    migrated = PaymentJournal(database).get(record.operation_id)
-    assert migrated.state is TransactionState.UNKNOWN
-    assert migrated.settlement_status is None
-    assert migrated.last_provisional_status == "X0S_REVERIFICATION_REQUIRED"
+    before = journal_snapshot(database)
+
+    with pytest.raises(UnsupportedJournalSchema):
+        PaymentJournal(database)
+
+    assert journal_snapshot(database) == before

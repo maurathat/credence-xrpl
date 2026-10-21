@@ -14,6 +14,7 @@ import sqlite3
 from collections.abc import Iterator
 from contextlib import contextmanager
 from datetime import UTC, datetime
+from enum import Enum
 from pathlib import Path
 from typing import cast
 
@@ -23,6 +24,7 @@ from credence.xrpl_adapter.types import (
     Asset,
     DuplicateFinancialOperation,
     JournalConflict,
+    LegacyJournalUnsupported,
     PaymentRecord,
     PreparedPayment,
     SettlementEvent,
@@ -31,6 +33,7 @@ from credence.xrpl_adapter.types import (
     TransactionHashMismatch,
     TransactionState,
     TransactionType,
+    UnsupportedJournalSchema,
     ValidatedLedgerObservation,
 )
 
@@ -103,6 +106,128 @@ CREATE INDEX IF NOT EXISTS xrpl_settlement_outbox_pending
     ON xrpl_settlement_outbox(delivered_at, created_at);
 """
 
+_ColumnSignature = tuple[str, int, str | None, int]
+
+_LEGACY_TRANSACTION_COLUMNS: dict[str, _ColumnSignature] = {
+    "operation_id": ("TEXT", 0, None, 1),
+    "payment_authorization_id": ("TEXT", 1, None, 0),
+    "transaction_type": ("TEXT", 1, None, 0),
+    "account": ("TEXT", 1, None, 0),
+    "destination": ("TEXT", 1, None, 0),
+    "asset_label": ("TEXT", 1, None, 0),
+    "asset_currency_code": ("TEXT", 1, None, 0),
+    "asset_issuer": ("TEXT", 1, None, 0),
+    "amount_micro_units": ("INTEGER", 1, None, 0),
+    "fee_drops": ("INTEGER", 1, None, 0),
+    "network_id": ("INTEGER", 1, None, 0),
+    "sequence": ("INTEGER", 0, None, 0),
+    "ticket_sequence": ("INTEGER", 0, None, 0),
+    "earliest_ledger_sequence": ("INTEGER", 1, None, 0),
+    "last_ledger_sequence": ("INTEGER", 1, None, 0),
+    "signed_transaction": ("BLOB", 1, None, 0),
+    "transaction_hash": ("TEXT", 1, None, 0),
+    "state": ("TEXT", 1, None, 0),
+    "last_provisional_status": ("TEXT", 0, None, 0),
+    "final_result": ("TEXT", 0, None, 0),
+    "final_detail": ("TEXT", 0, None, 0),
+    "final_evidence": ("BLOB", 0, None, 0),
+    "validated_ledger_index": ("INTEGER", 0, None, 0),
+    "settlement_status": ("TEXT", 0, None, 0),
+    "settlement_effect_claimed": ("INTEGER", 1, "0", 0),
+    "created_at": ("TEXT", 1, None, 0),
+    "updated_at": ("TEXT", 1, None, 0),
+}
+_CURRENT_TRANSACTION_COLUMNS = _LEGACY_TRANSACTION_COLUMNS | {
+    "validated_ledger_hash": ("TEXT", 0, None, 0),
+    "verified_delivered_amount_micro_units": ("INTEGER", 0, None, 0),
+    "evidence_verification_version": ("INTEGER", 1, "0", 0),
+    "submission_anchor_ledger_index": ("INTEGER", 0, None, 0),
+    "submission_anchor_ledger_hash": ("TEXT", 0, None, 0),
+    "submission_anchor_source_id": ("TEXT", 0, None, 0),
+}
+_ATTEMPT_COLUMNS: dict[str, _ColumnSignature] = {
+    "operation_id": ("TEXT", 1, None, 1),
+    "attempt_number": ("INTEGER", 1, None, 2),
+    "started_at": ("TEXT", 1, None, 0),
+    "completed_at": ("TEXT", 0, None, 0),
+    "disposition": ("TEXT", 0, None, 0),
+    "provisional_status": ("TEXT", 0, None, 0),
+}
+_OUTBOX_COLUMNS: dict[str, _ColumnSignature] = {
+    "event_id": ("TEXT", 0, None, 1),
+    "operation_id": ("TEXT", 1, None, 0),
+    "transaction_hash": ("TEXT", 1, None, 0),
+    "payload": ("BLOB", 1, None, 0),
+    "delivery_attempts": ("INTEGER", 1, "0", 0),
+    "last_attempt_at": ("TEXT", 0, None, 0),
+    "delivered_at": ("TEXT", 0, None, 0),
+    "created_at": ("TEXT", 1, None, 0),
+}
+_TRANSACTION_INDEXES = (
+    (0, "c", ("state", "updated_at")),
+    (1, "pk", ("operation_id",)),
+    (1, "u", ("account", "sequence")),
+    (1, "u", ("account", "ticket_sequence")),
+    (1, "u", ("payment_authorization_id",)),
+    (1, "u", ("transaction_hash",)),
+)
+_ATTEMPT_INDEXES = ((1, "pk", ("operation_id", "attempt_number")),)
+_OUTBOX_INDEXES = (
+    (0, "c", ("delivered_at", "created_at")),
+    (1, "pk", ("event_id",)),
+    (1, "u", ("operation_id",)),
+    (1, "u", ("transaction_hash",)),
+)
+_NO_FOREIGN_KEYS: tuple[tuple[str, ...], ...] = ()
+_OPERATION_FOREIGN_KEY = (
+    (
+        "xrpl_payment_transactions",
+        "operation_id",
+        "operation_id",
+        "NO ACTION",
+        "NO ACTION",
+        "NONE",
+    ),
+)
+
+
+class _SchemaKind(Enum):
+    EMPTY = "EMPTY"
+    LEGACY_X0 = "LEGACY_X0"
+    CURRENT = "CURRENT"
+    UNSUPPORTED = "UNSUPPORTED"
+
+
+def _index_signatures(
+    connection: sqlite3.Connection, table: str
+) -> tuple[tuple[int, str, tuple[str, ...]], ...]:
+    signatures = []
+    for row in connection.execute(f'PRAGMA index_list("{table}")'):
+        name = cast(str, row[1])
+        signatures.append(
+            (
+                cast(int, row[2]),
+                cast(str, row[3]),
+                tuple(
+                    cast(str, indexed[2])
+                    for indexed in connection.execute(f'PRAGMA index_info("{name}")')
+                ),
+            )
+        )
+    return tuple(sorted(signatures))
+
+
+def _column_signatures(connection: sqlite3.Connection, table: str) -> dict[str, _ColumnSignature]:
+    return {
+        cast(str, row[1]): (
+            cast(str, row[2]),
+            cast(int, row[3]),
+            cast(str | None, row[4]),
+            cast(int, row[5]),
+        )
+        for row in connection.execute(f'PRAGMA table_info("{table}")')
+    }
+
 
 def _now() -> str:
     return datetime.now(UTC).isoformat().replace("+00:00", "Z")
@@ -113,44 +238,114 @@ class PaymentJournal:
 
     def __init__(self, database: str | Path) -> None:
         self._database = Path(database)
-        self._database.parent.mkdir(parents=True, exist_ok=True)
-        with self._connect() as connection:
-            connection.executescript(SCHEMA)
-            self._migrate(connection)
+        kind = self._classify_existing_schema()
+        if kind is _SchemaKind.LEGACY_X0:
+            raise LegacyJournalUnsupported(
+                "original X0 journals are read-only pending a separately authorized "
+                "recovery procedure"
+            )
+        if kind is _SchemaKind.UNSUPPORTED:
+            raise UnsupportedJournalSchema(
+                "expected an empty database or the complete X0s schema at version 2"
+            )
+        if kind is _SchemaKind.EMPTY:
+            self._initialize()
         os.chmod(self._database, 0o600)
 
-    def _migrate(self, connection: sqlite3.Connection) -> None:
-        """Upgrade X0 journals without treating old finality as X0s-verified evidence."""
-        columns = {
-            cast(str, row[1])
-            for row in connection.execute("PRAGMA table_info(xrpl_payment_transactions)")
+    def _classify_existing_schema(self) -> _SchemaKind:
+        """Inspect an existing file read-only before any migration or journal write."""
+        if not self._database.exists() or (
+            self._database.is_file() and self._database.stat().st_size == 0
+        ):
+            return _SchemaKind.EMPTY
+        if not self._database.is_file():
+            return _SchemaKind.UNSUPPORTED
+        uri = f"{self._database.resolve().as_uri()}?mode=ro"
+        try:
+            connection = sqlite3.connect(uri, uri=True, timeout=10, isolation_level=None)
+            try:
+                version = cast(int, connection.execute("PRAGMA user_version").fetchone()[0])
+                integrity = cast(str, connection.execute("PRAGMA quick_check").fetchone()[0])
+                objects = {
+                    cast(str, row[0]): cast(str, row[1])
+                    for row in connection.execute(
+                        """SELECT name, type FROM sqlite_master
+                           WHERE name NOT LIKE 'sqlite_%'"""
+                    )
+                }
+                columns = {
+                    table: _column_signatures(connection, table)
+                    for table in (
+                        "xrpl_payment_transactions",
+                        "xrpl_submission_attempts",
+                        "xrpl_settlement_outbox",
+                    )
+                    if objects.get(table) == "table"
+                }
+                indexes = {table: _index_signatures(connection, table) for table in columns}
+                foreign_keys = {
+                    table: tuple(
+                        tuple(cast(str, value) for value in row[2:])
+                        for row in connection.execute(f'PRAGMA foreign_key_list("{table}")')
+                    )
+                    for table in columns
+                }
+            finally:
+                connection.close()
+        except (OSError, sqlite3.DatabaseError):
+            return _SchemaKind.UNSUPPORTED
+
+        table_names = {name for name, object_type in objects.items() if object_type == "table"}
+        non_index_objects = {
+            name for name, object_type in objects.items() if object_type != "index"
         }
-        additions = {
-            "validated_ledger_hash": "TEXT",
-            "verified_delivered_amount_micro_units": "INTEGER",
-            "evidence_verification_version": "INTEGER NOT NULL DEFAULT 0",
-            "submission_anchor_ledger_index": "INTEGER",
-            "submission_anchor_ledger_hash": "TEXT",
-            "submission_anchor_source_id": "TEXT",
-        }
-        for name, declaration in additions.items():
-            if name not in columns:
-                connection.execute(
-                    f"ALTER TABLE xrpl_payment_transactions ADD COLUMN {name} {declaration}"
-                )
-        connection.execute(
-            """UPDATE xrpl_payment_transactions
-               SET state = ?, settlement_status = NULL, settlement_effect_claimed = 0,
-                   last_provisional_status = 'X0S_REVERIFICATION_REQUIRED'
-               WHERE state IN (?, ?, ?) AND evidence_verification_version = 0""",
-            (
-                TransactionState.UNKNOWN.value,
-                TransactionState.VALIDATED_SUCCESS.value,
-                TransactionState.VALIDATED_FAILURE.value,
-                TransactionState.EXPIRED_NOT_INCLUDED.value,
-            ),
-        )
-        connection.execute("PRAGMA user_version = 2")
+        if integrity != "ok":
+            return _SchemaKind.UNSUPPORTED
+        if not objects and version == 0:
+            return _SchemaKind.EMPTY
+        if (
+            version in {0, 1}
+            and table_names == {"xrpl_payment_transactions", "xrpl_submission_attempts"}
+            and non_index_objects == table_names
+            and columns.get("xrpl_payment_transactions") == _LEGACY_TRANSACTION_COLUMNS
+            and columns.get("xrpl_submission_attempts") == _ATTEMPT_COLUMNS
+            and indexes.get("xrpl_payment_transactions") == _TRANSACTION_INDEXES
+            and indexes.get("xrpl_submission_attempts") == _ATTEMPT_INDEXES
+            and foreign_keys.get("xrpl_payment_transactions") == _NO_FOREIGN_KEYS
+            and foreign_keys.get("xrpl_submission_attempts") == _OPERATION_FOREIGN_KEY
+        ):
+            return _SchemaKind.LEGACY_X0
+        if (
+            version == 2
+            and table_names
+            == {
+                "xrpl_payment_transactions",
+                "xrpl_submission_attempts",
+                "xrpl_settlement_outbox",
+            }
+            and non_index_objects == table_names
+            and columns.get("xrpl_payment_transactions") == _CURRENT_TRANSACTION_COLUMNS
+            and columns.get("xrpl_submission_attempts") == _ATTEMPT_COLUMNS
+            and columns.get("xrpl_settlement_outbox") == _OUTBOX_COLUMNS
+            and indexes.get("xrpl_payment_transactions") == _TRANSACTION_INDEXES
+            and indexes.get("xrpl_submission_attempts") == _ATTEMPT_INDEXES
+            and indexes.get("xrpl_settlement_outbox") == _OUTBOX_INDEXES
+            and foreign_keys.get("xrpl_payment_transactions") == _NO_FOREIGN_KEYS
+            and foreign_keys.get("xrpl_submission_attempts") == _OPERATION_FOREIGN_KEY
+            and foreign_keys.get("xrpl_settlement_outbox") == _OPERATION_FOREIGN_KEY
+        ):
+            return _SchemaKind.CURRENT
+        return _SchemaKind.UNSUPPORTED
+
+    def _initialize(self) -> None:
+        """Create only a genuinely empty journal directly at schema version 2."""
+        self._database.parent.mkdir(parents=True, exist_ok=True)
+        with self._connect() as connection:
+            connection.executescript(
+                f"BEGIN IMMEDIATE;\n{SCHEMA}\nPRAGMA user_version = 2;\nCOMMIT;"
+            )
+        if self._classify_existing_schema() is not _SchemaKind.CURRENT:
+            raise UnsupportedJournalSchema("new journal initialization did not validate")
 
     def _connect(self) -> sqlite3.Connection:
         connection = sqlite3.connect(self._database, timeout=10, isolation_level=None)
