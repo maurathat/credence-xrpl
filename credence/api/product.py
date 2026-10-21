@@ -206,6 +206,117 @@ def _sorted(values: Sequence[str]) -> tuple[str, ...]:
     return tuple(sorted(set(values)))
 
 
+def procurement_class_for(form: ProcurementForm) -> ProcurementClass:
+    """The Core ProcurementClass a form describes (the dry run and the I2a purchase path use this
+    one mapping). Raises ValueError or TypeError on an invalid combination."""
+    return ProcurementClass(
+        model_family=form.model_family,
+        allowed_precisions=None
+        if form.allowed_precisions is None
+        else _sorted(form.allowed_precisions),
+        allowed_quantizations=None
+        if form.allowed_quantizations is None
+        else _sorted(form.allowed_quantizations),
+        minimum_evidence_tier=EvidenceTier(form.minimum_evidence_tier),
+        delivery_mode=DeliveryMode.INTERACTIVE,
+        allowed_jurisdictions=tuple(CountryCode(c) for c in _sorted(form.allowed_jurisdictions)),
+        allowed_data_residencies=tuple(
+            CountryCode(c) for c in _sorted(form.allowed_data_residencies)
+        ),
+        allowed_providers=tuple(ProviderId(p) for p in _sorted(form.allowed_providers)),
+    )
+
+
+def receipt_checks(
+    receipt: DeliveryReceiptBody,
+    gateway: SignedObject,
+    attestation: ProviderAttestationBody | None,
+    provider_signed: SignedObject | None,
+    request: PurchaseRequest,
+    profile: ExecutionProfile,
+    registry: KeyRegistry,
+    recorded_digest: str,
+    response: bytes | None,
+    response_note: str,
+) -> list[JSON]:
+    """Recompute a receipt's evidence checks with Core's digest and signature functions."""
+    checks: list[JSON] = []
+
+    def check(name: str, passed: bool | None, detail: str) -> None:
+        checks.append(
+            {
+                "check": name,
+                "result": "not_applicable" if passed is None else "pass" if passed else "fail",
+                "detail": detail,
+            }
+        )
+
+    digest = receipt.digest().value
+    check(
+        "receipt_digest",
+        digest == recorded_digest,
+        f"recomputed {digest} (Kessai serializer: JCS (RFC 8785) + NFC)",
+    )
+    gateway_result = verify_signed(receipt, gateway, registry, role=KeyRole.GATEWAY, subject=None)
+    check(
+        "gateway_signature",
+        gateway_result.accepted,
+        f"Ed25519 by {gateway.key_id.value}"
+        + ("" if gateway_result.failure is None else f": {gateway_result.failure.value}"),
+    )
+    tier = receipt.evidence_tier
+    if tier is EvidenceTier.BOUND_AND_SIGNED:
+        if attestation is None or provider_signed is None:
+            check("provider_signature", False, "Tier 2 receipt without a provider attestation")
+        else:
+            result = verify_signed(
+                attestation,
+                provider_signed,
+                registry,
+                role=KeyRole.PROVIDER,
+                subject=receipt.provider_id.value,
+            )
+            check(
+                "provider_signature",
+                result.accepted,
+                f"Ed25519 by {provider_signed.key_id.value} for {receipt.provider_id.value}"
+                + ("" if result.failure is None else f": {result.failure.value}"),
+            )
+            check(
+                "attestation_binding",
+                receipt.provider_attestation_digest == attestation.digest()
+                and attestation.purchase_request_digest == receipt.purchase_request_digest
+                and attestation.execution_profile_digest == receipt.execution_profile_digest
+                and attestation.response_digest == receipt.response_digest
+                and attestation.input_token_count == receipt.input_token_count
+                and attestation.output_token_count == receipt.output_token_count,
+                "attestation digest, request, profile, response and token counts equal "
+                "the receipt's",
+            )
+    else:
+        check(
+            "provider_signature",
+            None,
+            "Tier 1: the provider signs nothing; the gateway witnessed the response",
+        )
+    check(
+        "request_binding",
+        receipt.purchase_request_digest == request.digest(),
+        "receipt names the digest of the approved purchase request",
+    )
+    check(
+        "profile_binding",
+        receipt.execution_profile_digest == profile.digest(),
+        "receipt names the digest of the quoted execution profile",
+    )
+    check(
+        "response_digest",
+        None if response is None else payload_digest(response) == receipt.response_digest,
+        response_note,
+    )
+    return checks
+
+
 class ProductReadModel:
     def __init__(self, clock: Callable[[], Timestamp] = utc_now) -> None:
         self._clock = clock
@@ -409,24 +520,7 @@ class ProductReadModel:
             raise ProductError("NO_PROVIDERS", "allow at least one provider")
         try:
             tier = EvidenceTier(form.minimum_evidence_tier)
-            procurement = ProcurementClass(
-                model_family=form.model_family,
-                allowed_precisions=None
-                if form.allowed_precisions is None
-                else _sorted(form.allowed_precisions),
-                allowed_quantizations=None
-                if form.allowed_quantizations is None
-                else _sorted(form.allowed_quantizations),
-                minimum_evidence_tier=tier,
-                delivery_mode=DeliveryMode.INTERACTIVE,
-                allowed_jurisdictions=tuple(
-                    CountryCode(c) for c in _sorted(form.allowed_jurisdictions)
-                ),
-                allowed_data_residencies=tuple(
-                    CountryCode(c) for c in _sorted(form.allowed_data_residencies)
-                ),
-                allowed_providers=tuple(ProviderId(p) for p in _sorted(form.allowed_providers)),
-            )
+            procurement = procurement_class_for(form)
             template = self._presets["scenario-a-general"][1]
             facility = replace(
                 template,
@@ -847,88 +941,23 @@ class ProductReadModel:
         profile = ExecutionProfile.from_canonical(s["execution_profile"])
         registry = _registry(s["registry"])
         registered = {e["key_id"]: e for e in s["registry"]}
-
-        checks: list[JSON] = []
-
-        def check(name: str, passed: bool | None, detail: str) -> None:
-            checks.append(
-                {
-                    "check": name,
-                    "result": "not_applicable" if passed is None else "pass" if passed else "fail",
-                    "detail": detail,
-                }
-            )
-
-        digest = receipt.digest().value
-        check(
-            "receipt_digest",
-            digest == s["recorded_receipt_digest"],
-            f"recomputed {digest} (Kessai serializer: JCS (RFC 8785) + NFC)",
-        )
-        gateway_result = verify_signed(
-            receipt, gateway, registry, role=KeyRole.GATEWAY, subject=None
-        )
-        check(
-            "gateway_signature",
-            gateway_result.accepted,
-            f"Ed25519 by {gateway.key_id.value}"
-            + ("" if gateway_result.failure is None else f": {gateway_result.failure.value}"),
-        )
-        tier = receipt.evidence_tier
-        if tier is EvidenceTier.BOUND_AND_SIGNED:
-            if attestation is None or provider_signed is None:
-                check("provider_signature", False, "Tier 2 receipt without a provider attestation")
-            else:
-                result = verify_signed(
-                    attestation,
-                    provider_signed,
-                    registry,
-                    role=KeyRole.PROVIDER,
-                    subject=receipt.provider_id.value,
-                )
-                check(
-                    "provider_signature",
-                    result.accepted,
-                    f"Ed25519 by {provider_signed.key_id.value} for {receipt.provider_id.value}"
-                    + ("" if result.failure is None else f": {result.failure.value}"),
-                )
-                check(
-                    "attestation_binding",
-                    receipt.provider_attestation_digest == attestation.digest()
-                    and attestation.purchase_request_digest == receipt.purchase_request_digest
-                    and attestation.execution_profile_digest == receipt.execution_profile_digest
-                    and attestation.response_digest == receipt.response_digest
-                    and attestation.input_token_count == receipt.input_token_count
-                    and attestation.output_token_count == receipt.output_token_count,
-                    "attestation digest, request, profile, response and token counts equal "
-                    "the receipt's",
-                )
-        else:
-            check(
-                "provider_signature",
-                None,
-                "Tier 1: the provider signs nothing; the gateway witnessed the response",
-            )
-        check(
-            "request_binding",
-            receipt.purchase_request_digest == request.digest(),
-            "receipt names the digest of the approved purchase request",
-        )
-        check(
-            "profile_binding",
-            receipt.execution_profile_digest == profile.digest(),
-            "receipt names the digest of the quoted execution profile",
-        )
         response = s["response_utf8"]
-        check(
-            "response_digest",
-            None
-            if response is None
-            else payload_digest(response.encode("utf-8")) == receipt.response_digest,
+        checks = receipt_checks(
+            receipt,
+            gateway,
+            attestation,
+            provider_signed,
+            request,
+            profile,
+            registry,
+            s["recorded_receipt_digest"],
+            None if response is None else response.encode("utf-8"),
             "response bytes not available in this record; digest shown as recorded"
             if response is None
             else "recomputed from the response the agent retrieved",
         )
+        digest = receipt.digest().value
+        tier = receipt.evidence_tier
         signer = registered.get(gateway.key_id.value)
         return {
             "receipt_digest": digest,

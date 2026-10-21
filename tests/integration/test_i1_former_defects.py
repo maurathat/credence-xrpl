@@ -405,27 +405,39 @@ def test_invalid_release_attempts_through_core_are_refused_after_delivery_began(
 def test_r3_service_exposes_no_purchase_reserve_or_release_bypass(tmp_path: Path) -> None:
     service = open_service(tmp_path / "i.sqlite3", market_world(), register=(GENERAL_FACILITY,))
     public = {name for name in dir(service) if not name.startswith("_")}
+    # I2a adds remote signing (prepare / preparation / submit_prepared: no reserve or release of
+    # its own; submit runs the same lifecycle as purchase) and read-only agent reads.
     assert public == {
         "accounting",
         "acknowledge",
         "close",
         "journal_entry",
+        "lifecycle_events",
         "operation",
+        "operation_for_receipt",
+        "operations_for_agent",
         "pending_operations",
+        "preparation",
+        "prepare",
+        "public_key",
         "purchase",
         "recover",
         "register_facility",
         "retrieve",
+        "submit_prepared",
     }
     view = {name for name in dir(service.accounting) if not name.startswith("_")}
     assert view == {
+        "accounting_settlement",
         "chain_head",
+        "decision_record",
         "delivery_attempt",
         "dispute_evidence",
         "disputes",
         "exposure",
         "late_delivery_disputes",
         "no_delivery_releases",
+        "policy_decision_digest",
         "receipt_settled",
         "release_reason",
         "reservation",

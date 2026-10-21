@@ -31,12 +31,23 @@ Recovery reconciles each in-flight journal entry with Core's reservation, attemp
 records before anything else, and never re-executes a provider request, charges twice, releases a
 hold whose delivery may have happened, or fabricates a receipt.
 
+Remote agent signing (I2a, CR-1, provisional): `prepare` selects one offer under Core's policy and
+durably stores the exact `PurchaseRequest` for one authenticated agent (`preparation.py`); the
+agent verifies and signs that request's existing C3A statement outside the server; `submit_prepared`
+requires that signature, refuses any change, and only then runs the request through the same
+lifecycle as `purchase` (steps 2-15). `purchase` and `prepare` build requests with one builder.
+
+Agent-scoped reads (I2a, CR-3/CR-4, provisional): operations by agent, the operation of a receipt,
+and the lifecycle events Core and the journal recorded with their own timestamps. Nothing is
+inferred: a transition whose time was not persisted is not reported.
+
 Owner: Integration (San Antonio).
 """
 
 from __future__ import annotations
 
 import hashlib
+import json
 import os
 import threading
 from collections.abc import Callable, Iterable, Iterator
@@ -50,6 +61,7 @@ from nacl.signing import SigningKey
 
 from credence.core.billing import max_total_cost_value
 from credence.core.objects import (
+    DecisionRecord,
     ExecutionProfile,
     Facility,
     ProcurementClass,
@@ -77,6 +89,7 @@ from credence.core.reservation_ledger import (
     reservation_id_for,
 )
 from credence.core.settlement_coordinator import (
+    AccountingSettlement,
     DeliveryAttempt,
     DeliverySubmission,
     EvidenceBytes,
@@ -91,7 +104,15 @@ from credence.core.settlement_coordinator import (
     SignedPurchase,
     UnknownDeliveryCause,
 )
-from credence.core.signatures import KeyRegistry, KeyStatus
+from credence.core.signatures import (
+    KeyRegistry,
+    KeyRole,
+    KeyStatus,
+    RegisteredKey,
+    key_id_for,
+    sign,
+    verify_signed,
+)
 from credence.inference.gateway import (
     DeliveryCaptured,
     DeliveryNotAuthorized,
@@ -100,6 +121,7 @@ from credence.inference.gateway import (
     ProviderFailureKind,
     Purchase,
 )
+from credence.inference.market import Selection, qualify_and_select
 from credence.inference.payload import PayloadError, payload_digest
 from credence.inference.provider import InferenceProvider
 from credence.integration.authorization import (
@@ -119,6 +141,13 @@ from credence.integration.journal import (
     StateRefused,
 )
 from credence.integration.ownership import ProcessOwnership
+from credence.integration.preparation import (
+    PREPARATION_TTL_SECONDS,
+    Preparation,
+    PreparationStore,
+    market_digest,
+    new_preparation_id,
+)
 from credence.integration.revocation import DurableKeyRegistry, RevocationStore
 
 S = OperationState
@@ -153,6 +182,19 @@ class Refusal(Enum):
     PROMPT_NOT_UTF8 = "PROMPT_NOT_UTF8"
     NO_OFFERS = "NO_OFFERS"
     IDEMPOTENCY_CONFLICT = "IDEMPOTENCY_CONFLICT"
+    # Remote agent signing (I2a, CR-1). Nothing is journaled, reserved or called on any of these.
+    AGENT_NOT_AUTHORIZED = "AGENT_NOT_AUTHORIZED"
+    AGENT_REVOKED = "AGENT_REVOKED"
+    NO_QUALIFYING_OFFER = "NO_QUALIFYING_OFFER"
+    ALREADY_SUBMITTED = "ALREADY_SUBMITTED"
+    UNKNOWN_PREPARATION = "UNKNOWN_PREPARATION"
+    PREPARATION_EXPIRED = "PREPARATION_EXPIRED"
+    PREPARATION_STALE = "PREPARATION_STALE"
+    PREPARATION_CONSUMED = "PREPARATION_CONSUMED"
+    PROMPT_MISMATCH = "PROMPT_MISMATCH"
+    REQUEST_MISMATCH = "REQUEST_MISMATCH"
+    WRONG_AGENT = "WRONG_AGENT"
+    BAD_SIGNATURE = "BAD_SIGNATURE"
 
 
 class ServiceClosed(RuntimeError):
@@ -170,6 +212,10 @@ class ResponseUnavailable(RuntimeError):
 
 
 class UnknownOperation(KeyError):
+    pass
+
+
+class UnknownPreparation(KeyError):
     pass
 
 
@@ -217,6 +263,17 @@ class AccountingView:
     def release_reason(self, reservation_id: ReservationId) -> str | None:
         return self.__ledger.release_reason(reservation_id)
 
+    # Read only (I2a, CR-4).
+    def accounting_settlement(self, receipt_digest: Sha256Digest) -> AccountingSettlement | None:
+        return self.__coordinator.accounting_settlement(receipt_digest)
+
+    def policy_decision_digest(self, reservation_id: ReservationId) -> str | None:
+        return self.__ledger.decision_record_digest(reservation_id)
+
+    def decision_record(self, digest: str) -> DecisionRecord | None:
+        data = self.__ledger.decision_record_bytes(digest)
+        return None if data is None else DecisionRecord.from_canonical(json.loads(data))
+
 
 @dataclass(frozen=True)
 class Offer:
@@ -239,6 +296,34 @@ class Job:
 
 
 AgentSigner = Callable[[PurchaseRequest], SignedObject]
+
+
+@dataclass(frozen=True)
+class Market:
+    """The purchase context for one facility, supplied by the embedding process and never by the
+    agent: the facility terms as the operator configured them, the facility's procurement classes
+    and the current offers, in order (I2a, CR-1)."""
+
+    facility: Facility
+    procurement_classes: tuple[ProcurementClass, ...]
+    offers: tuple[Offer, ...]
+
+    def digest(self) -> Sha256Digest:
+        return market_digest(
+            self.facility,
+            self.procurement_classes,
+            [(o.quote, o.service_class, o.execution_profile) for o in self.offers],
+        )
+
+
+@dataclass(frozen=True)
+class LifecycleEvent:
+    """One recorded event of an operation, at the time its own record persisted (I2a, CR-4)."""
+
+    event: str
+    at: Timestamp
+    source: str
+    detail: str | None
 
 
 @dataclass(frozen=True)
@@ -288,6 +373,30 @@ def nonce_for(idempotency_key: str, offer_index: int) -> Nonce:
     return Nonce(hashlib.sha256(material).hexdigest()[:32])
 
 
+def purchase_requests(
+    idempotency_key: str,
+    facility_id: FacilityId,
+    offers: Iterable[Offer],
+    prompt_digest: Sha256Digest,
+    expires_at: Timestamp,
+) -> tuple[PurchaseRequest, ...]:
+    """The one request builder, shared by `purchase` and `prepare`: one request per offer, built
+    from job inputs only (none depends on exposure)."""
+    return tuple(
+        PurchaseRequest(
+            facility_id=facility_id,
+            provider_id=offer.quote.provider_id,
+            quote_id=offer.quote.quote_id,
+            purpose=Purpose.INFERENCE,
+            max_total_cost_micro_trlusd=MicroTrlusd(max_total_cost_value(offer.quote)),
+            prompt_digest=prompt_digest,
+            nonce=nonce_for(idempotency_key, index),
+            expires_at=expires_at,
+        )
+        for index, offer in enumerate(offers)
+    )
+
+
 def _restrict(path: Path) -> None:
     fd = os.open(path, os.O_RDWR | os.O_CREAT, DATABASE_FILE_MODE)
     try:
@@ -334,6 +443,7 @@ class IntegrationService:
                 self._ledger, self._durable_registry, fault=coordinator_fault
             )
             self._journal = Journal(self._database)
+            self._preparations = PreparationStore(self._database)
             self._gateway = Gateway(
                 ledger=self._ledger,
                 registry=self._durable_registry,
@@ -418,6 +528,160 @@ class IntegrationService:
         self._require_open()
         self._coordinator.register_facility(facility)
 
+    # --- agent-scoped reads (I2a, CR-3 and CR-4) --------------------------------------------
+
+    def public_key(self, key_id: KeyId) -> RegisteredKey | None:
+        """The registry's public record of a key (key ID, role, subject, durable status)."""
+        return self._registry.lookup(key_id)
+
+    def operations_for_agent(
+        self, agent_key_id: KeyId, *, limit: int, after: str | None = None
+    ) -> list[Operation]:
+        """Operations whose purchase this agent key signed (with its current registry subject),
+        oldest first. `after` is the last operation ID of the previous page; it must belong to
+        the same agent (otherwise UnknownOperation)."""
+        if not 1 <= limit <= 500:
+            raise ValueError("limit must be between 1 and 500")
+        key = self._registry.lookup(agent_key_id)
+        if key is None or key.role is not KeyRole.AGENT:
+            return []
+        cursor = None
+        if after is not None:
+            op = self._journal.get(after)
+            if op is None or (op.agent_key_id, op.agent_subject) != (
+                agent_key_id.value,
+                key.subject,
+            ):
+                raise UnknownOperation(after)
+            cursor = (str(op.row["created_at"]), op.operation_id)
+        return self._journal.for_agent(agent_key_id.value, key.subject, limit=limit, after=cursor)
+
+    def operation_for_receipt(self, receipt_digest: Sha256Digest) -> Operation:
+        op = self._journal.by_receipt(receipt_digest.value)
+        if op is None:
+            raise UnknownOperation(receipt_digest.value)
+        return op
+
+    def lifecycle_events(self, operation_id: str) -> list[LifecycleEvent]:
+        """Every event of the operation whose time a record persisted, oldest first.
+
+        Sources: the journal (intent, retrieval, acknowledgment, latest transition), Core's
+        reservation, policy decision, delivery attempt, no-delivery release, accounting
+        settlement, dispute and late-delivery records, the gateway-signed receipt's
+        provider-reported times, and the agent key's persisted revocation. Transitions whose
+        time is not persisted (for example `delivered`) are not reported."""
+        op = self.journal_entry(operation_id)
+        ordered: list[tuple[str, int, LifecycleEvent]] = []
+
+        def add(event: str, at: str | None, source: str, detail: str | None = None) -> None:
+            if at is not None:
+                ordered.append(
+                    (at, len(ordered), LifecycleEvent(event, Timestamp(at), source, detail))
+                )
+
+        add("intent_journaled", str(op.row["created_at"]), "integration_operations.created_at")
+        if op.reservation_id is not None:
+            rid = ReservationId(op.reservation_id)
+            policy_digest = self._accounting.policy_decision_digest(rid)
+            policy = (
+                None if policy_digest is None else self._accounting.decision_record(policy_digest)
+            )
+            if policy is not None:
+                add(
+                    "policy_decision",
+                    policy.decided_at.value,
+                    "decision_records (policy)",
+                    policy.outcome.value
+                    + ("" if policy.reason_code is None else f" {policy.reason_code.value}"),
+                )
+            try:
+                reservation = self._ledger.get(rid)
+            except ReservationStateError:
+                reservation = None
+            if reservation is not None:
+                add(
+                    "reserved",
+                    reservation.created_at.value,
+                    "reservations.created_at",
+                    f"hold {reservation.maximum_amount_micro_trlusd.value} micro-tRLUSD until "
+                    f"{reservation.expires_at.value}",
+                )
+            attempt = self._coordinator.delivery_attempt(rid)
+            if attempt is not None:
+                add(
+                    "delivery_attempt_recorded",
+                    attempt.begun_at.value,
+                    "delivery_attempts.begun_at",
+                )
+                if attempt.execution_claimed_at is not None:
+                    add(
+                        "execution_claimed",
+                        attempt.execution_claimed_at.value,
+                        "delivery_attempts.execution_claimed_at",
+                    )
+            for release in self._coordinator.no_delivery_releases():
+                if release.reservation_id == rid:
+                    add(
+                        "released_undelivered",
+                        release.released_at.value,
+                        "no_delivery_releases.released_at",
+                        release.reason.value,
+                    )
+        receipt = op.receipt()
+        if receipt is not None:
+            add(
+                "provider_started",
+                receipt.started_at.value,
+                "receipt.started_at (provider-reported, gateway-signed)",
+            )
+            add(
+                "provider_completed",
+                receipt.completed_at.value,
+                "receipt.completed_at (provider-reported, gateway-signed)",
+            )
+            digest = receipt.digest()
+            settled = self._coordinator.accounting_settlement(digest)
+            if settled is not None:
+                add(
+                    "accounting_settled",
+                    settled.settled_at.value,
+                    "accounting_settlements.settled_at",
+                    f"{settled.actual_amount.value} micro-tRLUSD drawn (accounting, not XRPL)",
+                )
+            for kind, _, _, receipt_digest, _, reason, recorded_at in self._coordinator.disputes():
+                if receipt_digest == digest.value:
+                    add(
+                        "settlement_dispute",
+                        recorded_at,
+                        "settlement_disputes.recorded_at",
+                        f"{kind} {reason}",
+                    )
+            for late in self._coordinator.late_delivery_disputes():
+                if late.receipt_digest == digest:
+                    add(
+                        "late_delivery_dispute",
+                        late.submitted_at.value,
+                        "late_delivery_disputes.submitted_at",
+                        f"reservation expired {late.expires_at.value}",
+                    )
+        add("retrieved", op.retrieved_at, "integration_operations.retrieved_at")
+        add("acknowledged", op.acknowledged_at, "integration_operations.acknowledged_at")
+        if op.agent_key_id is not None:
+            revocation = self._revocations.get(KeyId(op.agent_key_id))
+            if revocation is not None:
+                add(
+                    "agent_key_revoked",
+                    revocation.revoked_at.value,
+                    "integration_key_revocations.revoked_at",
+                )
+        add(
+            "latest_transition",
+            str(op.row["updated_at"]),
+            "integration_operations.updated_at",
+            f"journal state {op.state.value}",
+        )
+        return [event for _, _, event in sorted(ordered, key=lambda e: (e[0], e[1]))]
+
     # --- purchase ------------------------------------------------------------------------
 
     def purchase(self, job: Job, signer: AgentSigner) -> PurchaseReport | PurchaseRefused:
@@ -445,67 +709,349 @@ class IntegrationService:
                 )
             return self._purchase_locked(job, signer, prompt_digest)
 
-    def _purchase_locked(
-        self, job: Job, signer: AgentSigner, prompt_digest: Sha256Digest
+    # --- remote agent signing: prepare, then submit (I2a, CR-1) ----------------------------
+
+    def _agent_refusal(self, agent_key_id: KeyId, facility: Facility) -> PurchaseRefused | None:
+        """The key must be a registered agent key for the facility's borrower, and current."""
+        key = self._registry.lookup(agent_key_id)
+        if (
+            key is None
+            or key.role is not KeyRole.AGENT
+            or key.subject != facility.borrower_account.value
+        ):
+            return PurchaseRefused(
+                Refusal.AGENT_NOT_AUTHORIZED,
+                f"{agent_key_id.value} is not a registered agent key for this facility",
+            )
+        assert self._durable_registry is not None
+        if self._durable_registry.persisted_revocation(agent_key_id) or (
+            key.status is not KeyStatus.CURRENT
+        ):
+            return PurchaseRefused(Refusal.AGENT_REVOKED, agent_key_id.value)
+        return None
+
+    def _provisional_selection(
+        self, facility: Facility, market: Market, requests: tuple[PurchaseRequest, ...]
+    ) -> Selection:
+        """Core's qualification and Inference's routing rule, unchanged, over the unsigned
+        requests, against this database's real holds and used nonces.
+
+        The agent has not signed yet, so each request is signed in-process by an ephemeral
+        sandbox key registered, for this evaluation only, as an agent key for the facility's
+        borrower. The key is never stored or returned, and this selection authorizes nothing:
+        the agent's own signature, its key status and Core's reservation decide at submission.
+        The prompt is not used by qualification and is not available here."""
+        sandbox_key = SigningKey.generate()
+        registry = KeyRegistry(
+            [
+                RegisteredKey(
+                    key_id_for(sandbox_key.verify_key),
+                    KeyRole.AGENT,
+                    facility.borrower_account.value,
+                    KeyStatus.CURRENT,
+                )
+            ]
+        )
+        candidates = [
+            Purchase(
+                request=request,
+                request_signature=sign(request, sandbox_key),
+                prompt=b"",
+                facility=facility,
+                quote=offer.quote,
+                service_class=offer.service_class,
+                execution_profile=offer.execution_profile,
+                procurement_classes=market.procurement_classes,
+            )
+            for request, offer in zip(requests, market.offers, strict=True)
+        ]
+        del sandbox_key
+        return qualify_and_select(
+            candidates, registry=registry, ledger=self._ledger, now=self._clock()
+        )
+
+    def prepare(
+        self,
+        market: Market,
+        *,
+        agent_key_id: KeyId,
+        prompt_digest: Sha256Digest,
+        idempotency_key: str | None = None,
+    ) -> Preparation | PurchaseRefused:
+        """Select one offer under Core's policy and durably store the exact request for the agent
+        to sign. Reserves nothing, journals nothing and calls no provider.
+
+        The request is bound to `agent_key_id` (the authenticated agent), the facility, the
+        chosen offer and an opaque single-use preparation identity, and expires after
+        PREPARATION_TTL_SECONDS. Its fields are exactly those `purchase` would build for the same
+        idempotency key and offer."""
+        self._require_open()
+        if not market.offers:
+            return PurchaseRefused(Refusal.NO_OFFERS, "a job needs at least one offer")
+        refused = self._agent_refusal(agent_key_id, market.facility)
+        if refused is not None:
+            return refused
+        preparation_id = new_preparation_id()
+        key = idempotency_key if idempotency_key is not None else f"prepared:{preparation_id}"
+        fid = market.facility.facility_id.value
+        with self._facility_lock(fid):
+            existing = self._journal.by_key(key)
+            if existing is not None:
+                return PurchaseRefused(Refusal.ALREADY_SUBMITTED, existing.operation_id)
+            facility = self._accounted_facility(market.facility)
+            if isinstance(facility, PurchaseRefused):
+                return facility
+            now = self._clock()
+            expires_at = now.plus_seconds(PREPARATION_TTL_SECONDS)
+            requests = purchase_requests(
+                key, facility.facility_id, market.offers, prompt_digest, expires_at
+            )
+            selection = self._provisional_selection(facility, market, requests)
+            if selection.chosen is None:
+                reasons = sorted(
+                    {q.reason_code.value for q in selection.qualifications if q.reason_code}
+                )
+                return PurchaseRefused(Refusal.NO_QUALIFYING_OFFER, ",".join(reasons))
+            index = requests.index(selection.chosen.purchase.request)
+            offer = market.offers[index]
+            key_record = self._registry.lookup(agent_key_id)
+            assert key_record is not None
+            preparation = Preparation(
+                preparation_id=preparation_id,
+                idempotency_key=key,
+                operation_id=operation_id_for(key),
+                agent_key_id=agent_key_id,
+                agent_subject=key_record.subject,
+                facility_id=facility.facility_id,
+                market_digest=market.digest(),
+                offer_index=index,
+                request=requests[index],
+                quote=offer.quote,
+                service_class=offer.service_class,
+                execution_profile=offer.execution_profile,
+                prompt_digest=prompt_digest,
+                created_at=now,
+                expires_at=expires_at,
+            )
+            self._preparations.insert(preparation)
+            return preparation
+
+    def preparation(self, preparation_id: str) -> Preparation:
+        prepared = self._preparations.get(preparation_id)
+        if prepared is None:
+            raise UnknownPreparation(preparation_id)
+        return prepared
+
+    def submit_prepared(
+        self,
+        market: Market,
+        *,
+        preparation_id: str,
+        signature: SignedObject,
+        prompt: bytes,
+        agent_key_id: KeyId,
     ) -> PurchaseReport | PurchaseRefused:
-        facility_id = job.facility.facility_id
+        """Purchase exactly the prepared request, under the agent's own signature.
+
+        `agent_key_id` is the authenticated caller; `market` is the embedding process's current
+        view of the facility and its offers. Refused, with nothing journaled, reserved or
+        called, if the caller, prompt, request, signing key or market differs from the
+        preparation, if the signature does not verify under a current agent key for the
+        facility's borrower, if the preparation expired, or if Core's policy or the routing rule
+        would now choose differently. Another offer is never substituted. An identical
+        resubmission returns the journaled operation and never buys twice, across restarts."""
+        self._require_open()
+        try:
+            prompt_digest = payload_digest(prompt)
+        except PayloadError as exc:
+            return PurchaseRefused(Refusal.PROMPT_NOT_UTF8, str(exc))
+        prepared = self._preparations.get(preparation_id)
+        if prepared is None:
+            return PurchaseRefused(Refusal.UNKNOWN_PREPARATION, preparation_id)
+        if prepared.agent_key_id != agent_key_id:
+            return PurchaseRefused(Refusal.WRONG_AGENT, "not the preparation's agent")
+        if market.facility.facility_id != prepared.facility_id:
+            return PurchaseRefused(Refusal.PREPARATION_STALE, "a different facility")
+        with self._facility_lock(prepared.facility_id.value):
+            existing = self._journal.by_key(prepared.idempotency_key)
+            if existing is not None:
+                if (
+                    existing.row["request_digest"] == prepared.request_digest.value
+                    and existing.prompt_digest == prompt_digest.value
+                    and existing.row["request_signature"] == signature.canonical_bytes()
+                ):
+                    return PurchaseReport.of(existing)  # identical retry: never executes again
+                return PurchaseRefused(Refusal.PREPARATION_CONSUMED, existing.operation_id)
+            refused = self._check_submission(market, prepared, signature, prompt_digest)
+            if refused is not None:
+                return refused
+            if self._journal.in_flight(prepared.facility_id.value):
+                return PurchaseRefused(
+                    Refusal.FACILITY_BUSY,
+                    f"{prepared.facility_id.value} has an unreconciled operation; run recover()",
+                )
+            facility = self._accounted_facility(market.facility)
+            if isinstance(facility, PurchaseRefused):
+                return facility
+            requests = purchase_requests(
+                prepared.idempotency_key,
+                prepared.facility_id,
+                market.offers,
+                prepared.prompt_digest,
+                prepared.expires_at,
+            )
+            if requests[prepared.offer_index] != prepared.request:
+                return PurchaseRefused(Refusal.PREPARATION_STALE, "the request no longer rebuilds")
+            selection = self._provisional_selection(facility, market, requests)
+            if selection.chosen is None or selection.chosen.purchase.request != prepared.request:
+                return PurchaseRefused(
+                    Refusal.PREPARATION_STALE,
+                    "Core's policy or the offers now select differently; prepare again",
+                )
+            owner = self._registry.lookup(agent_key_id)
+            assert owner is not None
+            candidate = Purchase(
+                request=prepared.request,
+                request_signature=signature,
+                prompt=prompt,
+                facility=facility,
+                quote=prepared.quote,
+                service_class=prepared.service_class,
+                execution_profile=prepared.execution_profile,
+                procurement_classes=market.procurement_classes,
+            )
+            return self._select_and_run(
+                prepared.idempotency_key, prompt_digest, [candidate], owner=owner
+            )
+
+    def _check_submission(
+        self,
+        market: Market,
+        prepared: Preparation,
+        signature: SignedObject,
+        prompt_digest: Sha256Digest,
+    ) -> PurchaseRefused | None:
+        if prompt_digest != prepared.prompt_digest:
+            return PurchaseRefused(Refusal.PROMPT_MISMATCH, "the prompt is not the prepared one")
+        if not isinstance(signature, SignedObject):
+            return PurchaseRefused(Refusal.BAD_SIGNATURE, "MALFORMED_SIGNATURE")
+        if signature.object_digest != prepared.request_digest:
+            return PurchaseRefused(Refusal.REQUEST_MISMATCH, "signed a different request")
+        if signature.key_id != prepared.agent_key_id:
+            return PurchaseRefused(Refusal.WRONG_AGENT, "signed by another key")
+        refused = self._agent_refusal(prepared.agent_key_id, market.facility)
+        if refused is not None:
+            return refused
+        key = self._registry.lookup(prepared.agent_key_id)
+        if key is None or key.subject != prepared.agent_subject:
+            return PurchaseRefused(Refusal.AGENT_NOT_AUTHORIZED, "agent subject changed")
+        verification = verify_signed(
+            prepared.request,
+            signature,
+            self._registry,
+            role=KeyRole.AGENT,
+            subject=market.facility.borrower_account.value,
+        )
+        if not verification.signature_valid:
+            failure = verification.failure
+            return PurchaseRefused(
+                Refusal.BAD_SIGNATURE, "UNKNOWN" if failure is None else failure.value
+            )
+        if not verification.key_current:
+            return PurchaseRefused(Refusal.AGENT_REVOKED, prepared.agent_key_id.value)
+        if not self._clock().value < prepared.expires_at.value:
+            return PurchaseRefused(Refusal.PREPARATION_EXPIRED, prepared.expires_at.value)
+        if market.digest() != prepared.market_digest:
+            return PurchaseRefused(
+                Refusal.PREPARATION_STALE, "the facility terms or offers changed; prepare again"
+            )
+        return None
+
+    def _accounted_facility(self, presented: Facility) -> Facility | PurchaseRefused:
+        """The presented facility with Core's stored drawn, or a refusal (steps 3-4)."""
+        facility_id = presented.facility_id
         try:
             exposure = self._coordinator.exposure(facility_id, self._clock())
         except SettlementRefused as exc:
             if exc.reason == "UNACCOUNTED_FACILITY":
                 return PurchaseRefused(Refusal.UNREGISTERED_FACILITY, facility_id.value)
             raise
-        if exposure.limit != job.facility.limit_micro_trlusd:
+        if exposure.limit != presented.limit_micro_trlusd:
             return PurchaseRefused(
                 Refusal.FACILITY_LIMIT_MISMATCH,
                 f"stored limit {exposure.limit.value}, presented "
-                f"{job.facility.limit_micro_trlusd.value}",
+                f"{presented.limit_micro_trlusd.value}",
             )
-        facility = replace(job.facility, drawn_micro_trlusd=exposure.drawn)
+        return replace(presented, drawn_micro_trlusd=exposure.drawn)
 
-        candidates = []
-        for index, offer in enumerate(job.offers):
-            request = PurchaseRequest(
-                facility_id=facility_id,
-                provider_id=offer.quote.provider_id,
-                quote_id=offer.quote.quote_id,
-                purpose=Purpose.INFERENCE,
-                max_total_cost_micro_trlusd=MicroTrlusd(max_total_cost_value(offer.quote)),
-                prompt_digest=prompt_digest,
-                nonce=nonce_for(job.idempotency_key, index),
-                expires_at=job.request_expires_at,
+    def _purchase_locked(
+        self, job: Job, signer: AgentSigner, prompt_digest: Sha256Digest
+    ) -> PurchaseReport | PurchaseRefused:
+        facility = self._accounted_facility(job.facility)
+        if isinstance(facility, PurchaseRefused):
+            return facility
+        requests = purchase_requests(
+            job.idempotency_key,
+            facility.facility_id,
+            job.offers,
+            prompt_digest,
+            job.request_expires_at,
+        )
+        candidates = [
+            Purchase(
+                request=request,
+                request_signature=signer(request),
+                prompt=job.prompt,
+                facility=facility,
+                quote=offer.quote,
+                service_class=offer.service_class,
+                execution_profile=offer.execution_profile,
+                procurement_classes=job.procurement_classes,
             )
-            candidates.append(
-                Purchase(
-                    request=request,
-                    request_signature=signer(request),
-                    prompt=job.prompt,
-                    facility=facility,
-                    quote=offer.quote,
-                    service_class=offer.service_class,
-                    execution_profile=offer.execution_profile,
-                    procurement_classes=job.procurement_classes,
-                )
-            )
+            for request, offer in zip(requests, job.offers, strict=True)
+        ]
+        return self._select_and_run(job.idempotency_key, prompt_digest, candidates, owner=None)
 
+    def _select_and_run(
+        self,
+        idempotency_key: str,
+        prompt_digest: Sha256Digest,
+        candidates: list[Purchase],
+        *,
+        owner: RegisteredKey | None,
+    ) -> PurchaseReport:
+        """Steps 6-15 for signed candidates of one job. `owner` is the agent key the caller has
+        already verified signed them (remote signing); it is recorded on a `no_qualifying_offer`
+        entry so the agent can read it. The legacy in-process path passes None, as before."""
+        facility_id = candidates[0].request.facility_id
         now = self._clock()
-        operation_id = operation_id_for(job.idempotency_key)
+        operation_id = operation_id_for(idempotency_key)
         selection = self._gateway.select(candidates)
         if selection.chosen is None:
             reasons = sorted(
                 {q.reason_code.value for q in selection.qualifications if q.reason_code}
             )
-            op = self._journal.create(
-                {
-                    "operation_id": operation_id,
-                    "idempotency_key": job.idempotency_key,
-                    "facility_id": facility_id.value,
-                    "prompt_digest": prompt_digest.value,
-                    "state": S.NO_QUALIFYING_OFFER.value,
-                    "detail": ",".join(reasons),
-                },
-                now,
-            )
+            fields: dict[str, object] = {
+                "operation_id": operation_id,
+                "idempotency_key": idempotency_key,
+                "facility_id": facility_id.value,
+                "prompt_digest": prompt_digest.value,
+                "state": S.NO_QUALIFYING_OFFER.value,
+                "detail": ",".join(reasons),
+            }
+            if owner is not None and len(candidates) == 1:
+                only = candidates[0]
+                fields |= {
+                    "agent_key_id": owner.key_id.value,
+                    "agent_subject": owner.subject,
+                    "provider_id": only.request.provider_id.value,
+                    "request_digest": only.request.digest().value,
+                    "request": only.request.canonical_bytes(),
+                    "request_signature": None
+                    if only.request_signature is None
+                    else only.request_signature.canonical_bytes(),
+                }
+            op = self._journal.create(fields, now)
             return PurchaseReport.of(op)
 
         chosen = selection.chosen.purchase
@@ -515,7 +1061,7 @@ class IntegrationService:
         self._journal.create(
             {
                 "operation_id": operation_id,
-                "idempotency_key": job.idempotency_key,
+                "idempotency_key": idempotency_key,
                 "facility_id": facility_id.value,
                 "prompt_digest": prompt_digest.value,
                 "provider_id": chosen.request.provider_id.value,

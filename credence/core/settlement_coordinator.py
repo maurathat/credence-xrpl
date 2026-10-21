@@ -336,6 +336,18 @@ class LateDeliveryDispute:
 
 
 @dataclass(frozen=True)
+class AccountingSettlement:
+    """Core's accounting-settlement row for one receipt (read only; I2a CR-4). Not XRPL."""
+
+    receipt_digest: Sha256Digest
+    reservation_id: ReservationId
+    facility_id: FacilityId
+    verifier_decision_digest: Sha256Digest
+    actual_amount: MicroTrlusd
+    settled_at: Timestamp
+
+
+@dataclass(frozen=True)
 class NoDeliveryRelease:
     reservation_id: ReservationId
     facility_id: FacilityId
@@ -475,6 +487,26 @@ class SettlementCoordinator:
             (receipt_digest.value,),
         ).fetchone()
         return row is not None
+
+    def accounting_settlement(self, receipt_digest: Sha256Digest) -> AccountingSettlement | None:
+        """The accounting-settlement row for this receipt, or None (read only; I2a CR-4)."""
+        with self._ledger.write_transaction() as conn:
+            row = conn.execute(
+                "SELECT receipt_digest, reservation_id, facility_id, verifier_decision_digest, "
+                "actual_amount_micro_trlusd, settled_at FROM accounting_settlements "
+                "WHERE receipt_digest = ?",
+                (receipt_digest.value,),
+            ).fetchone()
+        if row is None:
+            return None
+        return AccountingSettlement(
+            receipt_digest=Sha256Digest(str(row[0])),
+            reservation_id=ReservationId(str(row[1])),
+            facility_id=FacilityId(str(row[2])),
+            verifier_decision_digest=Sha256Digest(str(row[3])),
+            actual_amount=MicroTrlusd(int(row[4])),
+            settled_at=Timestamp(str(row[5])),
+        )
 
     def disputes(self) -> list[tuple[str, str, str, str, str, str, str]]:
         """Operational dispute and rejection rows (not canonical objects), oldest first."""

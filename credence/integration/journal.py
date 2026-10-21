@@ -109,6 +109,10 @@ CREATE TABLE IF NOT EXISTS integration_operations (
 );
 CREATE INDEX IF NOT EXISTS integration_operations_by_facility
     ON integration_operations (facility_id, state);
+CREATE INDEX IF NOT EXISTS integration_operations_by_agent
+    ON integration_operations (agent_key_id, created_at, operation_id);
+CREATE INDEX IF NOT EXISTS integration_operations_by_receipt
+    ON integration_operations (receipt_digest);
 CREATE TABLE IF NOT EXISTS integration_authorization_nonces (
     agent_key_id TEXT NOT NULL,
     nonce TEXT NOT NULL,
@@ -316,12 +320,15 @@ class Journal:
         finally:
             conn.close()
 
-    def _select(self, where: str, args: tuple[object, ...]) -> list[Operation]:
+    def _select(
+        self, where: str, args: tuple[object, ...], *, limit: int | None = None
+    ) -> list[Operation]:
+        bound = "" if limit is None else " LIMIT ?"
         with self._write() as conn:
             rows = conn.execute(
                 f"SELECT {', '.join(_COLUMNS)} FROM integration_operations WHERE {where} "
-                "ORDER BY created_at, operation_id",
-                args,
+                f"ORDER BY created_at, operation_id{bound}",
+                args if limit is None else (*args, limit),
             ).fetchall()
         return [Operation(dict(zip(_COLUMNS, row, strict=True))) for row in rows]
 
@@ -343,6 +350,31 @@ class Journal:
     def in_states(self, states: frozenset[OperationState]) -> list[Operation]:
         values = tuple(s.value for s in states)
         return self._select(f"state IN ({', '.join('?' for _ in values)})", values)
+
+    def by_receipt(self, receipt_digest: str) -> Operation | None:
+        found = self._select("receipt_digest = ?", (receipt_digest,))
+        return found[0] if found else None
+
+    def for_agent(
+        self,
+        agent_key_id: str,
+        agent_subject: str,
+        *,
+        limit: int,
+        after: tuple[str, str] | None = None,
+    ) -> list[Operation]:
+        """Operations whose purchase the agent key (and subject) signed, oldest first, at most
+        `limit`, strictly after the (created_at, operation_id) cursor `after`."""
+        args: tuple[object, ...]
+        if after is None:
+            where, args = "agent_key_id = ? AND agent_subject = ?", (agent_key_id, agent_subject)
+        else:
+            where = (
+                "agent_key_id = ? AND agent_subject = ? AND "
+                "(created_at > ? OR (created_at = ? AND operation_id > ?))"
+            )
+            args = (agent_key_id, agent_subject, after[0], after[0], after[1])
+        return self._select(where, args, limit=limit)
 
     def create(self, fields: Mapping[str, object], now: Timestamp) -> Operation:
         """Insert a new operation. `fields` must include identity, facility, prompt and state."""

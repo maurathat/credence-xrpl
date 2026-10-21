@@ -1,6 +1,6 @@
 # API-CONTRACT
 
-Owner: API/UI (Claude Code). Status: Product P0, offline adapter on baseline `a3ec0a3`. Only the owner edits this file; other workstreams file a request in `contracts/requests/`.
+Owner: API/UI (Claude Code). Status: Product P0, offline adapter on baseline `a3ec0a3`; I2a integrated offline service added provisionally (see "I2a" below). Only the owner edits this file; other workstreams file a request in `contracts/requests/`.
 
 This contract describes `credence/api/` as implemented. The code is authoritative; `tests/unit/test_api_p0.py` exercises every route below.
 
@@ -151,3 +151,32 @@ The client's `retrieveAuthorizedResponse(operationId, authorization)` already fo
 ### Raising these gaps
 
 The gaps above need interface changes owned by Integration (San Antonio), Inference and XRPL Integration. They are not filed as interface change requests yet, because the accepted I1g/I1h commit may already change these interfaces. File them in `contracts/requests/` against the accepted commit.
+
+## I2a: integrated offline service (provisional)
+
+Status: implemented on `maurathat/credence-i2a-offline`, subject to security review (requests 0006–0008). The P0 routes above are unchanged and still serve the recorded runs. Tested by `tests/integration/test_i2a_api.py`, `test_i2a_agent_client.py` and `test_i2a_preparation.py`.
+
+Run: `uv run python -m credence.api.offline_demo init <dir>`, then `uv run python -m credence.api.offline_demo serve <dir>` (loopback only). The `IntegrationService` is embedded in this one process, which owns the database (`ProcessOwnership`). Providers are offline mocks (`credence/api/offline_world.py`: the real Nebius adapter over a mock transport, and the fake signing provider standing in for local Qwen); no provider is called. Quotes are configured demo prices. Gateway and mock-provider keys are TEST keys derived from public labels.
+
+**Authentication.** `Authorization: Bearer <agent session token>`. The server stores only each token's SHA-256 (`<dir>/server/agents.json`); the token and the agent's Ed25519 key live in `<dir>/agent/`, which the server never reads. The token authenticates API calls only; every purchase and response access needs the agent's own signature. A revoked agent key is refused on every route (`403 AGENT_REVOKED`).
+
+**Authorization.** An agent sees only its own facilities (borrower account = its key's subject), preparations and operations (signed by its key); anything else answers `404` as if absent. Idempotency keys are namespaced per agent.
+
+| Client operation | Route | Backend |
+| --- | --- | --- |
+| `liveSession` | `GET /v0/live/session` | session principal and key status |
+| `liveFacilities` | `GET /v0/live/facilities` | configured terms + Core `exposure` read now (no history) |
+| `preparePurchase` | `POST /v0/live/purchases/prepare` | `IntegrationService.prepare`. Body: the dry-run procurement fields (no facility limit or drawn), `prompt_digest` (never the prompt), optional `facility_id`, `idempotency_key`. The procurement must be a class registered on one of the agent's facilities (`422 PROCUREMENT_NOT_REGISTERED`); a price cap is refused (`422 PRICE_CAP_PREVIEW_ONLY`) |
+| `getPreparation` | `GET /v0/live/purchases/preparations/{id}` | the exact canonical request, digest, C3A statement, nonce, expiry, provider, quote, profile, price |
+| `submitSignedPurchase` | `POST /v0/live/purchases/submit` | `IntegrationService.submit_prepared`. Body: `preparation_id`, `prompt`, `signature` (a C3A `SignedObject`) |
+| `listLiveOperations` / `getLiveOperation` | `GET /v0/live/operations?limit&after`, `GET /v0/live/operations/{id}` | `operations_for_agent`, `journal_entry`, `lifecycle_events` (persisted timestamps only). Never the response bytes |
+| `getLiveExposure` | `GET /v0/live/operations/{id}/exposure` | facility terms + current exposure |
+| `getLiveReceipt` | `GET /v0/live/receipts/{digest}` | `operation_for_receipt`; checks recomputed with Core's functions against the service's public key records; accounting settlement row, verifier decision record, chain head, disputes |
+| `getLivePayment` | `GET /v0/live/operations/{id}/payment` | `payment_status.NoXrplPaymentStatus`: always `not_submitted`, no hash or ledger fields |
+| `postLiveResponse` | `POST /v0/live/operations/{id}/response` | the agent's `ResponseAuthorization` → `retrieve` (200, octet-stream) or `acknowledge` (204) |
+
+Errors are `{"error": CODE, "detail": text}`. Integration refusals pass through unchanged with these statuses: `403` `AGENT_NOT_AUTHORIZED`, `AGENT_REVOKED`, `WRONG_AGENT`, `BAD_SIGNATURE`; `404` `UNKNOWN_PREPARATION`; `409` `FACILITY_BUSY`, `IDEMPOTENCY_CONFLICT`, `ALREADY_SUBMITTED`, `PREPARATION_STALE`, `PREPARATION_CONSUMED`; `410` `PREPARATION_EXPIRED`; `422` `UNREGISTERED_FACILITY`, `FACILITY_LIMIT_MISMATCH`, `PROMPT_NOT_UTF8`, `NO_OFFERS`, `NO_QUALIFYING_OFFER`, `PROMPT_MISMATCH`, `REQUEST_MISMATCH`. Adapter codes: `401` `AUTHENTICATION_REQUIRED`, `INVALID_SESSION`; `404` `UNKNOWN_FACILITY`, `UNKNOWN_OPERATION`, `UNKNOWN_RECEIPT`; `422` `PRICE_CAP_PREVIEW_ONLY`, `PROCUREMENT_NOT_REGISTERED`, `FACILITY_REQUIRED`, `INVALID_PROCUREMENT`, `INVALID_PROMPT_DIGEST`, `INVALID_IDEMPOTENCY_KEY`, `MALFORMED_SIGNATURE`, `INVALID_LIMIT`; `409` `RESPONSE_UNAVAILABLE`; `403` `NotAuthorized` codes; `500` `JOURNAL_INCONSISTENCY`; `503` `SERVICE_UNAVAILABLE`, `INTEGRATED_SERVICE_NOT_RUNNING`. Bodies are strict; unknown members (for example a key) are refused.
+
+**Agent client.** `credence/agent/client.py` and `cli.py` (owner: Inference) prepare with the prompt's digest, independently verify every prepared field (digest, canonical bytes, C3A statement, own key and prompt, facility, provider, price ceiling, evidence floor, short expiry, quote/service/profile consistency), sign with `credence.core.signatures.sign`, and sign `ResponseAuthorization`s. The UI pastes their JSON output; it never holds the key.
+
+**XRPL.** X0 is not merged. `payment_status.route_state` records the preflight state mapping for a future reviewed read-only adapter and is not wired.

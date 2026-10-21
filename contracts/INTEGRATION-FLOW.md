@@ -191,6 +191,31 @@ Interruption points are tested at each of:
 - **Ownership is advisory.** It binds every `IntegrationService`. Code that opens the SQLite file directly is not prevented.
 - **Enforced interfaces only.** Provider execution is authorized by Core only through the supported interfaces: Core's coordinator, `Gateway.deliver` with Core's authority, and this service. A program that calls a provider adapter directly, or writes the SQLite file, is outside them. Credence does not claim execution is impossible there; such a delivery has no Core attempt and cannot settle.
 
+## Remote agent signing (I2a, CR-1, provisional)
+
+Status: implemented on the I2a offline integration branch; subject to Integration, Core and security review. No canonical object, C3A signature definition or Kessai serialization changed.
+
+`purchase(job, signer)` needs an in-process signer. An agent behind HTTP signs in two phases instead:
+
+1. **Prepare.** `prepare(market, agent_key_id=, prompt_digest=, idempotency_key=None)` → `Preparation | PurchaseRefused`. `Market` (facility terms, procurement classes and offers, in order) is supplied by the embedding process, never by the agent. The service checks that the authenticated key is a registered, current `agent` key for the facility's borrower, reads Core's exposure, builds one request per offer with the same builder as `purchase` (`purchase_requests`), and runs Core's qualification and the routing rule (`qualify_and_select`) against this database's real holds and used nonces. The agent has not signed yet, so each request is signed for that evaluation by an ephemeral sandbox key registered only in a throwaway registry; it is never stored and authorizes nothing. The chosen request is stored in `integration_preparations` with an opaque preparation ID (128 random bits), the agent key and subject, the facility, a digest of the market (Kessai: JCS (RFC 8785) + NFC), the offer's position, the exact canonical request and approved objects, the prompt digest, and a 300-second expiry (also the request's `expires_at`). Nothing is journaled or reserved and no provider is called.
+2. **Sign.** The agent verifies every field itself and signs the request's existing C3A statement (`signature_message`). The server, browser and journal never hold the agent's key.
+3. **Submit.** `submit_prepared(market, preparation_id=, signature=, prompt=, agent_key_id=)`. Under the facility lock, in order: an identical resubmission (same request, prompt and signature bytes) returns the journaled operation (`PREPARATION_CONSUMED` otherwise); the prompt must hash to the prepared digest (`PROMPT_MISMATCH`); the signature must be over the prepared request (`REQUEST_MISMATCH`) by the prepared key (`WRONG_AGENT`); the key must still be a current agent key for the borrower (`AGENT_NOT_AUTHORIZED`, `AGENT_REVOKED`) and the signature must verify (`BAD_SIGNATURE`); the preparation must not have expired (`PREPARATION_EXPIRED`); the market digest must be unchanged, the request must rebuild identically, and Core's qualification with the routing rule must still choose exactly the prepared request (`PREPARATION_STALE`). Another offer is never substituted. Only then does the prepared request, with the agent's signature, enter steps 6–15 of the lifecycle above, where Core verifies the signature again, reserves, and checks nonce, spending and the delivery attempt as for `purchase`.
+
+Idempotency is durable: the preparation names one idempotency key, the journal admits one operation per key, and both are in the database, so a retry after a restart returns the journaled operation and never executes again. A `no_qualifying_offer` entry from this path records the verified agent key so the agent can read it.
+
+Signing a request does not authorize execution by itself: execution still needs Core's committed `begin_delivery` and the gateway's claim.
+
+## Agent-scoped reads (I2a, CR-3 and CR-4, provisional)
+
+Read only; no journal or Core write.
+- `operations_for_agent(agent_key_id, limit=, after=)`: operations whose purchase that key (and its registry subject) signed, oldest first, paged by the last operation ID of the previous page.
+- `operation_for_receipt(receipt_digest)`: the operation that captured a receipt.
+- `lifecycle_events(operation_id)`: each event whose time a record persisted: the journal's `created_at`, `retrieved_at`, `acknowledged_at` and latest transition (`updated_at`); Core's policy decision (`decided_at`), reservation (`created_at`), delivery attempt (`begun_at`, `execution_claimed_at`), no-delivery release, accounting settlement (`settled_at`), dispute and late-delivery records; the gateway-signed receipt's provider-reported `started_at` and `completed_at`; and the agent key's persisted revocation. Transitions whose time is not persisted (for example `delivered`) are not reported; new history persistence (CR-5) is not implemented.
+- `public_key(key_id)`: the registry's public record of a key, with its durable status.
+- `AccountingView` adds `accounting_settlement(receipt_digest)`, `policy_decision_digest(reservation_id)` and `decision_record(digest)`, backed by two read-only Core additions (`SettlementCoordinator.accounting_settlement`, `ReservationLedger.decision_record_digest`).
+
 ## Refusals
 
-`Refusal` values: `UNREGISTERED_FACILITY`, `FACILITY_LIMIT_MISMATCH`, `FACILITY_BUSY`, `PROMPT_NOT_UTF8`, `NO_OFFERS`, `IDEMPOTENCY_CONFLICT`.
+`Refusal` values: `UNREGISTERED_FACILITY`, `FACILITY_LIMIT_MISMATCH`, `FACILITY_BUSY`, `PROMPT_NOT_UTF8`, `NO_OFFERS`, `IDEMPOTENCY_CONFLICT`, `AGENT_NOT_AUTHORIZED`, `AGENT_REVOKED`, `NO_QUALIFYING_OFFER`, `ALREADY_SUBMITTED`, `UNKNOWN_PREPARATION`, `PREPARATION_EXPIRED`, `PREPARATION_STALE`, `PREPARATION_CONSUMED`, `PROMPT_MISMATCH`, `REQUEST_MISMATCH`, `WRONG_AGENT`, `BAD_SIGNATURE`.
+
+The first six apply to `purchase`; the rest were added in I2a for `prepare` and `submit_prepared` (see "Remote agent signing"). Every refusal is returned before any journal entry, reservation or provider call.

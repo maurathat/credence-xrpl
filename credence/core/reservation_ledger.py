@@ -225,6 +225,16 @@ class ReservationLedger:
             raise ReservationStateError("NOT_FOUND", reservation_id.value)
         return None if row[0] is None else str(row[0])
 
+    def decision_record_digest(self, reservation_id: ReservationId) -> str | None:
+        """The digest of the accepting policy decision that created the reservation (read only;
+        I2a CR-4). None when no such reservation exists."""
+        with self._read() as conn:
+            row = conn.execute(
+                "SELECT decision_record_digest FROM reservations WHERE reservation_id = ?",
+                (reservation_id.value,),
+            ).fetchone()
+        return None if row is None else str(row[0])
+
     def decision_record_bytes(self, digest_value: str) -> bytes | None:
         with self._read() as conn:
             row = conn.execute(
