@@ -142,3 +142,23 @@ transport boundary, remove direct journal methods from live settlement
 authority, and define one settlement-effect authority path. Outbox delivery is
 at-least-once: a non-idempotent consumer can apply an event twice, so the live
 consumer must enforce `event_id` idempotency in its own durable transaction.
+
+## X1a additions (offline preflight)
+
+X1a adds offline-tested modules beside the unchanged X0t journal and service. It authorizes no
+live submission, and `PaymentService` still accepts only `offline_only` submission transports.
+Details, refusal codes and remaining dependencies are in `spike/xrpl/X1A-PREFLIGHT.md`; the
+decision is `docs/decisions/0010-xrpl-x1a-multisign-preflight.md`.
+
+| Interface | X1a implementation | Contract |
+| --- | --- | --- |
+| Multisignature | `credence.xrpl_adapter.multisign` | Build the unsigned Payment and its `xrpl-stx-sha512half-v1` digest; assemble canonical `Signers`; verify both master-key signatures, the validated SignerList (ResearchBot 1, policy signer 1, quorum 2), no RegularKey, the configured master-key state, the multisign fee, Sequence or TicketSequence, and LastLedgerSequence. |
+| Core payment authorization | `credence.signers.payment_authorization` | An Ed25519, domain-separated `PaymentAuthorization` statement binding operation, accounting settlement, receipt and chain head, amount, asset, destination, unsigned digest, expiry and network. Its `authorization_id` is the journal's `payment_authorization_id`. |
+| Policy signer | `credence.signers.policy_signer.PolicySigner` | Signs only after independently re-checking the statement against Core's accounting settlement and the validated ledger; one transaction per receipt and per operation, durably. |
+| Trusted transport | `credence.xrpl_adapter.rippled.RippledTransport` | Loopback-only JSON-RPC (API v2) to the pinned local rippled; all reads pinned to one validated ledger hash; implements `HashLookup` (X0s evidence envelope with raw responses) and `ValidatedLedgerObserver`. `submit` refuses unless explicitly enabled; `offline_only` is false. |
+| Outcome classification | `credence.xrpl_adapter.settlement.classify_payment` | Seven outcomes from one journal record, including `VALIDATED_UNEXPECTED_DELIVERY` decided from stored evidence. |
+| Settlement consumer | `credence.xrpl_adapter.settlement.SqliteSettlementEventConsumer` | Applies an outbox event once per `event_id` in the destination's own transaction, together with its effect. This is the single live settlement-effect authority path; `claim_xrpl_settlement` is not. |
+| tRLUSD setup | `credence.xrpl_adapter.trlusd_setup` | Unsigned setup steps, reserve arithmetic and read-only readiness findings. Nothing is submitted. |
+
+The X1a transport response shapes were exercised only against a deterministic fake node, not the
+pinned server.
