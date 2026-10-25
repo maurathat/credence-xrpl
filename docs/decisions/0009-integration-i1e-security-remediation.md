@@ -1,6 +1,6 @@
 # 0009. Integration I1e: close authorization and accounting bypasses
 
-- Status: Accepted for the integration branch, amended for I1g (§7–§10), I1i (§11) and I1k (§12). **Provisionally blocked for acceptance** until independent Core and Inference owner reviews approve the final I1g commit.
+- Status: Accepted for the integration branch, amended for I1g (§7–§10), I1i (§11), I1k (§12) and I1m (§13). **Provisionally blocked for acceptance** until independent Core and Inference owner reviews approve the final I1g commit.
 - Date: 2026-10-19
 - Owner: Integration (San Antonio)
 - Source: Maura's I1e authorization, and the I1d owner reviews of commit `cfc6224`:
@@ -78,7 +78,19 @@
    - **While running.** The verified file stays open as an anchor, re-verified at service checkpoints and inside the integration's write transactions. A mismatch poisons the service.
    - **CLI.** A refused offline revocation, including `OwnershipError`, prints `REFUSED: <code>` and exits 2.
    - **Unchanged.** No new lock service or external database. Core, Inference, policy, billing, verifier and canonical formats are unchanged.
-   - **Residual.** Identity is checked at checkpoints, not bound to SQLite's own file descriptor; a local POSIX filesystem is assumed.
+   - **Residual.** Identity is checked at checkpoints, not bound to SQLite's own file descriptor; a local POSIX filesystem is assumed. **Corrected in §13:** checkpoints detect a replacement only while it is observable; a swap-and-restore between checks can evade them.
+
+13. **Trusted database directory boundary (I1m, 2026-10-24; Skopje I1l finding).**
+   - **The finding.** A precisely timed replace-and-restore between two identity checks evades checkpoint detection. I1k also accepted databases in group- or world-writable directories, where another principal could do this.
+   - **The boundary.** `check_trusted_location` runs before ownership and offline revocation, and the database directory is re-checked at every `verify()`:
+     - the database directory must be ours, with no group or other write bit (sticky or not) and no write-granting ACL;
+     - every ancestor must be ours or root's, with no write-granting ACL; if writable, only sticky with an owned next component;
+     - symlinks on the caller's spelling must be ours or root's, in trusted directories;
+     - the database and lock files must be ours;
+     - deny-only ACLs are accepted, unreadable ACLs refused; macOS and Linux only.
+   - **The contract correction.** Identity checks detect a replacement only while it is observable. A swap-and-restore completed between checks can evade them, and the window is not eliminated. Supported security assumes untrusted principals cannot manipulate the database or lock directory. Same-authority code is outside the boundary. Checkpoints are not a pinned descriptor.
+   - **Verification limit.** No second OS account was available: foreign ownership is simulated through a uid seam, and ACL cases use real macOS ACLs.
+   - **Unchanged.** Core, Inference, XRPL, canonical formats and the I1k identity protections are all unchanged.
 
 ## Consequences
 

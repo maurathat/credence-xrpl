@@ -24,6 +24,26 @@ goes through `ProcessOwnership.acquire`, which establishes one identity for the 
    the canonical path still names that same file (device and inode), still one link; callers run
    it at their checkpoints and inside their own write transactions.
 
+Trusted directory boundary (Integration I1m). Identity checks see a replacement only while it is
+observable: a swap-and-restore completed entirely between two checks can evade them. Credence's
+supported deployment therefore requires that no untrusted OS principal can replace or redirect the
+database, its lock file or SQLite's journal. `check_trusted_location` enforces a conservative
+policy before ownership is taken, and the database directory is re-checked at every `verify()`:
+
+- **Database directory** (it holds the database, the owner lock and SQLite's journal): owned by
+  this effective user; no group or other write permission (sticky or not); no ACL entry that
+  allows writing, adding or deleting entries.
+- **Every ancestor** of it: owned by this effective user or root; no write-granting ACL entry; if
+  group- or other-writable, only with the sticky bit set and the next path component owned by
+  this user or root (so no one else can rename or delete it).
+- **The caller's own spelling**: every symlink on it must be owned by this user or root and sit in
+  a directory that passes the ancestor rule, so an alias cannot be redirected by someone else.
+- **Files**: the database and its lock file must be owned by this effective user.
+
+Deny-only ACL entries (such as macOS's default `everyone deny delete` on home directories) are
+accepted. ACLs that cannot be read are refused. Only macOS and Linux are supported. Code running
+with this user's own filesystem authority is outside the boundary.
+
 The lock is advisory: it binds every caller of this module, not code that opens the SQLite file
 directly.
 
@@ -32,9 +52,13 @@ Owner: Integration (San Antonio).
 
 from __future__ import annotations
 
+import ctypes
+import ctypes.util
+import errno
 import fcntl
 import os
 import stat
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -56,6 +80,134 @@ class DatabaseIdentityError(RuntimeError):
 
 def _race_point(point: str) -> None:
     """Test seam for deterministic race orchestration. Does nothing in production."""
+
+
+def _effective_uid() -> int:
+    """The trusted owner (a seam so tests can model a foreign owner without a second account)."""
+    return os.geteuid()
+
+
+# --- trusted directory boundary (I1m) -------------------------------------------------------------
+
+# macOS ACL permissions that let a principal change a directory's entries or a file's contents.
+_MODIFYING_ACL_PERMISSIONS = frozenset(
+    {
+        "add_file",
+        "add_subdirectory",
+        "delete",
+        "delete_child",
+        "write",
+        "append",
+        "writeattr",
+        "writeextattr",
+        "writesecurity",
+        "chown",
+    }
+)
+_ACL_TYPE_EXTENDED = 0x00000100
+
+
+def _darwin_acl_text(path: Path) -> str | None:
+    libc = ctypes.CDLL(ctypes.util.find_library("c"), use_errno=True)
+    libc.acl_get_file.restype = ctypes.c_void_p
+    libc.acl_get_file.argtypes = [ctypes.c_char_p, ctypes.c_int]
+    libc.acl_to_text.restype = ctypes.c_void_p
+    libc.acl_to_text.argtypes = [ctypes.c_void_p, ctypes.c_void_p]
+    libc.acl_free.argtypes = [ctypes.c_void_p]
+    handle = libc.acl_get_file(os.fsencode(path), _ACL_TYPE_EXTENDED)
+    if not handle:
+        if ctypes.get_errno() == errno.ENOENT:
+            return None  # no extended ACL
+        raise DatabaseIdentityError("ACL_UNREADABLE", str(path))
+    try:
+        text = libc.acl_to_text(handle, None)
+        if not text:
+            raise DatabaseIdentityError("ACL_UNREADABLE", str(path))
+        try:
+            return ctypes.string_at(text).decode("utf-8", "replace")
+        finally:
+            libc.acl_free(text)
+    finally:
+        libc.acl_free(handle)
+
+
+def acl_grants_modification(path: Path) -> bool:
+    """Whether an ACL entry may let some principal modify `path`. Unreadable: refused."""
+    if sys.platform == "darwin":
+        text = _darwin_acl_text(path)
+        if text is None:
+            return False
+        for line in text.splitlines()[1:]:  # first line is the "!#acl 1" header
+            fields = line.split(":")
+            if len(fields) < 6:
+                if line.strip():
+                    raise DatabaseIdentityError("ACL_UNREADABLE", str(path))
+                continue
+            kind, permissions = fields[4], set(fields[5].split(","))
+            if kind != "deny" and permissions & _MODIFYING_ACL_PERMISSIONS:
+                return True
+        return False
+    if sys.platform.startswith("linux"):
+        try:
+            names = os.listxattr(path)
+        except OSError:
+            raise DatabaseIdentityError("ACL_UNREADABLE", str(path)) from None
+        return any(n in ("system.posix_acl_access", "system.posix_acl_default") for n in names)
+    raise DatabaseIdentityError("UNSUPPORTED_PLATFORM", sys.platform)
+
+
+def _trusted_owner(uid: int) -> bool:
+    return uid in (_effective_uid(), 0)
+
+
+def check_database_directory(directory: Path) -> None:
+    """The canonical database directory: ours, not group/other writable, no write-granting ACL."""
+    info = os.stat(directory)
+    if not stat.S_ISDIR(info.st_mode):
+        raise DatabaseIdentityError("NOT_A_DIRECTORY", str(directory))
+    if info.st_uid != _effective_uid():
+        raise DatabaseIdentityError("UNTRUSTED_DIRECTORY_OWNER", str(directory))
+    if info.st_mode & 0o022:
+        raise DatabaseIdentityError(
+            "WRITABLE_DATABASE_DIRECTORY", f"{directory} {oct(stat.S_IMODE(info.st_mode))}"
+        )
+    if acl_grants_modification(directory):
+        raise DatabaseIdentityError("DIRECTORY_ACL", str(directory))
+
+
+def _check_container(directory: Path, child_owner: int) -> None:
+    """An ancestor (or a directory holding a symlink) on the path to the database."""
+    info = os.stat(directory)
+    if not _trusted_owner(info.st_uid):
+        raise DatabaseIdentityError("UNTRUSTED_DIRECTORY_OWNER", str(directory))
+    if info.st_mode & 0o022 and not (info.st_mode & stat.S_ISVTX and _trusted_owner(child_owner)):
+        raise DatabaseIdentityError(
+            "WRITABLE_DIRECTORY", f"{directory} {oct(stat.S_IMODE(info.st_mode))}"
+        )
+    if acl_grants_modification(directory):
+        raise DatabaseIdentityError("DIRECTORY_ACL", str(directory))
+
+
+def check_trusted_location(requested: Path, canonical: Path) -> None:
+    """Refuse a database whose path an untrusted principal could replace or redirect."""
+    database_directory = canonical.parent
+    check_database_directory(database_directory)
+    child = database_directory
+    for ancestor in database_directory.parents:
+        _check_container(ancestor, os.stat(child).st_uid)
+        child = ancestor
+    # The caller's own spelling: each symlink on it, and the directory holding it.
+    absolute = Path(os.path.abspath(requested))
+    for depth in range(1, len(absolute.parts)):
+        component = Path(*absolute.parts[: depth + 1])
+        try:
+            entry = os.lstat(component)
+        except FileNotFoundError:
+            break  # the fresh database's own name
+        if stat.S_ISLNK(entry.st_mode):
+            if not _trusted_owner(entry.st_uid):
+                raise DatabaseIdentityError("UNTRUSTED_SYMLINK", str(component))
+            _check_container(component.parent, entry.st_uid)
 
 
 def owner_lock_path(canonical_database: Path) -> Path:
@@ -111,6 +263,7 @@ class ProcessOwnership:
 
         `allow_create` permits initializing a fresh database at a path that does not exist."""
         canonical, fresh = canonical_database_path(database, allow_create=allow_create)
+        check_trusted_location(Path(database), canonical)
         inspected = None if fresh else os.stat(canonical, follow_symlinks=False)
         if inspected is not None:
             _check_regular_single_link(inspected, str(canonical))
@@ -154,6 +307,8 @@ class ProcessOwnership:
             info = os.fstat(fd)
             if not stat.S_ISREG(info.st_mode) or info.st_nlink != 1:
                 raise DatabaseIdentityError("LOCK_FILE_UNSAFE", str(lock_path))
+            if info.st_uid != _effective_uid():
+                raise DatabaseIdentityError("LOCK_FILE_UNSAFE", f"{lock_path} has another owner")
             os.fchmod(fd, OWNER_FILE_MODE)
             fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
         except BlockingIOError:
@@ -196,6 +351,9 @@ class ProcessOwnership:
         if (info.st_dev, info.st_ino) != (inspected.st_dev, inspected.st_ino):
             os.close(fd)
             raise DatabaseIdentityError("IDENTITY_CHANGED", "replaced after inspection")
+        if info.st_uid != _effective_uid():
+            os.close(fd)
+            raise DatabaseIdentityError("NOT_OWNER", f"{canonical} has another owner")
         return fd
 
     # --- held ownership ----------------------------------------------------------------------
@@ -226,6 +384,7 @@ class ProcessOwnership:
         if not self.identity.matches(info):
             raise DatabaseIdentityError("IDENTITY_CHANGED", "the database path names another file")
         _check_regular_single_link(info, str(self.identity.path))
+        check_database_directory(self.identity.path.parent)  # still a trusted directory (I1m)
 
     def release(self) -> None:
         if self._lock_fd is None:

@@ -1,6 +1,6 @@
 # INTEGRATION-FLOW
 
-Owner: Integration (San Antonio, Claude Code). Status: Integration I1c, remediated in I1e, I1g, I1i and I1k. Only the owner edits this file. Other workstreams file a request in `contracts/requests/`.
+Owner: Integration (San Antonio, Claude Code). Status: Integration I1c, remediated in I1e, I1g, I1i, I1k and I1m. Only the owner edits this file. Other workstreams file a request in `contracts/requests/`.
 
 This contract describes `credence/integration/` as implemented. The code is authoritative. `tests/integration/test_i1_contract.py` checks the lists below against the code. The decisions are `docs/decisions/0008-integration-i1c-inference-accounting.md` and `docs/decisions/0009-integration-i1e-security-remediation.md`. What a recorded attempt, a claimed execution, provider execution, captured evidence, verified delivery, accounting settlement and XRPL settlement each mean is set out in `contracts/SETTLEMENT-COORDINATOR.md`, "What each record means".
 
@@ -170,10 +170,21 @@ Ownership and offline revocation are bound to the physical database file, not to
    - immediately before each Core write phase of a purchase: reservation, delivery attempt, settlement;
    - inside every integration journal and revocation transaction, after `BEGIN IMMEDIATE` and before `COMMIT`.
 
-   On a mismatch the service is poisoned: every later operation is refused with the same `DatabaseIdentityError` until it is closed. A hard link added, or the file replaced, while it runs is caught at the next checkpoint.
+   On a mismatch the service is poisoned: every later operation is refused with the same `DatabaseIdentityError` until it is closed. A hard link added, the file replaced, or the directory made untrusted is caught at the next checkpoint **if it is still in place then**. Identity checks detect a replacement only while it is observable.
 5. **Hard links** are refused outright, at open and at every checkpoint. This implementation establishes no inode-based lock that could make two link names safe.
 6. **Release.** `close()` releases the flock on the canonical lock and closes the anchor. The OS releases both if the process dies. The next owner repeats the whole procedure.
 7. **Offline revocation** goes through the same procedure (see "Key revocation"). It cannot commit while a service owns the database through any alias, and it verifies identity before committing.
+8. **Trusted directory boundary (I1m).** Before ownership or offline revocation is taken, and re-checked for the database directory at every checkpoint, `check_trusted_location` refuses any location that a principal other than this effective user (or root) could manipulate:
+
+   | Location | Accepted | Refused |
+   | --- | --- | --- |
+   | Database directory (holds the database, the owner lock and SQLite's journal) | Owned by this effective user, with no group or other write bit (for example `0700`, `0750`, `0755`) | Any group or other write bit, sticky or not: `WRITABLE_DATABASE_DIRECTORY`. Another owner: `UNTRUSTED_DIRECTORY_OWNER` |
+   | Each ancestor directory | Owned by this user or root, not group- or other-writable; or writable but sticky (like `/tmp`) with the next component owned by this user or root | Another owner: `UNTRUSTED_DIRECTORY_OWNER`. Writable without the sticky bit, or sticky with a foreign next component: `WRITABLE_DIRECTORY` |
+   | Symlinks on the caller's spelling (directory or file aliases) | Owned by this user or root, in a directory meeting the ancestor rule | Another owner: `UNTRUSTED_SYMLINK`. In a writable, non-sticky directory: `WRITABLE_DIRECTORY` |
+   | ACLs (macOS extended ACLs; POSIX ACLs on Linux) | Deny-only entries (for example macOS's default `everyone deny delete` on home directories) | macOS: any non-deny entry granting add, delete, write, attribute, security or ownership changes. Linux: any POSIX ACL. Both refused whatever the mode bits say (`DIRECTORY_ACL`). Unreadable: `ACL_UNREADABLE` |
+   | Database and lock files | Owned by this effective user | `NOT_OWNER`, `LOCK_FILE_UNSAFE` |
+
+   Only macOS and Linux are supported (`UNSUPPORTED_PLATFORM` otherwise). The policy is conservative; it is not a deployment-wide permission manager.
 
 ## Journal
 
@@ -237,11 +248,13 @@ Interruption points are tested at each of:
 - **A revoked key strands its settled response.** Retrieval needs the purchasing key, by design, so a response settled for a key that is later revoked stays retained but unreadable until an operator handles it.
 - **Revocations in the operator's registry before binding.** These are read through the registry's internal key table, because Core's `KeyRegistry` exposes no listing. From binding on, `revoke` on that registry is an instance-level override (durable while open, raising after close); Core's class is unchanged. A Core in-memory revocation on a registry that is never bound is not durable.
 - **Ownership is advisory.** It binds every `IntegrationService` and `revoke_key`. Code that opens the SQLite file directly is not prevented.
-- **Identity checkpoints, not a file-descriptor-bound connection (I1k).** SQLite opens the database by path for each Core operation. Identity is verified at the checkpoints above, and inside the integration's own write transactions, not inside Core's. Two cases are caught at the next checkpoint and poison the service, but cannot be undone:
-  - a replacement within a single Core step, between its checkpoint and SQLite's open;
-  - a replace-and-restore double swap entirely between two checks.
+- **Identity checks are checkpoints, not a pinned descriptor (corrected in I1m).** SQLite opens the database by path for each Core operation. Identity is verified at the checkpoints above and inside the integration's own write transactions, not inside Core's. Checkpoint verification is not equivalent to binding every SQLite connection to a permanently pinned file descriptor.
+  - A replacement is detected only while it is observable at a check. One still in place at the next checkpoint is detected and poisons the service, but whatever a Core step wrote to the replacement before then is not undone.
+  - **A swap-and-restore completed entirely between two checks can evade detection.** It is reproduced in `test_i1_trusted_directory.py`: Core's reservation lands in the substitute and no check fires. The timing window is not eliminated.
+  - Credence's supported deployment security assumes the database directory and the lock-file directory cannot be manipulated by untrusted principals. That is enforced by the trusted directory boundary above.
+  - Code running with this user's filesystem authority (or root's) is outside the boundary.
 
-  The guarantees assume a local POSIX filesystem with stable device and inode numbers and working `flock`. Network filesystems are not supported.
+  The guarantees also assume a local POSIX filesystem with stable device and inode numbers and working `flock`; network filesystems are not supported.
 - **Enforced interfaces only.** Provider execution is authorized by Core only through the supported interfaces: Core's coordinator, `Gateway.deliver` with Core's authority, and this service. A program that calls a provider adapter directly, or writes the SQLite file, is outside them. Credence does not claim execution is impossible there; such a delivery has no Core attempt and cannot settle.
 
 ## Refusals
