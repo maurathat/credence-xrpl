@@ -1,0 +1,2 @@
+{"result":{"error":"txnNotFound","error_code":29,"error_message":"Transaction not found.","request":{"api_version":2,"binary":false,"command":"tx","transaction":"ABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABAB"},"status":"error"}}
+

@@ -1,0 +1,50 @@
+{
+ "N1 unpinned authoritative lookup": {
+  "ok": true,
+  "value": "LookupResult(disposition=<LookupDisposition.UNAVAILABLE: 'UNAVAILABLE'>, payment=None, detail='NODE_IDENTITY_NOT_PINNED')"
+ },
+ "N1 unpinned diagnostic_lookup": {
+  "ok": true,
+  "value": "DiagnosticLookup(disposition=<LookupDisposition.NOT_FOUND: 'NOT_FOUND'>, validated=None, result=None, ledger_index=None, delivered_amount_micro_units=None, detail=None, authoritative=False)"
+ },
+ "N1 unpinned validated_ledger": {
+  "error": "LookupUnavailable: validated ledger unavailable: NODE_IDENTITY_NOT_PINNED",
+  "ok": false
+ },
+ "account_snapshot(genesis)": {
+  "ok": true,
+  "value": "AccountSnapshot(account='rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh', exists=True, validated=True, ledger_index=2, ledger_hash='479CA47E3AF09CCC6AEB48B0FF48414AB3606B40CD6ABE69440058CB3BF7F592', flags=0, regular_key=None, sequence=1, balance_drops=100000000000000000, owner_count=0, transfer_rate=None, tickets=(), signer_list=None)"
+ },
+ "account_snapshot(unfunded)": {
+  "ok": true,
+  "value": "AccountSnapshot(account='rrrrrrrrrrrrrrrrrrrrBZbvji', exists=False, validated=True, ledger_index=2, ledger_hash='479CA47E3AF09CCC6AEB48B0FF48414AB3606B40CD6ABE69440058CB3BF7F592', flags=0, regular_key=None, sequence=None, balance_drops=None, owner_count=None, transfer_rate=None, tickets=(), signer_list=None)"
+ },
+ "identity with wrong network": {
+  "error": "TransportRefused: NETWORK_MISMATCH: network_id is 21337",
+  "ok": false
+ },
+ "identity with wrong node pin": {
+  "error": "TransportRefused: NODE_IDENTITY_MISMATCH: REDACTED_PUBLIC_NODE_KEY",
+  "ok": false
+ },
+ "lookup(historical)": {
+  "ok": true,
+  "value": "LookupResult(disposition=<LookupDisposition.NOT_FOUND: 'NOT_FOUND'>, payment=None, detail=None)"
+ },
+ "lookup(random)": {
+  "ok": true,
+  "value": "LookupResult(disposition=<LookupDisposition.NOT_FOUND: 'NOT_FOUND'>, payment=None, detail=None)"
+ },
+ "trust_line(genesis, peer)": {
+  "ok": true,
+  "value": "TrustLineSnapshot(account='rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh', issuer='rrrrrrrrrrrrrrrrrrrrBZbvji', currency_code='74524C5553440000000000000000000000000000', exists=False, ledger_index=2, ledger_hash='479CA47E3AF09CCC6AEB48B0FF48414AB3606B40CD6ABE69440058CB3BF7F592', balance_micro_units=0, limit_micro_units=0, no_ripple=False, no_ripple_peer=False)"
+ },
+ "validated_ledger(genesis)": {
+  "ok": true,
+  "value": "ValidatedLedgerObservation(ledger_index=2, complete_history_min=2, complete_history_max=2, history_complete=True, ledger_hash='479CA47E3AF09CCC6AEB48B0FF48414AB3606B40CD6ABE69440058CB3BF7F592', source_id='local-rippled-3.4.0-x1e', complete_history_ranges=(LedgerRange(first=2, last=2),), account='rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh', account_sequence=1, available_tickets=())"
+ },
+ "validated_ledger_identity": {
+  "ok": true,
+  "value": "ValidatedLedgerIdentity(source_id='local-rippled-3.4.0-x1e', network_id=21337, build_version='3.4.0', node_public_key='REDACTED_PUBLIC_NODE_KEY', ledger_index=2, ledger_hash='479CA47E3AF09CCC6AEB48B0FF48414AB3606B40CD6ABE69440058CB3BF7F592', base_fee_drops=10, reserve_base_drops=10000000, reserve_increment_drops=2000000, complete_ledgers='2', complete_history_ranges=(LedgerRange(first=2, last=2),), raw=(RawEvidence(method='server_state', params='{\"api_version\": 2}', response=b'{\"result\":{\"state\":{\"build_version\":\"3.4.0\",\"complete_ledgers\":\"2\",\"git\":{\"branch\":\"HEAD\","
+ }
+}

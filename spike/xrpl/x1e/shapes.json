@@ -1,0 +1,397 @@
+[
+ {
+  "error": null,
+  "file": "01-server_state.json",
+  "method": "server_state",
+  "params": {
+   "api_version": 2
+  },
+  "shape": {
+   "result": "object",
+   "result.state": "object",
+   "result.state.build_version": "str",
+   "result.state.complete_ledgers": "str",
+   "result.state.git": "object",
+   "result.state.git.branch": "str",
+   "result.state.git.hash": "str",
+   "result.state.initial_sync_duration_us": "str",
+   "result.state.io_latency_ms": "int",
+   "result.state.jq_trans_overflow": "str",
+   "result.state.last_close": "object",
+   "result.state.last_close.converge_time": "int",
+   "result.state.last_close.proposers": "int",
+   "result.state.load": "object",
+   "result.state.load.job_types": "array[1]",
+   "result.state.load.job_types[0]": "object",
+   "result.state.load.job_types[0].avg_time": "int",
+   "result.state.load.job_types[0].in_progress": "int",
+   "result.state.load.job_types[0].job_type": "str",
+   "result.state.load.job_types[0].peak_time": "int",
+   "result.state.load.threads": "int",
+   "result.state.load_base": "int",
+   "result.state.load_factor": "int",
+   "result.state.load_factor_fee_escalation": "int",
+   "result.state.load_factor_fee_queue": "int",
+   "result.state.load_factor_fee_reference": "int",
+   "result.state.load_factor_server": "int",
+   "result.state.network_id": "int",
+   "result.state.node_size": "str",
+   "result.state.peer_disconnects": "str",
+   "result.state.peer_disconnects_resources": "str",
+   "result.state.peers": "int",
+   "result.state.ports": "array[1]",
+   "result.state.ports[0]": "object",
+   "result.state.ports[0].port": "str",
+   "result.state.ports[0].protocol": "array[1]",
+   "result.state.ports[0].protocol[0]": "str",
+   "result.state.pubkey_node": "str",
+   "result.state.pubkey_validator": "str",
+   "result.state.server_state": "str",
+   "result.state.server_state_duration_us": "str",
+   "result.state.state_accounting": "object",
+   "result.state.state_accounting.connected": "object",
+   "result.state.state_accounting.connected.duration_us": "str",
+   "result.state.state_accounting.connected.transitions": "str",
+   "result.state.state_accounting.disconnected": "object",
+   "result.state.state_accounting.disconnected.duration_us": "str",
+   "result.state.state_accounting.disconnected.transitions": "str",
+   "result.state.state_accounting.full": "object",
+   "result.state.state_accounting.full.duration_us": "str",
+   "result.state.state_accounting.full.transitions": "str",
+   "result.state.state_accounting.syncing": "object",
+   "result.state.state_accounting.syncing.duration_us": "str",
+   "result.state.state_accounting.syncing.transitions": "str",
+   "result.state.state_accounting.tracking": "object",
+   "result.state.state_accounting.tracking.duration_us": "str",
+   "result.state.state_accounting.tracking.transitions": "str",
+   "result.state.time": "str",
+   "result.state.uptime": "int",
+   "result.state.validated_ledger": "object",
+   "result.state.validated_ledger.base_fee": "int",
+   "result.state.validated_ledger.close_time": "int",
+   "result.state.validated_ledger.hash": "str",
+   "result.state.validated_ledger.reserve_base": "int",
+   "result.state.validated_ledger.reserve_inc": "int",
+   "result.state.validated_ledger.seq": "int",
+   "result.state.validation_quorum": "int",
+   "result.state.validator_list_expires": "int",
+   "result.status": "str"
+  },
+  "status": "success"
+ },
+ {
+  "error": null,
+  "file": "02-ledger.json",
+  "method": "ledger",
+  "params": {
+   "api_version": 2,
+   "expand": false,
+   "ledger_index": 2,
+   "transactions": false
+  },
+  "shape": {
+   "result": "object",
+   "result.ledger": "object",
+   "result.ledger.account_hash": "str",
+   "result.ledger.close_flags": "int",
+   "result.ledger.close_time": "int",
+   "result.ledger.close_time_human": "str",
+   "result.ledger.close_time_iso": "str",
+   "result.ledger.close_time_resolution": "int",
+   "result.ledger.closed": "bool",
+   "result.ledger.ledger_hash": "str",
+   "result.ledger.ledger_index": "int",
+   "result.ledger.parent_close_time": "int",
+   "result.ledger.parent_hash": "str",
+   "result.ledger.total_coins": "str",
+   "result.ledger.transaction_hash": "str",
+   "result.ledger_hash": "str",
+   "result.ledger_index": "int",
+   "result.status": "str",
+   "result.validated": "bool"
+  },
+  "status": "success"
+ },
+ {
+  "error": null,
+  "file": "03-ledger.json",
+  "method": "ledger",
+  "params": {
+   "api_version": 2,
+   "ledger_index": "validated"
+  },
+  "shape": {
+   "result": "object",
+   "result.ledger": "object",
+   "result.ledger.account_hash": "str",
+   "result.ledger.close_flags": "int",
+   "result.ledger.close_time": "int",
+   "result.ledger.close_time_human": "str",
+   "result.ledger.close_time_iso": "str",
+   "result.ledger.close_time_resolution": "int",
+   "result.ledger.closed": "bool",
+   "result.ledger.ledger_hash": "str",
+   "result.ledger.ledger_index": "int",
+   "result.ledger.parent_close_time": "int",
+   "result.ledger.parent_hash": "str",
+   "result.ledger.total_coins": "str",
+   "result.ledger.transaction_hash": "str",
+   "result.ledger_hash": "str",
+   "result.ledger_index": "int",
+   "result.status": "str",
+   "result.validated": "bool"
+  },
+  "status": "success"
+ },
+ {
+  "error": null,
+  "file": "04-ledger.json",
+  "method": "ledger",
+  "params": {
+   "api_version": 2,
+   "ledger_index": 3
+  },
+  "shape": {
+   "result": "object",
+   "result.ledger": "object",
+   "result.ledger.closed": "bool",
+   "result.ledger.ledger_index": "int",
+   "result.ledger.parent_hash": "str",
+   "result.ledger_current_index": "int",
+   "result.status": "str",
+   "result.validated": "bool"
+  },
+  "status": "success"
+ },
+ {
+  "error": null,
+  "file": "05-account_info.json",
+  "method": "account_info",
+  "params": {
+   "account": "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh",
+   "api_version": 2,
+   "ledger_hash": "479CA47E3AF09CCC6AEB48B0FF48414AB3606B40CD6ABE69440058CB3BF7F592",
+   "signer_lists": true
+  },
+  "shape": {
+   "result": "object",
+   "result.account_data": "object",
+   "result.account_data.Account": "str",
+   "result.account_data.Balance": "str",
+   "result.account_data.Flags": "int",
+   "result.account_data.LedgerEntryType": "str",
+   "result.account_data.OwnerCount": "int",
+   "result.account_data.PreviousTxnID": "str",
+   "result.account_data.PreviousTxnLgrSeq": "int",
+   "result.account_data.Sequence": "int",
+   "result.account_data.index": "str",
+   "result.account_flags": "object",
+   "result.account_flags.allowTrustLineClawback": "bool",
+   "result.account_flags.defaultRipple": "bool",
+   "result.account_flags.depositAuth": "bool",
+   "result.account_flags.disableMasterKey": "bool",
+   "result.account_flags.disallowIncomingCheck": "bool",
+   "result.account_flags.disallowIncomingNFTokenOffer": "bool",
+   "result.account_flags.disallowIncomingPayChan": "bool",
+   "result.account_flags.disallowIncomingTrustline": "bool",
+   "result.account_flags.disallowIncomingXRP": "bool",
+   "result.account_flags.globalFreeze": "bool",
+   "result.account_flags.noFreeze": "bool",
+   "result.account_flags.passwordSpent": "bool",
+   "result.account_flags.requireAuthorization": "bool",
+   "result.account_flags.requireDestinationTag": "bool",
+   "result.ledger_hash": "str",
+   "result.ledger_index": "int",
+   "result.signer_lists": "array[0]",
+   "result.status": "str",
+   "result.validated": "bool"
+  },
+  "status": "success"
+ },
+ {
+  "error": "actNotFound",
+  "file": "06-account_info.json",
+  "method": "account_info",
+  "params": {
+   "account": "rrrrrrrrrrrrrrrrrrrrBZbvji",
+   "api_version": 2,
+   "ledger_hash": "479CA47E3AF09CCC6AEB48B0FF48414AB3606B40CD6ABE69440058CB3BF7F592",
+   "signer_lists": true
+  },
+  "shape": {
+   "result": "object",
+   "result.account": "str",
+   "result.error": "str",
+   "result.error_code": "int",
+   "result.error_message": "str",
+   "result.ledger_hash": "str",
+   "result.ledger_index": "int",
+   "result.request": "object",
+   "result.request.account": "str",
+   "result.request.api_version": "int",
+   "result.request.command": "str",
+   "result.request.ledger_hash": "str",
+   "result.request.signer_lists": "bool",
+   "result.status": "str",
+   "result.validated": "bool"
+  },
+  "status": "error"
+ },
+ {
+  "error": null,
+  "file": "07-account_objects.json",
+  "method": "account_objects",
+  "params": {
+   "account": "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh",
+   "api_version": 2,
+   "ledger_hash": "479CA47E3AF09CCC6AEB48B0FF48414AB3606B40CD6ABE69440058CB3BF7F592",
+   "limit": 400,
+   "type": "ticket"
+  },
+  "shape": {
+   "result": "object",
+   "result.account": "str",
+   "result.account_objects": "array[0]",
+   "result.ledger_hash": "str",
+   "result.ledger_index": "int",
+   "result.status": "str",
+   "result.validated": "bool"
+  },
+  "status": "success"
+ },
+ {
+  "error": "actNotFound",
+  "file": "08-account_objects.json",
+  "method": "account_objects",
+  "params": {
+   "account": "rrrrrrrrrrrrrrrrrrrrBZbvji",
+   "api_version": 2,
+   "ledger_hash": "479CA47E3AF09CCC6AEB48B0FF48414AB3606B40CD6ABE69440058CB3BF7F592",
+   "type": "ticket"
+  },
+  "shape": {
+   "result": "object",
+   "result.error": "str",
+   "result.error_code": "int",
+   "result.error_message": "str",
+   "result.request": "object",
+   "result.request.account": "str",
+   "result.request.api_version": "int",
+   "result.request.command": "str",
+   "result.request.ledger_hash": "str",
+   "result.request.type": "str",
+   "result.status": "str"
+  },
+  "status": "error"
+ },
+ {
+  "error": null,
+  "file": "09-account_lines.json",
+  "method": "account_lines",
+  "params": {
+   "account": "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh",
+   "api_version": 2,
+   "ledger_hash": "479CA47E3AF09CCC6AEB48B0FF48414AB3606B40CD6ABE69440058CB3BF7F592"
+  },
+  "shape": {
+   "result": "object",
+   "result.account": "str",
+   "result.ledger_hash": "str",
+   "result.ledger_index": "int",
+   "result.lines": "array[0]",
+   "result.status": "str",
+   "result.validated": "bool"
+  },
+  "status": "success"
+ },
+ {
+  "error": null,
+  "file": "10-account_lines.json",
+  "method": "account_lines",
+  "params": {
+   "account": "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh",
+   "api_version": 2,
+   "ledger_hash": "479CA47E3AF09CCC6AEB48B0FF48414AB3606B40CD6ABE69440058CB3BF7F592",
+   "peer": "rrrrrrrrrrrrrrrrrrrrBZbvji"
+  },
+  "shape": {
+   "result": "object",
+   "result.account": "str",
+   "result.ledger_hash": "str",
+   "result.ledger_index": "int",
+   "result.lines": "array[0]",
+   "result.status": "str",
+   "result.validated": "bool"
+  },
+  "status": "success"
+ },
+ {
+  "error": "txnNotFound",
+  "file": "11-tx.json",
+  "method": "tx",
+  "params": {
+   "api_version": 2,
+   "binary": true,
+   "transaction": "ABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABAB"
+  },
+  "shape": {
+   "result": "object",
+   "result.error": "str",
+   "result.error_code": "int",
+   "result.error_message": "str",
+   "result.request": "object",
+   "result.request.api_version": "int",
+   "result.request.binary": "bool",
+   "result.request.command": "str",
+   "result.request.transaction": "str",
+   "result.status": "str"
+  },
+  "status": "error"
+ },
+ {
+  "error": "txnNotFound",
+  "file": "12-tx.json",
+  "method": "tx",
+  "params": {
+   "api_version": 2,
+   "binary": false,
+   "transaction": "ABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABAB"
+  },
+  "shape": {
+   "result": "object",
+   "result.error": "str",
+   "result.error_code": "int",
+   "result.error_message": "str",
+   "result.request": "object",
+   "result.request.api_version": "int",
+   "result.request.binary": "bool",
+   "result.request.command": "str",
+   "result.request.transaction": "str",
+   "result.status": "str"
+  },
+  "status": "error"
+ },
+ {
+  "error": "txnNotFound",
+  "file": "13-tx.json",
+  "method": "tx",
+  "params": {
+   "api_version": 2,
+   "binary": true,
+   "transaction": "C8E822A0DFFC673D0F91048310281C0259CD00735F216A848DA36708EEF43C74"
+  },
+  "shape": {
+   "result": "object",
+   "result.error": "str",
+   "result.error_code": "int",
+   "result.error_message": "str",
+   "result.request": "object",
+   "result.request.api_version": "int",
+   "result.request.binary": "bool",
+   "result.request.command": "str",
+   "result.request.transaction": "str",
+   "result.status": "str"
+  },
+  "status": "error"
+ }
+]
