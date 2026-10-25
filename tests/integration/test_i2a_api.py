@@ -67,9 +67,12 @@ def no_network(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
 
 
 class Agent:
-    def __init__(self, agent_id: str, subject: str) -> None:
+    def __init__(
+        self, agent_id: str, subject: str, token_expires_at: str = "2026-12-31T00:00:00Z"
+    ) -> None:
         self.agent_id = agent_id
         self.subject = subject
+        self.token_expires_at = token_expires_at
         self.key = SigningKey.generate()
         self.key_id = key_id_for(self.key.verify_key)
         self.token = "cred-agent-" + secrets.token_urlsafe(32)
@@ -80,6 +83,7 @@ class Agent:
             "agent_key_id": self.key_id.value,
             "subject": self.subject,
             "token_sha256": token_digest(self.token),
+            "token_expires_at": self.token_expires_at,
         }
 
 

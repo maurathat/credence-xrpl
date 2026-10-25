@@ -11,8 +11,9 @@ built, signed or submitted. The server binds to loopback only.
 - `<demo-dir>/agent/` belongs to the agent: its own Ed25519 key (`agent.key`, owner-only) and its
   session token (`session-token`, owner-only). The agent CLI (`credence.agent.cli`) reads them.
   The server never reads this directory.
-- `<demo-dir>/server/` belongs to the server: `agents.json` with each agent's public key ID,
-  borrower account and the SHA-256 of its session token (never the token or any private key),
+- `<demo-dir>/server/` belongs to the server: `agents.json` (owner-only) with each agent's
+  public key ID, borrower account, the SHA-256 of its session token and the token's expiry
+  (never the token or any private key),
   and the SQLite database, which this one process owns (`ProcessOwnership`).
 
 `serve` opens the IntegrationService on that database (recovery runs first), registers the
@@ -43,6 +44,8 @@ from credence.core.signatures import KeyRegistry, key_id_for
 from credence.integration.service import IntegrationService
 
 DATABASE = "credence-i2a.sqlite3"
+SESSION_TTL_SECONDS = 12 * 3600  # demo session tokens expire after 12 hours
+AGENT_ENTRY_MEMBERS = {"agent_id", "agent_key_id", "subject", "token_sha256", "token_expires_at"}
 LOOPBACK = ("127.0.0.1", "localhost", "::1")
 
 
@@ -73,21 +76,14 @@ def init(demo_dir: Path, agent_id: str = "researchbot-demo") -> None:
         json.dumps({"agent_id": agent_id, "agent_key_id": key_id}, indent=2) + "\n",
         encoding="ascii",
     )
-    (server_dir / "agents.json").write_text(
-        json.dumps(
-            [
-                {
-                    "agent_id": agent_id,
-                    "agent_key_id": key_id,
-                    "subject": subject,
-                    "token_sha256": token_digest(token),
-                }
-            ],
-            indent=2,
-        )
-        + "\n",
-        encoding="ascii",
-    )
+    entry = {
+        "agent_id": agent_id,
+        "agent_key_id": key_id,
+        "subject": subject,
+        "token_sha256": token_digest(token),
+        "token_expires_at": utc_now().plus_seconds(SESSION_TTL_SECONDS).value,
+    }
+    _write_private(server_dir / "agents.json", json.dumps([entry], indent=2) + "\n")
     del key, token
     print(f"agent key and session token: {agent_dir} (owner-only; the server never reads them)")
     print(f"server configuration: {server_dir / 'agents.json'} (public key IDs, token digests)")
@@ -96,8 +92,11 @@ def init(demo_dir: Path, agent_id: str = "researchbot-demo") -> None:
 def load_agents(server_dir: Path) -> list[dict[str, str]]:
     entries = json.loads((server_dir / "agents.json").read_text(encoding="ascii"))
     for entry in entries:
-        if set(entry) != {"agent_id", "agent_key_id", "subject", "token_sha256"}:
-            raise SystemExit("agents.json: unexpected members (no tokens or keys belong here)")
+        if set(entry) != AGENT_ENTRY_MEMBERS:
+            raise SystemExit(
+                f"agents.json: each entry must have exactly {sorted(AGENT_ENTRY_MEMBERS)} "
+                "(public key ID, subject, token digest and expiry; no tokens or keys)"
+            )
     return list(entries)
 
 
@@ -131,7 +130,9 @@ def open_marketplace(
                     raise
         directory = AgentDirectory(
             {
-                a["token_sha256"]: AgentPrincipal(a["agent_id"], KeyId(a["agent_key_id"]))
+                a["token_sha256"]: AgentPrincipal(
+                    a["agent_id"], KeyId(a["agent_key_id"]), Timestamp(a["token_expires_at"])
+                )
                 for a in agents
             }
         )

@@ -6,9 +6,9 @@ acknowledgment. This adapter authenticates the agent session, checks that the ag
 it asks for, validates and decodes input, and serializes. It holds no agent key and accepts none:
 the agent signs prepared requests and response authorizations outside the browser and the API.
 
-- Authentication: a bearer session token per agent. Only its SHA-256 is configured on the server.
-  It authenticates API calls; it is not a signing key and authorizes no purchase by itself (the
-  agent's Ed25519 signature does).
+- Authentication: a bearer session token per agent, with an expiry. Only its SHA-256 and expiry
+  are configured on the server. It authenticates API calls; it is not a signing key and
+  authorizes no purchase by itself (the agent's Ed25519 signature does).
 - Authorization: an agent sees only its own facilities (borrower account = its key's subject),
   preparations and operations (signed by its key). Anything else answers 404, as if absent.
 - Providers are the offline mocks of `offline_world.py`. Prices are configured demo prices.
@@ -144,6 +144,7 @@ class MarketplaceError(ValueError):
 class AgentPrincipal:
     agent_id: str
     key_id: KeyId
+    token_expires_at: Timestamp  # the session token is refused at or after this time
 
 
 @dataclass(frozen=True)
@@ -226,6 +227,8 @@ class Marketplace:
         principal = self._directory.authenticate(authorization.removeprefix("Bearer ").strip())
         if principal is None:
             raise MarketplaceError("INVALID_SESSION", "unknown agent session token", 401)
+        if not self._clock().value < principal.token_expires_at.value:
+            raise MarketplaceError("SESSION_EXPIRED", "the agent session token has expired", 401)
         key = self._service.public_key(principal.key_id)
         if key is None or key.role is not KeyRole.AGENT:
             raise MarketplaceError("AGENT_NOT_AUTHORIZED", "the agent key is not registered", 403)
@@ -704,6 +707,8 @@ class Marketplace:
         """("retrieve", bytes) or ("acknowledge", None). Never logs or stores `body`."""
         op = self._own_operation(session, operation_id)
         authorization = _authorization(body)
+        if authorization.operation_id != op.operation_id:
+            raise MarketplaceError("WRONG_OPERATION", "authorization names another operation", 403)
         if authorization.agent_key_id != session.principal.key_id:
             raise MarketplaceError("WRONG_AGENT", "not this session's agent key", 403)
         try:
