@@ -1108,8 +1108,24 @@ def _signed_artifact_checks(
     return transaction, blob, expected_hash
 
 
-def _submission_preflight(endpoint: str, transaction: dict[str, Any]) -> None:
+def _submission_preflight(
+    endpoint: str,
+    transaction: dict[str, Any],
+    construction_ledger_index: int,
+    construction_ledger_hash: str,
+) -> None:
     network = verify_network(endpoint)
+    current_ledger_index = network["validated_ledger_index"]
+    if construction_ledger_index > current_ledger_index:
+        raise ValidationError("recorded construction ledger is ahead of validated node state")
+    observed_construction_hash = _ledger_hash(endpoint, construction_ledger_index)
+    if observed_construction_hash != construction_ledger_hash:
+        raise ValidationError("recorded construction ledger hash does not match validated history")
+    if (
+        construction_ledger_index == current_ledger_index
+        and observed_construction_hash != network["validated_ledger_hash"]
+    ):
+        raise ValidationError("current validated-ledger identity is internally inconsistent")
     if network["validated_ledger_index"] > transaction["LastLedgerSequence"]:
         raise ValidationError("signed transaction has already expired")
     source = _validated_account(endpoint, transaction["Account"], network["validated_ledger_index"])
@@ -1149,10 +1165,15 @@ def submit_once(
         transaction_identity=artifact_identity if isinstance(artifact_identity, str) else None,
     )
     transaction, blob, transaction_hash = _signed_artifact_checks(authorization, signed_artifact)
-    _construction_ledger, computed_identity = _validate_construction_binding(
+    construction_ledger, computed_identity = _validate_construction_binding(
         signed_artifact, transaction
     )
-    _submission_preflight(endpoint, transaction)
+    _submission_preflight(
+        endpoint,
+        transaction,
+        construction_ledger,
+        signed_artifact["construction"]["validated_ledger_hash"],
+    )
     _require_execution_capability(
         authorization,
         capability,
@@ -1386,6 +1407,20 @@ def poll_validated(
                     {"complete_ledgers": after["complete_ledgers"]},
                 )
                 raise RpcError("bounded transaction history is incomplete; retain UNKNOWN")
+            before_index = before["validated_ledger_index"]
+            if before_index <= last_possible_ledger:
+                journal.update(
+                    authorization.authorization_id,
+                    "submit",
+                    transaction_hash,
+                    "UNKNOWN_PREQUERY_LEDGER_NOT_EXPIRED",
+                    {
+                        "before_validated_ledger": before_index,
+                        "after_validated_ledger": latest,
+                        "last_possible_ledger": last_possible_ledger,
+                    },
+                )
+                raise RpcError("pre-query validated ledger had not passed expiry; retain UNKNOWN")
             journal.update(
                 authorization.authorization_id,
                 "submit",

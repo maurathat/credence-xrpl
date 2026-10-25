@@ -26,6 +26,7 @@ from t1_public_testnet.workflow import (  # noqa: E402
     AuthorizationError,
     CredentialError,
     ExecutionAuthorization,
+    ExecutionCapability,
     NetworkRefused,
     OperationJournal,
     ReplayRefused,
@@ -379,6 +380,161 @@ def test_b2_submission_refuses_altered_expiry_before_network(
             )
     finally:
         journal.close()
+
+
+def r2_submission_artifact(
+    tmp_path: Path,
+    *,
+    construction_index: int,
+    construction_hash: str = "A" * 64,
+) -> tuple[ExecutionAuthorization, ExecutionCapability, dict[str, Any]]:
+    value = transaction()
+    value["LastLedgerSequence"] = construction_index + 4
+    identity = transaction_identity(value)
+    authorization = write_authorization(
+        tmp_path,
+        operation="submit",
+        operations=("submit",),
+        identity=identity,
+    )
+    capability = issue_execution_capability(
+        authorization, operation="submit", execution_intent=True
+    )
+    artifact = signed_artifact(authorization.authorization_id)
+    signed_value = dict(value)
+    signed_value["SigningPubKey"] = "PUBLIC"
+    signed_value["TxnSignature"] = "SIGNATURE"
+    artifact["transaction"] = signed_value
+    artifact["transaction_identity"] = identity
+    artifact["network"]["validated_ledger_index"] = construction_index
+    artifact["network"]["validated_ledger_hash"] = construction_hash
+    artifact["construction"]["validated_ledger_index"] = construction_index
+    artifact["construction"]["validated_ledger_hash"] = construction_hash
+    return authorization, capability, artifact
+
+
+def install_r2_submission_mocks(
+    monkeypatch: pytest.MonkeyPatch,
+    artifact: dict[str, Any],
+    *,
+    current_index: int,
+    current_hash: str,
+    historical_hash: str | None,
+) -> list[str]:
+    monkeypatch.setattr(
+        workflow,
+        "_signed_artifact_checks",
+        lambda _authorization, _artifact: (
+            artifact["transaction"],
+            "BLOB",
+            artifact["transaction_hash"],
+        ),
+    )
+    monkeypatch.setattr(
+        workflow,
+        "verify_network",
+        lambda _endpoint: network_observation(current_index, current_hash),
+    )
+
+    def ledger_hash(_endpoint: str, _index: int) -> str:
+        if historical_hash is None:
+            raise RpcError("exact historical ledger is unavailable")
+        return historical_hash
+
+    monkeypatch.setattr(workflow, "_ledger_hash", ledger_hash)
+
+    def account(_endpoint: str, address: str, _ledger: int) -> dict[str, object]:
+        return {"Account": address, "Flags": 0, "OwnerCount": 0, "Sequence": 1}
+
+    monkeypatch.setattr(workflow, "_validated_account", account)
+    monkeypatch.setattr(workflow, "_fee_drops", lambda _endpoint: 10)
+    submit_calls: list[str] = []
+
+    def rpc(_endpoint: str, method: str, _params: dict[str, Any]) -> dict[str, Any]:
+        if method == "submit":
+            submit_calls.append(method)
+        return {"result": {"engine_result": "tesSUCCESS"}}
+
+    monkeypatch.setattr(workflow, "rpc_raw", rpc)
+    return submit_calls
+
+
+@pytest.mark.parametrize(
+    ("case", "construction_index", "current_index", "current_hash", "historical_hash", "message"),
+    [
+        ("future", 1996, 1000, "C" * 64, "A" * 64, "ahead"),
+        ("false-hash", 1000, 1001, "C" * 64, "B" * 64, "does not match"),
+        ("missing-history", 1000, 1001, "C" * 64, None, "unavailable"),
+        ("inconsistent-current", 1000, 1000, "C" * 64, "A" * 64, "inconsistent"),
+    ],
+)
+def test_r2_submission_refuses_untrusted_construction_ledger_without_submit_rpc(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    case: str,
+    construction_index: int,
+    current_index: int,
+    current_hash: str,
+    historical_hash: str | None,
+    message: str,
+) -> None:
+    del case
+    authorization, capability, artifact = r2_submission_artifact(
+        tmp_path, construction_index=construction_index
+    )
+    submit_calls = install_r2_submission_mocks(
+        monkeypatch,
+        artifact,
+        current_index=current_index,
+        current_hash=current_hash,
+        historical_hash=historical_hash,
+    )
+    journal = OperationJournal(tmp_path / "journal.sqlite3")
+    try:
+        with pytest.raises((ValidationError, RpcError), match=message):
+            submit_once(
+                authorization,
+                artifact,
+                journal,
+                capability=capability,
+                execution_intent=True,
+            )
+    finally:
+        journal.close()
+    assert submit_calls == []
+
+
+@pytest.mark.parametrize(
+    ("current_index", "current_hash"),
+    [(1001, "C" * 64), (1000, "A" * 64)],
+)
+def test_r2_submission_accepts_verified_historical_or_current_construction_ledger(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    current_index: int,
+    current_hash: str,
+) -> None:
+    authorization, capability, artifact = r2_submission_artifact(tmp_path, construction_index=1000)
+    submit_calls = install_r2_submission_mocks(
+        monkeypatch,
+        artifact,
+        current_index=current_index,
+        current_hash=current_hash,
+        historical_hash="A" * 64,
+    )
+    journal = OperationJournal(tmp_path / "journal.sqlite3")
+    try:
+        result = submit_once(
+            authorization,
+            artifact,
+            journal,
+            capability=capability,
+            execution_intent=True,
+        )
+    finally:
+        journal.close()
+    assert result["engine_result"] == "tesSUCCESS"
+    assert submit_calls == ["submit"]
 
 
 def test_network_id_field_is_refused_even_when_one() -> None:
@@ -1035,8 +1191,9 @@ def run_not_found_poll(
     *,
     searched_all: object,
     complete_ledgers: str,
+    before_index: int = 1005,
     after_index: int = 1005,
-    before_hash: str = "D" * 64,
+    before_hash: str = "E" * 64,
     after_hash: str = "E" * 64,
 ) -> tuple[ExecutionAuthorization, dict[str, Any], Path]:
     identity = transaction_identity(transaction())
@@ -1047,7 +1204,7 @@ def run_not_found_poll(
     install_poll_artifact_checks(monkeypatch, artifact)
     observations = iter(
         [
-            network_observation(1004, before_hash, complete_ledgers),
+            network_observation(before_index, before_hash, complete_ledgers),
             network_observation(after_index, after_hash, complete_ledgers),
         ]
     )
@@ -1071,11 +1228,8 @@ def run_not_found_poll(
 
     monkeypatch.setattr(workflow, "verify_network", verify)
     monkeypatch.setattr(workflow, "rpc_raw", lookup)
-    monkeypatch.setattr(
-        workflow,
-        "_ledger_hash",
-        lambda _endpoint, index: {1000: "A" * 64, 1004: before_hash}[index],
-    )
+    ledger_hashes = {1000: "A" * 64, before_index: before_hash}
+    monkeypatch.setattr(workflow, "_ledger_hash", lambda _endpoint, index: ledger_hashes[index])
     journal_path = tmp_path / "operations.sqlite3"
     journal = journal_with_submission(
         tmp_path, authorization.authorization_id, artifact["transaction_hash"]
@@ -1102,6 +1256,49 @@ def test_b1_conclusive_bounded_non_inclusion_requires_all_evidence(
     assert journal_status(path, authorization.authorization_id) == "EXPIRED_NOT_INCLUDED"
 
 
+def test_r1_prequery_v_plus_three_cannot_become_terminal_expiry(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    authorization, _artifact, path = run_not_found_poll(
+        tmp_path,
+        monkeypatch,
+        searched_all=True,
+        complete_ledgers="1-2000",
+        before_index=1003,
+        after_index=1005,
+        before_hash="D" * 64,
+        after_hash="E" * 64,
+    )
+    assert (
+        journal_status(path, authorization.authorization_id)
+        == "UNKNOWN_PREQUERY_LEDGER_NOT_EXPIRED"
+    )
+
+
+@pytest.mark.parametrize(
+    ("before_index", "expected_status"),
+    [
+        (1004, "UNKNOWN_PREQUERY_LEDGER_NOT_EXPIRED"),
+        (1005, "EXPIRED_NOT_INCLUDED"),
+    ],
+)
+def test_r1_prequery_expiry_boundary_is_strict(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    before_index: int,
+    expected_status: str,
+) -> None:
+    authorization, _artifact, path = run_not_found_poll(
+        tmp_path,
+        monkeypatch,
+        searched_all=True,
+        complete_ledgers="1-2000",
+        before_index=before_index,
+        after_index=1005,
+    )
+    assert journal_status(path, authorization.authorization_id) == expected_status
+
+
 @pytest.mark.parametrize("searched_all", [None, False, 1, "true"])
 def test_b1_missing_or_nonliteral_searched_all_retains_unknown(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, searched_all: object
@@ -1115,12 +1312,17 @@ def test_b1_missing_or_nonliteral_searched_all_retains_unknown(
     assert journal_status(path, authorization.authorization_id) == "UNKNOWN_INCOMPLETE_SEARCH"
 
 
-def test_b1_history_gap_retains_unknown(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+@pytest.mark.parametrize("complete_ledgers", ["empty", "1-1002,1004-2000"])
+def test_b1_incomplete_or_gapped_history_retains_unknown(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    complete_ledgers: str,
+) -> None:
     authorization, _artifact, path = run_not_found_poll(
         tmp_path,
         monkeypatch,
         searched_all=True,
-        complete_ledgers="1-1002,1004-2000",
+        complete_ledgers=complete_ledgers,
     )
     assert journal_status(path, authorization.authorization_id) == "UNKNOWN_HISTORY_GAP"
 
@@ -1133,11 +1335,60 @@ def test_b1_contradictory_same_index_hashes_retain_unknown(
         monkeypatch,
         searched_all=True,
         complete_ledgers="1-2000",
+        before_index=1004,
         after_index=1004,
         before_hash="D" * 64,
         after_hash="E" * 64,
     )
     assert journal_status(path, authorization.authorization_id) == "UNKNOWN_CONTRADICTORY_NODE"
+
+
+def test_r1_original_hash_can_validate_after_prequery_unknown(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    authorization, artifact, path = run_not_found_poll(
+        tmp_path,
+        monkeypatch,
+        searched_all=True,
+        complete_ledgers="1-2000",
+        before_index=1003,
+        after_index=1005,
+        before_hash="D" * 64,
+        after_hash="E" * 64,
+    )
+    assert (
+        journal_status(path, authorization.authorization_id)
+        == "UNKNOWN_PREQUERY_LEDGER_NOT_EXPIRED"
+    )
+
+    observations = iter([network_observation(1005, "F" * 64), network_observation(1006, "G" * 64)])
+    monkeypatch.setattr(workflow, "verify_network", lambda _endpoint: next(observations))
+
+    def validated_lookup(_endpoint: str, method: str, params: dict[str, Any]) -> dict[str, Any]:
+        assert method == "tx"
+        assert params["transaction"] == artifact["transaction_hash"]
+        return {
+            "result": {
+                **artifact["transaction"],
+                "status": "success",
+                "validated": True,
+                "hash": artifact["transaction_hash"],
+                "ledger_index": 1004,
+                "meta": {"TransactionResult": "tesSUCCESS"},
+            }
+        }
+
+    monkeypatch.setattr(workflow, "rpc_raw", validated_lookup)
+    ledger_hashes = {1000: "A" * 64, 1004: "D" * 64, 1005: "F" * 64}
+    monkeypatch.setattr(workflow, "_ledger_hash", lambda _endpoint, index: ledger_hashes[index])
+    journal = OperationJournal(path)
+    try:
+        result = poll_validated(authorization, artifact, journal, timeout_seconds=1)
+    finally:
+        journal.close()
+    assert result["transaction_hash"] == artifact["transaction_hash"]
+    assert result["ledger_index"] == 1004
+    assert journal_status(path, authorization.authorization_id) == "validated"
 
 
 def test_sensitive_operation_requires_explicit_execute_switch() -> None:

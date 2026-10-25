@@ -148,20 +148,28 @@ using another independent checkout/device is outside its durability boundary. If
 journal is lost, stop for review; do not reconstruct submission authority from the
 authorization file alone.
 
+Submission preflight reads the current validated node state and refuses if the
+recorded construction-ledger index is in the future. It retrieves that exact
+historical ledger and requires its validated hash to equal the artifact's recorded
+construction hash. If the exact ledger is unavailable or the current and historical
+observations conflict, submission stops before a journal claim or submit RPC.
+
 Submission uses the frozen blob and `fail_hard=true`. A timeout after the request is
 an unknown outcome: do not submit again. Poll only by the already computed hash.
 Polling reads a validated-ledger identity before the bounded `tx` lookup and again
 after it. It checks that the node stayed on native Testnet, did not move backwards,
 and still agrees with the construction/prior ledger hashes.
 
-`EXPIRED_NOT_INCLUDED` is recorded only when the latest trusted validated ledger is
-strictly greater than the frozen `LastLedgerSequence`, the bounded lookup covers
-construction ledger + 1 through `LastLedgerSequence`, its result contains literal
-`searched_all: true`, and `complete_ledgers` covers that entire range without a gap.
-A last-valid-ledger inclusion wins even when the ledger advances during the query.
-Missing evidence, a history gap, inconsistent ledger identity, timeout, or an
-unexpected response remains `UNKNOWN`; the branch stops and reconciles only by the
-original hash. No replacement is built or submitted.
+`EXPIRED_NOT_INCLUDED` is recorded only when both the pre-query and post-query
+validated-ledger indices are strictly greater than the frozen
+`LastLedgerSequence`, the bounded lookup covers construction ledger + 1 through
+`LastLedgerSequence`, its result contains literal `searched_all: true`, and
+`complete_ledgers` covers that entire range without a gap. If the pre-query ledger
+has not passed expiry, the result remains `UNKNOWN` even when the node advances past
+expiry during the lookup. A last-valid-ledger inclusion—and any later discovery of
+the original hash—wins. Missing evidence, a history gap, inconsistent ledger
+identity, timeout, or an unexpected response remains `UNKNOWN`; the branch stops and
+reconciles only by the original hash. No replacement is built or submitted.
 
 ## Eventual evidence
 
