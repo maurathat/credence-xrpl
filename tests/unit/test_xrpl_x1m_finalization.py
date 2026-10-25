@@ -131,7 +131,12 @@ def test_concurrent_recovery_finalization_closes_once_and_emits_one_event(
     assert len(journal.pending_settlement_events()) == 1
 
 
-def test_stale_lease_owner_cannot_complete_after_finalization(tmp_path: Path) -> None:
+def test_late_completion_without_transaction_identity_cannot_touch_finalized_attempt(
+    tmp_path: Path,
+) -> None:
+    """The live owner's attempt was closed by finalization. Without the persisted transaction
+    identity the late completion is refused, and the finalized attempt is never modified. (With
+    a fully consistent identity it is a benign no-write observation; see X1n.)"""
     flow = build_flow(tmp_path)
     original = flow.journal.get(OPERATION)
     flow.journal.record_submission_anchor(OPERATION, flow.trusted.validated_ledger(OWNER.account))

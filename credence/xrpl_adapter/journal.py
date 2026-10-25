@@ -46,6 +46,14 @@ _STATE_VALUES = ", ".join(f"'{state.value}'" for state in TransactionState)
 _DISPOSITION_VALUES = ", ".join(f"'{disposition.value}'" for disposition in SubmissionDisposition)
 SUBMISSION_LEASE_SECONDS = 30
 _FINALIZED_ATTEMPT_STATUS = "ABANDONED_FINAL_OUTCOME_RECOVERED_FROM_VALIDATED_LEDGER_EVIDENCE"
+# Terminal states whose finalization rests on validated evidence that the transaction was included.
+_VALIDATED_INCLUSION_STATES = frozenset(
+    {
+        TransactionState.VALIDATED_SUCCESS,
+        TransactionState.VALIDATED_FAILURE,
+        TransactionState.VALIDATED_UNEXPECTED_DELIVERY,
+    }
+)
 
 SCHEMA = f"""
 CREATE TABLE IF NOT EXISTS xrpl_payment_transactions (
@@ -705,7 +713,17 @@ class PaymentJournal:
         disposition: SubmissionDisposition,
         next_state: TransactionState,
         provisional_status: str,
+        transaction_hash: str | None = None,
     ) -> None:
+        """Complete the caller's own live attempt, or accept a benign late observation.
+
+        The only write is to the caller's still-open attempt. If that attempt was instead closed
+        by trusted validated-ledger finalization while the caller's lease was live, and the
+        caller's ``transaction_hash`` (the persisted signed transaction it broadcast), its lease
+        identity and the terminal payment outcome all agree, the late transport response is a
+        benign observation: nothing is written and no exception is raised (X1n, R1). Every other
+        mismatch, including a closure after the lease expired, raises ``JournalConflict``.
+        """
         if next_state not in {TransactionState.PENDING_CONFIRMATION, TransactionState.UNKNOWN}:
             raise ValueError("submission can finish only as pending or unknown")
         timestamp = _now()
@@ -725,6 +743,10 @@ class PaymentJournal:
                 ),
             )
             if cursor.rowcount != 1:
+                if self._is_benign_finalized_observation(
+                    connection, operation_id, lease, transaction_hash
+                ):
+                    return
                 raise JournalConflict(
                     f"{operation_id}: submission lease is not owned by this worker"
                 )
@@ -750,6 +772,76 @@ class PaymentJournal:
                     or TransactionState(cast(str, current["state"])) not in TERMINAL_STATES
                 ):
                     raise JournalConflict(f"{operation_id}: submission state changed concurrently")
+
+    @staticmethod
+    def _is_benign_finalized_observation(
+        connection: sqlite3.Connection,
+        operation_id: str,
+        lease: SubmissionLease,
+        caller_transaction_hash: str | None,
+    ) -> bool:
+        """Read-only check that a late completion concerns an attempt already closed by the
+        terminal validated-ledger finalization of the same, self-consistent payment."""
+        if not caller_transaction_hash:
+            return False
+        attempt = connection.execute(
+            """SELECT lease_owner_token, lease_expires_at, completed_at, disposition,
+                      provisional_status
+               FROM xrpl_submission_attempts WHERE operation_id = ? AND attempt_number = ?""",
+            (operation_id, lease.attempt_number),
+        ).fetchone()
+        if (
+            attempt is None
+            or attempt["lease_owner_token"] != lease.owner_token
+            or attempt["lease_expires_at"] != lease.expires_at
+            or attempt["completed_at"] is None
+            or attempt["disposition"] is not None
+            or attempt["provisional_status"] != _FINALIZED_ATTEMPT_STATUS
+        ):
+            return False
+        if connection.execute(
+            """SELECT 1 FROM xrpl_submission_attempts
+               WHERE operation_id = ? AND completed_at IS NULL""",
+            (operation_id,),
+        ).fetchone():
+            return False
+        row = connection.execute(
+            "SELECT * FROM xrpl_payment_transactions WHERE operation_id = ?", (operation_id,)
+        ).fetchone()
+        if row is None:
+            return False
+        try:
+            record = _record(row)
+            closed_at = _parse_timestamp(cast(str, attempt["completed_at"]))
+            lease_expiry = _parse_timestamp(cast(str, attempt["lease_expires_at"]))
+            persisted_hash = transaction_hash(record.signed_transaction)
+        except (TypeError, ValueError):
+            return False
+        # The attempt was closed by the terminal transition itself, while its lease was live.
+        if closed_at >= lease_expiry or attempt["completed_at"] != record.updated_at:
+            return False
+        if (
+            record.state not in _VALIDATED_INCLUSION_STATES
+            or persisted_hash != record.transaction_hash
+            or record.transaction_hash != caller_transaction_hash.upper()
+            or record.evidence_verification_version != 1
+            or not record.final_evidence
+            or not record.final_result
+            or record.validated_ledger_index is None
+            or not record.validated_ledger_hash
+        ):
+            return False
+        events = connection.execute(
+            "SELECT transaction_hash FROM xrpl_settlement_outbox WHERE operation_id = ?",
+            (operation_id,),
+        ).fetchall()
+        if record.state is TransactionState.VALIDATED_SUCCESS:
+            return (
+                record.settlement_status == "XRPL_SETTLED"
+                and len(events) == 1
+                and events[0]["transaction_hash"] == record.transaction_hash
+            )
+        return record.settlement_status is None and not events
 
     def record_reconciliation_state(
         self,
@@ -882,7 +974,9 @@ class PaymentJournal:
 
         A missing transport response is not rewritten as an acknowledgement or rejection. The
         attempt becomes inactive in the same transaction as payment finalization, and its owner
-        token remains as durable fencing evidence against a stale worker.
+        token remains as durable evidence of who held it. No worker can complete or overwrite the
+        closed attempt; a live owner's late response is accepted only as a no-write observation
+        (``finish_submission``, X1n).
         """
         connection.execute(
             """UPDATE xrpl_submission_attempts

@@ -348,6 +348,7 @@ class PaymentService:
             self._journal.finish_submission(
                 record.operation_id,
                 lease,
+                transaction_hash=record.transaction_hash,
                 disposition=SubmissionDisposition.TIMEOUT,
                 next_state=TransactionState.UNKNOWN,
                 provisional_status="SUBMISSION_TIMEOUT_OUTCOME_UNKNOWN",
@@ -357,6 +358,7 @@ class PaymentService:
             self._journal.finish_submission(
                 record.operation_id,
                 lease,
+                transaction_hash=record.transaction_hash,
                 disposition=SubmissionDisposition.TRANSPORT_ERROR,
                 next_state=TransactionState.UNKNOWN,
                 provisional_status="SUBMISSION_TRANSPORT_ERROR_OUTCOME_UNKNOWN",
@@ -367,6 +369,7 @@ class PaymentService:
             self._journal.finish_submission(
                 record.operation_id,
                 lease,
+                transaction_hash=record.transaction_hash,
                 disposition=SubmissionDisposition.TRANSPORT_ERROR,
                 next_state=TransactionState.UNKNOWN,
                 provisional_status="UNEXPECTED_SUBMISSION_RESPONSE",
@@ -376,6 +379,7 @@ class PaymentService:
         self._journal.finish_submission(
             record.operation_id,
             lease,
+            transaction_hash=record.transaction_hash,
             disposition=(
                 SubmissionDisposition.ACKNOWLEDGED
                 if response.accepted

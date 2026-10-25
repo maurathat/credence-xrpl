@@ -2,8 +2,8 @@
 
 Owner: XRPL Integration (Codex)
 
-Status: X0t offline legacy-journal boundary, amended through X1m (finalization attempt closure;
-journal schema version 4). Only the owner edits this file; other workstreams file a request in
+Status: X0t offline legacy-journal boundary, amended through X1n (benign late completion after
+finalization; journal schema version 4). Only the owner edits this file; other workstreams file a request in
 `contracts/requests/`.
 
 ## Boundary
@@ -119,7 +119,29 @@ unavailable, or ledger history cannot prove non-inclusion.
   payment's terminal state and, for validated success, its outbox event. It records
   `ABANDONED_FINAL_OUTCOME_RECOVERED_FROM_VALIDATED_LEDGER_EVIDENCE`, leaves the transport
   disposition unset rather than fabricating an acknowledgement, and preserves the lease owner
-  token so a stale worker cannot complete or overwrite the attempt.
+  token. No worker can complete, reopen or overwrite a finalized attempt.
+- Late completion by the live owner (X1n). If the caller's attempt was closed by that terminal
+  validated-ledger finalization while its lease was still live, `finish_submission` is a benign
+  observation that writes nothing and raises nothing, provided all of the following agree:
+  - the caller's lease is the closed attempt itself (attempt number, owner token, original
+    expiry);
+  - the attempt carries the finalization status with no disposition, was closed at the instant the
+    payment became terminal, and no other attempt is open;
+  - the caller's `transaction_hash` is the persisted, self-consistent signed transaction hash;
+  - the payment is `VALIDATED_SUCCESS` (settled, exactly one matching outbox event),
+    `VALIDATED_FAILURE` or `VALIDATED_UNEXPECTED_DELIVERY` (no event), with version-1 verified
+    evidence.
+
+  No event, lease, resubmission or state change follows; the caller reads the existing terminal
+  record. Liveness is judged when finalization closed the attempt, not when the late call
+  arrives, because the observation writes nothing. Any other case still raises
+  `JournalConflict`, including:
+  - a different owner, attempt, payment or signed hash, or no hash;
+  - an attempt closed by lease expiry, or closed by finalization only after its lease expired;
+  - an expiry (`EXPIRED_NOT_INCLUDED`) finalization;
+  - a nonterminal payment, or inconsistent terminal history.
+
+  Completion of any attempt not closed by finalization still requires the live owner's lease.
 - A found but unvalidated transaction remains `PENDING_CONFIRMATION`.
 - A validated non-`tesSUCCESS` result is `VALIDATED_FAILURE`.
 - Valid evidence for `tesSUCCESS` with the wrong delivered asset or amount is
