@@ -2,9 +2,12 @@
 
 ## Outcome
 
-X1k corrects Salvador X1j findings F1 and F2 inside XRPL-owned payment reconciliation and journal
-code. No transaction was signed or submitted to an XRPL network, no ledger was written, and no
-production payment authorization boundary was changed.
+X1k addresses F1 and F2, which originated in a separate contested report rather than Salvador's
+X1j ACCEPT verdict. Salvador subsequently reproduced both findings independently during X1k
+verification. This document does not amend or reinterpret the historical X1j verdict. The changes
+remain inside XRPL-owned payment reconciliation and journal code. No transaction was signed or
+submitted to an XRPL network, no ledger was written, and no production payment authorization
+boundary was changed.
 
 Base: `cdc67b37afc94a97fb607e1b79d142971528c247`.
 

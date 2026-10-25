@@ -45,6 +45,7 @@ from credence.xrpl_adapter.types import (
 _STATE_VALUES = ", ".join(f"'{state.value}'" for state in TransactionState)
 _DISPOSITION_VALUES = ", ".join(f"'{disposition.value}'" for disposition in SubmissionDisposition)
 SUBMISSION_LEASE_SECONDS = 30
+_FINALIZED_ATTEMPT_STATUS = "ABANDONED_FINAL_OUTCOME_RECOVERED_FROM_VALIDATED_LEDGER_EVIDENCE"
 
 SCHEMA = f"""
 CREATE TABLE IF NOT EXISTS xrpl_payment_transactions (
@@ -822,8 +823,12 @@ class PaymentJournal:
                     == verified_delivered_amount_micro_units
                     and current.evidence_verification_version == evidence_verification_version
                 ):
+                    self._close_attempts_for_finalization(
+                        connection, operation_id, timestamp=timestamp
+                    )
                     return current
                 raise JournalConflict(f"{operation_id}: contradictory terminal evidence")
+            self._close_attempts_for_finalization(connection, operation_id, timestamp=timestamp)
             connection.execute(
                 """UPDATE xrpl_payment_transactions
                    SET state = ?, final_result = ?, final_detail = ?, final_evidence = ?,
@@ -865,6 +870,26 @@ class PaymentJournal:
                     (event_id, operation_id, current.transaction_hash, payload, timestamp),
                 )
         return self.get(operation_id)
+
+    @staticmethod
+    def _close_attempts_for_finalization(
+        connection: sqlite3.Connection,
+        operation_id: str,
+        *,
+        timestamp: str,
+    ) -> None:
+        """Abandon open transport attempts when trusted ledger evidence makes payment final.
+
+        A missing transport response is not rewritten as an acknowledgement or rejection. The
+        attempt becomes inactive in the same transaction as payment finalization, and its owner
+        token remains as durable fencing evidence against a stale worker.
+        """
+        connection.execute(
+            """UPDATE xrpl_submission_attempts
+               SET completed_at = ?, disposition = NULL, provisional_status = ?
+               WHERE operation_id = ? AND completed_at IS NULL""",
+            (timestamp, _FINALIZED_ATTEMPT_STATUS, operation_id),
+        )
 
     def claim_settlement_effect(self, operation_id: str) -> bool:
         """Retired as a settlement authority (X1c, B5).

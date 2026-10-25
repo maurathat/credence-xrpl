@@ -2,9 +2,9 @@
 
 Owner: XRPL Integration (Codex)
 
-Status: X0t offline legacy-journal boundary, amended through X1k (pre-expiry evidence and
-reconciliation concurrency; journal schema version 4). Only the owner edits this file;
-other workstreams file a request in `contracts/requests/`.
+Status: X0t offline legacy-journal boundary, amended through X1m (finalization attempt closure;
+journal schema version 4). Only the owner edits this file; other workstreams file a request in
+`contracts/requests/`.
 
 ## Boundary
 
@@ -115,6 +115,11 @@ unavailable, or ledger history cannot prove non-inclusion.
   across processes; non-owners cannot call the transport, complete the attempt or overwrite its
   status. After expiry, one worker may durably abandon the attempt as outcome-unknown and claim a
   new lease for the same persisted bytes and hash. No replacement transaction is constructed.
+- Trusted finalization atomically abandons any still-open attempt in the same transaction as the
+  payment's terminal state and, for validated success, its outbox event. It records
+  `ABANDONED_FINAL_OUTCOME_RECOVERED_FROM_VALIDATED_LEDGER_EVIDENCE`, leaves the transport
+  disposition unset rather than fabricating an acknowledgement, and preserves the lease owner
+  token so a stale worker cannot complete or overwrite the attempt.
 - A found but unvalidated transaction remains `PENDING_CONFIRMATION`.
 - A validated non-`tesSUCCESS` result is `VALIDATED_FAILURE`.
 - Valid evidence for `tesSUCCESS` with the wrong delivered asset or amount is
