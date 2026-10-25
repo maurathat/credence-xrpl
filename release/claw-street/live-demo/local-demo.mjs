@@ -219,8 +219,8 @@ try {
   terminal?.close();
   const video = page.video();
   await context.close();
-  await browser.close();
   if (video) await video.saveAs(join(output, "claw-street-local-demo.webm"));
+  await browser.close();
   writeFileSync(join(output, "run.json"), JSON.stringify({ succeeded, mode, site: site.origin, api: api.origin, timings, operations, errors, blocked, recording: mode === "record" ? "Silent recording with captions; add founder narration." : null }, null, 2));
   console.log(`Artifacts: ${output}`);
 }

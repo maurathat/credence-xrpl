@@ -43,6 +43,15 @@ The initial sandboxed Python run could not open loopback test sockets. The same 
 with loopback access enabled; no application workaround was introduced. Existing Vite
 configuration notices and chunk-size warnings are non-failing.
 
+GitHub Linux CI run `40183111556` passed lint, strict typecheck, the full-history secret scan,
+all 1,245 unit tests and all 148 conformance tests. Its offline integration stage had one
+failure in the unchanged
+`test_a_directory_owned_by_another_user_is_refused_simulated` test: it received
+`WRITABLE_DIRECTORY` instead of `UNTRUSTED_DIRECTORY_OWNER` (228 passed, 38 skipped).
+No ownership implementation or test was changed to conceal or bypass that failure. The
+same test passes in the complete local macOS run above. The final release report links the
+latest GitHub run and its result; local success is not a claim that Linux CI is green.
+
 ## Hosted frontend
 
 Project `307a6bdc-1e63-4463-bff7-e79d2573943f`, commit
