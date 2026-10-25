@@ -9,7 +9,8 @@ Three things are kept separate and recorded side by side:
 3. the decision and every reason for it.
 
 `policy_evaluable` says Core's policy engine may be asked about the offer: the observed network and
-asset are exactly the approved ones. `executable` is always False under X402-P0: no payment network,
+asset are exactly the approved ones, and the network is not Mainnet (`ApprovedExecution` also
+refuses every public network ID, so this holds even for a misconfigured approval). `executable` is always False under X402-P0: no payment network,
 including Testnet, is authorized for submission. Mainnet challenges are displayable and assessable
 read-only (`read_only`), never executable.
 
@@ -151,6 +152,7 @@ def assess(
         approved_asset_label=approved.label,
         approved_issuer=approved.issuer,
         policy_evaluable=network_ok
+        and requirement.network != XRPL_MAINNET
         and currency_ok
         and issuer_ok
         and not requirement.cross_currency,

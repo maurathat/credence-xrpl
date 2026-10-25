@@ -9,7 +9,7 @@ terms.
 
 It is NOT:
 - signed by anyone, approved by Core, or a Core `PaymentAuthorization` (X1a statement);
-- submittable: `submission_authorized` is always False under X402-P0;
+- submittable: `submission_authorized` is always False (X402-P0, P2);
 - evidence that any payment exists.
 
 The unsigned Payment is built in the multisign-ready form X1a uses (empty SigningPubKey, no
@@ -26,8 +26,8 @@ Owner: x402 (X402-P0).
 from __future__ import annotations
 
 import hashlib
-from dataclasses import dataclass
-from decimal import Decimal
+from dataclasses import dataclass, fields
+from decimal import Decimal, InvalidOperation
 from typing import Any, Literal
 
 from xrpl.core.binarycodec import encode_for_signing
@@ -148,6 +148,27 @@ class PurchaseIntent:
 
 
 @dataclass(frozen=True)
+class ProposalTerms:
+    """Everything a proposal is derived from. `credence.x402.prepare` builds these only from
+    verified inputs (the Core-evaluated purchase, the parsed challenge, the pinned endpoint, the
+    approved execution); a proposal is valid only if it is exactly what these terms produce."""
+
+    intent: PurchaseIntent
+    merchant_id: str
+    resource_url: str
+    request_method: str
+    request_digest: str
+    requirement_digest: str
+    invoice: InvoiceBinding
+    amount: XrplAmount
+    destination: str
+    network: str
+    expires_at: Timestamp
+    ledger: LedgerContext
+    required_evidence_tier: EvidenceTier
+
+
+@dataclass(frozen=True)
 class PaymentAuthorizationProposal:
     proposal_id: str
     intent: PurchaseIntent
@@ -160,8 +181,7 @@ class PaymentAuthorizationProposal:
     amount: XrplAmount
     destination: str
     network: str
-    network_id: int
-    source_account: str
+    ledger: LedgerContext
     expires_at: Timestamp
     unsigned_transaction: tuple[tuple[str, Any], ...]
     unsigned_transaction_digest: str
@@ -177,11 +197,37 @@ class PaymentAuthorizationProposal:
         return self.intent.agent_id
 
     @property
+    def network_id(self) -> int:
+        return self.ledger.network_id
+
+    @property
+    def source_account(self) -> str:
+        return self.ledger.source_account
+
+    @property
     def x1_template_compatible(self) -> bool:
         return not self.x1_template_gaps
 
     def transaction(self) -> dict[str, Any]:
         return dict(self.unsigned_transaction)
+
+    def terms(self) -> ProposalTerms:
+        """The terms as this proposal states them (not trusted: see verify_binding)."""
+        return ProposalTerms(
+            intent=self.intent,
+            merchant_id=self.merchant_id,
+            resource_url=self.resource_url,
+            request_method=self.request_method,
+            request_digest=self.request_digest,
+            requirement_digest=self.requirement_digest,
+            invoice=self.invoice,
+            amount=self.amount,
+            destination=self.destination,
+            network=self.network,
+            expires_at=self.expires_at,
+            ledger=self.ledger,
+            required_evidence_tier=self.required_evidence_tier,
+        )
 
 
 def unsigned_payment(
@@ -227,21 +273,40 @@ def unsigned_payment(
     return tx, tuple(gaps)
 
 
-def verify_binding(proposal: PaymentAuthorizationProposal, invoice_id: str) -> None:
-    """Recompute the invoice binding from the merchant's invoice ID and check the proposal's
-    unsigned transaction and digest still commit to it. Any alteration is BINDING_ALTERED."""
-    tx = proposal.transaction()
-    expected = InvoiceBinding(
-        invoice_id, proposal.invoice.source_tag, proposal.invoice.destination_tag
-    )
-    if proposal.invoice != expected:
-        raise X402Refused(X402Refusal.BINDING_ALTERED, "invoice ID")
-    if tx.get("InvoiceID") != expected.invoice_id_field:
-        raise X402Refused(X402Refusal.BINDING_ALTERED, "InvoiceID")
-    if tx.get("Memos") != [{"Memo": {"MemoData": expected.memo_data}}]:
-        raise X402Refused(X402Refusal.BINDING_ALTERED, "Memos")
-    if unsigned_digest(tx) != proposal.unsigned_transaction_digest:
-        raise X402Refused(X402Refusal.BINDING_ALTERED, "unsigned transaction digest")
+def _first_difference(
+    actual: PaymentAuthorizationProposal, expected: PaymentAuthorizationProposal
+) -> str | None:
+    for item in fields(actual):
+        if getattr(actual, item.name) != getattr(expected, item.name):
+            return item.name
+    return None
+
+
+def verify_binding(proposal: PaymentAuthorizationProposal, terms: ProposalTerms) -> None:
+    """Fail closed unless `proposal` is exactly the proposal `terms` produce.
+
+    Two independent reconstructions, neither trusting a digest the proposal carries:
+
+    1. From the proposal's own stated terms, rebuild the unsigned Payment, its digest, the
+       idempotency key and the proposal ID. Any stored transaction, digest or identity that does not
+       follow from the stated terms (a destination changed with the transaction bytes left alone, a
+       mutated transaction with a recomputed digest, a replaced proposal ID) is refused.
+    2. From the trusted `terms` (built from verified inputs), rebuild the whole proposal and require
+       every field to be equal: agent, facility, purchase request, prompt, merchant, resource,
+       method, request digest, requirement digest, invoice binding (ID, InvoiceID, memo, source and
+       destination tags), amount, currency, issuer, destination, network, ledger context, expiry,
+       evidence tier, transaction and digest, idempotency key and proposal ID.
+
+    The first differing field is named in BINDING_ALTERED.
+    """
+    stated = _build(proposal.terms())
+    field_name = _first_difference(proposal, stated)
+    if field_name is not None:
+        raise X402Refused(X402Refusal.BINDING_ALTERED, f"{field_name} does not follow from terms")
+    expected = _build(terms)
+    field_name = _first_difference(proposal, expected)
+    if field_name is not None:
+        raise X402Refused(X402Refusal.BINDING_ALTERED, f"{field_name} differs from verified terms")
 
 
 def unsigned_digest(tx: dict[str, Any]) -> str:
@@ -280,45 +345,76 @@ def build_proposal(
     ledger: LedgerContext,
     required_evidence_tier: EvidenceTier,
 ) -> PaymentAuthorizationProposal:
-    """Build the proposal. The idempotency key binds agent, purchase request, merchant, resource,
-    request digest and requirement digest: the same purchase of the same challenge always maps to
-    the same key, and any change to any of them is a different purchase."""
-    if Decimal(amount.value) <= 0:
+    """Build the proposal from its terms (see ProposalTerms). Callers outside tests should go through
+    `credence.x402.prepare.prepare_proposal`, which derives the terms from verified inputs."""
+    return _build(
+        ProposalTerms(
+            intent=intent,
+            merchant_id=merchant_id,
+            resource_url=resource_url,
+            request_method=request_method,
+            request_digest=request_digest,
+            requirement_digest=requirement_digest,
+            invoice=invoice,
+            amount=amount,
+            destination=destination,
+            network=network,
+            expires_at=expires_at,
+            ledger=ledger,
+            required_evidence_tier=required_evidence_tier,
+        )
+    )
+
+
+def _build(t: ProposalTerms) -> PaymentAuthorizationProposal:
+    """The idempotency key binds agent, purchase request, merchant, resource, request digest and
+    requirement digest; the proposal ID binds every term, the ledger context and the transaction
+    digest."""
+    try:
+        positive = Decimal(t.amount.value) > 0
+    except InvalidOperation:
+        positive = False
+    if not positive:
         raise X402Refused(X402Refusal.MALFORMED_AMOUNT, "amount must be positive")
-    tx, gaps = unsigned_payment(amount, destination, invoice, ledger)
+    tx, gaps = unsigned_payment(t.amount, t.destination, t.invoice, t.ledger)
     tx_digest = unsigned_digest(tx)
     idempotency_key = digest_json(
         {
-            "agent_id": intent.agent_id,
-            "purchase_request_digest": intent.purchase_request_digest,
-            "merchant_id": merchant_id,
-            "resource_url": resource_url,
-            "request_digest": request_digest,
-            "requirement_digest": requirement_digest,
+            "agent_id": t.intent.agent_id,
+            "purchase_request_digest": t.intent.purchase_request_digest,
+            "merchant_id": t.merchant_id,
+            "resource_url": t.resource_url,
+            "request_digest": t.request_digest,
+            "requirement_digest": t.requirement_digest,
         }
     )
     body = _proposal_body(
         {
-            "agent_id": intent.agent_id,
-            "facility_id": intent.facility_id,
-            "purchase_request_digest": intent.purchase_request_digest,
-            "prompt_digest": intent.prompt_digest,
-            "merchant_id": merchant_id,
-            "resource_url": resource_url,
-            "request_method": request_method,
-            "request_digest": request_digest,
-            "requirement_digest": requirement_digest,
-            "invoice": invoice.canonical(),
-            "amount": amount.canonical(),
-            "destination": destination,
-            "network": network,
-            "network_id": ledger.network_id,
-            "source_account": ledger.source_account,
-            "expires_at": expires_at.value,
+            "agent_id": t.intent.agent_id,
+            "facility_id": t.intent.facility_id,
+            "purchase_request_digest": t.intent.purchase_request_digest,
+            "prompt_digest": t.intent.prompt_digest,
+            "merchant_id": t.merchant_id,
+            "resource_url": t.resource_url,
+            "request_method": t.request_method,
+            "request_digest": t.request_digest,
+            "requirement_digest": t.requirement_digest,
+            "invoice": t.invoice.canonical(),
+            "amount": t.amount.canonical(),
+            "destination": t.destination,
+            "network": t.network,
+            "ledger": {
+                "source_account": t.ledger.source_account,
+                "network_id": t.ledger.network_id,
+                "fee_drops": t.ledger.fee_drops,
+                "sequence": t.ledger.sequence,
+                "last_ledger_sequence": t.ledger.last_ledger_sequence,
+            },
+            "expires_at": t.expires_at.value,
             "unsigned_transaction_digest": tx_digest,
             "unsigned_transaction_digest_scheme": UNSIGNED_DIGEST_SCHEME,
             "idempotency_key": idempotency_key,
-            "required_evidence_tier": required_evidence_tier.value,
+            "required_evidence_tier": t.required_evidence_tier.value,
             "payment_before_delivery": True,
             "x1_template_gaps": list(gaps),
             "submission_authorized": False,
@@ -326,44 +422,54 @@ def build_proposal(
     )
     return PaymentAuthorizationProposal(
         proposal_id=digest_json(body),
-        intent=intent,
-        merchant_id=merchant_id,
-        resource_url=resource_url,
-        request_method=request_method,
-        request_digest=request_digest,
-        requirement_digest=requirement_digest,
-        invoice=invoice,
-        amount=amount,
-        destination=destination,
-        network=network,
-        network_id=ledger.network_id,
-        source_account=ledger.source_account,
-        expires_at=expires_at,
+        intent=t.intent,
+        merchant_id=t.merchant_id,
+        resource_url=t.resource_url,
+        request_method=t.request_method,
+        request_digest=t.request_digest,
+        requirement_digest=t.requirement_digest,
+        invoice=t.invoice,
+        amount=t.amount,
+        destination=t.destination,
+        network=t.network,
+        ledger=t.ledger,
+        expires_at=t.expires_at,
         unsigned_transaction=tuple(sorted(tx.items())),
         unsigned_transaction_digest=tx_digest,
         unsigned_transaction_digest_scheme=UNSIGNED_DIGEST_SCHEME,
         idempotency_key=idempotency_key,
-        required_evidence_tier=required_evidence_tier,
+        required_evidence_tier=t.required_evidence_tier,
         payment_before_delivery=True,
         x1_template_gaps=gaps,
     )
 
 
-class ProposalBook:
-    """Offline guard against duplicate invoices and replayed proposals, across all agents.
+class PaymentAuthorityBook:
+    """One purchase, one payment authority, across all agents: offline and IN MEMORY ONLY.
 
-    - An invoice ID (or, without one, a requirement digest) may back at most one proposal ever.
-      A second purchase against it, by any agent, is DUPLICATE_INVOICE.
-    - A proposal's idempotency key may be admitted once. Re-admitting the same proposal is
-      PROPOSAL_REPLAYED: the caller must look up the existing record, not pay again.
-    In-memory only; the durable version belongs to the X1 journal (contracts/requests/0010).
-    A merchant whose challenge has no invoice ID cannot be told apart between purchases on the
-    ledger; such a requirement may back one proposal only, which is deliberately conservative.
+    - A purchase request (its digest) may back at most one proposal, ever. A merchant re-challenge
+      with a new invoice, a timeout, an unknown outcome or a rejection never reopens it:
+      PURCHASE_ALREADY_AUTHORIZED. A new attempt needs a new signed purchase request and a new Core
+      decision.
+    - An invoice (network, destination, invoice ID) may back at most one proposal, by any agent:
+      DUPLICATE_INVOICE.
+    - Re-admitting a proposal already admitted is PROPOSAL_REPLAYED: look up the existing record.
+    - A proposal is bound to exactly one expected signed-transaction hash, and a hash to exactly one
+      proposal: TRANSACTION_ALREADY_BOUND. A validated hash confirms at most one purchase.
+
+    Nothing is ever removed. This is not restart-safe and is not replay protection across processes:
+    the state is lost on restart, and two books do not see each other. Durable uniqueness belongs to
+    Core's reservation identity and the X1 payment journal (contracts/requests/0009, 0010), which
+    X402-P2 does not change. Payment execution stays disabled.
     """
 
     def __init__(self) -> None:
         self._by_key: dict[str, PaymentAuthorizationProposal] = {}
+        self._by_purchase: dict[str, str] = {}
         self._by_invoice: dict[str, str] = {}
+        self._tx_by_proposal: dict[str, str] = {}
+        self._proposal_by_tx: dict[str, str] = {}
+        self._confirmed: dict[str, str] = {}
 
     @staticmethod
     def _invoice_key(proposal: PaymentAuthorizationProposal) -> str:
@@ -376,11 +482,40 @@ class ProposalBook:
     def admit(self, proposal: PaymentAuthorizationProposal) -> None:
         if proposal.idempotency_key in self._by_key:
             raise X402Refused(X402Refusal.PROPOSAL_REPLAYED, proposal.idempotency_key)
+        purchase = proposal.intent.purchase_request_digest
+        if purchase in self._by_purchase:
+            raise X402Refused(X402Refusal.PURCHASE_ALREADY_AUTHORIZED, purchase)
         invoice_key = self._invoice_key(proposal)
         if invoice_key in self._by_invoice:
             raise X402Refused(X402Refusal.DUPLICATE_INVOICE, "invoice already proposed")
         self._by_key[proposal.idempotency_key] = proposal
-        self._by_invoice[invoice_key] = proposal.idempotency_key
+        self._by_purchase[purchase] = proposal.proposal_id
+        self._by_invoice[invoice_key] = proposal.proposal_id
 
     def get(self, idempotency_key: str) -> PaymentAuthorizationProposal | None:
         return self._by_key.get(idempotency_key)
+
+    def admitted(self, proposal: PaymentAuthorizationProposal) -> bool:
+        return self._by_key.get(proposal.idempotency_key) == proposal
+
+    def bind_transaction(
+        self, proposal: PaymentAuthorizationProposal, transaction_hash: str
+    ) -> None:
+        if not self.admitted(proposal):
+            raise X402Refused(X402Refusal.BINDING_ALTERED, "proposal was not admitted")
+        bound = self._tx_by_proposal.get(proposal.proposal_id)
+        if bound is not None and bound != transaction_hash:
+            raise X402Refused(X402Refusal.TRANSACTION_ALREADY_BOUND, "proposal has another hash")
+        owner = self._proposal_by_tx.get(transaction_hash)
+        if owner is not None and owner != proposal.proposal_id:
+            raise X402Refused(X402Refusal.TRANSACTION_ALREADY_BOUND, "hash bound to another")
+        self._tx_by_proposal[proposal.proposal_id] = transaction_hash
+        self._proposal_by_tx[transaction_hash] = proposal.proposal_id
+
+    def confirm(self, proposal: PaymentAuthorizationProposal, transaction_hash: str) -> None:
+        if self._tx_by_proposal.get(proposal.proposal_id) != transaction_hash:
+            raise X402Refused(X402Refusal.TRANSACTION_ALREADY_BOUND, "not the bound hash")
+        owner = self._confirmed.get(transaction_hash)
+        if owner is not None and owner != proposal.proposal_id:
+            raise X402Refused(X402Refusal.TRANSACTION_ALREADY_BOUND, "hash confirmed another")
+        self._confirmed[transaction_hash] = proposal.proposal_id

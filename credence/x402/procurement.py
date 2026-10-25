@@ -51,6 +51,7 @@ from credence.x402.errors import X402Refusal, X402Refused
 from credence.x402.proposal import XrplAmount
 
 FLAT_PRICE_UNITS = 1_000_000
+PUBLIC_NETWORK_ID_MAX = 1024  # Mainnet 0, Testnet 1, Devnet 2 and other public IDs
 MAX_X402_EVIDENCE_TIER = EvidenceTier.WITNESSED
 
 
@@ -65,6 +66,17 @@ class ApprovedExecution:
     currency: str
     issuer: str
     label: str = "tRLUSD"
+
+    def __post_init__(self) -> None:
+        """Only a local standalone network can be approved: XRPL Mainnet, Testnet, Devnet and any
+        other network ID of 1024 or lower are public networks, none of which is authorized."""
+        if (
+            isinstance(self.network_id, bool)
+            or not isinstance(self.network_id, int)
+            or self.network_id <= PUBLIC_NETWORK_ID_MAX
+            or self.network != f"xrpl:{self.network_id}"
+        ):
+            raise X402Refused(X402Refusal.NETWORK_NOT_APPROVED, f"{self.network}")
 
     @property
     def submission_authorized(self) -> bool:

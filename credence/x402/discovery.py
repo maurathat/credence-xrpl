@@ -177,6 +177,8 @@ class ServiceCandidate:
         return None
 
     def compatible_requirement(self) -> XrplPaymentRequirement:
+        """For display and pinning only. It reads the probe's stored decisions; anything that leads
+        to a proposal (`prepare.offer_from`, `prepare.prepare_proposal`) recomputes compatibility."""
         if self.challenge is None or not self.selectable:
             raise X402Refused(X402Refusal.SERVICE_UNVERIFIED, self.status.value)
         for req, decision in zip(self.challenge.requirements, self.compatibility, strict=True):

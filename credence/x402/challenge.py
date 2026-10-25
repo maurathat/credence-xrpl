@@ -9,9 +9,12 @@ Supported wire protocol (X402-P0 research, contracts/X402-ADAPTER-CONTRACT.md, S
   and reported as UNSUPPORTED_SCHEME.
 - XRPL networks as CAIP-2 `xrpl:{network_id}` (`xrpl:0` Mainnet, `xrpl:1` Testnet, `xrpl:2`
   Devnet). Entries for other chains are ignored and listed in `ignored`.
-- The challenge may arrive in the `PAYMENT-REQUIRED` header (base64 of JSON), in the JSON body, or
-  both (both live merchants observed sent both, JSON-equal). If both are present they must be equal
-  as JSON; otherwise CONTRADICTORY_CHALLENGE. Neither is preferred silently.
+- The challenge may arrive in the `PAYMENT-REQUIRED` header (base64 of JSON), in the body, or both
+  (both live merchants observed sent both, JSON-equal). A body challenge is recognized by its
+  content, whatever the content type (application/json, absent, text/plain, +json types). If both
+  are present they must be strictly equal JSON (same JSON types too); otherwise
+  CONTRADICTORY_CHALLENGE. Ambiguous representations (a nested challenge, non-UTF-8 charset, a
+  byte-order mark before JSON) are refused. Neither representation is ever preferred.
 
 Each `accepts[]` entry is checked field by field: `amount` (integer drops for XRP, XRPL decimal
 value string for an issued currency), `asset` ("XRP", a 3-character code or a 40-hex code),
@@ -159,7 +162,7 @@ def _json(value: Any) -> JsonValue:
     return json.loads(json.dumps(value))  # type: ignore[no-any-return]
 
 
-def _strict_object(raw: bytes, what: str) -> dict[str, Any]:
+def _strict_json(raw: bytes, what: str) -> Any:
     def no_duplicates(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
         out: dict[str, Any] = {}
         for key, value in pairs:
@@ -177,6 +180,11 @@ def _strict_object(raw: bytes, what: str) -> dict[str, Any]:
         )
     except (UnicodeDecodeError, json.JSONDecodeError, RecursionError):
         raise X402Refused(X402Refusal.MALFORMED_CHALLENGE, f"{what} is not JSON") from None
+    return value
+
+
+def _strict_object(raw: bytes, what: str) -> dict[str, Any]:
+    value = _strict_json(raw, what)
     if not isinstance(value, dict):
         raise X402Refused(X402Refusal.MALFORMED_CHALLENGE, f"{what} is not an object")
     return value
@@ -317,19 +325,98 @@ def _requirement(entry: Mapping[str, Any]) -> XrplPaymentRequirement:
     )
 
 
+_CHALLENGE_KEYS = ("x402Version", "accepts")
+_JSON_MEDIA_TYPES = frozenset({"application/json", "text/json", "text/plain", ""})
+_UTF8_BOM = b"\xef\xbb\xbf"
+_OTHER_BOMS = (b"\xff\xfe", b"\xfe\xff", b"\x00\x00\xfe\xff")
+_MAX_NESTING_SCAN = 64
+
+
+def strictly_equal(a: Any, b: Any) -> bool:
+    """JSON equality with exact types: 1 is not 1.0 or true, key sets and list order must match.
+    Python's `==` treats 1 == 1.0 == True, which would let two representations disagree."""
+    if type(a) is not type(b):
+        return False
+    if isinstance(a, dict):
+        return a.keys() == b.keys() and all(strictly_equal(a[k], b[k]) for k in a)
+    if isinstance(a, list):
+        return len(a) == len(b) and all(strictly_equal(x, y) for x, y in zip(a, b, strict=True))
+    return bool(a == b)
+
+
+def _holds_challenge(value: Any, depth: int = 0) -> bool:
+    """Whether a challenge-shaped object (x402Version or accepts) appears anywhere inside."""
+    if depth > _MAX_NESTING_SCAN:
+        return True  # too deep to inspect: treat as ambiguous
+    if isinstance(value, dict):
+        if any(key in value for key in _CHALLENGE_KEYS):
+            return True
+        return any(_holds_challenge(v, depth + 1) for v in value.values())
+    if isinstance(value, list):
+        return any(_holds_challenge(v, depth + 1) for v in value)
+    return False
+
+
+def _media_type(response: HttpResponse) -> tuple[str, str | None]:
+    raw = response.header("content-type") or ""
+    if raw == DUPLICATE_HEADER_MARKER:
+        raise X402Refused(X402Refusal.CONTRADICTORY_CHALLENGE, "content-type repeated")
+    media, _, params = raw.partition(";")
+    charset = None
+    for param in params.split(";"):
+        key, _, value = param.strip().partition("=")
+        if key.strip().lower() == "charset":
+            charset = value.strip().strip('"').lower()
+    return media.strip().lower(), charset
+
+
+def _body_challenge(response: HttpResponse) -> dict[str, Any] | None:
+    """A challenge carried in the body, recognized by its content whatever the content type.
+
+    - Empty body, or a body that is not JSON (an HTML or text error page): no body challenge.
+    - A JSON object without x402Version/accepts and no challenge-shaped object inside it: a
+      non-challenge error body, ignored as before.
+    - A top-level JSON object with x402Version or accepts: the body challenge.
+    - Anything ambiguous is refused rather than ignored: a challenge-shaped object nested inside
+      another value, a body in a non-UTF-8 charset or with a UTF-16/32 byte-order mark, a UTF-8 BOM
+      before JSON, JSON that fails strict parsing when it is declared JSON or starts like JSON.
+    """
+    body = response.body
+    if not body:
+        return None
+    media, charset = _media_type(response)
+    if charset is not None and charset not in ("utf-8", "utf8"):
+        raise X402Refused(X402Refusal.MALFORMED_CHALLENGE, f"body charset {charset}")
+    if body.startswith(_OTHER_BOMS):
+        raise X402Refused(X402Refusal.MALFORMED_CHALLENGE, "body is not UTF-8")
+    declared_json = media in _JSON_MEDIA_TYPES - {"text/plain", ""} or media.endswith("+json")
+    stripped = body.lstrip(b" \t\r\n")
+    if stripped.startswith(_UTF8_BOM):
+        if stripped[len(_UTF8_BOM) :].lstrip(b" \t\r\n")[:1] in (b"{", b"["):
+            raise X402Refused(X402Refusal.MALFORMED_CHALLENGE, "byte-order mark before JSON")
+        return None
+    looks_json = stripped[:1] in (b"{", b"[")
+    if not (declared_json or looks_json):
+        return None  # a non-JSON error body (for example an HTML page)
+    value = _strict_json(body, "body")
+    if isinstance(value, dict) and any(key in value for key in _CHALLENGE_KEYS):
+        return value
+    if _holds_challenge(value):
+        raise X402Refused(X402Refusal.MALFORMED_CHALLENGE, "challenge nested in the body")
+    return None  # a JSON error body that is not a challenge
+
+
 def _carried(response: HttpResponse) -> tuple[dict[str, Any], str]:
-    header = response.header("payment-required")
-    body: dict[str, Any] | None = None
+    """The one challenge the response carries. If both the header and the body carry one, they must
+    be strictly equal (same keys, values and JSON types); otherwise CONTRADICTORY_CHALLENGE. Neither
+    representation is ever preferred over the other."""
     if response.body_truncated:
         raise X402Refused(X402Refusal.MALFORMED_CHALLENGE, "body larger than the limit")
-    content_type = (response.header("content-type") or "").split(";")[0].strip().lower()
-    if response.body and content_type == "application/json":
-        body = _strict_object(response.body, "body")
-        if not any(key in body for key in ("x402Version", "accepts")):
-            body = None  # a JSON error body that is not a challenge
+    header = response.header("payment-required")
     decoded = None if header is None else _decode_header(header)
+    body = _body_challenge(response)
     if decoded is not None and body is not None:
-        if decoded != body:
+        if not strictly_equal(decoded, body):
             raise X402Refused(X402Refusal.CONTRADICTORY_CHALLENGE, "header and body differ")
         return decoded, "header+body"
     if decoded is not None:

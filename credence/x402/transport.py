@@ -3,9 +3,14 @@
 Merchant responses are untrusted input. This module enforces, before any byte leaves:
 
 - the target origin (scheme, host, port) is on the operator's allow-list;
-- the request carries no payment or authentication material: every header name in
-  FORBIDDEN_REQUEST_HEADERS (case-insensitive) is refused, so an x402 payment header, a bearer
-  token or a cookie can never be sent, to the merchant or to anyone else;
+- the request carries only headers on an explicit allow-list (ALLOWED_REQUEST_HEADERS: `accept`
+  and `content-type`, matched case-insensitively). Every other name is refused, including
+  authentication, cookie, proxy-credential and payment headers, unknown names, names with
+  whitespace or other characters outside the HTTP token set, and repeated names. Values must be
+  printable ASCII without leading or trailing whitespace, and `content-type` must be
+  `application/json` (optionally `; charset=utf-8`). So an x402 payment header, a bearer token or a
+  cookie can never be sent, to the merchant or to anyone else. The transport itself adds only the
+  framing headers http.client always sends (Host, Accept-Encoding: identity, Content-Length);
 - redirects are never followed. A 3xx is returned to the caller as an observation; its Location is
   recorded only as text and never requested. A transport that follows redirects is a defect.
 
@@ -24,6 +29,7 @@ from __future__ import annotations
 
 import hashlib
 import http.client
+import re
 import urllib.parse
 from collections.abc import Mapping
 from dataclasses import dataclass, field
@@ -31,8 +37,10 @@ from typing import Protocol
 
 from credence.x402.errors import X402Refusal, X402Refused
 
-# Header names a non-paying discovery request must never carry. Lower case.
-FORBIDDEN_REQUEST_HEADERS = frozenset(
+# The only request headers a non-paying discovery request may carry. Lower case.
+ALLOWED_REQUEST_HEADERS = frozenset({"accept", "content-type"})
+# Named only to give a clearer refusal code; anything off the allow-list is refused regardless.
+SENSITIVE_REQUEST_HEADERS = frozenset(
     {
         "authorization",
         "proxy-authorization",
@@ -42,8 +50,13 @@ FORBIDDEN_REQUEST_HEADERS = frozenset(
         "x-payment",  # x402 v1 payment header
         "payment-signature",  # x402 v2 payment header
         "x-payment-signature",
+        "x-payment-secure",
+        "x-risk-session",
     }
 )
+_TOKEN = re.compile(r"[!#$%&'*+.^_`|~0-9A-Za-z-]+")  # RFC 9110 field-name token
+_VALUE = re.compile(r"[\x21-\x7e](?:[\x20-\x7e]*[\x21-\x7e])?")
+_JSON_CONTENT_TYPE = re.compile(r"application/json(?:; ?charset=utf-8)?", re.IGNORECASE)
 
 # Response headers Credence keeps. Everything else (Set-Cookie, tracing, server banners) is dropped.
 PERMITTED_RESPONSE_HEADERS = frozenset(
@@ -109,6 +122,23 @@ class OriginAllowList:
         return origin
 
 
+def check_request_header(name: object, value: object) -> None:
+    """Refuse any outgoing header that is not exactly an allow-listed name with a clean value."""
+    if not isinstance(name, str) or not isinstance(value, str):
+        raise X402Refused(X402Refusal.HEADER_NOT_ALLOWED, "header must be text")
+    if not _TOKEN.fullmatch(name):
+        raise X402Refused(X402Refusal.HEADER_NOT_ALLOWED, f"malformed name {name!r}")
+    lowered = name.lower()
+    if lowered in SENSITIVE_REQUEST_HEADERS or "auth" in lowered or "cookie" in lowered:
+        raise X402Refused(X402Refusal.PAYMENT_MATERIAL_REFUSED, lowered)
+    if lowered not in ALLOWED_REQUEST_HEADERS:
+        raise X402Refused(X402Refusal.HEADER_NOT_ALLOWED, lowered)
+    if not _VALUE.fullmatch(value):
+        raise X402Refused(X402Refusal.HEADER_NOT_ALLOWED, f"malformed value for {lowered}")
+    if lowered == "content-type" and not _JSON_CONTENT_TYPE.fullmatch(value):
+        raise X402Refused(X402Refusal.HEADER_NOT_ALLOWED, "content-type must be application/json")
+
+
 @dataclass(frozen=True)
 class HttpRequest:
     """One outgoing request. `body` is transient; only its digest is ever recorded."""
@@ -121,9 +151,12 @@ class HttpRequest:
     def __post_init__(self) -> None:
         if self.method not in ("GET", "POST", "HEAD"):
             raise X402Refused(X402Refusal.UNSUPPORTED_METHOD, self.method)
-        for name, _ in self.headers:
-            if name.lower() in FORBIDDEN_REQUEST_HEADERS:
-                raise X402Refused(X402Refusal.PAYMENT_MATERIAL_REFUSED, name)
+        seen: set[str] = set()
+        for name, value in self.headers:
+            check_request_header(name, value)
+            if name.lower() in seen:
+                raise X402Refused(X402Refusal.HEADER_NOT_ALLOWED, f"repeated {name.lower()}")
+            seen.add(name.lower())
 
     @property
     def body_digest(self) -> str:

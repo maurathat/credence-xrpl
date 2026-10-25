@@ -1,26 +1,26 @@
-# x402 buyer adapter contract (X402-P0)
+# x402 buyer adapter contract (X402-P0, remediated in X402-P2)
 
-Owner: x402 workstream (X402-P0, `maurathat/credence-x402-adapter`). Package: `credence/x402/`.
+Owner: x402 workstream (X402-P0/P2, `maurathat/credence-x402-adapter`). Package: `credence/x402/`.
 Status: offline adapter and non-paying discovery only. Nothing in this package signs, submits or pays.
 
 Credence uses this adapter to evaluate and prepare purchases from XRPL x402-protected services. The first facilitator ecosystem is t54's. Core accounting, agent authorization, delivery verification and the XRPL payment journal are unchanged. Nebius and local Qwen are unaffected.
 
 ## Naming
 
-Merchant payment terms are third-party data, recorded exactly as observed. A t54 merchant that asks for RLUSD on XRPL Mainnet (`xrpl:0`) is recorded as RLUSD on `xrpl:0` and assessed read-only. Credence's own approved execution asset is tRLUSD, a test token, on the configured local standalone network. Each `CompatibilityDecision` keeps the two in separate fields. Under X402-P0 no network is authorized for submission, Testnet included.
+Merchant payment terms are third-party data, recorded exactly as observed. A t54 merchant that asks for RLUSD on XRPL Mainnet (`xrpl:0`) is recorded as RLUSD on `xrpl:0` and assessed read-only. Credence's own approved execution asset is tRLUSD, a test token, on the configured local standalone network. Each `CompatibilityDecision` keeps the two in separate fields. No network is authorized for submission, Testnet included. `ApprovedExecution` refuses any public network ID (1024 or lower: Mainnet 0, Testnet 1, Devnet 2), so only a local standalone network can be approved at all.
 
 ## Modules
 
 | Module | Responsibility |
 | --- | --- |
-| `transport` | The only path to the network. Origin allow-list (exact scheme/host/port; plain http loopback-only). Refuses payment, credential and cookie headers. Never follows redirects. Keeps only permitted response headers and a bounded body. |
+| `transport` | The only path to the network. Origin allow-list (exact scheme/host/port; plain http loopback-only). Outbound headers are an explicit allow-list: `accept` and `content-type` only, case-insensitive, valid token names, clean printable values, `content-type` exactly `application/json` (optionally `; charset=utf-8`), no repeats. Everything else (auth, cookies, proxy credentials, payment headers, unknown or malformed names) is refused. Never follows redirects. Keeps only permitted response headers and a bounded body. |
 | `mock` | Deterministic in-memory transport for tests. Records every attempted request. |
 | `challenge` | Version-aware typed 402 parser, `request_digest`, `check_live`, `parse_settlement_response`. |
 | `compatibility` | `FacilitatorProfile` (from `/supported`, plus multisig knowledge), `assess` → `CompatibilityDecision`. |
 | `discovery` | Directory listings (advertised), `probe` and `reprobe` (observed), endpoint pinning. |
 | `procurement` | Maps an x402 offer onto Core `ExecutionProfile` / `ServiceClass` / `Quote` so that Core's own `policy_engine.evaluate` decides it (through the unchanged `inference.market.qualify_and_select`). |
-| `prepare` | `offer_from` a selectable candidate; `prepare_proposal` after Core accepts. |
-| `proposal` | `PaymentAuthorizationProposal`, unsigned Payment and digest, `verify_binding`, `ProposalBook`. |
+| `prepare` | `offer_from` a probed candidate (compatibility recomputed); `x402_provider_id`; `proposal_terms` / `prepare_proposal` from a Core-evaluated purchase, recomputing every fact. |
+| `proposal` | `ProposalTerms`, `PaymentAuthorizationProposal`, unsigned Payment and digest, `verify_binding` (full reconstruction), `PaymentAuthorityBook` (in-memory). |
 | `lifecycle` | Offline payment-before-delivery state model. |
 | `discover` | Operator-run non-paying discovery CLI; JSON report. |
 | `errors` | `X402Refusal` codes and `X402Refused`. |
@@ -32,7 +32,12 @@ Taken from t54's facilitator docs, its live `/supported` and `/openapi.json`, it
 - **x402 version 2 only.** Any other `x402Version` returns `IncompatibleChallenge(UNSUPPORTED_VERSION)`. v1 fields (`maxAmountRequired`) inside a v2 entry are `CONTRADICTORY_CHALLENGE`.
 - **Scheme `exact` only.** `upto` and `batch-settlement` (both advertised by t54) and any unknown scheme return `UNSUPPORTED_SCHEME`.
 - **Networks:** CAIP-2 `xrpl:{network_id}`. Other chains are ignored and listed in `ignored`. Non-canonical spellings (`xrpl-testnet`, `xrpl:01`) are not XRPL.
-- **Challenge location:** the `PAYMENT-REQUIRED` header (base64 JSON), the JSON body, or both. If both are present they must be JSON-equal, else `CONTRADICTORY_CHALLENGE`. A repeated header is also contradictory. JSON is strict: duplicate keys and NaN/Infinity are refused.
+- **Challenge location:** the `PAYMENT-REQUIRED` header (base64 JSON), the body, or both.
+  - A body challenge is recognized by its content whatever the content type (absent, `application/json`, `text/plain`, `text/json`, any `+json` type, or another type when the body is JSON).
+  - If both carry a challenge they must be *strictly* equal JSON (same keys, values and JSON types: `1`, `1.0` and `true` differ), else `CONTRADICTORY_CHALLENGE`. Neither representation is ever preferred.
+  - Ambiguous representations are refused (`MALFORMED_CHALLENGE`): a challenge-shaped object nested inside the body, a non-UTF-8 charset, a UTF-16/32 byte-order mark, a UTF-8 BOM before JSON, or a body that is declared or looks like JSON but fails strict parsing.
+  - Non-challenge error bodies (HTML, plain text, JSON without challenge keys) are ignored as before.
+  - A repeated header is contradictory. JSON is strict: duplicate keys and NaN/Infinity are refused. The 64 KiB body limit is unchanged.
 - **`resource.url`** must equal the requested URL exactly (`RESOURCE_MISMATCH`).
 - **Per requirement:**
   - `amount`: integer drops for XRP; a positive XRPL decimal value string (no exponent, at most 16 significant digits) for an issued currency.
@@ -60,7 +65,7 @@ Taken from t54's facilitator docs, its live `/supported` and `/openapi.json`, it
 
 - the observed network, currency, label, issuer and amount;
 - the approved network, currency, label and issuer;
-- `policy_evaluable`: the observed network, currency and issuer are exactly the approved ones, and the requirement is not cross-currency;
+- `policy_evaluable`: the observed network, currency and issuer are exactly the approved ones, the network is not `xrpl:0`, and the requirement is not cross-currency;
 - `read_only`: the network is `xrpl:0`;
 - `executable`: always False;
 - `reasons`, in order:
@@ -98,7 +103,8 @@ For both t54 hosted facilitators, multisig support is `UNKNOWN`.
 | `requirement_digest` | sha256 of the exact `accepts[]` entry |
 | `invoice.invoice_id`, `.invoice_id_field`, `.memo_data`, `.source_tag`, `.destination_tag` | The invoice binding: `InvoiceID = SHA256(UTF-8(invoiceId))` and `MemoData = HEX(UTF-8(invoiceId))` |
 | `amount.currency`, `.issuer`, `.value` | Exact XRPL wire amount, as required |
-| `destination`, `network`, `network_id`, `source_account` | Where, on which network, from which account |
+| `destination`, `network` | Where, on which network |
+| `ledger.source_account`, `.network_id`, `.fee_drops`, `.sequence`, `.last_ledger_sequence` | The ledger context of the unsigned Payment (bound into `proposal_id` since X402-P2) |
 | `expires_at` | Observation time plus `maxTimeoutSeconds` |
 | `unsigned_transaction`, `unsigned_transaction_digest`, `unsigned_transaction_digest_scheme` | The unsigned multisign-ready Payment and its `xrpl-stx-sha512half-v1` digest |
 | `idempotency_key` | sha256 of agent, purchase request, merchant, resource, request digest and requirement digest |
@@ -115,19 +121,35 @@ The unsigned Payment follows t54's SDK shape:
 - `NetworkID` only above 1024;
 - `SigningPubKey ""` and no signatures.
 
-`verify_binding` recomputes the binding from the invoice ID and re-derives the digest; any alteration is `BINDING_ALTERED`. The X1 mapping and its gaps are in request 0010.
+`verify_binding(proposal, terms)` fails closed unless the proposal is exactly what `terms` produce (X402-P2):
 
-`prepare_proposal` refuses when any of the following holds:
+1. It rebuilds the unsigned Payment, its digest, the idempotency key and the proposal ID from the proposal's own stated terms. A destination changed with the transaction bytes left alone, a mutated transaction with a recomputed digest, or a replaced ID are all refused.
+2. It rebuilds the whole proposal from the trusted `terms` and requires every field to be equal.
 
-- the request is not the one challenged (`RESOURCE_MISMATCH`);
+The first differing field is named in `BINDING_ALTERED`. Trusted terms come only from `prepare.proposal_terms`. The X1 mapping and its gaps are in request 0010.
+
+`prepare_proposal` consumes the Core-evaluated purchase (`inference.market.Qualification`: the signed `PurchaseRequest`, its Core objects, the `PolicyDecision` and the headroom and nonce facts it was decided with), the trusted key registry, the approved execution, the facilitator profile and the ledger context. It accepts no caller-supplied intent, merchant identity, evidence tier or compatibility decision. It refuses when any of the following holds:
+
+- the request is not the one challenged, or its body is not the prompt the signed request commits to (`RESOURCE_MISMATCH`);
 - the challenge is not the pinned endpoint (`ENDPOINT_CHANGED`);
-- the requirement or decision is from another challenge (`BINDING_ALTERED`);
-- the requirement is not policy-evaluable (its first reason);
+- the requirement is from another challenge (`BINDING_ALTERED`);
+- recomputed compatibility makes the requirement not policy-evaluable (its first reason, e.g. `MAINNET_READ_ONLY`);
+- the ledger context or the requirement is not on the approved network (`NETWORK_NOT_APPROVED`);
 - the challenge has expired (`CHALLENGE_EXPIRED`);
-- Core rejected the purchase (`POLICY_REJECTED`);
-- the ledger context is on another network (`NETWORK_NOT_APPROVED`).
+- the purchase's provider is not the endpoint's reserved x402 identity `x402.<host>.<12 hex of sha256(url, method, network, payTo)>` (`PROVIDER_NAMESPACE`), so a Nebius, local Qwen or other merchant's decision cannot be reused;
+- the decision is not a policy-stage acceptance (`POLICY_REJECTED`);
+- re-running Core's pure `evaluate` with the re-verified request signature does not reproduce the supplied decision record exactly (`CORE_DECISION_MISMATCH`). The record's input digests are those of this request, facility, quote, service class, profile and procurement classes;
+- the quote, service class and profile are not exactly this requirement's flat-price projection, or Core's approved maximum, its reservation amount, the projected price and the merchant amount are not the same micro-tRLUSD integer (`CORE_DECISION_MISMATCH`);
+- the paying account is not the facility's borrower account (`AGENT_MISMATCH`).
 
-`ProposalBook` refuses a second proposal for one invoice, by any agent (`DUPLICATE_INVOICE`), and re-admission of one idempotency key (`PROPOSAL_REPLAYED`).
+The agent identity is the request's signing key. The facility, purchase request and prompt come from the signed request. The required tier is the strictest of the facility's and its procurement classes'.
+
+`PaymentAuthorityBook` is in memory only and not restart-safe. It refuses:
+
+- a second proposal for one purchase request, ever, whatever happened to the first (`PURCHASE_ALREADY_AUTHORIZED`);
+- a second proposal for one invoice, by any agent (`DUPLICATE_INVOICE`);
+- re-admission of one idempotency key (`PROPOSAL_REPLAYED`);
+- a second transaction hash for one proposal, or one hash for two proposals or two confirmations (`TRANSACTION_ALREADY_BOUND`).
 
 ## Payment-before-delivery lifecycle
 
@@ -137,7 +159,11 @@ The unsigned Payment follows t54's SDK shape:
 | --- | --- |
 | Quote refused / expired | `QUOTE_REFUSED` / `QUOTE_EXPIRED`, only before any payment could exist |
 | Timeout | `PAYMENT_STATUS_UNKNOWN`, never `PAYMENT_REJECTED` |
-| Validated failure (with result code) | `PAYMENT_REJECTED` |
+| Provisional engine result (`ter…`, `tel…`, `tef…`, `tem…`, or `tes…` before validation) | `PAYMENT_STATUS_UNKNOWN`; never terminal |
+| Validated evidence not authenticated by the configured `ValidatedEvidenceVerifier` (default `NoTrustedEvidenceSource` authenticates nothing; X1's result verifier is the intended one) | refused, `PAYMENT_EVIDENCE_UNAUTHENTICATED`; record unchanged |
+| Validated evidence without a validated ledger index and hash, or not for the expected transaction (the hash bound at `PAYMENT_PENDING`, the unsigned digest, InvoiceID, memo, source and destination tags) | refused, `PAYMENT_EVIDENCE_MISMATCH`; record unchanged |
+| Authenticated validated failure with a `tec…` result | `PAYMENT_REJECTED` |
+| Validated failure claiming `tes`, `ter`, `tel`, `tef`, `tem`, or a missing or malformed code | refused, `PAYMENT_EVIDENCE_MISMATCH` |
 | Validated success, but amount/asset/issuer/destination/network differs | `VALIDATED_UNEXPECTED_DELIVERY` |
 | Merchant settlement response | Recorded, with mismatches named; never confirms or rejects |
 | Confirmed payment | Never implies delivery; delivery needs its own bound observation |
@@ -146,9 +172,9 @@ The unsigned Payment follows t54's SDK shape:
 | Unresolvable | `MANUAL_RECONCILIATION_REQUIRED`, from unknown, unexpected, failed or insufficient |
 | Observation for another agent or proposal | `AGENT_MISMATCH` / `BINDING_ALTERED`; record unchanged |
 
-From `PAYMENT_PENDING` on, `may_propose_payment` is False for good. This model is not Core's settlement lifecycle.
+From `PAYMENT_PENDING` on, `may_propose_payment` is False for good, and the authority book never admits another proposal for the same purchase request. Nothing resubmits or repays. This model is not Core's settlement lifecycle.
 
-## Not in X402-P0
+## Not in X402-P0 or X402-P2
 
 - Payment submission and real `PAYMENT-SIGNATURE` headers.
 - Signing, custody and facilitator `/verify` or `/settle` calls.
@@ -159,6 +185,6 @@ From `PAYMENT_PENDING` on, `may_propose_payment` is False for good. This model i
 
 ## Tests
 
-- `tests/unit/test_x402_challenge.py`, `test_x402_discovery.py`, `test_x402_procurement.py`, `test_x402_prepare.py`, `test_x402_lifecycle.py` and `test_x402_discover_cli.py`.
+- `tests/unit/test_x402_challenge.py`, `test_x402_discovery.py`, `test_x402_procurement.py`, `test_x402_prepare.py`, `test_x402_lifecycle.py`, `test_x402_discover_cli.py` and (X402-P2) `test_x402_p2_remediation.py`. Shared worlds: `x402_world.py`, `x402_core_world.py`.
 - `tests/conformance/test_x402_p0_fixtures.py` (recorded observations and the deterministic fixture).
 - Fixtures are in `contracts/fixtures/x402_p0/`. Regenerate with `uv run python contracts/fixtures/build_x402_p0_fixtures.py`.

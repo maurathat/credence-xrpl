@@ -91,7 +91,9 @@ The recorded challenges, `/supported` bodies, a directory excerpt and the ledger
 | `tests/unit/test_x402_procurement.py` | 14 |
 | `tests/unit/test_x402_discover_cli.py` | 2 |
 | `tests/conformance/test_x402_p0_fixtures.py` | 6 |
-| **Total** | **172** |
+| **X402-P0 total** | **172** |
+| `tests/unit/test_x402_p2_remediation.py` (X402-P2) | 113 |
+| **Total** | **285** |
 
 Brief tests 1–20 map to these files as follows:
 
@@ -103,12 +105,26 @@ Brief tests 1–20 map to these files as follows:
 | 6–10, 12, 13, 19 | prepare (end to end) |
 | 12–17, 19 | lifecycle |
 
-Every x402 test disables sockets. No test signs, transfers or makes a paid request.
+Every x402 test disables sockets except the X402-P2 F4 redirect test, which runs a loopback-only HTTP server to prove the real transport sends one request and never follows a redirect. No test signs, transfers or makes a paid request.
+
+## X402-P2 remediation (Skopje F1–F4, Ulaanbaatar E1–E4)
+
+All eight findings were reproduced against `c56a5e0` (32 exploitable cases). Each is now refused, as shown by `tests/unit/test_x402_p2_remediation.py`. In summary:
+
+- **F1:** body challenges are recognized whatever the content type; header and body must be strictly equal JSON; ambiguous representations are refused.
+- **F2:** only an authenticated, validated `tec…` result is a terminal failure; `ter`/`tel`/`tef`/`tem` are provisional (unknown) or invalid evidence.
+- **F3/E3:** `verify_binding` rebuilds the whole proposal from its stated terms and from verified terms.
+- **F4:** outbound headers are an allow-list.
+- **E1:** a proposal needs the Core-evaluated purchase, a recomputed matching decision, the exact flat-price projection, one micro-tRLUSD amount throughout, and the endpoint's reserved `x402.` identity.
+- **E2:** compatibility is recomputed, Mainnet is never evaluable, and no public network can be approved.
+- **E4:** one proposal per purchase request ever, one transaction hash per proposal, and confirmation only for the expected transaction and invoice binding. All in memory only; not restart-safe.
+
+The adapter remains non-paying.
 
 ## Remaining change requests
 
-- `contracts/requests/0009-core-x402-flat-price-offers.md` (Core): flat per-request price, payment before delivery, money unit, location facts, evidence.
-- `contracts/requests/0010-x1-x402-prepayment-and-invoice-binding.md` (X1): a pre-delivery authorization statement, an exact `InvoiceID` binding field, the other x402 Payment fields, NetworkID on low network IDs, third-party submission, durable duplicate and replay guards, multisig, the validity window, and builder reuse.
+- `contracts/requests/0009-core-x402-flat-price-offers.md` (Core), revised in X402-P2 as items C1–C12: prepaid procurement contract, exact flat-price accounting, durable reservation identity, one payment per reservation, exposure at validated payment, outstanding delivery obligation, receipt chain, facility concurrency, network fees, merchant namespace, Tier-1 receipt, signed or recomputable decisions.
+- `contracts/requests/0010-x1-x402-prepayment-and-invoice-binding.md` (X1), revised in X402-P2 as items X1–X11: verified Core reservation input, independent policy-signer recomputation, network-specific NetworkID, exact transaction and invoice matching, durable uniqueness, transaction-hash replay protection, `LastLedgerSequence` bounds, facilitator submission, verified terminal outcomes, multisig, builder reuse.
 - **Claims note for Maura (not resolved here):** the build plan's line "Providers are paid after verification" cannot hold for an x402 merchant, which is paid before it serves. X402-P0 pays nothing, so nothing contradicts it today.
 
 ## Open compatibility questions for t54 engineers

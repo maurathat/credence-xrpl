@@ -13,12 +13,13 @@ from x402_world import (
     APPROVED,
     LATER,
     LOCAL_NETWORK,
-    MERCHANT_PAY_TO,
     NOW,
     OTHER_ACCOUNT,
-    TRLUSD_ISSUER,
-    TRLUSD_WIRE_CODE,
+    make_pending,
+    observe,
     proposal,
+    request_auth,
+    validated,
 )
 
 from credence.core.primitives import EvidenceTier, Timestamp
@@ -32,7 +33,7 @@ from credence.x402.lifecycle import (
     PurchaseState,
     SettlementClaim,
 )
-from credence.x402.proposal import ProposalBook
+from credence.x402.proposal import PaymentAuthorityBook
 
 TX = "B" * 64
 AGENT = "agent-researchbot"
@@ -42,25 +43,13 @@ OTHER_AGENT = "agent-other"
 def pending(agent: str = AGENT) -> PurchaseRecord:
     p = proposal(agent)
     record = lc.policy_accepted(lc.quoted(agent, NOW), NOW)
-    record = lc.authorization_requested(record, p, NOW)
-    return lc.payment_pending(record, NOW)
+    record = request_auth(record, p, NOW)
+    return make_pending(record)
 
 
 def success(record: PurchaseRecord, **changes: object) -> PaymentObservation:
-    assert record.proposal is not None
-    obs = PaymentObservation(
-        agent_id=record.agent_id,
-        proposal_id=record.proposal.proposal_id,
-        outcome=LedgerOutcome.VALIDATED_SUCCESS,
-        observed_at=LATER,
-        transaction_hash=TX,
-        delivered_amount="0.25",
-        delivered_currency=TRLUSD_WIRE_CODE,
-        delivered_issuer=TRLUSD_ISSUER,
-        destination=MERCHANT_PAY_TO,
-        network=LOCAL_NETWORK,
-    )
-    return replace(obs, **changes)  # type: ignore[arg-type]
+    """Trusted validated evidence for the record's expected transaction (x402_world.validated)."""
+    return validated(record, **changes)
 
 
 def timeout(record: PurchaseRecord) -> PaymentObservation:
@@ -72,7 +61,7 @@ def timeout(record: PurchaseRecord) -> PaymentObservation:
 
 def confirmed() -> PurchaseRecord:
     record = pending()
-    return lc.payment_observed(record, success(record))
+    return observe(record, success(record))
 
 
 def delivery(record: PurchaseRecord, **changes: object) -> DeliveryObservation:
@@ -117,7 +106,7 @@ def test_proposal_is_never_submittable() -> None:
 
 
 def test_duplicate_invoice_is_refused_across_agents() -> None:
-    book = ProposalBook()
+    book = PaymentAuthorityBook()
     book.admit(proposal(AGENT, label="job-1"))
     with pytest.raises(X402Refused) as exc:
         book.admit(proposal(OTHER_AGENT, label="job-2"))  # same invoice ID, other agent
@@ -125,7 +114,7 @@ def test_duplicate_invoice_is_refused_across_agents() -> None:
 
 
 def test_replayed_proposal_is_refused_and_the_original_is_kept() -> None:
-    book = ProposalBook()
+    book = PaymentAuthorityBook()
     p = proposal()
     book.admit(p)
     with pytest.raises(X402Refused) as exc:
@@ -146,14 +135,14 @@ def test_record_cannot_reenter_payment_after_payment_may_exist() -> None:
     record = pending()
     assert not record.may_propose_payment
     with pytest.raises(X402Refused) as exc:
-        lc.authorization_requested(record, proposal(), LATER)
+        request_auth(record, proposal(), LATER)
     assert exc.value.code is X402Refusal.ILLEGAL_TRANSITION
 
 
 def test_expired_proposal_cannot_be_requested_or_paid() -> None:
     record = lc.policy_accepted(lc.quoted(AGENT, NOW), NOW)
     with pytest.raises(X402Refused) as exc:
-        lc.authorization_requested(record, proposal(), Timestamp("2026-10-24T16:00:00Z"))
+        request_auth(record, proposal(), Timestamp("2026-10-24T16:00:00Z"))
     assert exc.value.code is X402Refusal.CHALLENGE_EXPIRED
 
 
@@ -162,27 +151,25 @@ def test_expired_proposal_cannot_be_requested_or_paid() -> None:
 
 def test_timeout_is_unknown_never_failed() -> None:
     record = pending()
-    record = lc.payment_observed(record, timeout(record))
+    record = observe(record, timeout(record))
     assert record.state is PurchaseState.PAYMENT_STATUS_UNKNOWN
-    record = lc.payment_observed(record, timeout(record))  # still unknown, still not failed
+    record = observe(record, timeout(record))  # still unknown, still not failed
     assert record.state is PurchaseState.PAYMENT_STATUS_UNKNOWN
     assert record.payment is None
 
 
 def test_unknown_resolves_only_by_validated_evidence() -> None:
     record = pending()
-    record = lc.payment_observed(record, timeout(record))
-    record = lc.payment_observed(record, success(record))
+    record = observe(record, timeout(record))
+    record = observe(record, success(record))
     assert record.state is PurchaseState.PAYMENT_CONFIRMED
 
 
 def test_failure_needs_a_validated_result_code() -> None:
     record = pending()
     with pytest.raises(X402Refused):
-        lc.payment_observed(
-            record, success(record, outcome=LedgerOutcome.VALIDATED_FAILURE, result_code=None)
-        )
-    rejected = lc.payment_observed(
+        observe(record, success(record, outcome=LedgerOutcome.VALIDATED_FAILURE, result_code=None))
+    rejected = observe(
         record,
         success(record, outcome=LedgerOutcome.VALIDATED_FAILURE, result_code="tecPATH_DRY"),
     )
@@ -191,7 +178,7 @@ def test_failure_needs_a_validated_result_code() -> None:
 
 def test_unknown_can_go_to_manual_reconciliation_keeping_history() -> None:
     record = pending()
-    record = lc.payment_observed(record, timeout(record))
+    record = observe(record, timeout(record))
     record = lc.manual_reconciliation(record, "operator", LATER)
     assert record.state is PurchaseState.MANUAL_RECONCILIATION_REQUIRED
     assert not record.may_propose_payment
@@ -199,7 +186,7 @@ def test_unknown_can_go_to_manual_reconciliation_keeping_history() -> None:
 
 def test_validated_success_with_wrong_amount_is_unexpected_delivery() -> None:
     record = pending()
-    record = lc.payment_observed(record, success(record, delivered_amount="0.24"))
+    record = observe(record, success(record, delivered_amount="0.24"))
     assert record.state is PurchaseState.VALIDATED_UNEXPECTED_DELIVERY
     assert record.payment is not None and record.payment.transaction_hash == TX
 
@@ -215,7 +202,7 @@ def test_validated_success_with_wrong_amount_is_unexpected_delivery() -> None:
 )
 def test_validated_success_to_anything_else_is_unexpected_delivery(change: dict[str, str]) -> None:
     record = pending()
-    record = lc.payment_observed(record, success(record, **change))
+    record = observe(record, success(record, **change))
     assert record.state is PurchaseState.VALIDATED_UNEXPECTED_DELIVERY
 
 
@@ -238,7 +225,7 @@ def test_confirmed_payment_then_failed_delivery_keeps_payment_and_never_pays_aga
     assert record.payment is not None and record.payment.transaction_hash == TX
     assert not record.may_propose_payment
     with pytest.raises(X402Refused):
-        lc.payment_pending(record, LATER)
+        make_pending(record, LATER)
     record = lc.manual_reconciliation(record, "paid, not delivered", LATER)
     assert record.payment is not None and record.payment.transaction_hash == TX
 
@@ -267,8 +254,9 @@ def test_expiry_after_payment_changes_nothing() -> None:
 
 def test_delivery_below_required_tier_is_insufficient() -> None:
     p = proposal(tier=EvidenceTier.BOUND_AND_SIGNED)
-    record = lc.authorization_requested(lc.policy_accepted(lc.quoted(AGENT, NOW), NOW), p, NOW)
-    record = lc.payment_observed(lc.payment_pending(record, NOW), success(record))
+    record = request_auth(lc.policy_accepted(lc.quoted(AGENT, NOW), NOW), p, NOW)
+    record = make_pending(record)
+    record = observe(record, success(record))
     record = lc.delivery_started(record, LATER)
     record = lc.delivery_observed(record, delivery(record))  # Tier 1 witnessed only
     assert record.state is PurchaseState.DELIVERY_EVIDENCE_INSUFFICIENT
@@ -333,7 +321,7 @@ def test_settlement_claim_before_payment_is_refused() -> None:
 def test_payment_observation_for_another_agent_is_refused() -> None:
     record = pending(AGENT)
     with pytest.raises(X402Refused) as exc:
-        lc.payment_observed(record, success(record, agent_id=OTHER_AGENT))
+        observe(record, success(record, agent_id=OTHER_AGENT))
     assert exc.value.code is X402Refusal.AGENT_MISMATCH
     assert record.state is PurchaseState.PAYMENT_PENDING
 
@@ -342,7 +330,7 @@ def test_observation_for_another_agents_proposal_is_refused() -> None:
     mine, theirs = pending(AGENT), pending(OTHER_AGENT)
     assert theirs.proposal is not None
     with pytest.raises(X402Refused) as exc:
-        lc.payment_observed(mine, success(mine, proposal_id=theirs.proposal.proposal_id))
+        observe(mine, success(mine, proposal_id=theirs.proposal.proposal_id))
     assert exc.value.code is X402Refusal.BINDING_ALTERED
 
 
@@ -356,5 +344,5 @@ def test_delivery_for_another_agent_is_refused() -> None:
 def test_agent_cannot_attach_another_agents_proposal() -> None:
     record = lc.policy_accepted(lc.quoted(AGENT, NOW), NOW)
     with pytest.raises(X402Refused) as exc:
-        lc.authorization_requested(record, proposal(OTHER_AGENT), NOW)
+        request_auth(record, proposal(OTHER_AGENT), NOW)
     assert exc.value.code is X402Refusal.AGENT_MISMATCH

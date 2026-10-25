@@ -2,7 +2,7 @@
   "fixture": "credence.x402.p0.deterministic",
   "mock_proposal": {
     "idempotency_key": "sha256:c07096fe6ea0ddb792974eb0f5ebc890b208fa27005c494bde68e66277cfe684",
-    "proposal_id": "sha256:7f4344b5dfea8ee3931f6ec4744913a71ddd7dddc7d43e0a161e0ae724861c17",
+    "proposal_id": "sha256:78eca4431fba63234ff52b131f880bdefb2182cd0f5a44813e56724a82339038",
     "request_digest": "sha256:c58386a709a9ca59a4827ca0136e64ed4f683b529d24aa002c64beb38d05cb2c",
     "requirement_digest": "sha256:e3b0b72a1b0d6d870bf1d4349ce2fac811c372a5a90cd5dac88d57092dacf71d",
     "submission_authorized": false,

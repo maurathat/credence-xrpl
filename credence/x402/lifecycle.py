@@ -3,7 +3,7 @@
 x402 inverts Credence's normal order. Core pays a provider after delivery and verification; an x402
 merchant is paid before it serves. This module is an isolated orchestration model of that order. It
 is not Core's settlement lifecycle, not the X1 payment journal, and it moves no money: every payment
-fact it receives is an observation supplied by a caller (in X402-P0, a deterministic mock).
+fact it receives is an observation supplied by a caller (in X402-P0/P2, a deterministic mock).
 
 Happy path:
 
@@ -16,8 +16,17 @@ MANUAL_RECONCILIATION_REQUIRED.
 
 Rules this model enforces:
 
-- A payment timeout is PAYMENT_STATUS_UNKNOWN, never PAYMENT_REJECTED. Only validated ledger
-  evidence of a failed transaction can reject a payment.
+- A payment timeout is PAYMENT_STATUS_UNKNOWN, never PAYMENT_REJECTED. So is any provisional
+  engine result (`ter…`, `tel…`, `tef…`, `tem…`, or even `tes…` before validation): only a result in
+  a validated ledger is final. `tefPAST_SEQ` in particular can mean the transaction already applied.
+- Validated evidence counts only if a `ValidatedEvidenceVerifier` authenticates it (in production,
+  X1's result verifier; X402-P2 has none, so the default refuses all validated evidence). A validated
+  failure must be a `tec…` result; `tes` claimed as a failure, and `ter`/`tel`/`tef`/`tem` claimed as
+  validated (they never appear in a validated ledger), are refused as invalid evidence.
+- Validated evidence must be for the exact expected transaction: the signed-transaction hash bound
+  at PAYMENT_PENDING, the proposal's unsigned-transaction digest and its invoice binding (InvoiceID,
+  memo, source and destination tags). Anything else is refused, not interpreted. One hash can be
+  bound to, and confirm, only one purchase (PaymentAuthorityBook).
 - A merchant's or facilitator's settlement response (x402 `PAYMENT-RESPONSE` / `X-PAYMENT-RESPONSE`)
   is the merchant's claim. It is recorded and cross-checked, but it never confirms a payment: only
   validated ledger evidence does (in the separately reviewed X1 path).
@@ -28,7 +37,9 @@ Rules this model enforces:
   proposal, request digest and payment transaction, with evidence at or above the required tier.
 - Once a payment may exist (PAYMENT_PENDING onward), the record never returns to a state from which
   a new payment could be proposed. `may_propose_payment` is False for good, and a failed delivery
-  keeps the payment and the missing-delivery facts and goes to manual reconciliation.
+  keeps the payment and the missing-delivery facts and goes to manual reconciliation. A purchase
+  request may back one proposal ever (PaymentAuthorityBook), so a timeout or an unknown outcome can
+  never open a second authorization. Nothing here resubmits or repays; uncertainty never does.
 - Every observation names the agent and proposal it belongs to; one for another agent or proposal
   is refused (AGENT_MISMATCH / BINDING_ALTERED) without changing the record.
 
@@ -37,12 +48,14 @@ Owner: x402 (X402-P0).
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, replace
 from enum import Enum
+from typing import Protocol
 
 from credence.core.primitives import EvidenceTier, Timestamp
 from credence.x402.errors import X402Refusal, X402Refused
-from credence.x402.proposal import PaymentAuthorizationProposal
+from credence.x402.proposal import PaymentAuthorityBook, PaymentAuthorizationProposal
 
 
 class PurchaseState(Enum):
@@ -86,20 +99,29 @@ TERMINAL = frozenset(
 
 
 class LedgerOutcome(Enum):
-    """What validated ledger evidence says about the proposed payment. TIMEOUT is not evidence."""
+    """What a payment observation reports. Only the two VALIDATED_ outcomes are ledger evidence, and
+    only once a verifier authenticates them. PROVISIONAL is an engine result from submission or a
+    facilitator (not validated); TIMEOUT is no information at all."""
 
     VALIDATED_SUCCESS = "validated_success"
     VALIDATED_FAILURE = "validated_failure"
+    PROVISIONAL = "provisional"
     TIMEOUT = "timeout"
+
+
+_ENGINE_RESULT = re.compile(r"(tes|tec|ter|tel|tef|tem)[A-Z_]+")
+_TX_HASH = re.compile(r"[0-9A-F]{64}")
 
 
 @dataclass(frozen=True)
 class PaymentObservation:
-    """One payment fact, as the X1 result verifier would report it. In X402-P0 always a mock.
+    """One payment fact, as the X1 result verifier would report it. In X402-P2 always a mock.
 
-    For VALIDATED_SUCCESS, the delivered_* fields are what the validated ledger says was delivered.
-    For VALIDATED_FAILURE, result_code is the validated engine result (for example tecPATH_DRY).
-    For TIMEOUT, only observed_at is meaningful.
+    For VALIDATED_*: the validated ledger's index and hash, the transaction hash, its engine result,
+    the unsigned-transaction digest of the validated transaction with its signatures removed, its
+    invoice binding fields, and (for success) what the ledger says was delivered.
+    For PROVISIONAL: the engine result reported before validation (and the hash, if known).
+    For TIMEOUT: only observed_at is meaningful.
     """
 
     agent_id: str
@@ -107,12 +129,34 @@ class PaymentObservation:
     outcome: LedgerOutcome
     observed_at: Timestamp
     transaction_hash: str | None = None
+    result_code: str | None = None
+    validated_ledger_index: int | None = None
+    validated_ledger_hash: str | None = None
+    unsigned_transaction_digest: str | None = None
+    invoice_id_field: str | None = None
+    memo_data: str | None = None
+    source_tag: int | None = None
+    destination_tag: int | None = None
     delivered_amount: str | None = None
     delivered_currency: str | None = None
     delivered_issuer: str | None = None
     destination: str | None = None
     network: str | None = None
-    result_code: str | None = None
+
+
+class ValidatedEvidenceVerifier(Protocol):
+    """Authenticates that a VALIDATED_ observation really came from trusted validated-ledger
+    evidence. X1's result verifier is the intended implementation (contracts/requests/0010)."""
+
+    def authenticate(self, observation: PaymentObservation) -> bool: ...
+
+
+class NoTrustedEvidenceSource:
+    """The X402-P2 default: no trusted ledger source is configured, so no validated evidence is
+    accepted and no payment can be confirmed or rejected."""
+
+    def authenticate(self, observation: PaymentObservation) -> bool:
+        return False
 
 
 @dataclass(frozen=True)
@@ -158,6 +202,7 @@ class PurchaseRecord:
     proposal: PaymentAuthorizationProposal | None
     state: PurchaseState
     history: tuple[Transition, ...]
+    transaction_hash: str | None = None  # the expected signed transaction, bound at PAYMENT_PENDING
     payment: PaymentObservation | None = None
     settlement_claim: SettlementClaim | None = None
     settlement_claim_mismatch: str | None = None
@@ -237,12 +282,21 @@ def quote_expired(record: PurchaseRecord, at: Timestamp) -> PurchaseRecord:
 
 
 def authorization_requested(
-    record: PurchaseRecord, proposal: PaymentAuthorizationProposal, at: Timestamp
+    record: PurchaseRecord,
+    proposal: PaymentAuthorizationProposal,
+    at: Timestamp,
+    *,
+    book: PaymentAuthorityBook,
 ) -> PurchaseRecord:
+    """Attach the proposal and admit it to the authority book: one proposal per purchase request,
+    per invoice and per idempotency key, ever."""
     if proposal.agent_id != record.agent_id:
         raise X402Refused(X402Refusal.AGENT_MISMATCH, "proposal is for another agent")
     if at > proposal.expires_at:
         raise X402Refused(X402Refusal.CHALLENGE_EXPIRED, "proposal expired")
+    if record.state is not S.POLICY_ELIGIBLE:
+        raise X402Refused(X402Refusal.ILLEGAL_TRANSITION, f"authorization in {record.state.value}")
+    book.admit(proposal)
     return _move(
         record,
         frozenset({S.POLICY_ELIGIBLE}),
@@ -253,21 +307,35 @@ def authorization_requested(
     )
 
 
-def payment_pending(record: PurchaseRecord, at: Timestamp) -> PurchaseRecord:
-    """The separately authorized payment path reports that a payment may now exist. X402-P0 never
-    submits; this transition is driven by tests only."""
+def payment_pending(
+    record: PurchaseRecord,
+    at: Timestamp,
+    *,
+    transaction_hash: str,
+    book: PaymentAuthorityBook,
+) -> PurchaseRecord:
+    """The separately authorized payment path reports that the signed transaction with this hash
+    may now exist. X402-P2 never signs or submits; this transition is driven by tests only."""
     if record.proposal is None or at > record.proposal.expires_at:
         raise X402Refused(X402Refusal.CHALLENGE_EXPIRED, "no live proposal")
+    if not isinstance(transaction_hash, str) or not _TX_HASH.fullmatch(transaction_hash):
+        raise X402Refused(X402Refusal.PAYMENT_EVIDENCE_MISMATCH, "transaction hash")
+    if record.state is not S.PAYMENT_AUTHORIZATION_PENDING:
+        raise X402Refused(X402Refusal.ILLEGAL_TRANSITION, f"payment in {record.state.value}")
+    book.bind_transaction(record.proposal, transaction_hash)
     return _move(
         record,
         frozenset({S.PAYMENT_AUTHORIZATION_PENDING}),
         S.PAYMENT_PENDING,
         "payment_pending",
         at,
+        transaction_hash=transaction_hash,
     )
 
 
-def _matches(proposal: PaymentAuthorizationProposal, obs: PaymentObservation) -> list[str]:
+def _delivered_mismatch(
+    proposal: PaymentAuthorizationProposal, obs: PaymentObservation
+) -> list[str]:
     expected = {
         "delivered_amount": proposal.amount.value,
         "delivered_currency": proposal.amount.currency,
@@ -278,9 +346,31 @@ def _matches(proposal: PaymentAuthorizationProposal, obs: PaymentObservation) ->
     return [name for name, value in expected.items() if getattr(obs, name) != value]
 
 
-def payment_observed(record: PurchaseRecord, obs: PaymentObservation) -> PurchaseRecord:
+def _identity_mismatch(
+    record: PurchaseRecord, proposal: PaymentAuthorizationProposal, obs: PaymentObservation
+) -> list[str]:
+    expected = {
+        "transaction_hash": record.transaction_hash,
+        "unsigned_transaction_digest": proposal.unsigned_transaction_digest,
+        "invoice_id_field": proposal.invoice.invoice_id_field,
+        "memo_data": proposal.invoice.memo_data,
+        "source_tag": proposal.invoice.source_tag,
+        "destination_tag": proposal.invoice.destination_tag,
+    }
+    return [name for name, value in expected.items() if getattr(obs, name) != value]
+
+
+def payment_observed(
+    record: PurchaseRecord,
+    obs: PaymentObservation,
+    *,
+    verifier: ValidatedEvidenceVerifier,
+    book: PaymentAuthorityBook,
+) -> PurchaseRecord:
     proposal = _bound(record, obs.agent_id, obs.proposal_id)
     waiting = frozenset({S.PAYMENT_PENDING, S.PAYMENT_STATUS_UNKNOWN})
+    if record.state not in waiting:
+        raise X402Refused(X402Refusal.ILLEGAL_TRANSITION, f"payment fact in {record.state.value}")
     if obs.outcome is LedgerOutcome.TIMEOUT:
         return _move(
             record,
@@ -290,21 +380,51 @@ def payment_observed(record: PurchaseRecord, obs: PaymentObservation) -> Purchas
             obs.observed_at,
             "no validated evidence; not a failure",
         )
-    if obs.transaction_hash is None:
-        raise X402Refused(X402Refusal.PAYMENT_EVIDENCE_MISMATCH, "validated evidence without hash")
+    code = obs.result_code
+    if code is None or not _ENGINE_RESULT.fullmatch(code):
+        raise X402Refused(X402Refusal.PAYMENT_EVIDENCE_MISMATCH, "missing or unsupported result")
+    if obs.transaction_hash is not None and obs.transaction_hash != record.transaction_hash:
+        raise X402Refused(X402Refusal.PAYMENT_EVIDENCE_MISMATCH, "not the expected transaction")
+    if obs.outcome is LedgerOutcome.PROVISIONAL:
+        return _move(
+            record,
+            waiting,
+            S.PAYMENT_STATUS_UNKNOWN,
+            "payment_provisional",
+            obs.observed_at,
+            f"{code}: provisional, not final",
+        )
+    # VALIDATED_SUCCESS or VALIDATED_FAILURE: ledger evidence, which must be authenticated.
+    if not verifier.authenticate(obs):
+        raise X402Refused(X402Refusal.PAYMENT_EVIDENCE_UNAUTHENTICATED, "no trusted ledger source")
+    if (
+        isinstance(obs.validated_ledger_index, bool)
+        or not isinstance(obs.validated_ledger_index, int)
+        or obs.validated_ledger_index < 1
+        or not isinstance(obs.validated_ledger_hash, str)
+        or not _TX_HASH.fullmatch(obs.validated_ledger_hash)
+    ):
+        raise X402Refused(X402Refusal.PAYMENT_EVIDENCE_MISMATCH, "no validated ledger")
+    mismatched_identity = _identity_mismatch(record, proposal, obs)
+    if mismatched_identity:
+        raise X402Refused(X402Refusal.PAYMENT_EVIDENCE_MISMATCH, ",".join(mismatched_identity))
     if obs.outcome is LedgerOutcome.VALIDATED_FAILURE:
-        if obs.result_code is None or obs.result_code == "tesSUCCESS":
-            raise X402Refused(X402Refusal.PAYMENT_EVIDENCE_MISMATCH, "failure without result")
+        if not code.startswith("tec"):
+            raise X402Refused(
+                X402Refusal.PAYMENT_EVIDENCE_MISMATCH, f"{code} is not a validated failure"
+            )
         return _move(
             record,
             waiting,
             S.PAYMENT_REJECTED,
             "payment_rejected",
             obs.observed_at,
-            obs.result_code,
+            code,
             payment=obs,
         )
-    mismatched = _matches(proposal, obs)
+    if code != "tesSUCCESS":
+        raise X402Refused(X402Refusal.PAYMENT_EVIDENCE_MISMATCH, f"{code} is not a success")
+    mismatched = _delivered_mismatch(proposal, obs)
     if mismatched:
         return _move(
             record,
@@ -315,6 +435,8 @@ def payment_observed(record: PurchaseRecord, obs: PaymentObservation) -> Purchas
             ",".join(mismatched),
             payment=obs,
         )
+    assert obs.transaction_hash is not None
+    book.confirm(proposal, obs.transaction_hash)
     return _move(
         record, waiting, S.PAYMENT_CONFIRMED, "payment_confirmed", obs.observed_at, payment=obs
     )
@@ -338,7 +460,7 @@ def settlement_claimed(
         problems.append("payer")
     if claim.transaction_hash is None:
         problems.append("no transaction hash")
-    elif record.payment is not None and claim.transaction_hash != record.payment.transaction_hash:
+    elif claim.transaction_hash != record.transaction_hash:
         problems.append("transaction hash")
     mismatch = ",".join(problems) or None
     step = Transition(record.state, record.state, "settlement_claimed", at, mismatch or "")

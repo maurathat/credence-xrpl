@@ -11,18 +11,22 @@ from __future__ import annotations
 import base64
 import hashlib
 import json
+from dataclasses import replace
 from typing import Any
 
 from xrpl.core.addresscodec import encode_classic_address
 
 from credence.core.primitives import EvidenceTier, Timestamp
+from credence.x402 import lifecycle as lc
 from credence.x402.compatibility import FacilitatorKind, FacilitatorProfile, MultisigSupport
 from credence.x402.discovery import CandidateEndpoint
+from credence.x402.lifecycle import PaymentObservation
 from credence.x402.mock import MockTransport
 from credence.x402.procurement import ApprovedExecution
 from credence.x402.proposal import (
     InvoiceBinding,
     LedgerContext,
+    PaymentAuthorityBook,
     PaymentAuthorizationProposal,
     PurchaseIntent,
     XrplAmount,
@@ -186,3 +190,77 @@ def client(
 
 def endpoint(url: str = MERCHANT_URL) -> CandidateEndpoint:
     return CandidateEndpoint(url, "POST", PROBE_BODY, "application/json")
+
+
+# --- payment evidence and authority (X402-P2) ---------------------------------------------
+
+TX = "B" * 64
+LEDGER_HASH = "C" * 64
+
+
+class MockTrustedLedger:
+    """Stands in for X1's validated-result verifier: authenticates exactly the observations it
+    issued itself, so a forged or altered observation is unauthenticated."""
+
+    def __init__(self) -> None:
+        self._issued: set[PaymentObservation] = set()
+
+    def issue(self, observation: PaymentObservation) -> PaymentObservation:
+        self._issued.add(observation)
+        return observation
+
+    def authenticate(self, observation: PaymentObservation) -> bool:
+        return observation in self._issued
+
+
+TRUSTED = MockTrustedLedger()
+BOOKS: dict[str, PaymentAuthorityBook] = {}
+
+
+def book_for(p: PaymentAuthorizationProposal) -> PaymentAuthorityBook:
+    return BOOKS.setdefault(p.proposal_id, PaymentAuthorityBook())
+
+
+def request_auth(
+    record: lc.PurchaseRecord, p: PaymentAuthorizationProposal, at: Timestamp
+) -> lc.PurchaseRecord:
+    """authorization_requested with a fresh authority book per proposal (one book per scenario)."""
+    BOOKS[p.proposal_id] = PaymentAuthorityBook()
+    return lc.authorization_requested(record, p, at, book=BOOKS[p.proposal_id])
+
+
+def make_pending(record: lc.PurchaseRecord, at: Timestamp = NOW, tx: str = TX) -> lc.PurchaseRecord:
+    assert record.proposal is not None
+    return lc.payment_pending(record, at, transaction_hash=tx, book=book_for(record.proposal))
+
+
+def observe(record: lc.PurchaseRecord, obs: PaymentObservation) -> lc.PurchaseRecord:
+    assert record.proposal is not None
+    return lc.payment_observed(record, obs, verifier=TRUSTED, book=book_for(record.proposal))
+
+
+def validated(record: lc.PurchaseRecord, **changes: object) -> PaymentObservation:
+    """A trusted validated-success observation for exactly the record's expected transaction."""
+    p = record.proposal
+    assert p is not None
+    obs = PaymentObservation(
+        agent_id=record.agent_id,
+        proposal_id=p.proposal_id,
+        outcome=lc.LedgerOutcome.VALIDATED_SUCCESS,
+        observed_at=LATER,
+        transaction_hash=record.transaction_hash or TX,
+        result_code="tesSUCCESS",
+        validated_ledger_index=121,
+        validated_ledger_hash=LEDGER_HASH,
+        unsigned_transaction_digest=p.unsigned_transaction_digest,
+        invoice_id_field=p.invoice.invoice_id_field,
+        memo_data=p.invoice.memo_data,
+        source_tag=p.invoice.source_tag,
+        destination_tag=p.invoice.destination_tag,
+        delivered_amount=p.amount.value,
+        delivered_currency=p.amount.currency,
+        delivered_issuer=p.amount.issuer,
+        destination=p.destination,
+        network=p.network,
+    )
+    return TRUSTED.issue(replace(obs, **changes))  # type: ignore[arg-type]
