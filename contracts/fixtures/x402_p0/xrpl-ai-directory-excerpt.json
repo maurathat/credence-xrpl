@@ -1,0 +1,153 @@
+{
+  "source": "https://xrpl-ai.org/directory",
+  "accessed_at": "2026-10-25T02:29:29Z",
+  "category": "DIRECTORY-METADATA",
+  "asOf": 1792895306666,
+  "note": "Verbatim excerpt of the directory's embedded services array (6 of 129 entries). Advertised metadata only; no listing here is evidence that a service works.",
+  "services": [
+    {
+      "id": "rBi1QrVjwaNofisZAQnovoXdHkS73FG1tJ",
+      "merchantAddr": "rBi1QrVjwaNofisZAQnovoXdHkS73FG1tJ",
+      "merchant": {
+        "name": "Heurist Inference Router",
+        "logoUrl": "https://storage.googleapis.com/tworld-473700-xrpl-ai-merchant-logos/xrpl-ai/merchant-logos/b9bd085a2dd8f42b21b8a8b05db95d9d5e841322e92d737669c94776c9068a46.png"
+      },
+      "providerName": null,
+      "providerLogoUrl": null,
+      "category": "Inference & Agents",
+      "categoryConfidence": 1,
+      "name": "Inference Router \u2014 Powered by Heurist",
+      "description": "Access a curated selection of AI models through one simple router, starting at 0.003 RLUSD per request on XRPL. Prices vary by model and usage.",
+      "url": "https://router.heurist.xyz/x402/xrpl/v1/chat/completions",
+      "priceAmount": "0.0005",
+      "priceAsset": "524C555344000000000000000000000000000000",
+      "priceAssetIssuer": "rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De",
+      "network": "xrpl:0",
+      "isDiscovered": false,
+      "endpointCount": 1,
+      "endpointCountTruncated": false,
+      "txCount": 10400917,
+      "txCountTruncated": false
+    },
+    {
+      "id": "rGYbaZwYqA5XwFcmxWVdyyut4vUeTD7KcQ:OpenAI",
+      "merchantAddr": "rGYbaZwYqA5XwFcmxWVdyyut4vUeTD7KcQ",
+      "merchant": {
+        "name": "Monid Tool Router",
+        "logoUrl": "https://storage.googleapis.com/tworld-473700-xrpl-ai-merchant-logos/xrpl-ai/merchant-logos/dc5c4084468daa231434cf0054004cfbe9f51bf90e965c53ab2ba3232d62d4e1.png"
+      },
+      "providerName": "OpenAI",
+      "providerLogoUrl": "https://monid.ai/logos/providers/openai.svg",
+      "category": "Inference & Agents",
+      "categoryConfidence": null,
+      "name": "Edit Image (Precise)",
+      "description": "Reference-image editing with gpt-image-2.5-sunburst.",
+      "url": "https://monid-x402-xrpl-production.up.railway.app/t/openai/v1/image/gpt-image-2.5-sunburst-edit",
+      "priceAmount": "0.001",
+      "priceAsset": "524C555344000000000000000000000000000000",
+      "priceAssetIssuer": "rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De",
+      "network": "xrpl:0",
+      "isDiscovered": true,
+      "endpointCount": 6,
+      "endpointCountTruncated": false,
+      "txCount": 0,
+      "txCountTruncated": false
+    },
+    {
+      "id": "ra9b6JX5aPVbdJhogDDddsRAcasWg7gzC3",
+      "merchantAddr": "ra9b6JX5aPVbdJhogDDddsRAcasWg7gzC3",
+      "merchant": {
+        "name": "AskSurf",
+        "logoUrl": "/merchants/asksurf.ico"
+      },
+      "providerName": null,
+      "providerLogoUrl": null,
+      "category": "Inference & Agents",
+      "categoryConfidence": 0.95,
+      "name": "X Tweets by IDs",
+      "description": "Returns normalized X posts by numeric ID.",
+      "url": "https://x402.asksurf.ai/x402/xrpl/data/v1/x/tweets",
+      "priceAmount": "0.006",
+      "priceAsset": "524C555344000000000000000000000000000000",
+      "priceAssetIssuer": "rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De",
+      "network": "xrpl:0",
+      "isDiscovered": true,
+      "endpointCount": 120,
+      "endpointCountTruncated": false,
+      "txCount": 1003376,
+      "txCountTruncated": false
+    },
+    {
+      "id": "rERHPAkbSH8bEHYJWKDERJJ9meDab8Zb1N",
+      "merchantAddr": "rERHPAkbSH8bEHYJWKDERJJ9meDab8Zb1N",
+      "merchant": {
+        "name": "Emerge Digital Agent Commerce",
+        "logoUrl": "https://storage.googleapis.com/tworld-473700-xrpl-ai-merchant-logos/xrpl-ai/merchant-logos/0c57f948452d298182bf78fca76d3bfadafafc1e84b2904cc6f7e29771973bce.png"
+      },
+      "providerName": null,
+      "providerLogoUrl": null,
+      "category": "Inference & Agents",
+      "categoryConfidence": 0.95,
+      "name": "Vela Scan \u2014 agent-readiness crawl (API edition)",
+      "description": "Live scan of a URL you supply for agent accessibility: robots.txt AI-crawler rules, llms.txt presence, .well-known/x402 (agent payments), MCP/NLWeb hints in headers and HTML, and a machine-readable readiness report. Real fetches at call time. The per-call API edition of the Vela OS agent-readiness line by Emerge Digital. Usage metered in Metronome. Pay in XRP (\u2248$0.05) or exactly 0.05 RLUSD.",
+      "url": "https://agent-commerce.emergedigital.com/api/xrpl/utm-build",
+      "priceAmount": "0.001",
+      "priceAsset": "XRP",
+      "priceAssetIssuer": null,
+      "network": "xrpl:0",
+      "isDiscovered": true,
+      "endpointCount": 56,
+      "endpointCountTruncated": false,
+      "txCount": 6,
+      "txCountTruncated": false
+    },
+    {
+      "id": "rBy7V2qW93u2P7cUTkMAvP7zF6daKKcMid",
+      "merchantAddr": "rBy7V2qW93u2P7cUTkMAvP7zF6daKKcMid",
+      "merchant": {
+        "name": "Altair",
+        "logoUrl": "/merchants/altair.png"
+      },
+      "providerName": null,
+      "providerLogoUrl": null,
+      "category": "Inference & Agents",
+      "categoryConfidence": null,
+      "name": "Altair Daily Invoice Settlement",
+      "description": "Pay an Altair daily usage invoice over x402. Each invoice sets its own RLUSD amount; replace {invoice_id} with the invoice ID.",
+      "url": "https://x402-settlement.altair.credit/x402/invoices/{invoice_id}",
+      "priceAmount": "",
+      "priceAsset": "524C555344000000000000000000000000000000",
+      "priceAssetIssuer": "rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De",
+      "network": "xrpl:0",
+      "isDiscovered": false,
+      "endpointCount": 1,
+      "endpointCountTruncated": false,
+      "txCount": 0,
+      "txCountTruncated": false
+    },
+    {
+      "id": "rnPmtGgU7fMKrud7m1oK7E1ogN35qDbKV1",
+      "merchantAddr": "rnPmtGgU7fMKrud7m1oK7E1ogN35qDbKV1",
+      "merchant": {
+        "name": "Greenhead x402 XRPL API",
+        "logoUrl": "https://storage.googleapis.com/tworld-473700-xrpl-ai-merchant-logos/xrpl-ai/merchant-logos/f66f068e0f2cd2cddc1f3d86ed9271ca153bfa257b7101d564abb4a1e196fe5f.png"
+      },
+      "providerName": null,
+      "providerLogoUrl": null,
+      "category": null,
+      "categoryConfidence": null,
+      "name": "base-ping",
+      "description": "Prove route for Base mainnet USDC x402 (eip155:8453). HTTP 200 after facilitator verify+settle. Priced as the cheapest SKU (0.002 face \u2192 2000 USDC atomic when Base is enabled).",
+      "url": "https://x402.greenhead.io/v1/base/ping",
+      "priceAmount": "0.002",
+      "priceAsset": "XRP",
+      "priceAssetIssuer": null,
+      "network": "xrpl:0",
+      "isDiscovered": true,
+      "endpointCount": 20,
+      "endpointCountTruncated": false,
+      "txCount": 0,
+      "txCountTruncated": false
+    }
+  ]
+}

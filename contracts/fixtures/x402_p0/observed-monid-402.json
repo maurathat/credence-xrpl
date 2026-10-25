@@ -1,0 +1,33 @@
+{
+  "category": "OBSERVED-MERCHANT",
+  "observed_at": "2026-10-25T02:34:05Z",
+  "note": "One unpaid, unauthenticated request (curl --max-redirs 0, no payment header) during X402-P0 research. Only permitted response headers are kept. The merchant's terms are third-party data recorded exactly as observed.",
+  "request": {
+    "method": "GET",
+    "url": "https://monid-x402-xrpl-production.up.railway.app/t/openai/v1/image/gpt-image-2.5-sunburst-edit",
+    "content_type": null,
+    "body": ""
+  },
+  "response": {
+    "status": 402,
+    "headers": [
+      [
+        "content-type",
+        "application/json"
+      ],
+      [
+        "date",
+        "Sun, 25 Oct 2026 02:34:05 GMT"
+      ],
+      [
+        "payment-required",
+        "eyJhY2NlcHRzIjpbeyJhbW91bnQiOiIwLjAwMSIsImFzc2V0IjoiNTI0QzU1NTM0NDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMCIsImV4dHJhIjp7ImNyb3NzQ3VycmVuY3kiOmZhbHNlLCJkaXNjb3ZlcnlQcm9iZSI6dHJ1ZSwiaW52b2ljZUlkIjoiMkExQjBEODJBMEQ4NEQ2NUJGNTJGRjc4QUUzNDc2MjkiLCJpc3N1ZXIiOiJyTXhDS2JFRHdxcjc2UXVoZVNVTWRFR2Y0Qjl4SjhtNURlIiwicHJpY2luZyI6eyJjb3N0VXNkIjoiMC4wMDAzOCIsImVzdGltYXRlZCI6dHJ1ZSwidXBzdHJlYW1QcmljZVR5cGUiOiJUSUVSRUQifSwic291cmNlVGFnIjo4MDQ2ODE0Njh9LCJtYXhUaW1lb3V0U2Vjb25kcyI6NjAwLCJuZXR3b3JrIjoieHJwbDowIiwicGF5VG8iOiJyR1liYVp3WXFBNVh3RmNteFdWZHl5dXQ0dlVlVEQ3S2NRIiwic2NoZW1lIjoiZXhhY3QifV0sImVycm9yIjoiUEFZTUVOVC1TSUdOQVRVUkUgaGVhZGVyIGlzIHJlcXVpcmVkIiwiZXh0ZW5zaW9ucyI6e30sInJlc291cmNlIjp7ImRlc2NyaXB0aW9uIjoiRWRpdCBJbWFnZSAoUHJlY2lzZSkgXHUyMDE0IE1vbmlkIFRvb2wgUm91dGVyIiwibWltZVR5cGUiOiJhcHBsaWNhdGlvbi9qc29uIiwidXJsIjoiaHR0cHM6Ly9tb25pZC14NDAyLXhycGwtcHJvZHVjdGlvbi51cC5yYWlsd2F5LmFwcC90L29wZW5haS92MS9pbWFnZS9ncHQtaW1hZ2UtMi41LXN1bmJ1cnN0LWVkaXQifSwieDQwMlZlcnNpb24iOjJ9"
+      ],
+      [
+        "content-length",
+        "720"
+      ]
+    ],
+    "body": "{\"x402Version\":2,\"resource\":{\"url\":\"https://monid-x402-xrpl-production.up.railway.app/t/openai/v1/image/gpt-image-2.5-sunburst-edit\",\"description\":\"Edit Image (Precise) \u2014 Monid Tool Router\",\"mimeType\":\"application/json\"},\"accepts\":[{\"scheme\":\"exact\",\"network\":\"xrpl:0\",\"amount\":\"0.001\",\"asset\":\"524C555344000000000000000000000000000000\",\"payTo\":\"rGYbaZwYqA5XwFcmxWVdyyut4vUeTD7KcQ\",\"maxTimeoutSeconds\":600,\"extra\":{\"crossCurrency\":false,\"discoveryProbe\":true,\"pricing\":{\"upstreamPriceType\":\"TIERED\",\"costUsd\":\"0.00038\",\"estimated\":true},\"issuer\":\"rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De\",\"sourceTag\":804681468,\"invoiceId\":\"2A1B0D82A0D84D65BF52FF78AE347629\"}}],\"error\":\"PAYMENT-SIGNATURE header is required\",\"extensions\":{}}"
+  }
+}

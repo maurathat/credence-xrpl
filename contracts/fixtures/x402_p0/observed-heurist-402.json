@@ -1,0 +1,33 @@
+{
+  "category": "OBSERVED-MERCHANT",
+  "observed_at": "2026-10-25T02:32:13Z",
+  "note": "One unpaid, unauthenticated request (curl --max-redirs 0, no payment header) during X402-P0 research. Only permitted response headers are kept. The merchant's terms are third-party data recorded exactly as observed.",
+  "request": {
+    "method": "POST",
+    "url": "https://router.heurist.xyz/x402/xrpl/v1/chat/completions",
+    "content_type": "application/json",
+    "body": "{\"prompt\":\"ping\"}"
+  },
+  "response": {
+    "status": 402,
+    "headers": [
+      [
+        "date",
+        "Sun, 25 Oct 2026 02:32:13 GMT"
+      ],
+      [
+        "content-type",
+        "application/json"
+      ],
+      [
+        "content-length",
+        "1021"
+      ],
+      [
+        "payment-required",
+        "eyJhY2NlcHRzIjpbeyJhbW91bnQiOiIwLjAwMDUiLCJhc3NldCI6IjUyNEM1NTUzNDQwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAiLCJleHRyYSI6eyJjcm9zc0N1cnJlbmN5IjpmYWxzZSwiZGlzY292ZXJ5UHJvYmUiOnRydWUsImV4ZWN1dGlvbiI6eyJtb2RlbCI6ImhldXJpc3QvZ2xtLTUuMyIsInRyYW5zcG9ydCI6Im9wZW5haS1jb21wYXRpYmxlLWh0dHAifSwiaW52b2ljZUlkIjoiMDFBMTcwRTZDMUNEN0M2NTgzRjRBMUEyMENFMkRBQzMiLCJpc3N1ZXIiOiJyTXhDS2JFRHdxcjc2UXVoZVNVTWRFR2Y0Qjl4SjhtNURlIiwicHJpY2luZyI6eyJhbW91bnQiOiIwLjAwMDUiLCJjdXJyZW5jeSI6IlVTRCIsImVzdGltYXRlZElucHV0VG9rZW5zIjo0NCwiaW5wdXRQZXJNaWxsaW9uIjoiMS43NSIsIm1hcmtlZFVwQ29zdFVzZCI6IjAuMDAwMTAzMTI1IiwibWFya3VwIjoiMS4yNSIsIm1pbmltdW1BbW91bnQiOiIwLjAwMDUiLCJtb2RlbCI6ImhldXJpc3QvZ2xtLTUuMyIsIm91dHB1dFBlck1pbGxpb24iOiI1LjUwIiwicG9saWN5IjoiZXhhY3QtcHJlcGFpZCIsInJlZmVyZW5jZUNvc3RVc2QiOiIwLjAwMDA4MjUiLCJyZXNlcnZlZE91dHB1dFRva2VucyI6MSwic2V0dGxlbWVudEFzc2V0IjoiUkxVU0QiLCJzZXR0bGVtZW50T3ZlcmhlYWRSbHVzZCI6IjAuMDAwMiJ9fSwibWF4VGltZW91dFNlY29uZHMiOjYwMCwibmV0d29yayI6InhycGw6MCIsInBheVRvIjoickJpMVFyVmp3YU5vZmlzWkFRbm92b1hkSGtTNzNGRzF0SiIsInNjaGVtZSI6ImV4YWN0In1dLCJlcnJvciI6IlBBWU1FTlQtU0lHTkFUVVJFIGhlYWRlciBpcyByZXF1aXJlZCIsImV4dGVuc2lvbnMiOnt9LCJyZXNvdXJjZSI6eyJkZXNjcmlwdGlvbiI6IkluZmVyZW5jZSBSb3V0ZXIgXHUyMDE0IFBvd2VyZWQgYnkgSGV1cmlzdCIsIm1pbWVUeXBlIjoiYXBwbGljYXRpb24vanNvbiIsInVybCI6Imh0dHBzOi8vcm91dGVyLmhldXJpc3QueHl6L3g0MDIveHJwbC92MS9jaGF0L2NvbXBsZXRpb25zIn0sIng0MDJWZXJzaW9uIjoyfQ=="
+      ]
+    ],
+    "body": "{\"x402Version\":2,\"resource\":{\"url\":\"https://router.heurist.xyz/x402/xrpl/v1/chat/completions\",\"description\":\"Inference Router \u2014 Powered by Heurist\",\"mimeType\":\"application/json\"},\"accepts\":[{\"scheme\":\"exact\",\"network\":\"xrpl:0\",\"amount\":\"0.0005\",\"asset\":\"524C555344000000000000000000000000000000\",\"payTo\":\"rBi1QrVjwaNofisZAQnovoXdHkS73FG1tJ\",\"maxTimeoutSeconds\":600,\"extra\":{\"crossCurrency\":false,\"discoveryProbe\":true,\"pricing\":{\"currency\":\"USD\",\"settlementAsset\":\"RLUSD\",\"model\":\"heurist/glm-5.3\",\"estimatedInputTokens\":44,\"reservedOutputTokens\":1,\"inputPerMillion\":\"1.75\",\"outputPerMillion\":\"5.50\",\"referenceCostUsd\":\"0.0000825\",\"markup\":\"1.25\",\"markedUpCostUsd\":\"0.000103125\",\"settlementOverheadRlusd\":\"0.0002\",\"minimumAmount\":\"0.0005\",\"amount\":\"0.0005\",\"policy\":\"exact-prepaid\"},\"execution\":{\"model\":\"heurist/glm-5.3\",\"transport\":\"openai-compatible-http\"},\"issuer\":\"rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De\",\"invoiceId\":\"01A170E6C1CD7C6583F4A1A20CE2DAC3\"}}],\"error\":\"PAYMENT-SIGNATURE header is required\",\"extensions\":{}}"
+  }
+}
