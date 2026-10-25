@@ -1,0 +1,68 @@
+# Claw Street — Powered by Credence
+
+Claw Street is an AI-agent procurement marketplace. An agent states what inference it may buy. Credence Core decides
+which offers qualify under the agent's spending, credit and evidence policy. The agent signs the purchase with its own
+key, and Credence records the verified delivery receipt and the accounting. Kessai Labs builds Claw Street on Credence
+infrastructure; Credence is a Kessai product.
+
+**This build is an offline demonstration.** The providers are offline mocks: no provider is called. Prices are
+configured demo prices in micro-tRLUSD (tRLUSD is a test token). Accounting settlement is Credence's internal record,
+not an XRPL payment. No XRPL transaction is built, signed or submitted. See [`DISCLOSURES.md`](DISCLOSURES.md).
+
+| Document | Contents |
+| --- | --- |
+| [`DEMO-SCRIPT.md`](DEMO-SCRIPT.md) | Three-minute demonstration and judge walkthrough |
+| [`ARCHITECTURE.md`](ARCHITECTURE.md) | Components, data flow and integration status |
+| [`TEST-SUMMARY.md`](TEST-SUMMARY.md) | Reproducible test and browser results for this release candidate |
+| [`DISCLOSURES.md`](DISCLOSURES.md) | Sponsor and third-party integration disclosures |
+| [`DEPLOYMENT-READINESS.md`](DEPLOYMENT-READINESS.md) | Hosting checklist and the deployment decisions still open |
+| [`DEMO-RESET.md`](DEMO-RESET.md) | Clean demo dataset, reset and recovery |
+| [`SUBMISSION-CHECKLIST.md`](SUBMISSION-CHECKLIST.md) | Deliverables and unresolved blockers |
+| [`TESTNET-PROOF.md`](TESTNET-PROOF.md) | Reserved slot for a separate XRPL Testnet connectivity proof (empty) |
+
+## Requirements
+
+- macOS or Linux, `git`, [`uv`](https://docs.astral.sh/uv/) (Python 3.12 is pinned), [`bun`](https://bun.sh) 1.4+.
+- No API keys, accounts or local models are needed for the demo.
+
+## Start the demo (two terminals, all on loopback)
+
+```bash
+# The Credence parent repository is not published yet (see SUBMISSION-CHECKLIST.md).
+git clone <credence repository> credence && cd credence
+git checkout maurathat/claw-street-release
+git submodule update --init          # custody serializer and the web app (release/claw-street-ui)
+uv sync --locked
+
+# Terminal 1: create the demo agent and start the offline API on 127.0.0.1:8000
+uv run python -m credence.api.offline_demo init  ~/claw-street-demo
+uv run python -m credence.api.offline_demo serve ~/claw-street-demo
+
+# Terminal 2: start the web app on 127.0.0.1:5173
+cd web && bun install --frozen-lockfile
+VITE_CREDENCE_API_BASE_URL=http://127.0.0.1:8000 bun run dev --host 127.0.0.1 --port 5173
+```
+
+Open <http://127.0.0.1:5173>. To sign in as the demo agent, paste the contents of
+`~/claw-street-demo/agent/session-token` into **Agent session**. The token is not a signing key, and it expires after
+12 hours. The agent's private key never enters the browser. The agent signs from a third terminal:
+
+```bash
+uv run python -m credence.agent.cli --demo-dir ~/claw-street-demo sign --preparation <prep-id> --prompt "<prompt>"
+uv run python -m credence.agent.cli --demo-dir ~/claw-street-demo authorize --operation <op-id> --action retrieve
+uv run python -m credence.agent.cli --demo-dir ~/claw-street-demo authorize --operation <op-id> --action acknowledge
+```
+
+The same flow can run without the browser (the presets are `scenario-a-general` and `scenario-b-controlled`):
+
+```bash
+uv run python -m credence.agent.cli --demo-dir ~/claw-street-demo purchase \
+  --preset scenario-a-general --prompt "Synthetic Credence test prompt."
+```
+
+## Verify
+
+```bash
+make test && make typecheck && make lint      # Python: unit, conformance, offline integration
+(cd web && bun run typecheck && bun run build && bun test)
+```
