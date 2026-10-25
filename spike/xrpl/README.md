@@ -40,6 +40,7 @@ see `evidence/checkpoint-1b-r/` for raw evidence.
 
 T1 is a separate public native XRPL Testnet connectivity proof. Its offline,
 fail-closed plan and isolated scripts are documented in
-`T1-PUBLIC-TESTNET-PLAN.md`. T1 is not governed by Credence procurement
+`T1-PUBLIC-TESTNET-PLAN.md`; the B1/B2/C1–C4 offline remediation evidence is in
+`T1A-REMEDIATION.md`. T1 is not governed by Credence procurement
 authorization, does not change the product's local-ledger claim, and remains
 unexecuted pending explicit T1 execution authorization.

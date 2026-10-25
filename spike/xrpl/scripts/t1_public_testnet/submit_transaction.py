@@ -8,6 +8,7 @@ from pathlib import Path
 from .workflow import (
     OperationJournal,
     default_journal_path,
+    issue_execution_capability,
     load_authorization,
     load_signed,
     require_explicit_execute,
@@ -23,9 +24,20 @@ def main() -> None:
     args = parser.parse_args()
     require_explicit_execute(args.execute)
     authorization = load_authorization(args.authorization, operation="submit")
+    capability = issue_execution_capability(
+        authorization,
+        operation="submit",
+        execution_intent=args.execute,
+    )
     journal = OperationJournal(default_journal_path())
     try:
-        result = submit_once(authorization, load_signed(args.input), journal)
+        result = submit_once(
+            authorization,
+            load_signed(args.input),
+            journal,
+            capability=capability,
+            execution_intent=args.execute,
+        )
     finally:
         journal.close()
     print(f"T1 provisional submission result: {result['engine_result']}; poll for finality")

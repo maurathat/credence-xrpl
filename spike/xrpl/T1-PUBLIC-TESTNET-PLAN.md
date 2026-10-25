@@ -29,8 +29,15 @@ private endpoints, and the repository's standalone network ID 21337 are refused.
 ## Network identity rule
 
 Every network-capable stage first calls `server_info` and requires the exact integer
-`result.info.network_id == 1` plus a validated ledger. IDs 0, 2, 21337 and the XRPL
-EVM chain IDs are explicitly refused; every other ID is refused as unknown.
+`result.info.network_id == 1`, a validated-ledger index and hash, and a declared
+complete-ledger range. IDs 0, 2, 21337 and the XRPL EVM chain IDs are explicitly
+refused; every other ID is refused as unknown.
+
+The HTTP client ignores `HTTP_PROXY`, `HTTPS_PROXY` and related environment proxy
+configuration. It installs no proxy, refuses HTTP 301, 302, 303, 307 and 308
+redirects, and rejects a response whose final URL differs from the fixed requested
+URL. Neither CLI nor library callers can provide a replacement endpoint outside the
+two exact allowlist entries.
 
 The transaction itself must omit `NetworkID`. Native XRPL Testnet is network ID 1,
 and the protocol disallows the transaction field on networks with IDs at or below
@@ -76,26 +83,49 @@ No script generates a wallet. The operator must create two Testnet-only wallets
 outside this repository using a separately approved method. Never reuse Mainnet
 credentials.
 
-Faucet, signing, and submission each require both:
+Faucet, signing, and submission each require all three gates:
 
 1. a mode-0600 authorization JSON file stored outside the repository; and
-2. the explicit `--execute` switch.
+2. the explicit CLI `--execute` switch; and
+3. an opaque, operation-specific library capability issued only after independently
+   supplied execution intent and authorization revalidation.
 
-The authorization is exact and short-lived:
+`setup_accounts`, `sign_unsigned` and `submit_once` default to refusal. A direct
+library call cannot bypass the CLI gate: each protected function validates execution
+intent, the capability seal, authorization digest, operation, network ID, accounts,
+amount, label and—when applicable—the exact transaction identity before any network
+call, signing, or submission. Authorization is checked again immediately before the
+protected action.
+
+The authorization is exact, UTC-only and short-lived. `expires_at` must be later than
+`issued_at`, no more than 24 hours after it, and later than every validation instant.
+Missing, malformed, non-UTC, future-dated, expired and contradictory timestamps are
+refused. The private file is re-read and its SHA-256 digest and complete parsed value
+must remain unchanged during an operation.
 
 ```json
 {
-  "schema": "credence.t1.execution-authorization.v1",
+  "schema": "credence.t1.execution-authorization.v2",
   "authorization_id": "operator-assigned-unique-id",
+  "issued_at": "YYYY-MM-DDTHH:MM:SSZ",
   "expires_at": "YYYY-MM-DDTHH:MM:SSZ",
   "network_id": 1,
   "label": "XRPL connectivity proof transaction. Not governed by Credence procurement authorization.",
   "amount_drops": "1",
   "source": "<source classic address>",
   "destination": "<destination classic address>",
-  "allowed_operations": ["faucet", "construct", "sign", "submit", "poll", "capture"]
+  "allowed_operations": ["sign", "submit", "poll", "capture"],
+  "transaction_identity": "<64-character uppercase SHA-256 identity>"
 }
 ```
+
+Account setup may use `transaction_identity: null` and only `faucet`. Construction
+may use `transaction_identity: null` and only `construct`, because the exact fee and
+sequence do not exist until validated Testnet state is read. After construction, the
+operator must issue a fresh payment authorization with the unsigned artifact's exact
+`transaction_identity`, the same `authorization_id` as that artifact, and only the
+needed later operations. Editing an authorization while a command is running causes
+refusal.
 
 The signing credential is accepted only through a private terminal prompt. It is
 never accepted as a command argument, environment variable, file, report field, or
@@ -108,14 +138,30 @@ The scripts use one fixed SQLite operation journal at
 `spike/xrpl/evidence/raw/t1/operations.sqlite3`. Before a faucet request or
 submission, the script commits a unique operation claim with full synchronous
 durability. A repeated authorization/operation/target is refused. Only one
-submission hash is allowed for an authorization. The command line cannot redirect
-the replay journal to a fresh file.
+submission hash is allowed for an authorization, and the same canonical signed
+transaction hash cannot be claimed under another authorization ID. These constraints
+survive process restarts. The command line cannot redirect the replay journal to a
+fresh file.
+
+This is local replay protection, not a global guarantee. Deleting the journal or
+using another independent checkout/device is outside its durability boundary. If the
+journal is lost, stop for review; do not reconstruct submission authority from the
+authorization file alone.
 
 Submission uses the frozen blob and `fail_hard=true`. A timeout after the request is
-an unknown outcome: do not submit again. Poll by the already computed hash. Any
-unexpected ledger or provider result is recorded in the journal and stops that
-branch. Expiry without validated inclusion is final for T1; the scripts do not build
-or submit a replacement.
+an unknown outcome: do not submit again. Poll only by the already computed hash.
+Polling reads a validated-ledger identity before the bounded `tx` lookup and again
+after it. It checks that the node stayed on native Testnet, did not move backwards,
+and still agrees with the construction/prior ledger hashes.
+
+`EXPIRED_NOT_INCLUDED` is recorded only when the latest trusted validated ledger is
+strictly greater than the frozen `LastLedgerSequence`, the bounded lookup covers
+construction ledger + 1 through `LastLedgerSequence`, its result contains literal
+`searched_all: true`, and `complete_ledgers` covers that entire range without a gap.
+A last-valid-ledger inclusion wins even when the ledger advances during the query.
+Missing evidence, a history gap, inconsistent ledger identity, timeout, or an
+unexpected response remains `UNKNOWN`; the branch stops and reconciles only by the
+original hash. No replacement is built or submitted.
 
 ## Eventual evidence
 
@@ -138,12 +184,13 @@ Run from the repository root with `PYTHONPATH=spike/xrpl/scripts`. These command
 documentation only until explicit T1 execution authorization is delivered.
 
 ```text
-uv run python -m t1_public_testnet.account_setup --authorization /secure/t1-auth.json --execute
-uv run python -m t1_public_testnet.construct_transaction --authorization /secure/t1-auth.json --output spike/xrpl/evidence/raw/t1/unsigned.json
-uv run python -m t1_public_testnet.sign_transaction --authorization /secure/t1-auth.json --input spike/xrpl/evidence/raw/t1/unsigned.json --output spike/xrpl/evidence/raw/t1/signed.json --execute
-uv run python -m t1_public_testnet.submit_transaction --authorization /secure/t1-auth.json --input spike/xrpl/evidence/raw/t1/signed.json --execute
-uv run python -m t1_public_testnet.poll_transaction --authorization /secure/t1-auth.json --input spike/xrpl/evidence/raw/t1/signed.json
-uv run python -m t1_public_testnet.capture_evidence --authorization /secure/t1-auth.json --input spike/xrpl/evidence/raw/t1/signed.json --output spike/xrpl/evidence/t1/validated-transaction.json
+uv run python -m t1_public_testnet.account_setup --authorization /secure/t1-account-auth.json --execute
+uv run python -m t1_public_testnet.construct_transaction --authorization /secure/t1-construct-auth.json --output spike/xrpl/evidence/raw/t1/unsigned.json
+# Stop: independently inspect unsigned.json and issue t1-payment-auth.json with its exact transaction_identity.
+uv run python -m t1_public_testnet.sign_transaction --authorization /secure/t1-payment-auth.json --input spike/xrpl/evidence/raw/t1/unsigned.json --output spike/xrpl/evidence/raw/t1/signed.json --execute
+uv run python -m t1_public_testnet.submit_transaction --authorization /secure/t1-payment-auth.json --input spike/xrpl/evidence/raw/t1/signed.json --execute
+uv run python -m t1_public_testnet.poll_transaction --authorization /secure/t1-payment-auth.json --input spike/xrpl/evidence/raw/t1/signed.json
+uv run python -m t1_public_testnet.capture_evidence --authorization /secure/t1-payment-auth.json --input spike/xrpl/evidence/raw/t1/signed.json --output spike/xrpl/evidence/t1/validated-transaction.json
 ```
 
 Stop after evidence capture. Do not generalize this authorization to a second payment

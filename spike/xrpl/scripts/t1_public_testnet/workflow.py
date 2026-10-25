@@ -14,8 +14,8 @@ import sqlite3
 import time
 import urllib.error
 import urllib.request
-from dataclasses import dataclass
-from datetime import UTC, datetime
+from dataclasses import dataclass, field
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Any, Final, TypeGuard
@@ -40,7 +40,8 @@ AMOUNT_DROPS: Final = "1"
 TF_FULLY_CANONICAL_SIG: Final = 0x80000000
 LAST_LEDGER_OFFSET: Final = 4
 MAX_FEE_DROPS: Final = 1_000
-AUTH_SCHEMA: Final = "credence.t1.execution-authorization.v1"
+MAX_AUTHORIZATION_LIFETIME: Final = timedelta(hours=24)
+AUTH_SCHEMA: Final = "credence.t1.execution-authorization.v2"
 UNSIGNED_SCHEMA: Final = "credence.t1.unsigned-payment.v1"
 SIGNED_SCHEMA: Final = "credence.t1.signed-payment.v1"
 EVIDENCE_SCHEMA: Final = "credence.t1.validated-evidence.v1"
@@ -80,19 +81,47 @@ class RpcError(T1Error):
     """A public endpoint returned an unavailable or unexpected result."""
 
 
+def _utc_now() -> datetime:
+    return datetime.now(UTC)
+
+
 @dataclass(frozen=True)
 class ExecutionAuthorization:
     authorization_id: str
+    issued_at: datetime
     expires_at: datetime
     operations: frozenset[str]
     source: str
     destination: str
+    network_id: int
+    label: str
+    amount_drops: str
+    transaction_identity: str | None
+    file_path: Path
+    file_sha256: str
 
-    def require(self, operation: str) -> None:
+    def require(self, operation: str, *, now: datetime | None = None) -> None:
         if operation not in self.operations:
             raise AuthorizationError(f"execution authorization does not allow {operation!r}")
-        if datetime.now(UTC) >= self.expires_at:
+        checked_at = _normalized_now(now)
+        if checked_at < self.issued_at:
+            raise AuthorizationError("execution authorization is future-dated")
+        if checked_at >= self.expires_at:
             raise AuthorizationError("execution authorization has expired")
+
+
+_CAPABILITY_SEAL: Final = object()
+
+
+@dataclass(frozen=True)
+class ExecutionCapability:
+    """Opaque, operation-specific authority for a protected library action."""
+
+    authorization_id: str
+    authorization_sha256: str
+    operation: str
+    transaction_identity: str | None
+    _seal: object = field(repr=False, compare=False)
 
 
 def _is_plain_int(value: object) -> TypeGuard[int]:
@@ -107,9 +136,7 @@ def _is_under(path: Path, parent: Path) -> bool:
     return True
 
 
-def load_authorization(path: Path, *, operation: str) -> ExecutionAuthorization:
-    """Load a separately created authorization file, never a repository artifact."""
-
+def _read_authorization_file(path: Path) -> tuple[Path, bytes, dict[str, Any]]:
     candidate = path.expanduser()
     if candidate.is_symlink():
         raise AuthorizationError("execution authorization must not be a symlink")
@@ -120,19 +147,54 @@ def load_authorization(path: Path, *, operation: str) -> ExecutionAuthorization:
     try:
         if not resolved.is_file():
             raise AuthorizationError("execution authorization must be a regular non-symlink file")
-        if resolved.stat().st_mode & 0o077:
-            raise AuthorizationError("execution authorization permissions must be owner-only")
-        raw = resolved.read_text(encoding="utf-8")
-        data = json.loads(raw)
+        if resolved.stat().st_mode & 0o777 != 0o600:
+            raise AuthorizationError("execution authorization permissions must be mode 0600")
+        raw = resolved.read_bytes()
+        data = json.loads(raw.decode("utf-8"))
     except AuthorizationError:
         raise
     except (OSError, UnicodeError, json.JSONDecodeError) as exc:
         raise AuthorizationError("execution authorization is unavailable or invalid") from exc
     if not isinstance(data, dict):
         raise AuthorizationError("execution authorization must be a JSON object")
+    return resolved, raw, data
+
+
+def _normalized_now(now: datetime | None = None) -> datetime:
+    value = _utc_now() if now is None else now
+    if value.tzinfo is None or value.utcoffset() is None:
+        raise AuthorizationError("authorization validation time must be timezone-aware")
+    return value.astimezone(UTC)
+
+
+def _authorization_timestamp(value: object, field_name: str) -> datetime:
+    if not isinstance(value, str) or not value:
+        raise AuthorizationError(f"execution {field_name} must be an ISO 8601 UTC timestamp")
+    try:
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError as exc:
+        raise AuthorizationError(
+            f"execution {field_name} must be an ISO 8601 UTC timestamp"
+        ) from exc
+    if parsed.tzinfo is None or parsed.utcoffset() is None:
+        raise AuthorizationError(f"execution {field_name} must be timezone-aware")
+    if parsed.utcoffset() != timedelta(0):
+        raise AuthorizationError(f"execution {field_name} must use UTC")
+    return parsed.astimezone(UTC)
+
+
+def _parse_authorization(
+    path: Path,
+    raw: bytes,
+    data: dict[str, Any],
+    *,
+    operation: str,
+    now: datetime | None = None,
+) -> ExecutionAuthorization:
     required = {
         "schema",
         "authorization_id",
+        "issued_at",
         "expires_at",
         "network_id",
         "label",
@@ -140,11 +202,12 @@ def load_authorization(path: Path, *, operation: str) -> ExecutionAuthorization:
         "source",
         "destination",
         "allowed_operations",
+        "transaction_identity",
     }
     if set(data) != required:
         raise AuthorizationError("execution authorization has unexpected or missing fields")
     if data["schema"] != AUTH_SCHEMA:
-        raise AuthorizationError("execution authorization schema is not T1 v1")
+        raise AuthorizationError("execution authorization schema is not T1 v2")
     assert_expected_network_id(data["network_id"])
     if data["label"] != REQUIRED_LABEL or data["amount_drops"] != AMOUNT_DROPS:
         raise AuthorizationError(
@@ -155,13 +218,17 @@ def load_authorization(path: Path, *, operation: str) -> ExecutionAuthorization:
         raise AuthorizationError("execution authorization_id must be a nonempty string")
     if len(authorization_id) > 128:
         raise AuthorizationError("execution authorization_id is too long")
-    try:
-        expires_at = datetime.fromisoformat(str(data["expires_at"]).replace("Z", "+00:00"))
-    except ValueError as exc:
-        raise AuthorizationError("execution expires_at must be ISO 8601") from exc
-    if expires_at.tzinfo is None:
-        raise AuthorizationError("execution expires_at must include a timezone")
-    expires_at = expires_at.astimezone(UTC)
+    issued_at = _authorization_timestamp(data["issued_at"], "issued_at")
+    expires_at = _authorization_timestamp(data["expires_at"], "expires_at")
+    if expires_at <= issued_at:
+        raise AuthorizationError("execution timestamps are contradictory")
+    if expires_at - issued_at > MAX_AUTHORIZATION_LIFETIME:
+        raise AuthorizationError("execution authorization lifetime exceeds 24 hours")
+    checked_at = _normalized_now(now)
+    if issued_at > checked_at:
+        raise AuthorizationError("execution authorization is future-dated")
+    if expires_at <= checked_at:
+        raise AuthorizationError("execution authorization has expired")
     operations = data["allowed_operations"]
     if not isinstance(operations, list) or not operations:
         raise AuthorizationError("allowed_operations must be a nonempty list")
@@ -174,15 +241,104 @@ def load_authorization(path: Path, *, operation: str) -> ExecutionAuthorization:
     destination = require_classic_address(data["destination"], "destination")
     if source == destination:
         raise AuthorizationError("source and destination must be distinct")
+    transaction_identity = data["transaction_identity"]
+    if transaction_identity is not None and (
+        not isinstance(transaction_identity, str)
+        or len(transaction_identity) != 64
+        or any(character not in "0123456789ABCDEF" for character in transaction_identity)
+    ):
+        raise AuthorizationError("transaction_identity must be null or 64 uppercase hex characters")
+    if operation in {"sign", "submit", "poll", "capture"} and transaction_identity is None:
+        raise AuthorizationError(f"{operation} authorization requires a transaction_identity")
     authorization = ExecutionAuthorization(
         authorization_id=authorization_id,
+        issued_at=issued_at,
         expires_at=expires_at,
         operations=operation_set,
         source=source,
         destination=destination,
+        network_id=EXPECTED_NETWORK_ID,
+        label=REQUIRED_LABEL,
+        amount_drops=AMOUNT_DROPS,
+        transaction_identity=transaction_identity,
+        file_path=path,
+        file_sha256=hashlib.sha256(raw).hexdigest(),
     )
-    authorization.require(operation)
+    authorization.require(operation, now=checked_at)
     return authorization
+
+
+def load_authorization(
+    path: Path, *, operation: str, now: datetime | None = None
+) -> ExecutionAuthorization:
+    """Load a separately created authorization file, never a repository artifact."""
+
+    resolved, raw, data = _read_authorization_file(path)
+    return _parse_authorization(resolved, raw, data, operation=operation, now=now)
+
+
+def revalidate_authorization(
+    authorization: ExecutionAuthorization,
+    *,
+    operation: str,
+    now: datetime | None = None,
+) -> None:
+    """Re-read the private file and confirm its authority immediately before action."""
+
+    resolved, raw, data = _read_authorization_file(authorization.file_path)
+    current = _parse_authorization(resolved, raw, data, operation=operation, now=now)
+    if current != authorization:
+        raise AuthorizationError("execution authorization changed after it was loaded")
+
+
+def issue_execution_capability(
+    authorization: ExecutionAuthorization,
+    *,
+    operation: str,
+    execution_intent: bool = False,
+) -> ExecutionCapability:
+    """Issue an opaque operation capability only for explicit execution intent."""
+
+    if execution_intent is not True:
+        raise AuthorizationError("explicit library execution intent is required")
+    revalidate_authorization(authorization, operation=operation)
+    return ExecutionCapability(
+        authorization_id=authorization.authorization_id,
+        authorization_sha256=authorization.file_sha256,
+        operation=operation,
+        transaction_identity=authorization.transaction_identity,
+        _seal=_CAPABILITY_SEAL,
+    )
+
+
+def _require_execution_capability(
+    authorization: ExecutionAuthorization,
+    capability: ExecutionCapability | None,
+    *,
+    operation: str,
+    execution_intent: bool,
+    transaction_identity: str | None = None,
+) -> None:
+    if execution_intent is not True:
+        raise AuthorizationError("explicit library execution intent is required")
+    if not isinstance(capability, ExecutionCapability) or capability._seal is not _CAPABILITY_SEAL:
+        raise AuthorizationError("valid library execution capability is required")
+    if (
+        capability.authorization_id != authorization.authorization_id
+        or capability.authorization_sha256 != authorization.file_sha256
+        or capability.operation != operation
+    ):
+        raise AuthorizationError("execution capability does not match authorization and operation")
+    if authorization.network_id != EXPECTED_NETWORK_ID:
+        raise NetworkRefused("execution authorization is not bound to native XRPL Testnet ID 1")
+    if authorization.label != REQUIRED_LABEL or authorization.amount_drops != AMOUNT_DROPS:
+        raise AuthorizationError("execution authorization lost its frozen payment binding")
+    if transaction_identity is not None and (
+        authorization.transaction_identity != transaction_identity
+        or capability.transaction_identity != transaction_identity
+    ):
+        raise AuthorizationError("execution capability does not match the authorized transaction")
+    revalidate_authorization(authorization, operation=operation)
 
 
 def require_explicit_execute(execute: bool) -> None:
@@ -263,6 +419,22 @@ def assert_expected_network_id(network_id: object) -> int:
     return network_id
 
 
+class _NoRedirectHandler(urllib.request.HTTPRedirectHandler):
+    """Refuse all redirects instead of letting urllib change the destination."""
+
+    def redirect_request(
+        self,
+        req: urllib.request.Request,
+        fp: Any,
+        code: int,
+        msg: str,
+        headers: Any,
+        newurl: str,
+    ) -> urllib.request.Request | None:
+        del req, fp, msg, headers, newurl
+        raise RpcError(f"HTTP redirect {code} is refused")
+
+
 def _post_json(url: str, body: dict[str, Any], *, timeout: float = 15.0) -> dict[str, Any]:
     request = urllib.request.Request(
         url,
@@ -270,8 +442,14 @@ def _post_json(url: str, body: dict[str, Any], *, timeout: float = 15.0) -> dict
         headers={"Content-Type": "application/json", "User-Agent": "credence-t1-proof/1"},
         method="POST",
     )
+    opener = urllib.request.build_opener(
+        urllib.request.ProxyHandler({}),
+        _NoRedirectHandler(),
+    )
     try:
-        with urllib.request.urlopen(request, timeout=timeout) as response:  # noqa: S310
+        with opener.open(request, timeout=timeout) as response:
+            if response.geturl() != url:
+                raise RpcError("HTTP response destination changed unexpectedly")
             payload = response.read()
     except (urllib.error.HTTPError, urllib.error.URLError, TimeoutError, OSError) as exc:
         raise RpcError("network request failed; response details were not logged") from exc
@@ -317,14 +495,58 @@ def verify_network(endpoint: str = PRIMARY_RPC_ENDPOINT) -> dict[str, Any]:
     server_state = info.get("server_state")
     if server_state not in {"full", "proposing", "validating"}:
         raise RpcError("server is not in a state suitable for validated-ledger operations")
+    complete_ledgers = info.get("complete_ledgers")
+    if not isinstance(complete_ledgers, str):
+        raise RpcError("server_info omitted complete_ledgers")
     return {
         "endpoint": endpoint,
         "network_id": network_id,
         "validated_ledger_index": ledger_index,
         "validated_ledger_hash": ledger_hash.upper(),
         "server_state": server_state,
+        "complete_ledgers": complete_ledgers,
         "reserve_base_xrp": ledger.get("reserve_base_xrp"),
     }
+
+
+def parse_complete_ledgers(value: str) -> tuple[tuple[int, int], ...]:
+    """Parse the server's complete-ledger range expression without assumptions."""
+
+    if value == "empty":
+        return ()
+    ranges: list[tuple[int, int]] = []
+    for part in value.split(","):
+        pieces = part.split("-")
+        if len(pieces) == 1 and pieces[0].isdecimal():
+            start = end = int(pieces[0])
+        elif len(pieces) == 2 and all(piece.isdecimal() for piece in pieces):
+            start, end = (int(piece) for piece in pieces)
+        else:
+            raise RpcError("complete_ledgers has an invalid range expression")
+        if start <= 0 or end < start:
+            raise RpcError("complete_ledgers has an invalid range")
+        ranges.append((start, end))
+    previous_end = 0
+    for start, end in ranges:
+        if start <= previous_end:
+            raise RpcError("complete_ledgers ranges overlap or are unordered")
+        previous_end = end
+    return tuple(ranges)
+
+
+def history_covers(value: str, first_ledger: int, last_ledger: int) -> bool:
+    if first_ledger <= 0 or last_ledger < first_ledger:
+        raise ValidationError("bounded transaction history range is invalid")
+    next_required = first_ledger
+    for start, end in parse_complete_ledgers(value):
+        if end < next_required:
+            continue
+        if start > next_required:
+            return False
+        next_required = end + 1
+        if next_required > last_ledger:
+            return True
+    return False
 
 
 def _validated_account(endpoint: str, account: str, ledger_index: int) -> dict[str, Any]:
@@ -470,12 +692,54 @@ def validate_transaction_structure(
         raise ValidationError("unsigned transaction must have an empty SigningPubKey")
 
 
+def transaction_identity(transaction: dict[str, Any]) -> str:
+    """Identify the complete unsigned transaction, including fee, sequence and expiry."""
+
+    unsigned = dict(transaction)
+    unsigned.pop("TxnSignature", None)
+    unsigned["SigningPubKey"] = ""
+    encoded = json.dumps(unsigned, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest().upper()
+
+
+def _validate_construction_binding(
+    artifact: dict[str, Any], transaction: dict[str, Any]
+) -> tuple[int, str]:
+    network = artifact.get("network")
+    construction = artifact.get("construction")
+    identity = artifact.get("transaction_identity")
+    if not isinstance(network, dict) or not isinstance(construction, dict):
+        raise ValidationError("artifact omitted its recorded construction context")
+    if network.get("network_id") != EXPECTED_NETWORK_ID:
+        raise NetworkRefused("artifact is not bound to native XRPL Testnet ID 1")
+    ledger_index = construction.get("validated_ledger_index")
+    ledger_hash = construction.get("validated_ledger_hash")
+    if not _is_plain_int(ledger_index) or ledger_index <= 0:
+        raise ValidationError("construction context has an invalid validated-ledger index")
+    if not isinstance(ledger_hash, str) or len(ledger_hash) != 64:
+        raise ValidationError("construction context has an invalid validated-ledger hash")
+    if (
+        network.get("validated_ledger_index") != ledger_index
+        or network.get("validated_ledger_hash") != ledger_hash
+    ):
+        raise ValidationError("network and construction ledger identities disagree")
+    if transaction.get("LastLedgerSequence") != ledger_index + LAST_LEDGER_OFFSET:
+        raise ValidationError(
+            "LastLedgerSequence must equal the recorded validated-ledger index plus exactly 4"
+        )
+    computed_identity = transaction_identity(transaction)
+    if identity != computed_identity:
+        raise ValidationError("transaction does not match its recorded transaction identity")
+    return ledger_index, computed_identity
+
+
 def construct_unsigned(
     authorization: ExecutionAuthorization,
     *,
     endpoint: str = PRIMARY_RPC_ENDPOINT,
 ) -> dict[str, Any]:
     authorization.require("construct")
+    revalidate_authorization(authorization, operation="construct")
     network = verify_network(endpoint)
     ledger_index = network["validated_ledger_index"]
     source = _validated_account(endpoint, authorization.source, ledger_index)
@@ -524,15 +788,24 @@ def construct_unsigned(
         destination=authorization.destination,
         signed=False,
     )
+    identity = transaction_identity(transaction)
+    if (
+        authorization.transaction_identity is not None
+        and authorization.transaction_identity != identity
+    ):
+        raise AuthorizationError("construction does not match the authorized transaction identity")
     return {
         "schema": UNSIGNED_SCHEMA,
         "authorization_id": authorization.authorization_id,
         "network": network,
         "construction": {
+            "validated_ledger_index": ledger_index,
+            "validated_ledger_hash": network["validated_ledger_hash"],
             "fee_rule": "exact open_ledger_fee at construction; no bump; cap 1000 drops",
             "sequence_rule": "exact source Sequence from the pinned validated ledger",
             "last_ledger_rule": "pinned validated ledger index plus 4",
         },
+        "transaction_identity": identity,
         "transaction": transaction,
     }
 
@@ -574,10 +847,17 @@ def sign_unsigned(
     unsigned_artifact: dict[str, Any],
     *,
     credential: str | None,
+    capability: ExecutionCapability | None = None,
+    execution_intent: bool = False,
 ) -> dict[str, Any]:
-    authorization.require("sign")
-    if credential is None or not credential.strip():
-        raise CredentialError("signing credential is required through the private prompt")
+    artifact_identity = unsigned_artifact.get("transaction_identity")
+    _require_execution_capability(
+        authorization,
+        capability,
+        operation="sign",
+        execution_intent=execution_intent,
+        transaction_identity=artifact_identity if isinstance(artifact_identity, str) else None,
+    )
     if unsigned_artifact.get("schema") != UNSIGNED_SCHEMA:
         raise ValidationError("unsigned artifact has the wrong schema")
     if unsigned_artifact.get("authorization_id") != authorization.authorization_id:
@@ -591,12 +871,26 @@ def sign_unsigned(
         destination=authorization.destination,
         signed=False,
     )
+    _construction_ledger, computed_identity = _validate_construction_binding(
+        unsigned_artifact, transaction
+    )
+    if authorization.transaction_identity != computed_identity:
+        raise AuthorizationError("authorization does not identify the unsigned transaction")
+    if credential is None or not credential.strip():
+        raise CredentialError("signing credential is required through the private prompt")
     try:
         wallet = Wallet.from_seed(credential.strip())
     except Exception as exc:
         raise CredentialError("signing credential is invalid") from exc
     if wallet.address != authorization.source:
         raise CredentialError("signing credential does not control the authorized source")
+    _require_execution_capability(
+        authorization,
+        capability,
+        operation="sign",
+        execution_intent=execution_intent,
+        transaction_identity=computed_identity,
+    )
     try:
         signed = sign(Transaction.from_xrpl(transaction), wallet)
     except Exception as exc:
@@ -608,12 +902,15 @@ def sign_unsigned(
         destination=authorization.destination,
         signed=True,
     )
-    for field, value in transaction.items():
-        if field != "SigningPubKey" and signed_transaction.get(field) != value:
-            raise ValidationError(f"signing unexpectedly changed {field}")
+    for field_name, value in transaction.items():
+        if field_name != "SigningPubKey" and signed_transaction.get(field_name) != value:
+            raise ValidationError(f"signing unexpectedly changed {field_name}")
     return {
         "schema": SIGNED_SCHEMA,
         "authorization_id": authorization.authorization_id,
+        "network": unsigned_artifact["network"],
+        "construction": unsigned_artifact["construction"],
+        "transaction_identity": computed_identity,
         "transaction_hash": signed.get_hash(),
         "transaction_blob": signed.blob(),
         "transaction": signed_transaction,
@@ -648,6 +945,10 @@ class OperationJournal:
             "CREATE UNIQUE INDEX IF NOT EXISTS one_submission_per_authorization "
             "ON operation_claims(authorization_id) WHERE operation = 'submit'"
         )
+        self.connection.execute(
+            "CREATE UNIQUE INDEX IF NOT EXISTS one_submission_per_transaction_hash "
+            "ON operation_claims(target) WHERE operation = 'submit'"
+        )
 
     def close(self) -> None:
         self.connection.close()
@@ -664,7 +965,7 @@ class OperationJournal:
         except sqlite3.IntegrityError as exc:
             self.connection.execute("ROLLBACK")
             raise ReplayRefused(
-                f"{operation} is already claimed for this execution authorization"
+                f"{operation} target or authorization is already claimed durably"
             ) from exc
         except Exception:
             self.connection.execute("ROLLBACK")
@@ -707,11 +1008,18 @@ def setup_accounts(
     authorization: ExecutionAuthorization,
     journal: OperationJournal,
     *,
+    capability: ExecutionCapability | None = None,
+    execution_intent: bool = False,
     endpoint: str = PRIMARY_RPC_ENDPOINT,
     poll_seconds: float = 2.0,
     timeout_seconds: float = 60.0,
 ) -> dict[str, str]:
-    authorization.require("faucet")
+    _require_execution_capability(
+        authorization,
+        capability,
+        operation="faucet",
+        execution_intent=execution_intent,
+    )
     verify_network(endpoint)
     statuses: dict[str, str] = {}
     for role, address in (
@@ -721,7 +1029,19 @@ def setup_accounts(
         if not _account_absent(endpoint, address):
             statuses[role] = "already_funded"
             continue
+        _require_execution_capability(
+            authorization,
+            capability,
+            operation="faucet",
+            execution_intent=execution_intent,
+        )
         journal.claim(authorization.authorization_id, "faucet", address)
+        _require_execution_capability(
+            authorization,
+            capability,
+            operation="faucet",
+            execution_intent=execution_intent,
+        )
         try:
             _faucet_request(address)
         except T1Error:
@@ -775,6 +1095,9 @@ def _signed_artifact_checks(
         destination=authorization.destination,
         signed=True,
     )
+    _construction_ledger, computed_identity = _validate_construction_binding(artifact, transaction)
+    if authorization.transaction_identity != computed_identity:
+        raise AuthorizationError("authorization does not identify the signed transaction")
     try:
         decoded = decode(blob)
         model = Transaction.from_xrpl(transaction)
@@ -813,12 +1136,38 @@ def submit_once(
     signed_artifact: dict[str, Any],
     journal: OperationJournal,
     *,
+    capability: ExecutionCapability | None = None,
+    execution_intent: bool = False,
     endpoint: str = PRIMARY_RPC_ENDPOINT,
 ) -> dict[str, Any]:
-    authorization.require("submit")
+    artifact_identity = signed_artifact.get("transaction_identity")
+    _require_execution_capability(
+        authorization,
+        capability,
+        operation="submit",
+        execution_intent=execution_intent,
+        transaction_identity=artifact_identity if isinstance(artifact_identity, str) else None,
+    )
     transaction, blob, transaction_hash = _signed_artifact_checks(authorization, signed_artifact)
+    _construction_ledger, computed_identity = _validate_construction_binding(
+        signed_artifact, transaction
+    )
     _submission_preflight(endpoint, transaction)
+    _require_execution_capability(
+        authorization,
+        capability,
+        operation="submit",
+        execution_intent=execution_intent,
+        transaction_identity=computed_identity,
+    )
     journal.claim(authorization.authorization_id, "submit", transaction_hash)
+    _require_execution_capability(
+        authorization,
+        capability,
+        operation="submit",
+        execution_intent=execution_intent,
+        transaction_identity=computed_identity,
+    )
     try:
         response = rpc_raw(endpoint, "submit", {"tx_blob": blob, "fail_hard": True})
     except T1Error:
@@ -914,26 +1263,81 @@ def poll_validated(
     timeout_seconds: float = 90.0,
 ) -> dict[str, Any]:
     authorization.require("poll")
+    revalidate_authorization(authorization, operation="poll")
     transaction, _blob, transaction_hash = _signed_artifact_checks(authorization, signed_artifact)
+    construction_ledger, _identity = _validate_construction_binding(signed_artifact, transaction)
+    construction_hash = signed_artifact["construction"]["validated_ledger_hash"]
+    first_possible_ledger = construction_ledger + 1
+    last_possible_ledger = transaction["LastLedgerSequence"]
     deadline = time.monotonic() + timeout_seconds
     while time.monotonic() < deadline:
-        verify_network(endpoint)
+        revalidate_authorization(authorization, operation="poll")
+        before = verify_network(endpoint)
+        if before["validated_ledger_index"] < construction_ledger:
+            journal.update(
+                authorization.authorization_id,
+                "submit",
+                transaction_hash,
+                "UNKNOWN_CONTRADICTORY_NODE",
+            )
+            raise RpcError("validated ledger predates the recorded construction context")
+        try:
+            if _ledger_hash(endpoint, construction_ledger) != construction_hash:
+                raise ValidationError("construction ledger hash changed")
+        except T1Error as exc:
+            journal.update(
+                authorization.authorization_id,
+                "submit",
+                transaction_hash,
+                "UNKNOWN_CONTRADICTORY_NODE",
+            )
+            raise RpcError("poll observations are contradictory; retain UNKNOWN") from exc
         response = rpc_raw(
             endpoint,
             "tx",
             {
                 "transaction": transaction_hash,
                 "binary": False,
-                "min_ledger": transaction["LastLedgerSequence"] - LAST_LEDGER_OFFSET + 1,
-                "max_ledger": transaction["LastLedgerSequence"],
+                "min_ledger": first_possible_ledger,
+                "max_ledger": last_possible_ledger,
             },
         )
+        after = verify_network(endpoint)
+        try:
+            _validate_node_progression(endpoint, before, after)
+        except T1Error as exc:
+            journal.update(
+                authorization.authorization_id,
+                "submit",
+                transaction_hash,
+                "UNKNOWN_CONTRADICTORY_NODE",
+            )
+            raise RpcError("poll observations are contradictory; retain UNKNOWN") from exc
         result = response.get("result")
         if isinstance(result, dict) and result.get("status") == "success":
             try:
                 projection = _tx_projection(result, transaction)
                 if projection["transaction_hash"] != transaction_hash:
                     raise ValidationError("tx lookup returned a different transaction hash")
+                if not first_possible_ledger <= projection["ledger_index"] <= last_possible_ledger:
+                    raise ValidationError(
+                        "transaction was returned outside its possible ledger range"
+                    )
+                included_hash = _ledger_hash(endpoint, projection["ledger_index"])
+                if (
+                    projection["ledger_index"] == after["validated_ledger_index"]
+                    and included_hash != after["validated_ledger_hash"]
+                ):
+                    raise ValidationError(
+                        "validated transaction ledger conflicts with the current ledger identity"
+                    )
+                if (
+                    projection["ledger_index"] == before["validated_ledger_index"]
+                    and included_hash != before["validated_ledger_hash"]
+                ):
+                    raise ValidationError(
+                        "validated transaction ledger conflicts with the prior ledger identity"
+                    )
             except T1Error:
                 journal.update(
                     authorization.authorization_id,
@@ -958,16 +1362,43 @@ def poll_validated(
                 "unexpected_poll_result",
             )
             raise RpcError("tx lookup returned an unexpected result; stop")
-        latest = verify_network(endpoint)["validated_ledger_index"]
-        if latest > transaction["LastLedgerSequence"]:
+        latest = after["validated_ledger_index"]
+        if latest > last_possible_ledger:
+            if result.get("searched_all") is not True:
+                journal.update(
+                    authorization.authorization_id,
+                    "submit",
+                    transaction_hash,
+                    "UNKNOWN_INCOMPLETE_SEARCH",
+                    {"searched_all": result.get("searched_all")},
+                )
+                raise RpcError(
+                    "bounded transaction lookup did not report literal searched_all true"
+                )
+            if not history_covers(
+                after["complete_ledgers"], first_possible_ledger, last_possible_ledger
+            ):
+                journal.update(
+                    authorization.authorization_id,
+                    "submit",
+                    transaction_hash,
+                    "UNKNOWN_HISTORY_GAP",
+                    {"complete_ledgers": after["complete_ledgers"]},
+                )
+                raise RpcError("bounded transaction history is incomplete; retain UNKNOWN")
             journal.update(
                 authorization.authorization_id,
                 "submit",
                 transaction_hash,
-                "expired_not_found",
-                {"latest_validated_ledger": latest},
+                "EXPIRED_NOT_INCLUDED",
+                {
+                    "first_possible_ledger": first_possible_ledger,
+                    "last_possible_ledger": last_possible_ledger,
+                    "latest_validated_ledger": latest,
+                    "searched_all": True,
+                },
             )
-            raise RpcError("transaction expired without validated inclusion; do not resubmit")
+            raise RpcError("transaction conclusively expired without inclusion; do not resubmit")
         time.sleep(poll_seconds)
     journal.update(
         authorization.authorization_id,
@@ -982,10 +1413,41 @@ def _ledger_hash(endpoint: str, ledger_index: int) -> str:
     result = rpc_result(endpoint, "ledger", {"ledger_index": ledger_index, "transactions": False})
     if result.get("validated") is not True:
         raise ValidationError("independent ledger lookup is not validated")
+    observed_index = result.get("ledger_index")
+    if observed_index is not None and observed_index != ledger_index:
+        raise ValidationError("ledger lookup returned a contradictory ledger index")
     ledger_hash = result.get("ledger_hash")
     if not isinstance(ledger_hash, str) or len(ledger_hash) != 64:
         raise ValidationError("independent ledger lookup omitted ledger hash")
     return ledger_hash.upper()
+
+
+def _validate_node_progression(
+    endpoint: str,
+    before: dict[str, Any],
+    after: dict[str, Any],
+) -> None:
+    if (
+        before.get("network_id") != EXPECTED_NETWORK_ID
+        or after.get("network_id") != EXPECTED_NETWORK_ID
+    ):
+        raise NetworkRefused("poll observations are not both native XRPL Testnet ID 1")
+    if before.get("endpoint") != endpoint or after.get("endpoint") != endpoint:
+        raise NetworkRefused("poll observations came from an unexpected endpoint")
+    before_index = before.get("validated_ledger_index")
+    after_index = after.get("validated_ledger_index")
+    if not _is_plain_int(before_index) or not _is_plain_int(after_index):
+        raise ValidationError("poll observations omitted validated-ledger indices")
+    if after_index < before_index:
+        raise ValidationError("validated-ledger index moved backwards between poll observations")
+    if after_index == before_index:
+        if after.get("validated_ledger_hash") != before.get("validated_ledger_hash"):
+            raise ValidationError("same validated-ledger index returned contradictory hashes")
+        return
+    if _ledger_hash(endpoint, before_index) != before.get("validated_ledger_hash"):
+        raise ValidationError(
+            "advanced node no longer agrees with the prior validated-ledger identity"
+        )
 
 
 def _response_digest(response: dict[str, Any]) -> str:
@@ -998,12 +1460,14 @@ def capture_independent_evidence(
     signed_artifact: dict[str, Any],
 ) -> dict[str, Any]:
     authorization.require("capture")
+    revalidate_authorization(authorization, operation="capture")
     transaction, _blob, transaction_hash = _signed_artifact_checks(authorization, signed_artifact)
     observations: dict[str, dict[str, Any]] = {}
     for name, endpoint in (
         ("primary", PRIMARY_RPC_ENDPOINT),
         ("secondary", SECONDARY_RPC_ENDPOINT),
     ):
+        revalidate_authorization(authorization, operation="capture")
         network = verify_network(endpoint)
         response = rpc_raw(
             endpoint,
