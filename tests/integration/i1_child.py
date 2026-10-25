@@ -47,7 +47,39 @@ class BlockAfterExecuting(Wrapped):
         raise AssertionError("unreachable")
 
 
+def check_revoked(database: Path) -> None:
+    """A fresh process with a freshly built registry listing every key as current: report
+    whether the agent can retrieve, acknowledge and purchase. Prints one JSON line."""
+    import json
+
+    from i1_world import Clock, acknowledge
+    from inference_world import NOW
+
+    from credence.integration.service import operation_id_for
+
+    world = market_world()
+    service = open_service(database, world, clock=Clock(NOW.plus_seconds(120)))
+    op = operation_id_for("job-facility-market-general-1")
+    out: dict[str, str] = {}
+    for name, call in (
+        ("retrieve", lambda: retrieve(service, op)),
+        ("acknowledge", lambda: acknowledge(service, op)),
+    ):
+        try:
+            call()
+            out[name] = "allowed"
+        except Exception as exc:  # reported, not raised
+            out[name] = f"refused {exc}"
+    report = service.purchase(job(2), agent_signer)
+    out["purchase"] = f"{report.state.value} {getattr(report, 'detail', '')}".strip()  # type: ignore[union-attr]
+    out["provider_calls"] = str(len(world.nebius_transport.posts))
+    print(json.dumps(out), flush=True)
+
+
 def main(database: Path, scenario: str) -> None:
+    if scenario == "check_revoked":
+        check_revoked(database)
+        return
     world = market_world()
     providers = None
     hook = None

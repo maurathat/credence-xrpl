@@ -29,7 +29,7 @@ HOLDER = """
 import sys, time
 from pathlib import Path
 from credence.integration.ownership import ProcessOwnership
-ownership = ProcessOwnership.acquire(Path(sys.argv[1]))
+ownership = ProcessOwnership.acquire(Path(sys.argv[1]), allow_create=True)  # a fresh database
 print("owned", flush=True)
 time.sleep(120)
 """

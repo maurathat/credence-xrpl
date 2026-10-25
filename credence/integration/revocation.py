@@ -1,47 +1,70 @@
-"""Durable, fail-closed key revocation for an integration database (Integration I1g, finding F1).
+"""Durable, fail-closed key revocation for an integration database (I1g F1, closed in I1i).
 
-Core's C3A `KeyRegistry` is an in-memory object, and it is frozen. A revocation made on it used
-to vanish when the service restarted with a freshly built registry. Here revocation is an
-operational record in the shared SQLite database, authoritative over any registry supplied later:
+Core's C3A `KeyRegistry` is an in-memory object, and it is frozen. Revocation that must survive
+restarts is an operational record in the shared SQLite database, authoritative over any registry
+supplied later. These are distinct:
 
-- `integration_key_revocations` keeps the key identity, the revocation time and the trusted
-  administrative actor (the operator identity the service was opened with). Rows never expire and
-  are never deleted; registering the same key again does not restore it.
-- `DurableKeyRegistry` is what the service hands to Core and the gateway. Its `lookup` reports a
-  persisted-revoked key as `revoked` whatever the supplied registry says. It is a subclass used
-  only inside the integration; C3A signature semantics and formats are unchanged.
-- The existing workflow, `KeyRegistry.revoke(key_id)` on the registry the service was opened with,
-  is routed through persistence while the service is open: the record is committed before the
-  revocation takes effect. A revocation already present in the supplied registry when the service
-  opens is persisted at open.
-- Fail closed: an unreadable or malformed revocation record raises `RevocationStateError`, and the
-  operation (or opening the service) is refused. If persisting a revocation fails, the key is still
-  refused in this process and `RevocationNotPersisted` is raised.
+- **Core in-memory revocation.** `KeyRegistry.revoke` on a registry that was never bound to an
+  integration service only changes that object. It is not a durable Credence administrative
+  operation.
+- **Durable bound revocation.** While an `IntegrationService` is open, `revoke` on the registry it
+  was opened with commits a record to `integration_key_revocations` before it returns, then marks
+  the key revoked. Revocations already present in that registry are persisted when it is bound.
+- **Revocation after the service closed.** The bound registry's `revoke` does not revert to Core's
+  in-memory method: it marks the key revoked in that object (fail closed in-process) and raises
+  `RevocationNotPersisted`, because nothing was committed. Closing twice keeps this; binding the
+  same object to a new service restores durable behavior (and persists what it marked).
+- **Trusted offline administrative revocation.** `revoke_key(database, key_id, operator)` commits a
+  record with no service running. Trust is the operating system's: the caller must be the OS user
+  owning the existing owner-only (0600) integration database and must hold its exclusive ownership
+  lock, derived from the database's canonical, verified identity (I1k) so no path alias can
+  bypass a running service. It never creates a database, is idempotent and irreversible, and reports success only
+  after commit. Command line: `python -m credence.integration.revocation --database PATH
+  --key-id ed25519:... --operator NAME`. It is not an HTTP endpoint.
+- **Durable state on restart.** Persisted revocations override any registry supplied later, never
+  expire, and survive re-registration of the same key.
+- **Unexpected in-process revocation.** A key found revoked in the supplied registry but with no
+  persisted record (for example through `KeyRegistry.revoke(registry, key_id)`, which bypasses the
+  binding) is refused at once, in this process only. `lookup` does not persist it.
 
-There is no public revocation operation for agents or remote callers: revoking requires the
-operator's in-process registry object.
+`DurableKeyRegistry.lookup` performs no database I/O on any branch: Core calls it inside its own
+write transactions (settlement verifies signatures in-transaction). Fail closed: unreadable or
+malformed revocation state raises `RevocationStateError`; a failed persistence raises
+`RevocationNotPersisted` and the key stays refused in-process.
 
 Owner: Integration (San Antonio).
 """
 
 from __future__ import annotations
 
+import argparse
+import os
 import sqlite3
+import stat
+import sys
 import threading
-from collections.abc import Callable, Iterator
+from collections.abc import Callable, Iterator, Sequence
 from contextlib import contextmanager
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from pathlib import Path
 
 from credence.core.primitives import DomainError, KeyId, Timestamp
 from credence.core.signatures import KeyRegistry, KeyStatus, RegisteredKey
+from credence.integration.ownership import (
+    DatabaseIdentityError,
+    OwnershipError,
+    ProcessOwnership,
+)
+
+VIAS = ("key_registry_revoke", "offline_admin")
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS integration_key_revocations (
     key_id TEXT PRIMARY KEY,
     revoked_at TEXT NOT NULL,
     revoked_by TEXT NOT NULL,
-    via TEXT NOT NULL CHECK (via IN ('key_registry_revoke'))
+    via TEXT NOT NULL CHECK (via IN ('key_registry_revoke', 'offline_admin'))
 )
 """
 
@@ -51,7 +74,19 @@ class RevocationStateError(RuntimeError):
 
 
 class RevocationNotPersisted(RuntimeError):
-    """A revocation could not be persisted. It still applies in this process."""
+    """No durable revocation was committed. Where noted, the key is still refused in-process."""
+
+
+class OfflineRevocationRefused(RuntimeError):
+    """The offline administrative revocation refused to run. `reason` is a code."""
+
+    def __init__(self, reason: str, detail: str = "") -> None:
+        super().__init__(f"{reason}: {detail}" if detail else reason)
+        self.reason = reason
+
+
+class RegistryAlreadyBound(RuntimeError):
+    """The registry is bound to another open integration service."""
 
 
 @dataclass(frozen=True)
@@ -67,7 +102,7 @@ def _parse(row: tuple[object, ...]) -> Revocation:
         key_id, revoked_at, revoked_by, via = row
         if not isinstance(revoked_by, str) or not revoked_by.strip():
             raise ValueError("revoked_by")
-        if via != "key_registry_revoke":
+        if via not in VIAS:
             raise ValueError("via")
         return Revocation(KeyId(str(key_id)), Timestamp(str(revoked_at)), revoked_by, str(via))
     except (ValueError, TypeError, DomainError) as exc:
@@ -88,11 +123,36 @@ def revocation_in(conn: sqlite3.Connection, key_id: str) -> Revocation | None:
 
 
 class RevocationStore:
-    def __init__(self, path: Path, *, busy_timeout: float = 30) -> None:
+    def __init__(
+        self,
+        path: Path,
+        *,
+        busy_timeout: float = 30,
+        verify: Callable[[], None] | None = None,
+    ) -> None:
+        """`verify` (I1k) runs inside every write transaction, after BEGIN IMMEDIATE and again
+        before COMMIT: it raises unless the path still names the owned, verified database."""
         self._path = str(path)
         self._busy_timeout = busy_timeout
+        self._verify = verify or (lambda: None)
         with self._write() as conn:
-            conn.execute(SCHEMA)
+            existing = conn.execute(
+                "SELECT sql FROM sqlite_master WHERE type = 'table' "
+                "AND name = 'integration_key_revocations'"
+            ).fetchone()
+            if existing is not None and "'offline_admin'" not in str(existing[0]):
+                # I1g schema: widen the `via` check in place, keeping every record (one txn).
+                conn.execute(
+                    "ALTER TABLE integration_key_revocations RENAME TO integration_key_revocations_i1g"
+                )
+                conn.execute(SCHEMA)
+                conn.execute(
+                    "INSERT INTO integration_key_revocations SELECT key_id, revoked_at, "
+                    "revoked_by, via FROM integration_key_revocations_i1g"
+                )
+                conn.execute("DROP TABLE integration_key_revocations_i1g")
+            else:
+                conn.execute(SCHEMA)
 
     @contextmanager
     def _write(self) -> Iterator[sqlite3.Connection]:
@@ -100,7 +160,9 @@ class RevocationStore:
         try:
             conn.execute("BEGIN IMMEDIATE")
             try:
+                self._verify()  # this connection's file is the verified database
                 yield conn
+                self._verify()
             except BaseException:
                 conn.execute("ROLLBACK")
                 raise
@@ -126,17 +188,24 @@ class RevocationStore:
         with self._write() as conn:
             return revocation_in(conn, key_id.value)
 
-    def revoke(self, key_id: KeyId, now: Timestamp, actor: str) -> Revocation:
-        """Persist a revocation (first one kept). Commits before returning."""
+    def revoke(
+        self, key_id: KeyId, now: Timestamp, actor: str, *, via: str = "key_registry_revoke"
+    ) -> Revocation:
+        """Persist a revocation (first one kept: idempotent, irreversible). Commits first."""
+        if via not in VIAS:
+            raise ValueError(f"unknown revocation path {via!r}")
         with self._write() as conn:
             conn.execute(
                 "INSERT OR IGNORE INTO integration_key_revocations (key_id, revoked_at, "
-                "revoked_by, via) VALUES (?, ?, ?, 'key_registry_revoke')",
-                (key_id.value, now.value, actor),
+                "revoked_by, via) VALUES (?, ?, ?, ?)",
+                (key_id.value, now.value, actor, via),
             )
             stored = revocation_in(conn, key_id.value)
         assert stored is not None
         return stored
+
+
+_BINDING = "_credence_durable_binding"
 
 
 class DurableKeyRegistry(KeyRegistry):
@@ -144,12 +213,12 @@ class DurableKeyRegistry(KeyRegistry):
 
     Keys come from the operator's supplied registry; persisted revocations override it.
 
-    `lookup` does no database I/O: Core calls it inside its own write transactions (settlement
-    verifies signatures in-transaction), so it reads an in-memory mirror of the persisted
-    revocations, loaded at `bind` and updated under the gate whenever a revocation commits. One
-    process owns the database, so the mirror equals the database. Where ordering matters the
-    database is read directly: the journal's access transactions re-read the revocation row, and
-    purchase admission re-reads it under the gate (`persisted_revocation`)."""
+    `lookup` performs no database I/O on any branch. It reads an in-memory mirror of the persisted
+    revocations (loaded at `bind`, updated under the gate whenever a revocation commits; one
+    process owns the database, so the mirror equals the database) and the set of keys refused in
+    this process. Where ordering matters the database is read directly, outside Core's
+    transactions: the journal's access transactions re-read the revocation row, and purchase
+    admission re-reads it under the gate (`persisted_revocation`)."""
 
     def __init__(
         self,
@@ -168,34 +237,53 @@ class DurableKeyRegistry(KeyRegistry):
         self._actor = actor
         self._clock = clock
         self._gate = gate
-        self._unpersisted: set[KeyId] = set()
+        self._refused_in_process: set[KeyId] = set()
         self._revoked: set[KeyId] = set()
-        self._original_revoke: Callable[[KeyId], None] | None = None
+        self._bound = False
 
-    # --- routing the existing workflow -----------------------------------------------------
+    # --- binding the operator's registry ---------------------------------------------------
 
     def bind(self) -> None:
-        """Route `supplied.revoke` through persistence, and persist revocations it already has."""
+        """Route `supplied.revoke` through persistence; persist revocations it already has."""
+        holder = getattr(self._supplied, _BINDING, None)
+        if isinstance(holder, DurableKeyRegistry) and holder is not self and holder._bound:
+            raise RegistryAlreadyBound("this registry is bound to another open service")
         self._revoked = set(self._store.all())
         existing = getattr(self._supplied, "_keys", {})
         for key_id, key in dict(existing).items():
             if key.status is KeyStatus.REVOKED:
-                self._persist(key_id)
-        self._original_revoke = self._supplied.revoke
-        setattr(self._supplied, "revoke", self.revoke)  # noqa: B010 - an instance override
+                with self._gate:
+                    self._persist(key_id)
+        setattr(self._supplied, _BINDING, self)  # noqa: B010 - instance-level marker
+        setattr(self._supplied, "revoke", self.revoke)  # noqa: B010 - instance-level override
+        self._bound = True
 
     def unbind(self) -> None:
-        if self._original_revoke is not None:
-            if "revoke" in vars(self._supplied):
-                delattr(self._supplied, "revoke")
-            self._original_revoke = None
+        """On close: `revoke` on the operator's registry raises instead of silently reverting to
+        Core's in-memory method. Idempotent."""
+        if getattr(self._supplied, _BINDING, None) is not self:
+            return  # a later service has bound this registry; leave its binding alone
+        self._bound = False
+        supplied = self._supplied
+
+        def revoke_while_closed(key_id: KeyId) -> None:
+            if supplied.lookup(key_id) is not None:
+                KeyRegistry.revoke(supplied, key_id)  # fail closed in this object
+            raise RevocationNotPersisted(
+                f"{key_id.value}: no integration service is open, so no durable revocation was "
+                "committed. The key is marked revoked in this registry object only. Use "
+                "credence.integration.revocation.revoke_key for a durable offline revocation."
+            )
+
+        setattr(supplied, "revoke", revoke_while_closed)  # noqa: B010 - instance-level override
 
     def _persist(self, key_id: KeyId) -> None:
+        """Commit a revocation record. Callers hold the gate and no other write transaction."""
         try:
             self._store.revoke(key_id, self._clock(), self._actor)
             self._revoked.add(key_id)
         except sqlite3.Error as exc:
-            self._unpersisted.add(key_id)  # still refused in this process
+            self._refused_in_process.add(key_id)  # still refused in this process
             raise RevocationNotPersisted(
                 f"{key_id.value}: revocation not persisted ({type(exc).__name__}); "
                 "refused in this process only"
@@ -207,29 +295,136 @@ class DurableKeyRegistry(KeyRegistry):
         raise RuntimeError("register keys in the operator's registry, not the durable view")
 
     def revoke(self, key_id: KeyId) -> None:
-        """Persist first (committed), then mark the supplied registry. Serialized with the
-        integration's authorization commits through the shared gate."""
+        """Bound revocation: commit the record first, then mark the key revoked. Serialized with
+        the integration's purchase admission through the shared gate."""
         with self._gate:
             self._persist(key_id)
-            original = self._original_revoke or KeyRegistry.revoke.__get__(self._supplied)
             if self._supplied.lookup(key_id) is not None:
-                original(key_id)
+                KeyRegistry.revoke(self._supplied, key_id)
 
     def persisted_revocation(self, key_id: KeyId) -> bool:
-        """Read the database directly (fail closed on bad state). Not for use inside another
+        """Read the database directly (fail closed on bad state). Never call this inside another
         open write transaction on this database."""
         revoked = self._store.get(key_id) is not None
         if revoked:
             self._revoked.add(key_id)
-        return revoked or key_id in self._unpersisted
+        return revoked or key_id in self._refused_in_process
 
     def lookup(self, key_id: KeyId) -> RegisteredKey | None:
+        """No database I/O. A persisted, failed-to-persist or unexpected in-memory revocation all
+        report the key as revoked; nothing is persisted here."""
         key = self._supplied.lookup(key_id)
         if key is None:
             return None
-        if key_id in self._unpersisted or key_id in self._revoked:
-            return RegisteredKey(key.key_id, key.role, key.subject, KeyStatus.REVOKED)
         if key.status is KeyStatus.REVOKED:
-            with self._gate:
-                self._persist(key_id)  # an in-memory revocation made outside the binding
+            self._refused_in_process.add(key_id)  # unexpected: refused here, not persisted
+            return key
+        if key_id in self._refused_in_process or key_id in self._revoked:
+            return RegisteredKey(key.key_id, key.role, key.subject, KeyStatus.REVOKED)
         return key
+
+
+# --- trusted offline administrative revocation ---------------------------------------------------
+
+
+def _utc_now() -> Timestamp:
+    return Timestamp(datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"))
+
+
+def revoke_key(
+    database: Path,
+    key_id: KeyId,
+    operator: str,
+    *,
+    clock: Callable[[], Timestamp] = _utc_now,
+) -> Revocation:
+    """Durably revoke `key_id` with no integration service running. Success means committed.
+
+    Trusted operator context, checked before anything is written (I1k: through the same canonical
+    database identity the service uses, so an alias cannot bypass a running service):
+    - the database must already exist and resolve to one verified file (never created; not a
+      dangling symlink; exactly one hard link) and be an integration database;
+    - that file must be owned by the calling OS user and be owner-only (no group or other access);
+    - the caller must take its exclusive ownership lock, derived from the canonical path
+      (`OwnershipError` while a service runs: use the open service's bound `registry.revoke`);
+    - the write transaction re-verifies that the path still names that file before committing.
+    The record names the operator and the OS user. Idempotent: the first record is kept."""
+    if not isinstance(key_id, KeyId):
+        raise TypeError("key_id must be a KeyId")
+    if not operator.strip():
+        raise OfflineRevocationRefused("OPERATOR_REQUIRED")
+    try:
+        ownership = ProcessOwnership.acquire(Path(database), allow_create=False)
+    except DatabaseIdentityError as exc:
+        raise OfflineRevocationRefused(exc.reason, str(database)) from None
+    try:
+        canonical = ownership.identity.path
+        info = ownership.anchor_stat()  # the verified file itself, not the path
+        if info.st_uid != os.getuid():
+            raise OfflineRevocationRefused("NOT_OWNER", str(canonical))
+        if info.st_mode & 0o077:
+            raise OfflineRevocationRefused("INSECURE_PERMISSIONS", oct(stat.S_IMODE(info.st_mode)))
+        try:
+            probe = sqlite3.connect(f"file:{canonical}?mode=rw", uri=True)
+            try:
+                found = probe.execute(
+                    "SELECT 1 FROM sqlite_master WHERE type = 'table' "
+                    "AND name = 'integration_operations'"
+                ).fetchone()
+            finally:
+                probe.close()
+        except sqlite3.Error as exc:
+            raise OfflineRevocationRefused("UNREADABLE_DATABASE", type(exc).__name__) from None
+        ownership.verify()
+        if found is None:
+            raise OfflineRevocationRefused("NOT_AN_INTEGRATION_DATABASE", str(canonical))
+        actor = f"{operator.strip()} (os uid {os.getuid()})"
+        _offline_race_point("before_store")
+        try:
+            store = RevocationStore(canonical, verify=ownership.verify)
+            store.all()  # fail closed on malformed existing state
+            return store.revoke(key_id, clock(), actor, via="offline_admin")
+        except sqlite3.Error as exc:
+            raise RevocationNotPersisted(
+                f"{key_id.value}: offline revocation not committed ({type(exc).__name__})"
+            ) from None
+        except DatabaseIdentityError as exc:
+            raise OfflineRevocationRefused(exc.reason, str(canonical)) from None
+    finally:
+        ownership.release()
+
+
+def _offline_race_point(point: str) -> None:
+    """Test seam for deterministic race orchestration. Does nothing in production."""
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(
+        prog="python -m credence.integration.revocation",
+        description="Durably revoke a key in an integration database (no service running).",
+    )
+    parser.add_argument("--database", required=True, type=Path)
+    parser.add_argument("--key-id", required=True, help="ed25519:<64 hex digits>")
+    parser.add_argument("--operator", required=True, help="name recorded with the revocation")
+    args = parser.parse_args(argv)
+    try:
+        record = revoke_key(args.database, KeyId(args.key_id), args.operator)
+    except OwnershipError:
+        print(
+            "REFUSED: OWNED_BY_RUNNING_SERVICE: an integration service owns this database; "
+            "revoke through its bound registry instead",
+            file=sys.stderr,
+        )
+        return 2
+    except (OfflineRevocationRefused, RevocationNotPersisted, RevocationStateError) as exc:
+        print(f"REFUSED: {exc}", file=sys.stderr)
+        return 2
+    except DomainError as exc:
+        print(f"REFUSED: malformed key id ({exc})", file=sys.stderr)
+        return 2
+    print(f"revoked {record.key_id.value} at {record.revoked_at.value} by {record.revoked_by}")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

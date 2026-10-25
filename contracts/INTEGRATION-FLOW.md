@@ -1,6 +1,6 @@
 # INTEGRATION-FLOW
 
-Owner: Integration (San Antonio, Claude Code). Status: Integration I1c, remediated in I1e and I1g. Only the owner edits this file. Other workstreams file a request in `contracts/requests/`.
+Owner: Integration (San Antonio, Claude Code). Status: Integration I1c, remediated in I1e, I1g, I1i, I1k, I1m and I1o. Only the owner edits this file. Other workstreams file a request in `contracts/requests/`.
 
 This contract describes `credence/integration/` as implemented. The code is authoritative. `tests/integration/test_i1_contract.py` checks the lists below against the code. The decisions are `docs/decisions/0008-integration-i1c-inference-accounting.md` and `docs/decisions/0009-integration-i1e-security-remediation.md`. What a recorded attempt, a claimed execution, provider execution, captured evidence, verified delivery, accounting settlement and XRPL settlement each mean is set out in `contracts/SETTLEMENT-COORDINATOR.md`, "What each record means".
 
@@ -22,7 +22,7 @@ It connects Inference delivery (`contracts/INFERENCE-GATEWAY-CONTRACT.md`, `Gate
 
 `IntegrationService.purchase(job, signer)`, for one job:
 
-1. **Ownership.** The service owns the database (`ProcessOwnership`, an OS `flock` on `<database>.owner`). A second owner, in any process, is refused (`OwnershipError`).
+1. **Ownership.** The service owns the database's canonical identity (`ProcessOwnership`: an OS `flock` on `<canonical database>.owner`, see "Database identity and ownership"). A second owner, in any process and through any path spelling, is refused (`OwnershipError`).
 2. **Serialization.** The facility's in-process lock is held from this step until the operation is settled or terminally reconciled. There is one in-flight purchase per facility; a facility with an unreconciled journal entry refuses new purchases (`FACILITY_BUSY`).
 3. **Registration.** The facility must be registered in Core (otherwise `UNREGISTERED_FACILITY`).
 4. **Accounting.** Core's authoritative exposure is read. The presented limit must equal the stored limit (otherwise `FACILITY_LIMIT_MISMATCH`), and drawn is taken from Core.
@@ -108,24 +108,91 @@ So a retrieval authorization cannot acknowledge, an authorization for one operat
 
 `NotAuthorized` codes: `MALFORMED_AUTHORIZATION`, `WRONG_ACTION`, `WRONG_OPERATION`, `MALFORMED_NONCE`, `AUTHORIZATION_EXPIRED`, `AUTHORIZATION_TOO_LONG`, `UNKNOWN_KEY`, `BAD_SIGNATURE`, `WRONG_ROLE`, `REVOKED_KEY`, `WRONG_AGENT`, `UNKNOWN_OPERATION`, `NONCE_REUSED`.
 
-## Key revocation (I1g, finding F1)
+## Key revocation (I1g finding F1, lifecycle closed in I1i)
 
-Revocation is durable and fail-closed. It survives restarts and overrides any registry supplied later.
+A revocation never appears successful unless it is committed to `integration_key_revocations`. These cases are distinct:
 
-- **Record.** `integration_key_revocations` holds the key ID, the revocation time, the trusted administrative actor (the `operator` the service was opened with), and how it was made. It is in the same database. A record never expires and is never deleted.
-- **Authority.** The service gives Core and the gateway a `DurableKeyRegistry`. Keys come from the operator's registry; a persisted revocation reports the key as `revoked` whatever that registry says. Re-registering the key, or a freshly built registry that lists it as current, does not restore it.
-- **The existing workflow is routed through persistence.** While the service is open, `KeyRegistry.revoke(key_id)` on the registry it was opened with commits the revocation record before the revocation takes effect. A revocation already present in that registry when the service opens is persisted at open. Closing the service restores Core's own `revoke` on that object.
-- **No public revocation operation.** Revoking requires the operator's in-process registry object. Agents and remote callers cannot revoke.
+| Case | What happens | Durable? |
+| --- | --- | --- |
+| Core in-memory revocation: `KeyRegistry.revoke` on a registry never bound to a service | Changes that object only | No. It is not a Credence administrative operation |
+| Durable bound revocation: `revoke` on the operator's registry while its service is open | Commits the record, then marks the key revoked, then returns | Yes |
+| Revocation attempted after the service closed: `revoke` on that registry after `close()` | Marks the key revoked in that object (fail closed in-process) and raises `RevocationNotPersisted`; nothing is committed. Closing twice keeps this. Binding the same object to a new service persists what it marks | No, and the operator is told so |
+| Trusted offline administrative revocation: `revoke_key(database, key_id, operator)` | Commits the record with no service running; success means committed | Yes |
+| Durable state on restart | Persisted revocations override any registry supplied later, including a fresh one listing the key as current, and re-registration | — |
+| Unexpected in-process revocation: a key revoked in the supplied registry with no record (for example `KeyRegistry.revoke(registry, key_id)`, which bypasses the binding) | Refused at once in this process; not persisted | No |
+
+- **Record.** `integration_key_revocations` holds the key ID, the revocation time, the trusted administrative actor, and how it was made (`via`: `key_registry_revoke` or `offline_admin`).
+  - For a bound revocation the actor is the `operator` the service was opened with. For an offline one it is the operator name plus the OS user ID.
+  - It is in the same database. A record never expires and is never deleted, and revoking again keeps the first record.
+  - An I1g database is upgraded in place on first use, keeping its records.
+- **`lookup` performs no persistence and no database I/O on any branch.** Core calls it inside its own write transactions (settlement verifies signatures in-transaction). It reads an in-memory mirror of the persisted revocations and the set of keys refused in this process. Persistence happens only in the bound `revoke`, at binding (when the service opens), or in `revoke_key`, never inside Core's transactions.
+- **Authority.** The service gives Core and the gateway a `DurableKeyRegistry`. Keys come from the operator's registry; a revoked key is reported `revoked` whatever that registry says.
+- **One binding at a time.** A registry bound to an open service cannot be bound by another (`RegistryAlreadyBound`). A later service's binding replaces the closed one's, and a stale `close()` of the earlier service does not disturb it.
+- **Trusted offline revocation.** `revoke_key` (command line: `python -m credence.integration.revocation --database PATH --key-id ed25519:... --operator NAME`) uses the same identity procedure as the service, so a path alias cannot reach a database a service owns. It runs only when all of these hold:
+  - the database already exists and resolves to one verified file. It is never created (`DATABASE_MISSING`). A dangling symlink is refused (`DANGLING_SYMLINK`), and so is a hard-linked file (`HARD_LINKED`). It must be a regular file (`NOT_A_REGULAR_FILE`), and it must be an integration database (`NOT_AN_INTEGRATION_DATABASE`);
+  - that file is owned by the calling OS user (`NOT_OWNER`) and is owner-only (`INSECURE_PERMISSIONS`), checked on the verified file, not the path;
+  - the caller takes the exclusive ownership lock derived from the canonical path (`OwnershipError` while a service runs, through any alias);
+  - the path still names that file inside the write transaction, before commit (`IDENTITY_CHANGED`, `ALIAS_CHANGED`; nothing is committed).
+
+  It fails loudly (`RevocationNotPersisted`) if the commit fails. On the command line, every refusal, including a running service (`REFUSED: OWNED_BY_RUNNING_SERVICE`), prints `REFUSED: <code>` and exits 2. It is not an HTTP endpoint, and agents and remote callers cannot revoke.
+- **Emergency revocation.**
+  - While the service runs: call `revoke` on the operator registry it was opened with. It returns only after the commit.
+  - During downtime: run `revoke_key` as the OS user owning the database (the command above). Exit status 0 means committed; any refusal exits 2 with the reason. The next service start refuses the key whatever registry it is given.
 - **Fail closed.**
-  - An unreadable or malformed revocation record refuses opening the service, purchase admission, retrieval and acknowledgment (`RevocationStateError`).
-  - If a revocation cannot be persisted, the key is still refused in this process and `RevocationNotPersisted` is raised.
+  - An unreadable or malformed revocation record refuses opening the service, purchase admission, retrieval, acknowledgment and offline revocation (`RevocationStateError`).
+  - A failed bound persistence raises `RevocationNotPersisted` and the key stays refused in-process.
 - **Ordering.**
   - Retrieval and acknowledgment re-read the revocation row inside their access transaction, so a revocation committed first refuses them (`REVOKED_KEY`) without consuming a nonce.
-  - Purchase admission (Core's reservation) and the pre-execution check below run under the same in-process gate as revocation commits.
+  - Purchase admission (Core's reservation) and the pre-execution check below run under the same in-process gate as bound revocation commits. Offline revocation cannot race a running service; it needs the ownership lock.
 - **Purchases already admitted when a revocation commits.**
   - Not yet executing (no Core delivery attempt): the provider is not called. The hold is released through Core's audited no-delivery release, and the operation ends `released_undelivered` with detail `agent key revoked before execution`.
   - Executing (Core recorded the attempt): the delivery may be payable, so it continues to accounting settlement. The revoked key cannot retrieve the response, which stays retained (see Known failure windows).
-- A revoked agent key's new purchases are refused before any reservation: Core qualifies no offer (`KEY_REVOKED`).
+- **New purchases by a revoked agent key are refused before any provider call.** Core qualifies no offer (`KEY_REVOKED`). If the revocation lands between qualification and reservation, Core's reservation rejects it (`policy_rejected`, `KEY_REVOKED`).
+- **A revoked gateway or provider key** makes affected settlements fail verification (`RECEIPT_SIG_INVALID`, a dispute with the hold kept). Nothing is settled or falsely released, and nothing is re-executed.
+
+## Database identity and ownership (I1k)
+
+Ownership and offline revocation are bound to the physical database file, not to the path spelling. Every caller goes through `ProcessOwnership.acquire`.
+
+1. **Canonical identity.**
+   - An existing database path is resolved with `Path.resolve(strict=True)`, so every symlink alias names the same canonical path.
+   - A path that does not exist is a fresh database only when creation is requested, as the service does. It must not be a symlink (`DANGLING_SYMLINK`). Its parent is resolved strictly (`PARENT_MISSING`) and the name appended, so a symlinked parent directory yields the same canonical destination.
+2. **Owner lock.** `<canonical path>.owner` is opened with `O_NOFOLLOW`, and must be a regular file with one link (`LOCK_FILE_UNSAFE`). The caller's alias never determines it.
+3. **Verified file.** With the lock held:
+   - an existing database is opened with `O_NOFOLLOW`, and its device and inode must equal those inspected before the lock was taken (`IDENTITY_CHANGED`: replaced, deleted and recreated, or vanished);
+   - a fresh database is created with `O_CREAT | O_EXCL | O_NOFOLLOW`, owner-only. If one appears in the meantime it is refused, never adopted (`IDENTITY_CHANGED`);
+   - the file must be regular, with exactly one hard link (`NOT_A_REGULAR_FILE`, `HARD_LINKED`);
+   - the caller's path must still resolve to the canonical path (`ALIAS_CHANGED`).
+
+   Any mismatch is refused (`DatabaseIdentityError`) before ownership is reported. An existing database that disappears is never silently recreated.
+4. **Anchor and checkpoints.** The verified file stays open for the life of the ownership, and the service uses only the canonical path. The canonical path must still name the anchored file (same device and inode, one link) at each of these checkpoints:
+   - every public service operation;
+   - immediately before each Core write phase of a purchase: reservation, delivery attempt, settlement;
+   - inside every integration journal and revocation transaction, after `BEGIN IMMEDIATE` and before `COMMIT`.
+
+   On a mismatch the service is poisoned: every later operation is refused with the same `DatabaseIdentityError` until it is closed. A hard link added, the file replaced, or the directory made untrusted is caught at the next checkpoint **if it is still in place then**. Identity checks detect a replacement only while it is observable.
+5. **Hard links** are refused outright, at open and at every checkpoint. This implementation establishes no inode-based lock that could make two link names safe.
+6. **Release.** `close()` releases the flock on the canonical lock and closes the anchor. The OS releases both if the process dies. The next owner repeats the whole procedure.
+7. **Offline revocation** goes through the same procedure (see "Key revocation"). It cannot commit while a service owns the database through any alias, and it verifies identity before committing.
+8. **Trusted directory boundary (I1m, completed in I1o).** Before ownership or offline revocation is taken, `resolve_trusted` refuses any location that a principal other than this effective user (or root) could manipulate. It does not rely on `Path.resolve()` alone: it walks every component actually traversed, starting at the root. Each entry is looked up in a directory already checked, and that directory must meet the rules below for the entry. A symlink's target components are walked the same way, on every hop and however deeply nested, so a chain such as `private/chain → shared/link → private/data/db.sqlite3` crosses `shared` and is judged by it. The walk is re-run at every identity checkpoint while the service runs:
+
+   | Location | Accepted | Refused |
+   | --- | --- | --- |
+   | Database directory (holds the database, the owner lock and SQLite's journal) | Owned by this effective user, with no group or other write bit (for example `0700`, `0750`, `0755`) | Any group or other write bit, sticky or not: `WRITABLE_DATABASE_DIRECTORY`. Another owner: `UNTRUSTED_DIRECTORY_OWNER` |
+   | Each ancestor directory | Owned by this user or root, not group- or other-writable; or writable but sticky (like `/tmp`) with the next component owned by this user or root | Another owner: `UNTRUSTED_DIRECTORY_OWNER`. Writable without the sticky bit, or sticky with a foreign next component: `WRITABLE_DIRECTORY` |
+   | Every symlink traversed, on the caller's path or inside any link target (file or directory, any number of hops) | Owned by this user or root, in a directory meeting the ancestor rule | Another owner: `UNTRUSTED_SYMLINK`. In a writable, non-sticky directory: `WRITABLE_DIRECTORY`. More than 40 hops: `SYMLINK_LOOP`. Missing target: `DANGLING_SYMLINK`. Changed while read, or the walk disagrees with the OS's resolution: `PATH_CHANGED` |
+   | ACLs (macOS extended ACLs; POSIX ACLs on Linux) | Deny-only entries (for example macOS's default `everyone deny delete` on home directories) | macOS: any non-deny entry granting add, delete, write, attribute, security or ownership changes. Linux: any POSIX ACL. Both refused whatever the mode bits say (`DIRECTORY_ACL`). Unreadable: `ACL_UNREADABLE` |
+   | Database and lock files (checked through their open descriptors, before either is changed) | Owned by this effective user; exactly one link; no group or other write bit (a database readable by others is accepted and then tightened to `0600`); ACL entries that are read-only or deny-only and do not block the owner | Another owner: `NOT_OWNER`. Group or other write: `FILE_PERMISSIONS`. An ACL entry granting write, append, delete, attribute, security or ownership changes: `FILE_ACL`. For the lock, any of these, an owner-blocking deny, or the name no longer leading to the locked file: `LOCK_FILE_UNSAFE` |
+
+   Only macOS and Linux are supported (`UNSUPPORTED_PLATFORM` otherwise). The policy is conservative; it is not a deployment-wide permission manager.
+
+   **Revalidation while running (I1o).** Every identity checkpoint (each public operation, before each Core write phase, and inside the integration's write transactions) re-establishes, before the operation proceeds:
+   - the trusted walk of the canonical path, so a traversed directory made writable or given a write-granting ACL after startup is refused;
+   - the database directory rule;
+   - the database file's identity and security;
+   - the lock: the lock path must still name the locked file (`LOCK_IDENTITY_CHANGED`), with the same file checks.
+
+   A failure poisons the service. Under the boundary no other principal can delete or recreate the lock entry: the directory is private, and a delete-granting ACL on the lock is refused. A same-user deletion is outside the boundary. A second process could then lock a new entry, because the lock cannot be pinned to the database inode (a `flock` on the database blocks SQLite's own locking on macOS). The original owner is refused at its next checkpoint.
 
 ## Journal
 
@@ -187,8 +254,15 @@ Interruption points are tested at each of:
   A crash after `begin_delivery` but before the claim is also reported as `unknown`. The absence of a claim does show the supported gateway made no call, but the release rule still requires no attempt at all; it was not widened in I1e. The same conservative classification applies to failures a provider adapter raises before sending anything (for example a missing or malformed Nebius credential). This fails closed.
 - **`unknown` holds lapse by expiry.** That frees headroom. If the provider did execute, the cost is outside Credence's accounting until reconciled by hand.
 - **A revoked key strands its settled response.** Retrieval needs the purchasing key, by design, so a response settled for a key that is later revoked stays retained but unreadable until an operator handles it.
-- **Revocations made before the service opens.** These are read from the operator's registry through its internal key table, because Core's `KeyRegistry` exposes no listing. While the service is open, `revoke` on that registry is replaced by an instance-level override; Core's class is unchanged.
-- **Ownership is advisory.** It binds every `IntegrationService`. Code that opens the SQLite file directly is not prevented.
+- **Revocations in the operator's registry before binding.** These are read through the registry's internal key table, because Core's `KeyRegistry` exposes no listing. From binding on, `revoke` on that registry is an instance-level override (durable while open, raising after close); Core's class is unchanged. A Core in-memory revocation on a registry that is never bound is not durable.
+- **Ownership is advisory.** It binds every `IntegrationService` and `revoke_key`. Code that opens the SQLite file directly is not prevented.
+- **Identity checks are checkpoints, not a pinned descriptor (corrected in I1m).** SQLite opens the database by path for each Core operation. Identity is verified at the checkpoints above and inside the integration's own write transactions, not inside Core's. Checkpoint verification is not equivalent to binding every SQLite connection to a permanently pinned file descriptor.
+  - A replacement is detected only while it is observable at a check. One still in place at the next checkpoint is detected and poisons the service, but whatever a Core step wrote to the replacement before then is not undone.
+  - **A swap-and-restore completed entirely between two checks can evade detection.** It is reproduced in `test_i1_trusted_directory.py`: Core's reservation lands in the substitute and no check fires. The timing window is not eliminated.
+  - Credence's supported deployment security assumes the database directory and the lock-file directory cannot be manipulated by untrusted principals. That is enforced by the trusted directory boundary above.
+  - Code running with this user's filesystem authority (or root's) is outside the boundary.
+
+  The guarantees also assume a local POSIX filesystem with stable device and inode numbers and working `flock`; network filesystems are not supported.
 - **Enforced interfaces only.** Provider execution is authorized by Core only through the supported interfaces: Core's coordinator, `Gateway.deliver` with Core's authority, and this service. A program that calls a provider adapter directly, or writes the SQLite file, is outside them. Credence does not claim execution is impossible there; such a delivery has no Core attempt and cannot settle.
 
 ## Remote agent signing (I2a, CR-1, provisional)

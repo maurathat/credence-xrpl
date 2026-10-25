@@ -13,6 +13,7 @@
 2. **Serialization.**
    - There is one in-flight purchase per facility, from reservation through accounting settlement or terminal reconciliation. An in-process per-facility lock enforces it, backed by the journal's in-flight check.
    - One process serves a database, enforced by an OS `flock` on `<database>.owner`, which the OS drops when its owner dies.
+   - **Amended by decision 0009 §12 (I1k):** the lock is derived from the database's canonical, verified identity (`<canonical database>.owner`), not the caller's path spelling, so aliases cannot create a second owner.
 3. **Durable intent before chargeable execution, as Core state.**
    - Core records a delivery attempt (`begin_delivery`) before any provider call.
    - The no-delivery release is permitted only when Core has no attempt for the reservation. The trusted evidence is Core's own record, not a caller's claim.

@@ -410,6 +410,7 @@ def test_r3_service_exposes_no_purchase_reserve_or_release_bypass(tmp_path: Path
     assert public == {
         "accounting",
         "acknowledge",
+        "database",
         "close",
         "journal_entry",
         "lifecycle_events",
