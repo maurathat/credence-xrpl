@@ -1,0 +1,21 @@
+{
+  "name": "claw-street-live-demo",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Guided, read-only three-minute demo of Claw Street at https://creds-for-ai.lovable.app",
+  "type": "module",
+  "engines": {
+    "node": ">=20.11"
+  },
+  "scripts": {
+    "present": "node demo.mjs present",
+    "rehearse": "node demo.mjs rehearse",
+    "record": "node demo.mjs record",
+    "check": "node demo.mjs check",
+    "install-browser": "playwright install chromium",
+    "selftest": "node guard-selftest.mjs"
+  },
+  "dependencies": {
+    "playwright": "1.60.0"
+  }
+}
