@@ -1,6 +1,6 @@
 # 0009. Integration I1e: close authorization and accounting bypasses
 
-- Status: Accepted for the integration branch, amended for I1g (§7–§10) and I1i (§11). **Provisionally blocked for acceptance** until independent Core and Inference owner reviews approve the final I1g commit.
+- Status: Accepted for the integration branch, amended for I1g (§7–§10), I1i (§11) and I1k (§12). **Provisionally blocked for acceptance** until independent Core and Inference owner reviews approve the final I1g commit.
 - Date: 2026-10-19
 - Owner: Integration (San Antonio)
 - Source: Maura's I1e authorization, and the I1d owner reviews of commit `cfc6224`:
@@ -66,6 +66,19 @@
      - `via` widens to `offline_admin`; I1g tables are upgraded in place.
    - `DurableKeyRegistry.lookup` performs no database I/O on any branch. An unexpected in-memory revocation is refused in-process, not persisted from inside Core's write transactions. This removes the 31 s nested busy-timeout stall.
    - Frozen Core `KeyRegistry`, C3A/C3B formats and Core settlement rules are unchanged.
+
+12. **Database identity and ownership (I1k, 2026-10-24; Skopje I1j finding).**
+   - **The defect.** A symlink alias derived a different `.owner` lock. The offline revocation therefore committed while a service ran (and the service ignored it), and a second service could open the same database.
+   - **Identity procedure.** Ownership and offline revocation now share one identity procedure:
+     - the canonical path: `resolve(strict=True)` for an existing file, or the strictly resolved parent plus the name for a fresh one;
+     - a lock derived from the canonical path, opened with `O_NOFOLLOW`;
+     - under the lock, the database opened with `O_NOFOLLOW` (fresh: `O_CREAT | O_EXCL`) and its device and inode checked against the pre-lock inspection;
+     - exactly one hard link, and the caller's path still resolving to the canonical path.
+   - **Refusals.** Mismatches are typed `DatabaseIdentityError` refusals: `DANGLING_SYMLINK`, `DATABASE_MISSING`, `PARENT_MISSING`, `NOT_A_REGULAR_FILE`, `HARD_LINKED`, `IDENTITY_CHANGED`, `ALIAS_CHANGED`, `LOCK_FILE_UNSAFE`.
+   - **While running.** The verified file stays open as an anchor, re-verified at service checkpoints and inside the integration's write transactions. A mismatch poisons the service.
+   - **CLI.** A refused offline revocation, including `OwnershipError`, prints `REFUSED: <code>` and exits 2.
+   - **Unchanged.** No new lock service or external database. Core, Inference, policy, billing, verifier and canonical formats are unchanged.
+   - **Residual.** Identity is checked at checkpoints, not bound to SQLite's own file descriptor; a local POSIX filesystem is assumed.
 
 ## Consequences
 

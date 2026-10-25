@@ -17,7 +17,8 @@ supplied later. These are distinct:
 - **Trusted offline administrative revocation.** `revoke_key(database, key_id, operator)` commits a
   record with no service running. Trust is the operating system's: the caller must be the OS user
   owning the existing owner-only (0600) integration database and must hold its exclusive ownership
-  lock. It never creates a database, is idempotent and irreversible, and reports success only
+  lock, derived from the database's canonical, verified identity (I1k) so no path alias can
+  bypass a running service. It never creates a database, is idempotent and irreversible, and reports success only
   after commit. Command line: `python -m credence.integration.revocation --database PATH
   --key-id ed25519:... --operator NAME`. It is not an HTTP endpoint.
 - **Durable state on restart.** Persisted revocations override any registry supplied later, never
@@ -50,7 +51,11 @@ from pathlib import Path
 
 from credence.core.primitives import DomainError, KeyId, Timestamp
 from credence.core.signatures import KeyRegistry, KeyStatus, RegisteredKey
-from credence.integration.ownership import ProcessOwnership
+from credence.integration.ownership import (
+    DatabaseIdentityError,
+    OwnershipError,
+    ProcessOwnership,
+)
 
 VIAS = ("key_registry_revoke", "offline_admin")
 
@@ -118,9 +123,18 @@ def revocation_in(conn: sqlite3.Connection, key_id: str) -> Revocation | None:
 
 
 class RevocationStore:
-    def __init__(self, path: Path, *, busy_timeout: float = 30) -> None:
+    def __init__(
+        self,
+        path: Path,
+        *,
+        busy_timeout: float = 30,
+        verify: Callable[[], None] | None = None,
+    ) -> None:
+        """`verify` (I1k) runs inside every write transaction, after BEGIN IMMEDIATE and again
+        before COMMIT: it raises unless the path still names the owned, verified database."""
         self._path = str(path)
         self._busy_timeout = busy_timeout
+        self._verify = verify or (lambda: None)
         with self._write() as conn:
             existing = conn.execute(
                 "SELECT sql FROM sqlite_master WHERE type = 'table' "
@@ -146,7 +160,9 @@ class RevocationStore:
         try:
             conn.execute("BEGIN IMMEDIATE")
             try:
+                self._verify()  # this connection's file is the verified database
                 yield conn
+                self._verify()
             except BaseException:
                 conn.execute("ROLLBACK")
                 raise
@@ -324,31 +340,32 @@ def revoke_key(
 ) -> Revocation:
     """Durably revoke `key_id` with no integration service running. Success means committed.
 
-    Trusted operator context, checked before anything is written:
-    - the database must already exist (it is never created) and be an integration database;
-    - it must be owned by the calling OS user and be owner-only (no group or other access);
-    - the caller must take its exclusive ownership lock (refused while a service runs: use the
-      open service's bound `registry.revoke` then).
+    Trusted operator context, checked before anything is written (I1k: through the same canonical
+    database identity the service uses, so an alias cannot bypass a running service):
+    - the database must already exist and resolve to one verified file (never created; not a
+      dangling symlink; exactly one hard link) and be an integration database;
+    - that file must be owned by the calling OS user and be owner-only (no group or other access);
+    - the caller must take its exclusive ownership lock, derived from the canonical path
+      (`OwnershipError` while a service runs: use the open service's bound `registry.revoke`);
+    - the write transaction re-verifies that the path still names that file before committing.
     The record names the operator and the OS user. Idempotent: the first record is kept."""
     if not isinstance(key_id, KeyId):
         raise TypeError("key_id must be a KeyId")
     if not operator.strip():
         raise OfflineRevocationRefused("OPERATOR_REQUIRED")
-    path = Path(database)
     try:
-        info = os.stat(path)
-    except FileNotFoundError:
-        raise OfflineRevocationRefused("DATABASE_MISSING", str(path)) from None
-    if not stat.S_ISREG(info.st_mode):
-        raise OfflineRevocationRefused("NOT_A_FILE", str(path))
-    if info.st_uid != os.getuid():
-        raise OfflineRevocationRefused("NOT_OWNER", str(path))
-    if info.st_mode & 0o077:
-        raise OfflineRevocationRefused("INSECURE_PERMISSIONS", oct(stat.S_IMODE(info.st_mode)))
-    ownership = ProcessOwnership.acquire(path)  # OwnershipError while a service runs
+        ownership = ProcessOwnership.acquire(Path(database), allow_create=False)
+    except DatabaseIdentityError as exc:
+        raise OfflineRevocationRefused(exc.reason, str(database)) from None
     try:
+        canonical = ownership.identity.path
+        info = ownership.anchor_stat()  # the verified file itself, not the path
+        if info.st_uid != os.getuid():
+            raise OfflineRevocationRefused("NOT_OWNER", str(canonical))
+        if info.st_mode & 0o077:
+            raise OfflineRevocationRefused("INSECURE_PERMISSIONS", oct(stat.S_IMODE(info.st_mode)))
         try:
-            probe = sqlite3.connect(f"file:{path}?mode=rw", uri=True)
+            probe = sqlite3.connect(f"file:{canonical}?mode=rw", uri=True)
             try:
                 found = probe.execute(
                     "SELECT 1 FROM sqlite_master WHERE type = 'table' "
@@ -358,19 +375,27 @@ def revoke_key(
                 probe.close()
         except sqlite3.Error as exc:
             raise OfflineRevocationRefused("UNREADABLE_DATABASE", type(exc).__name__) from None
+        ownership.verify()
         if found is None:
-            raise OfflineRevocationRefused("NOT_AN_INTEGRATION_DATABASE", str(path))
+            raise OfflineRevocationRefused("NOT_AN_INTEGRATION_DATABASE", str(canonical))
         actor = f"{operator.strip()} (os uid {os.getuid()})"
+        _offline_race_point("before_store")
         try:
-            store = RevocationStore(path)
+            store = RevocationStore(canonical, verify=ownership.verify)
             store.all()  # fail closed on malformed existing state
             return store.revoke(key_id, clock(), actor, via="offline_admin")
         except sqlite3.Error as exc:
             raise RevocationNotPersisted(
                 f"{key_id.value}: offline revocation not committed ({type(exc).__name__})"
             ) from None
+        except DatabaseIdentityError as exc:
+            raise OfflineRevocationRefused(exc.reason, str(canonical)) from None
     finally:
         ownership.release()
+
+
+def _offline_race_point(point: str) -> None:
+    """Test seam for deterministic race orchestration. Does nothing in production."""
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -384,6 +409,13 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = parser.parse_args(argv)
     try:
         record = revoke_key(args.database, KeyId(args.key_id), args.operator)
+    except OwnershipError:
+        print(
+            "REFUSED: OWNED_BY_RUNNING_SERVICE: an integration service owns this database; "
+            "revoke through its bound registry instead",
+            file=sys.stderr,
+        )
+        return 2
     except (OfflineRevocationRefused, RevocationNotPersisted, RevocationStateError) as exc:
         print(f"REFUSED: {exc}", file=sys.stderr)
         return 2

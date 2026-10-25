@@ -25,7 +25,7 @@ from __future__ import annotations
 
 import json
 import sqlite3
-from collections.abc import Iterator, Mapping
+from collections.abc import Callable, Iterator, Mapping
 from contextlib import contextmanager
 from dataclasses import dataclass
 from enum import Enum
@@ -294,9 +294,18 @@ class Operation:
 
 
 class Journal:
-    def __init__(self, path: Path, *, busy_timeout: float = 30) -> None:
+    def __init__(
+        self,
+        path: Path,
+        *,
+        busy_timeout: float = 30,
+        verify: Callable[[], None] | None = None,
+    ) -> None:
+        """`verify` (I1k) runs inside every write transaction, after BEGIN IMMEDIATE and again
+        before COMMIT: it raises unless the path still names the owned, verified database."""
         self._path = str(path)
         self._busy_timeout = busy_timeout
+        self._verify = verify or (lambda: None)
         with self._write() as conn:
             for statement in SCHEMA.split(";"):
                 if statement.strip():
@@ -308,7 +317,9 @@ class Journal:
         try:
             conn.execute("BEGIN IMMEDIATE")
             try:
+                self._verify()  # this connection's file is the verified database
                 yield conn
+                self._verify()
             except BaseException:
                 conn.execute("ROLLBACK")
                 raise

@@ -37,7 +37,6 @@ Owner: Integration (San Antonio).
 from __future__ import annotations
 
 import hashlib
-import os
 import threading
 from collections.abc import Callable, Iterable, Iterator
 from contextlib import contextmanager
@@ -118,11 +117,10 @@ from credence.integration.journal import (
     OperationState,
     StateRefused,
 )
-from credence.integration.ownership import ProcessOwnership
+from credence.integration.ownership import DatabaseIdentityError, ProcessOwnership
 from credence.integration.revocation import DurableKeyRegistry, RevocationStore
 
 S = OperationState
-DATABASE_FILE_MODE = 0o600
 
 # Interruption points, in lifecycle order (tests only). A hook may raise to simulate a crash.
 CRASH_POINTS = (
@@ -288,14 +286,6 @@ def nonce_for(idempotency_key: str, offer_index: int) -> Nonce:
     return Nonce(hashlib.sha256(material).hexdigest()[:32])
 
 
-def _restrict(path: Path) -> None:
-    fd = os.open(path, os.O_RDWR | os.O_CREAT, DATABASE_FILE_MODE)
-    try:
-        os.fchmod(fd, DATABASE_FILE_MODE)
-    finally:
-        os.close(fd)
-
-
 class IntegrationService:
     """The single process that serves one integration database."""
 
@@ -316,14 +306,17 @@ class IntegrationService:
         persists the revocation in this database before it takes effect, and persisted
         revocations override any registry supplied later (I1g, F1). `operator` names the trusted
         administrative actor recorded with each revocation."""
-        self._database = Path(database)
-        self._ownership = ProcessOwnership.acquire(self._database)
+        # I1k: ownership is bound to the database's canonical identity; from here on only the
+        # canonical path is used, and every checkpoint verifies it still names the owned file.
+        self._ownership = ProcessOwnership.acquire(Path(database), allow_create=True)
+        self._database = self._ownership.identity.path
+        self._identity_failure: DatabaseIdentityError | None = None
         # Serializes revocation commits with purchase admission (I1g, F1).
         self._revocation_gate = threading.RLock()
         self._durable_registry: DurableKeyRegistry | None = None
         try:
-            _restrict(self._database)
-            revocations = RevocationStore(self._database)
+            self._ownership.restrict_permissions()
+            revocations = RevocationStore(self._database, verify=self._ownership.verify)
             revocations.all()  # fail closed on unreadable or malformed revocation state
             self._durable_registry = DurableKeyRegistry(
                 registry, revocations, actor=operator, clock=clock, gate=self._revocation_gate
@@ -333,7 +326,7 @@ class IntegrationService:
             self._coordinator = SettlementCoordinator(
                 self._ledger, self._durable_registry, fault=coordinator_fault
             )
-            self._journal = Journal(self._database)
+            self._journal = Journal(self._database, verify=self._ownership.verify)
             self._gateway = Gateway(
                 ledger=self._ledger,
                 registry=self._durable_registry,
@@ -383,6 +376,18 @@ class IntegrationService:
     def _require_open(self) -> None:
         if not self._ownership.held:
             raise ServiceClosed(str(self._database))
+        self._check_identity()
+
+    def _check_identity(self) -> None:
+        """I1k checkpoint: the canonical path still names the owned file. A mismatch poisons the
+        service: every later operation is refused until it is closed."""
+        if self._identity_failure is not None:
+            raise self._identity_failure
+        try:
+            self._ownership.verify()
+        except DatabaseIdentityError as exc:
+            self._identity_failure = exc
+            raise
 
     @contextmanager
     def _facility_lock(self, facility_id: str) -> Iterator[None]:
@@ -392,6 +397,11 @@ class IntegrationService:
             yield
 
     # --- read-only views -----------------------------------------------------------------
+
+    @property
+    def database(self) -> Path:
+        """The canonical path of the owned database (I1k)."""
+        return self._database
 
     @property
     def accounting(self) -> AccountingView:
@@ -535,6 +545,7 @@ class IntegrationService:
         self._crash("after_intent")
 
         with self._revocation_gate:  # a revocation committed first is seen by the policy check
+            self._check_identity()  # before Core's reservation write
             signature = chosen.request_signature
             if signature is not None:
                 assert self._durable_registry is not None
@@ -601,6 +612,7 @@ class IntegrationService:
         # Admitted before a revocation, but not yet executing: a revocation committed first stops
         # the provider call (I1g, F1). The gate orders this check against revocation commits.
         with self._revocation_gate:
+            self._check_identity()  # before Core records the delivery attempt
             if self._agent_revoked(op):
                 return self._release_undelivered(
                     op,
@@ -682,6 +694,7 @@ class IntegrationService:
         """From DELIVERED: submit the stored evidence to Core."""
         op = self._journal.get(operation_id)
         assert op is not None and op.state is S.DELIVERED
+        self._check_identity()  # before Core's settlement write
         try:
             result = self._coordinator.settle(self._submission(op), self._clock())
         except SettlementRefused as exc:
