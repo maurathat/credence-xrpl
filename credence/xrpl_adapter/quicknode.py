@@ -558,16 +558,16 @@ class QuickNodeJsonRpcClient:
             response = connection.getresponse()
             if response.status != 200:
                 return _http_failure(method, response.status, response.getheader("Retry-After"))
-            declared = response.getheader("Content-Length")
-            if declared is not None and (
-                not declared.strip().isdigit()
-                or len(declared.strip()) > 12
-                or int(declared) > MAX_RESPONSE_BYTES
-            ):
-                return QuickNodeRefused("RESPONSE_TOO_LARGE", method)
+            framing = _framing_refusal(response.headers)
+            if framing is not None:
+                return QuickNodeRefused(framing, method)
             chunks: list[bytes] = []
             size = 0
-            while True:
+            # Completion comes from http.client's framing state, never from the socket. Once the
+            # parser has the whole body (Content-Length reached, terminating chunk read, or EOF
+            # for a close-delimited body) it closes the response; for a ``Connection: close`` or
+            # HTTP/1.0 response that also releases the socket. Nothing touches the socket after.
+            while not response.isclosed():
                 sock.settimeout(self._remaining(deadline))
                 chunk = response.read1(_READ_CHUNK)
                 if not chunk:
@@ -606,6 +606,29 @@ class QuickNodeJsonRpcClient:
         if isinstance(exc, OSError):
             return QuickNodeUnavailable("CONNECTION_FAILED", method)
         return QuickNodeRefused("HTTP_PROTOCOL_ERROR", method)
+
+
+def _framing_refusal(headers: Any) -> str | None:
+    """Refuse ambiguous or oversized body framing before any of the body is read.
+
+    ``http.client`` silently prefers ``Transfer-Encoding`` over ``Content-Length`` and treats an
+    unparseable length as "read to EOF"; both would let a hostile peer choose the framing.
+    """
+    lengths = [value.strip() for value in headers.get_all("Content-Length") or []]
+    encodings = [value.strip() for value in headers.get_all("Transfer-Encoding") or []]
+    if encodings:
+        tokens = [token.strip().lower() for token in ",".join(encodings).split(",")]
+        if lengths or tokens != ["chunked"]:
+            return "MALFORMED_HTTP_RESPONSE"
+    if lengths:
+        if len(set(lengths)) != 1:
+            return "MALFORMED_HTTP_RESPONSE"
+        declared = lengths[0]
+        if not (declared.isascii() and declared.isdigit()):
+            return "MALFORMED_HTTP_RESPONSE"
+        if len(declared) > 12 or int(declared) > MAX_RESPONSE_BYTES:
+            return "RESPONSE_TOO_LARGE"
+    return None
 
 
 def _http_failure(method: str, status: int, retry_after_header: str | None) -> QuickNodeError:
@@ -737,9 +760,10 @@ class HostedPaymentObservation:
 # --- parsing helpers -----------------------------------------------------------------------------
 
 
-_JSON_STRING = re.compile(rb'"(?:[^"\\]|\\.)*"', re.DOTALL)
-_NOT_BRACKETS = bytes(byte for byte in range(256) if byte not in b"[]{}")
-_INNERMOST_PAIR = re.compile(rb"\[\]|\{\}")
+_QUOTE = 0x22
+_BACKSLASH = 0x5C
+_CLOSER_FOR = {0x5B: 0x5D, 0x7B: 0x7D}  # "[" -> "]", "{" -> "}"
+_CLOSERS = frozenset(_CLOSER_FOR.values())
 _INTEGER_TEXT = re.compile(r"^-?[0-9]{1,20}$")
 _RPC_ERROR_CODE = re.compile(r"^[A-Za-z][A-Za-z0-9_]{0,47}$")
 
@@ -770,23 +794,39 @@ def _refuse_constant(text: str) -> object:
 
 
 def _nesting_code(raw: bytes) -> str | None:
-    """Refuse nesting deeper than ``MAX_JSON_DEPTH`` before the recursive JSON parser runs.
+    """Refuse excessive nesting, unterminated strings and mismatched brackets before parsing.
 
-    Strings are removed and only brackets kept (both at C speed); each pass then deletes the
-    innermost ``[]``/``{}`` pairs, so a well-formed document is empty after at most its depth in
-    passes.
+    One forward pass with constant work per byte: no regular expressions, no slicing and no
+    recursion, so the cost is linear in the (already size-capped) input. It tracks whether it is
+    inside a string and whether the previous byte was an escaping backslash, so an escaped quote
+    never ends a string, and it counts ``[]``/``{}`` only outside strings. The stack of expected
+    closers never grows beyond ``MAX_JSON_DEPTH``.
+
+    This is a bounded pre-check, not a JSON validator: ``json.loads`` still decides what is valid.
     """
-    skeleton = _JSON_STRING.sub(b"", raw).translate(None, _NOT_BRACKETS)
-    for _ in range(MAX_JSON_DEPTH):
-        if not skeleton:
-            return None
-        reduced = _INNERMOST_PAIR.sub(b"", skeleton)
-        if reduced == skeleton:  # unbalanced; still report runaway opening brackets as depth
-            opening = skeleton[: MAX_JSON_DEPTH + 1]
-            deep = len(opening) > MAX_JSON_DEPTH and not opening.strip(b"[{")
-            return "RESPONSE_TOO_DEEP" if deep else "MALFORMED_RESPONSE"
-        skeleton = reduced
-    return "RESPONSE_TOO_DEEP" if skeleton else None
+    expected: list[int] = []
+    in_string = False
+    escaped = False
+    for byte in raw:
+        if in_string:
+            if escaped:
+                escaped = False
+            elif byte == _BACKSLASH:
+                escaped = True
+            elif byte == _QUOTE:
+                in_string = False
+        elif byte == _QUOTE:
+            in_string = True
+        elif byte in _CLOSER_FOR:
+            if len(expected) == MAX_JSON_DEPTH:
+                return "RESPONSE_TOO_DEEP"
+            expected.append(_CLOSER_FOR[byte])
+        elif byte in _CLOSERS:
+            if not expected or expected.pop() != byte:
+                return "MALFORMED_RESPONSE"
+    if in_string or expected:
+        return "MALFORMED_RESPONSE"
+    return None
 
 
 def parse_json_bounded(raw: bytes, context: str = "response") -> object:

@@ -13,11 +13,15 @@ from __future__ import annotations
 
 import hashlib
 import json
+import shutil
 import socket
+import ssl
+import subprocess
 import threading
 import time
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any
 
 from x1a_world import xrpl_test_key
@@ -372,15 +376,30 @@ class Seen:
     body: bytes
 
 
-Action = Reply | Raw | Drip | Stall
+@dataclass
+class Dynamic:
+    """Build the whole response from the recorded request (for method-aware fake endpoints)."""
+
+    respond: Callable[[Seen], bytes]
+
+
+Action = Reply | Raw | Drip | Stall | Dynamic
 
 
 class LoopbackQuickNode:
     """One scripted action per accepted connection. Records each request and when each response
     ended (``closed``: seconds since the server started, when the client hung up or we finished)."""
 
-    def __init__(self, script: list[Action]) -> None:
+    def __init__(
+        self,
+        script: list[Action],
+        *,
+        default: Action | None = None,
+        tls: ssl.SSLContext | None = None,
+    ) -> None:
         self.script = list(script)
+        self.default = default
+        self.tls = tls
         self.requests: list[Seen] = []
         self.closed: list[float] = []
         self.started = time.monotonic()
@@ -399,13 +418,18 @@ class LoopbackQuickNode:
                 connection, _ = self._listener.accept()
             except OSError:
                 return
-            action = self.script.pop(0) if self.script else None
+            action = self.script.pop(0) if self.script else self.default
             threading.Thread(target=self._serve, args=(connection, action), daemon=True).start()
 
     def _serve(self, connection: socket.socket, action: Action | None) -> None:
         try:
+            if self.tls is not None:
+                connection.settimeout(5.0)
+                connection = self.tls.wrap_socket(connection, server_side=True)
             self._read_request(connection)
-            if isinstance(action, Reply):
+            if isinstance(action, Dynamic):
+                connection.sendall(action.respond(self.requests[-1]))
+            elif isinstance(action, Reply):
                 head = (
                     f"HTTP/1.1 {action.status} Scripted\r\nContent-Length: {len(action.body)}\r\n"
                 )
@@ -486,3 +510,56 @@ class Wiring:
         sock = socket.create_connection(address[1], timeout=max(deadline - time.monotonic(), 0.01))
         watchdog.attach(sock)
         return sock
+
+
+def clio_responder(
+    node: FakeQuickNode, *, version: bytes = b"HTTP/1.1", close: bool = True
+) -> Dynamic:
+    """Answer each JSON-RPC request from ``node``, framed with Content-Length (and close)."""
+
+    def respond(seen: Seen) -> bytes:
+        request = json.loads(seen.body)
+        body = node.call(request["method"], request["params"][0])
+        head = version + b" 200 OK\r\nContent-Type: application/json\r\n"
+        head += b"Content-Length: %d\r\n" % len(body)
+        if close:
+            head += b"Connection: close\r\n"
+        return head + b"\r\n" + body
+
+    return Dynamic(respond)
+
+
+def loopback_certificate(directory: Path, hostname: str = HOST) -> tuple[Path, ssl.SSLContext]:
+    """A throwaway self-signed certificate for ``hostname``, generated at test time (never
+    committed). Returns the CA file a client may additionally trust and a server context."""
+    openssl = shutil.which("openssl")
+    if openssl is None:
+        raise RuntimeError("openssl is required to generate the loopback TLS certificate")
+    key, cert = directory / "loopback-key.pem", directory / "loopback-cert.pem"
+    subprocess.run(
+        [
+            openssl,
+            "req",
+            "-x509",
+            "-newkey",
+            "ec",
+            "-pkeyopt",
+            "ec_paramgen_curve:prime256v1",
+            "-nodes",
+            "-days",
+            "1",
+            "-subj",
+            f"/CN={hostname}",
+            "-addext",
+            f"subjectAltName=DNS:{hostname}",
+            "-keyout",
+            str(key),
+            "-out",
+            str(cert),
+        ],
+        check=True,
+        capture_output=True,
+    )
+    server = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+    server.load_cert_chain(cert, key)
+    return cert, server

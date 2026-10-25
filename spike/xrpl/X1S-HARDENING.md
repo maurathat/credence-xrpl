@@ -1,5 +1,8 @@
 # Checkpoint X1s — QuickNode transport hardening
 
+Amended by X1u (`spike/xrpl/X1U-REMEDIATION.md`): the nesting pre-check is now a linear byte
+scanner, and connection-close framing is fixed.
+
 ## Outcome
 
 X1s corrects Salvador's four X1r findings (Q1–Q4) against X1q `baadf60`. It is offline:

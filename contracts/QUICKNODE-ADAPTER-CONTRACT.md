@@ -1,14 +1,16 @@
 # QUICKNODE-ADAPTER-CONTRACT
 
-Owner: XRPL Integration. For checkpoints X1q and X1s, Maura delegated this file and
+Owner: XRPL Integration. For checkpoints X1q, X1s and X1u, Maura delegated this file and
 `credence/xrpl_adapter/quicknode.py` / `quicknode_probe.py` to Da Nang (Claude Code).
 
-Status: X1q, hardened by X1s; read-only, offline-tested. Real-endpoint verification is
+Status: X1q, hardened by X1s and remediated by X1u; read-only, offline-tested. Real-endpoint
+verification is
 **PENDING**, because no QuickNode endpoint was configured.
 
 - Decisions: `docs/decisions/0012-xrpl-x1q-quicknode-read-only.md`,
   `docs/decisions/0013-xrpl-x1s-quicknode-hardening.md`.
-- Reports: `spike/xrpl/X1Q-QUICKNODE.md`, `spike/xrpl/X1S-HARDENING.md`.
+- Reports: `spike/xrpl/X1Q-QUICKNODE.md`, `spike/xrpl/X1S-HARDENING.md`,
+  `spike/xrpl/X1U-REMEDIATION.md`.
 
 ## Scope
 
@@ -119,7 +121,7 @@ never raises. Limits are checked before any expensive work:
 | Limit | Value | Refusal |
 | --- | --- | --- |
 | Response body | 8 MiB (declared `Content-Length` checked first, then the streamed size) | `RESPONSE_TOO_LARGE` |
-| JSON nesting | 32 levels, checked on a bracket skeleton before the recursive parser runs | `RESPONSE_TOO_DEEP` |
+| JSON nesting | 32 levels, checked by a single linear byte scan (string and escape state tracked; no regular expressions, slicing or recursion) before the recursive parser runs. Unterminated strings and mismatched brackets are refused by the same scan. | `RESPONSE_TOO_DEEP` / `MALFORMED_RESPONSE` |
 | JSON numbers | integers up to 24 digits; floats up to 32 characters and finite; no `NaN`/`Infinity` | `NUMBER_OUT_OF_RANGE` |
 | XRP amounts | digit strings of at most 18 digits, at most 10^17 drops | `MALFORMED_AMOUNT` |
 | Issued amounts and trust-line values | at most 48 characters, 16 significant digits, adjusted exponent -81 to 95 (XRPL's range), checked before normalization | `MALFORMED_AMOUNT` / `MALFORMED_RESPONSE` |
@@ -128,7 +130,22 @@ never raises. Limits are checked before any expensive work:
 | `complete_ledgers` | 4096 characters | `MALFORMED_COMPLETE_LEDGERS` |
 | Node error tokens | `[A-Za-z][A-Za-z0-9_]{0,47}`, otherwise `malformedError` | `RPC_<token>` |
 | Malformed HTTP (bad status line, oversized or too many headers) | `http.client` limits | `MALFORMED_HTTP_RESPONSE` |
-| Body shorter than its `Content-Length` | | `CONNECTION_CLOSED` (retryable) |
+| Contradictory or malformed framing (X1u) | `Content-Length` together with `Transfer-Encoding`; differing duplicate lengths; a non-digit length; any transfer coding other than exactly `chunked` | `MALFORMED_HTTP_RESPONSE` |
+| Body shorter than its framing (`Content-Length` not reached, missing or short chunk) | | `CONNECTION_CLOSED` (retryable) |
+
+Accepted framings (X1u):
+
+- HTTP/1.1 and HTTP/1.0 bodies framed by `Content-Length`, whether the connection is kept alive or
+  closed;
+- chunked bodies;
+- HTTP/1.0 bodies delimited by connection close. Truncation of these cannot be detected by
+  definition; the strict JSON parser still refuses an incomplete document.
+
+Body completion comes from `http.client`'s framing state (`HTTPResponse.isclosed()`). No socket
+operation follows a complete response.
+
+JSON duplicate keys: there is no duplicate-key rule. `json.loads` keeps the last value. The X1u
+brief described one as existing; it does not, and adding one was outside X1u's authorization.
 
 Anything else that hostile input still reaches becomes `RESPONSE_PROCESSING_FAILED`, with no cause
 or context. A refused observation has no evidence and no settlement authority. Through
@@ -147,7 +164,9 @@ Limitations:
 
 - **DNS.** `getaddrinfo` cannot be cancelled. It runs in a daemon thread and the caller returns
   `TIMEOUT` at the deadline, but the lookup itself may continue in the background until the system
-  resolver gives up.
+  resolver gives up. Repeated timeouts against a resolver that hangs can therefore accumulate
+  background DNS worker threads, one per timed-out attempt, until those lookups return. There is
+  no pool or cap.
 - **Socket shutdown.** Waking a blocked call by shutting its socket down is the documented
   behavior on Linux and macOS, and it is what the tests exercise. Other platforms are not
   verified.
@@ -171,6 +190,33 @@ attribute (not reachable through `vars()`), and the endpoint refuses copying and
 repr is redacted. Code that deliberately reads `endpoint._url` (for example, a crash reporter
 configured to walk private attributes several levels deep) can still reach it, so the token must
 still be treated as a secret in crash-reporting configuration.
+
+## Integration issues (recorded in X1u, not resolved)
+
+San Francisco's independently reviewed XRPL branch (`maurathat/credence-multi-sig-ledger`,
+`bc82eb6`) has moved on since this branch left `99ca646`. These issues are recorded only. Yeosu
+owns any later resolution, under separate authorization. X1u did not rebase, merge, renumber or
+change any shared XRPL code.
+
+1. **`HashLookup` signature.** San Francisco's protocol is
+   `lookup(transaction_hash, *, min_ledger=None, max_ledger=None)`.
+   `QuickNodeReconciliationView.lookup(transaction_hash)` accepts neither keyword, so San
+   Francisco's `PaymentService` would fail with `TypeError` when it passes them.
+2. **Decision numbers.** San Francisco has committed:
+   - `0012-xrpl-x1e-real-node-preflight`;
+   - `0013-xrpl-x1g-non-inclusion-proof`;
+   - `0014-xrpl-x1i-payment-liveness`;
+   - `0015-xrpl-x1k-reconciliation-ownership`.
+
+   Da Nang's `0012` and `0013` collide with the first two. Request number `0010` does not collide.
+3. **Adapter contract.** `contracts/XRPL-ADAPTER-CONTRACT.md` differs between the branches. San
+   Francisco changed it by about 113 lines after `99ca646`; Da Nang added only the X1q pointer
+   section.
+4. **Corrections not inherited.** San Francisco's non-inclusion, identity and reconciliation
+   corrections (`journal.py`, `rippled.py`, `service.py`, `types.py`) are not in this branch.
+5. **Boundaries to preserve.** Any later integration must preserve San Francisco's accepted
+   payment-authority and evidence boundaries. The hosted view must remain unable to finalize,
+   anchor or settle.
 
 ## Payment reconciliation
 
@@ -205,7 +251,7 @@ The hosted evidence schema is not the X0t schema, so `PaymentResultVerifier` rej
 XRPL settlement in the journal and Core accounting settlement stay separate facts. A hosted
 observation is neither.
 
-## Unsupported in X1q and X1s
+## Unsupported in X1q, X1s and X1u
 
 - Submission, signing and any ledger write.
 - WebSocket subscriptions.
