@@ -1396,15 +1396,22 @@ def poll_validated(
                 raise RpcError(
                     "bounded transaction lookup did not report literal searched_all true"
                 )
-            if not history_covers(
+            before_history_complete = history_covers(
+                before["complete_ledgers"], first_possible_ledger, last_possible_ledger
+            )
+            after_history_complete = history_covers(
                 after["complete_ledgers"], first_possible_ledger, last_possible_ledger
-            ):
+            )
+            if not before_history_complete or not after_history_complete:
                 journal.update(
                     authorization.authorization_id,
                     "submit",
                     transaction_hash,
                     "UNKNOWN_HISTORY_GAP",
-                    {"complete_ledgers": after["complete_ledgers"]},
+                    {
+                        "before_complete_ledgers": before["complete_ledgers"],
+                        "after_complete_ledgers": after["complete_ledgers"],
+                    },
                 )
                 raise RpcError("bounded transaction history is incomplete; retain UNKNOWN")
             before_index = before["validated_ledger_index"]

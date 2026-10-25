@@ -191,6 +191,16 @@ def journal_status(path: Path, authorization_id: str) -> str:
     return str(row[0])
 
 
+def journal_claim_count(path: Path) -> int:
+    connection = sqlite3.connect(path)
+    try:
+        row = connection.execute("SELECT COUNT(*) FROM operation_claims").fetchone()
+    finally:
+        connection.close()
+    assert row is not None
+    return int(row[0])
+
+
 @pytest.mark.parametrize(
     ("network_id", "message"),
     [
@@ -1191,6 +1201,8 @@ def run_not_found_poll(
     *,
     searched_all: object,
     complete_ledgers: str,
+    before_complete_ledgers: str | None = None,
+    after_complete_ledgers: str | None = None,
     before_index: int = 1005,
     after_index: int = 1005,
     before_hash: str = "E" * 64,
@@ -1202,10 +1214,14 @@ def run_not_found_poll(
     )
     artifact = signed_artifact(authorization.authorization_id)
     install_poll_artifact_checks(monkeypatch, artifact)
+    before_history = (
+        complete_ledgers if before_complete_ledgers is None else before_complete_ledgers
+    )
+    after_history = complete_ledgers if after_complete_ledgers is None else after_complete_ledgers
     observations = iter(
         [
-            network_observation(before_index, before_hash, complete_ledgers),
-            network_observation(after_index, after_hash, complete_ledgers),
+            network_observation(before_index, before_hash, before_history),
+            network_observation(after_index, after_hash, after_history),
         ]
     )
     calls: list[str] = []
@@ -1216,6 +1232,7 @@ def run_not_found_poll(
 
     def lookup(_endpoint: str, method: str, params: dict[str, Any]) -> dict[str, Any]:
         calls.append(method)
+        assert method == "tx"
         assert params["min_ledger"] == 1001
         assert params["max_ledger"] == 1004
         return {
@@ -1254,6 +1271,84 @@ def test_b1_conclusive_bounded_non_inclusion_requires_all_evidence(
         complete_ledgers="1-2000",
     )
     assert journal_status(path, authorization.authorization_id) == "EXPIRED_NOT_INCLUDED"
+
+
+def test_t1c_prequery_history_gap_remains_unknown_then_original_hash_validates(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(
+        workflow,
+        "construct_unsigned",
+        lambda *_args, **_kwargs: pytest.fail("replacement Payment was constructed"),
+    )
+    monkeypatch.setattr(
+        workflow,
+        "submit_once",
+        lambda *_args, **_kwargs: pytest.fail("submit was attempted"),
+    )
+    authorization, artifact, path = run_not_found_poll(
+        tmp_path,
+        monkeypatch,
+        searched_all=True,
+        complete_ledgers="1-1006",
+        before_complete_ledgers="1-1001,1003-1006",
+        after_complete_ledgers="1-1006",
+        before_index=1006,
+        after_index=1006,
+        before_hash="E" * 64,
+        after_hash="E" * 64,
+    )
+    assert journal_status(path, authorization.authorization_id) == "UNKNOWN_HISTORY_GAP"
+    assert journal_claim_count(path) == 1
+
+    observations = iter([network_observation(1006, "E" * 64), network_observation(1007, "F" * 64)])
+    monkeypatch.setattr(workflow, "verify_network", lambda _endpoint: next(observations))
+
+    def validated_lookup(_endpoint: str, method: str, params: dict[str, Any]) -> dict[str, Any]:
+        assert method == "tx"
+        assert params["transaction"] == artifact["transaction_hash"]
+        return {
+            "result": {
+                **artifact["transaction"],
+                "status": "success",
+                "validated": True,
+                "hash": artifact["transaction_hash"],
+                "ledger_index": 1002,
+                "meta": {"TransactionResult": "tesSUCCESS"},
+            }
+        }
+
+    monkeypatch.setattr(workflow, "rpc_raw", validated_lookup)
+    ledger_hashes = {1000: "A" * 64, 1002: "B" * 64, 1006: "E" * 64}
+    monkeypatch.setattr(workflow, "_ledger_hash", lambda _endpoint, index: ledger_hashes[index])
+    journal = OperationJournal(path)
+    try:
+        result = poll_validated(authorization, artifact, journal, timeout_seconds=1)
+    finally:
+        journal.close()
+    assert result["transaction_hash"] == artifact["transaction_hash"]
+    assert result["ledger_index"] == 1002
+    assert journal_status(path, authorization.authorization_id) == "validated"
+    assert journal_claim_count(path) == 1
+
+
+def test_t1c_postquery_history_gap_remains_unknown(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    authorization, _artifact, path = run_not_found_poll(
+        tmp_path,
+        monkeypatch,
+        searched_all=True,
+        complete_ledgers="1-1006",
+        before_complete_ledgers="1-1006",
+        after_complete_ledgers="1-1001,1003-1006",
+        before_index=1006,
+        after_index=1006,
+        before_hash="E" * 64,
+        after_hash="E" * 64,
+    )
+    assert journal_status(path, authorization.authorization_id) == "UNKNOWN_HISTORY_GAP"
+    assert journal_claim_count(path) == 1
 
 
 def test_r1_prequery_v_plus_three_cannot_become_terminal_expiry(
