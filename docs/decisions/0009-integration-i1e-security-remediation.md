@@ -1,6 +1,6 @@
 # 0009. Integration I1e: close authorization and accounting bypasses
 
-- Status: Accepted for the integration branch, amended for I1g (§7–§10), I1i (§11), I1k (§12) and I1m (§13). **Provisionally blocked for acceptance** until independent Core and Inference owner reviews approve the final I1g commit.
+- Status: Accepted for the integration branch, amended for I1g (§7–§10), I1i (§11), I1k (§12), I1m (§13) and I1o (§14). **Provisionally blocked for acceptance** until independent Core and Inference owner reviews approve the final I1g commit.
 - Date: 2026-10-19
 - Owner: Integration (San Antonio)
 - Source: Maura's I1e authorization, and the I1d owner reviews of commit `cfc6224`:
@@ -82,7 +82,7 @@
 
 13. **Trusted database directory boundary (I1m, 2026-10-24; Skopje I1l finding).**
    - **The finding.** A precisely timed replace-and-restore between two identity checks evades checkpoint detection. I1k also accepted databases in group- or world-writable directories, where another principal could do this.
-   - **The boundary.** `check_trusted_location` runs before ownership and offline revocation, and the database directory is re-checked at every `verify()`:
+   - **The boundary.** `check_trusted_location` (replaced by `resolve_trusted` in §14) runs before ownership and offline revocation, and the database directory is re-checked at every `verify()`:
      - the database directory must be ours, with no group or other write bit (sticky or not) and no write-granting ACL;
      - every ancestor must be ours or root's, with no write-granting ACL; if writable, only sticky with an owned next component;
      - symlinks on the caller's spelling must be ours or root's, in trusted directories;
@@ -91,6 +91,20 @@
    - **The contract correction.** Identity checks detect a replacement only while it is observable. A swap-and-restore completed between checks can evade them, and the window is not eliminated. Supported security assumes untrusted principals cannot manipulate the database or lock directory. Same-authority code is outside the boundary. Checkpoints are not a pinned descriptor.
    - **Verification limit.** No second OS account was available: foreign ownership is simulated through a uid seam, and ACL cases use real macOS ACLs.
    - **Unchanged.** Core, Inference, XRPL, canonical formats and the I1k identity protections are all unchanged.
+
+14. **Nested symlink and file ACL closure (I1o, 2026-10-24; Skopje I1n findings V1, V2).**
+   - **V1.** The I1m check inspected only the caller's spelling and the final canonical chain, so `private/chain → shared/link → private/data/db.sqlite3`, with `shared` world-writable and not sticky, was accepted.
+     - `resolve_trusted` now walks every component actually traversed, from the root, on every link hop. Every traversed directory is checked: owner, mode, sticky rule, ACLs.
+     - Loops (`SYMLINK_LOOP`), dangling targets and links changed while read (`PATH_CHANGED`) are refused, and the walk must match the OS resolution. `Path.resolve()` is no longer trusted alone.
+   - **V2.** A `0600` database or lock file with an ACL granting `everyone` write or delete was accepted. Both files are now checked through their descriptors, before either is changed: owner, one link, no group or other write bit, no modifying ACL entry (`FILE_ACL`, `FILE_PERMISSIONS`; the lock reports `LOCK_FILE_UNSAFE`).
+     - Read-only and compatible deny-only ACLs are accepted. An owner-blocking deny fails closed.
+     - The lock path must still name the locked file, after `flock` and at every checkpoint (`LOCK_IDENTITY_CHANGED`).
+   - **Revalidation.** `verify()` re-runs the walk, the database directory rule, the file checks and the lock identity at every checkpoint. An ancestor made writable or given an ACL after startup poisons the service.
+   - **Not closed, and stated.**
+     - A same-user replace-and-restore between checks.
+     - A same-user deletion and recreation of the lock entry, which lets a second process lock a new entry (the original owner fails closed). Pinning the lock to the database inode was tested and rejected: `flock` on the database blocks SQLite's locking on macOS.
+     - No second OS account: permission inspection is verified with real modes and ACLs, but cross-user execution was not.
+   - **Unchanged.** Core, Inference, XRPL and the frontend.
 
 ## Consequences
 

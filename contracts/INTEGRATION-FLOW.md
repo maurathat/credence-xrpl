@@ -1,6 +1,6 @@
 # INTEGRATION-FLOW
 
-Owner: Integration (San Antonio, Claude Code). Status: Integration I1c, remediated in I1e, I1g, I1i, I1k and I1m. Only the owner edits this file. Other workstreams file a request in `contracts/requests/`.
+Owner: Integration (San Antonio, Claude Code). Status: Integration I1c, remediated in I1e, I1g, I1i, I1k, I1m and I1o. Only the owner edits this file. Other workstreams file a request in `contracts/requests/`.
 
 This contract describes `credence/integration/` as implemented. The code is authoritative. `tests/integration/test_i1_contract.py` checks the lists below against the code. The decisions are `docs/decisions/0008-integration-i1c-inference-accounting.md` and `docs/decisions/0009-integration-i1e-security-remediation.md`. What a recorded attempt, a claimed execution, provider execution, captured evidence, verified delivery, accounting settlement and XRPL settlement each mean is set out in `contracts/SETTLEMENT-COORDINATOR.md`, "What each record means".
 
@@ -174,17 +174,25 @@ Ownership and offline revocation are bound to the physical database file, not to
 5. **Hard links** are refused outright, at open and at every checkpoint. This implementation establishes no inode-based lock that could make two link names safe.
 6. **Release.** `close()` releases the flock on the canonical lock and closes the anchor. The OS releases both if the process dies. The next owner repeats the whole procedure.
 7. **Offline revocation** goes through the same procedure (see "Key revocation"). It cannot commit while a service owns the database through any alias, and it verifies identity before committing.
-8. **Trusted directory boundary (I1m).** Before ownership or offline revocation is taken, and re-checked for the database directory at every checkpoint, `check_trusted_location` refuses any location that a principal other than this effective user (or root) could manipulate:
+8. **Trusted directory boundary (I1m, completed in I1o).** Before ownership or offline revocation is taken, `resolve_trusted` refuses any location that a principal other than this effective user (or root) could manipulate. It does not rely on `Path.resolve()` alone: it walks every component actually traversed, starting at the root. Each entry is looked up in a directory already checked, and that directory must meet the rules below for the entry. A symlink's target components are walked the same way, on every hop and however deeply nested, so a chain such as `private/chain → shared/link → private/data/db.sqlite3` crosses `shared` and is judged by it. The walk is re-run at every identity checkpoint while the service runs:
 
    | Location | Accepted | Refused |
    | --- | --- | --- |
    | Database directory (holds the database, the owner lock and SQLite's journal) | Owned by this effective user, with no group or other write bit (for example `0700`, `0750`, `0755`) | Any group or other write bit, sticky or not: `WRITABLE_DATABASE_DIRECTORY`. Another owner: `UNTRUSTED_DIRECTORY_OWNER` |
    | Each ancestor directory | Owned by this user or root, not group- or other-writable; or writable but sticky (like `/tmp`) with the next component owned by this user or root | Another owner: `UNTRUSTED_DIRECTORY_OWNER`. Writable without the sticky bit, or sticky with a foreign next component: `WRITABLE_DIRECTORY` |
-   | Symlinks on the caller's spelling (directory or file aliases) | Owned by this user or root, in a directory meeting the ancestor rule | Another owner: `UNTRUSTED_SYMLINK`. In a writable, non-sticky directory: `WRITABLE_DIRECTORY` |
+   | Every symlink traversed, on the caller's path or inside any link target (file or directory, any number of hops) | Owned by this user or root, in a directory meeting the ancestor rule | Another owner: `UNTRUSTED_SYMLINK`. In a writable, non-sticky directory: `WRITABLE_DIRECTORY`. More than 40 hops: `SYMLINK_LOOP`. Missing target: `DANGLING_SYMLINK`. Changed while read, or the walk disagrees with the OS's resolution: `PATH_CHANGED` |
    | ACLs (macOS extended ACLs; POSIX ACLs on Linux) | Deny-only entries (for example macOS's default `everyone deny delete` on home directories) | macOS: any non-deny entry granting add, delete, write, attribute, security or ownership changes. Linux: any POSIX ACL. Both refused whatever the mode bits say (`DIRECTORY_ACL`). Unreadable: `ACL_UNREADABLE` |
-   | Database and lock files | Owned by this effective user | `NOT_OWNER`, `LOCK_FILE_UNSAFE` |
+   | Database and lock files (checked through their open descriptors, before either is changed) | Owned by this effective user; exactly one link; no group or other write bit (a database readable by others is accepted and then tightened to `0600`); ACL entries that are read-only or deny-only and do not block the owner | Another owner: `NOT_OWNER`. Group or other write: `FILE_PERMISSIONS`. An ACL entry granting write, append, delete, attribute, security or ownership changes: `FILE_ACL`. For the lock, any of these, an owner-blocking deny, or the name no longer leading to the locked file: `LOCK_FILE_UNSAFE` |
 
    Only macOS and Linux are supported (`UNSUPPORTED_PLATFORM` otherwise). The policy is conservative; it is not a deployment-wide permission manager.
+
+   **Revalidation while running (I1o).** Every identity checkpoint (each public operation, before each Core write phase, and inside the integration's write transactions) re-establishes, before the operation proceeds:
+   - the trusted walk of the canonical path, so a traversed directory made writable or given a write-granting ACL after startup is refused;
+   - the database directory rule;
+   - the database file's identity and security;
+   - the lock: the lock path must still name the locked file (`LOCK_IDENTITY_CHANGED`), with the same file checks.
+
+   A failure poisons the service. Under the boundary no other principal can delete or recreate the lock entry: the directory is private, and a delete-granting ACL on the lock is refused. A same-user deletion is outside the boundary. A second process could then lock a new entry, because the lock cannot be pinned to the database inode (a `flock` on the database blocks SQLite's own locking on macOS). The original owner is refused at its next checkpoint.
 
 ## Journal
 

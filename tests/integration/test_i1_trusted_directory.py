@@ -3,7 +3,7 @@
 Identity checks see a replacement only while it is observable; a swap-and-restore completed
 between two checks can evade them (reproduced below, and documented as such). The supported
 deployment therefore refuses database locations an untrusted principal could manipulate:
-`ownership.check_trusted_location` runs before ownership or offline revocation, and the database
+`ownership.resolve_trusted` (I1m's `check_trusted_location`, completed in I1o) runs before ownership or offline revocation, and the database
 directory is re-checked at every identity checkpoint.
 
 Limitation: this machine offers no second OS account. Foreign ownership is modeled through the
