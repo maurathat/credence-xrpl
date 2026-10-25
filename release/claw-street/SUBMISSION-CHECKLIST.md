@@ -1,7 +1,8 @@
 # Submission checklist
 
-Release candidate: `maurathat/claw-street-release`, code at `9844530` (parents `ab1bd50` and `4c57b91`); web
-`4a9a812`.
+Submission branch: `maurathat/claw-street-release`, based on `8bb4a758fec312eddcf21575bb69b84005a320c0`.
+The parent Git submodule pins the exact local frontend revision. See `SUBMISSION-VALIDATION.md`
+and the delivered release report for final commit IDs and push verification.
 
 ## Deliverables
 
@@ -13,22 +14,21 @@ Release candidate: `maurathat/claw-street-release`, code at `9844530` (parents `
 | Architecture and integration status | Done: `ARCHITECTURE.md` |
 | Reproducible test summary | Done: `TEST-SUMMARY.md` |
 | Sponsor integration disclosures | Done: `DISCLOSURES.md` |
-| Deployment readiness | Done: `DEPLOYMENT-READINESS.md` (decisions open) |
+| Deployment readiness | Local backend plus video; separate public browser simulation |
 | Demo dataset and reset/recovery | Done: `DEMO-RESET.md` |
 | Testnet proof slot | Reserved, empty: `TESTNET-PROOF.md` |
-| Demo video | **Not recorded** |
-| Submission description text | **Not written**; draft it from `README.md` and `DISCLOSURES.md` |
+| Demo video | Record with `npm run local:record`; delivered recording status is in the release report |
+| Submission description text | Done: `SUBMISSION.md` |
+| Founder portrait pitch | Script: `FOUNDER-PITCH.md`; rehearsal page: `founder-pitch.html`; record founder footage |
 
-## Must resolve before submission
+## Final manual steps
 
-| # | Blocker | Owner |
+| # | Action | Owner |
 | --- | --- | --- |
-| 1 | **The public site `creds-for-ai.lovable.app` serves the old UI** ("Credence Markets", bare RLUSD, "XRPL connected", "live MVP", "Forwards"). This breaks the claims rules wherever judges can see it | Maura (unpublish, or update `main`) |
-| 2 | The Credence parent repository and `maurathat/claw-street-release` are not published (fresh clones of the release need them) | Maura (push authorization) |
-| 3 | Choose a deployment: local demo plus video (recommended), or the reviewed public single-host option | Maura |
-| 4 | Record the demo video | Maura / presenter |
-| 5 | Claims decisions: the recorded x402 challenges name RLUSD as third-party data, against the rule "tRLUSD everywhere, never RLUSD"; and keeping "Providers are paid after verification" when no provider is paid in this build | Maura |
-| 6 | Add `release/` to `docs/OWNERSHIP.md` | Maura |
+| 1 | Add your voice to the captioned local demo recording and upload it to the submission's video host | Presenter |
+| 2 | Record the founder pitch in 9:16; use the supplied opening and closing cards | Maura |
+| 3 | Give judges access to both source repositories, or supply an approved source archive. Visibility is unchanged | Maura |
+| 4 | Paste the published website, accessible video URL and source URL into the submission form | Maura |
 
 ## Known limitations to disclose (not fixed in this release)
 
@@ -38,16 +38,6 @@ Release candidate: `maurathat/claw-street-release`, code at `9844530` (parents `
 
 ## Not in this release (do not present as working)
 
-- **XRPL payments:** `c8be7aa` on `maurathat/claw-street-integration` is contested.
-  - Salvador confirmed findings F1 and F2 on `cdc67b3`.
-  - The remediation `bc82eb6` is BLOCKED on D1.
-  - Still open: N3, N4 and N5, production custody, Core payment authority and real found-transaction evidence.
-- **x402 payments:**
-  - Still required: Core request 0009 items C3, C4, C12, C13 and C14, and X1 request 0010 items X2, X5, X6, X9, X10
-    and X12.
-  - The replay guard is in memory only.
-  - The merchant ID is 48-bit, below the 128-bit floor.
-  - Facilitator acceptance of a multisigned Payment is unknown.
-- **QuickNode:** X1u is pending, and the adapter is incompatible with the newer lookup interface.
-- **Public Testnet proof:** the brief hasn't been delivered to Addis-Ababa.
-- **Ledger hardware signer, XRPL lending, Verifiable Intent:** not connected.
+- **Core/X2-0R and native payout implementation:** blocked and separate; no promotion in this release.
+- **XRPL marketplace payments, x402 payments, QuickNode, Ledger hardware, XRPL lending and Verifiable Intent:** not connected.
+- **Separate Testnet connectivity:** the existing public walkthrough reads a historical transaction. It is independent of marketplace authorization and grants no payment authority.

@@ -1,7 +1,10 @@
 # Deployment readiness
 
-Status: **ready for a local (loopback) demo. Not ready for a public deployment without owner decisions.** Nothing has
-been deployed.
+Status: **local backend demo plus recorded video; separate public browser simulation.**
+The corrected browser simulation is published at https://creds-for-ai.lovable.app from hosted
+frontend commit `a7bb600b43a8b7dc4e5ff297723810306861fac6`. All 13 public routes, the purchase/attack
+simulations and routing strategies were checked in Playwright. It does not connect to this backend.
+No backend deployment or hosted payment service is part of the submission.
 
 ## Checklist
 
@@ -37,12 +40,9 @@ been deployed.
 3. **Not useful: frontend only** (Lovable or Cloudflare without the API). Every screen would show the API as
    unavailable.
 
-## Decisions for the owner
+## Remaining operations
 
-1. Choose option 1 or 2.
-2. **The public Lovable site serves the old UI from `main`** ("Credence Markets", bare RLUSD, "XRPL connected",
-   "live MVP"). Unpublish it, or point it at `release/claw-street-ui` (that means merging into `main` of
-   `creds-for-ai`, an outward-facing action), before judges can find it.
-3. Publish the Credence parent repository and the release branch (a push, not yet authorized), so the README clone
-   works.
-4. Fix the stale `/v0/health` value `"baseline": "a3ec0a31…"`. The running code is I2b and later; the owner is API/UI.
+1. Upload the narrated demo and founder pitch, then supply their accessible URLs.
+2. Supply judge repository access. Repository visibility is unchanged.
+3. The stale `/v0/health` value `"baseline": "a3ec0a31…"` remains an identified API/UI limitation.
+   Verify the running code with the Git revision and submission validation, not that legacy label.

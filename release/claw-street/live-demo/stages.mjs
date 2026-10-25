@@ -48,11 +48,11 @@ export const STAGES = [
     cue: [
       "Same order, five provider offers: price per verified inference unit, latency, evidence tier, residency.",
       "The routing strategy is the agent's procurement policy. Watch which offer becomes Best.",
-      "Cheapest picks on price. Verified requires Tier 2-plus evidence. Credit-eligible only allows providers on the facility's allowlist: the policy, not the agent, decides.",
+      "These strategy buttons simulate price, evidence and allowlist selection in the browser. Credence Core runs only in the separate local demo.",
     ],
     async run(h) {
       await h.goto("/market");
-      await h.expectText("Verified inference market");
+      await h.expectText("Inference procurement");
       await h.focus(h.heading("Provider bids for ORD-2261"));
       for (const strategy of ["Cheapest", "Verified", "Credit-eligible"]) {
         await h.click(h.page.getByRole("radio", { name: strategy }));
@@ -67,8 +67,8 @@ export const STAGES = [
     seconds: 32,
     cue: [
       "Now the agent buys. This runs the site's purchase simulation in the browser; no provider is called and nothing is paid.",
-      "Four checks: the agent's signature and limit, the provider-signed receipt, the request-response-profile binding, then settlement.",
-      "All pass, and the facility is drawn 10.46 tRLUSD. The page says it plainly: Credence accounting, not an on-chain payment.",
+      "The four displayed checks are simulated. No agent signature or provider receipt is verified on this public site.",
+      "The simulated facility draw is 10.46 tRLUSD, a synthetic test unit. This is in-browser accounting only.",
     ],
     async run(h) {
       await h.goto("/credit");
@@ -78,9 +78,9 @@ export const STAGES = [
       await h.expectText("362.40 tRLUSD");
       await h.focus(h.heading("Simulate inference purchase"));
       await h.click(h.page.getByRole("button", { name: "Simulate inference purchase", exact: true }));
-      await h.expectText("Facility drawn +10.46 tRLUSD (Credence accounting — not an on-chain payment)");
-      await h.expectText("Settled in policy — no hardware confirmation required.");
-      await h.focus(h.page.getByText("Settled in policy — no hardware confirmation required.", { exact: false }).first());
+      await h.expectText("Facility drawn +10.46 tRLUSD (in-browser accounting simulation — no payment, nothing settled on XRPL)");
+      await h.expectText("Simulated draw recorded in in-browser accounting only.");
+      await h.focus(h.page.getByText("Simulated draw recorded in in-browser accounting only.", { exact: false }).first());
     },
   },
   {
@@ -90,17 +90,17 @@ export const STAGES = [
     cue: [
       "In the facility panel, available credit went from 362.40 to 351.94 tRLUSD, outstanding to 148.06, and utilization from 27.5% to 29.6%.",
       "Now an attack. The site picks one of six attack cases at random; whichever it is, it's rejected, nothing is drawn and balances don't change.",
-      "tRLUSD is a test token. These are Credence's accounting records, not XRPL payments.",
+      "tRLUSD is a synthetic test unit here. These balances are simulated in the browser; nothing is paid.",
     ],
     async run(h) {
       // Normally continues on stage 3's page. If started directly (--from credit) or replayed after the attack,
       // re-create the simulated purchase first so the numbers are right.
-      const settled = h.page.getByText("Settled in policy — no hardware confirmation required.", { exact: false }).first();
+      const settled = h.page.getByText("Simulated draw recorded in in-browser accounting only.", { exact: false }).first();
       if (!h.page.url().endsWith("/credit") || !(await settled.isVisible().catch(() => false))) {
         await h.goto("/credit");
         await h.click(h.page.getByRole("button", { name: "Reset", exact: true }));
         await h.click(h.page.getByRole("button", { name: "Simulate inference purchase", exact: true }));
-        await h.expectText("Settled in policy — no hardware confirmation required.");
+        await h.expectText("Simulated draw recorded in in-browser accounting only.");
       }
       await h.focus(h.heading("Active facility"));
       await h.expectText("351.94 tRLUSD");
@@ -123,7 +123,7 @@ export const STAGES = [
     title: "5a · Evidence: receipts and verification",
     seconds: 22,
     cue: [
-      "Every purchase leaves a receipt: request, response and execution-profile digests, the provider's signature, the evidence tier.",
+      "The page displays seeded example receipts and their evidence tiers. These hosted receipts are not cryptographically verified.",
       "Tier 2 means the provider signed what it says it served. It is not proof that exact weights ran; the page says that too.",
       "The evidence ladder shows which levels are present for these receipts and which are roadmap.",
     ],
@@ -131,7 +131,7 @@ export const STAGES = [
       await h.goto("/receipts");
       await h.expectText("Inference receipts");
       await h.focus(h.heading("Receipts"));
-      await h.expectText("Tier 2 — provider-declared and bound");
+      await h.expectText("provider signed what it says it served");
       await h.focus(h.heading("Evidence ladder"));
     },
   },
@@ -172,7 +172,7 @@ export const STAGES = [
     id: "close",
     title: "7 · Close on the Claw Street logo",
     seconds: 10,
-    cue: ["Claw Street, powered by Credence: policy decides, the agent signs, Credence verifies and accounts. Thank you."],
+    cue: ["Claw Street, powered by Credence. Explore this browser simulation, then run the local signed-purchase demo. Thank you."],
     async run(h) {
       await h.goto("/");
       await h.focus(h.logo(), { holdMs: 5000 });

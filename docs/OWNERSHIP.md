@@ -35,6 +35,7 @@ Changes to Core or Inference canonical contracts made on the integration branch 
 | `infra/speculos/` | Ledger Integration | **TBD** |
 | `third_party/custody/` (submodule, pinned) | Kessai (external; not edited here) | — |
 | `docs/`, root tooling (`Makefile`, `pyproject.toml`, CI, agent rules) | Maura | — |
+| `release/claw-street/` (submission copy, presenter tooling and recording assets) | Submission release | Maura |
 
 ## Workstreams
 

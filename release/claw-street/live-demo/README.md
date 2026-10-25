@@ -1,5 +1,9 @@
 # Claw Street live demo (Playwright)
 
+For the working backend demonstration, use the `local:check`, `local:visible`, `local:present`
+and `local:record` commands in [`../README.md`](../README.md#presenter-and-recording).
+The commands documented below drive the separate public browser simulation.
+
 A guided, three-minute demonstration of the public Claw Street site, <https://creds-for-ai.lovable.app>, ending on
 the XRPL Testnet connectivity proof
 [`D26C5DDC…76DE79`](https://testnet.xrpl.org/transactions/D26C5DDC6F51877D745462BD7A6C8C8FE24972137637E2B62D1E269D0F76DE79).
@@ -22,9 +26,9 @@ page's **Simulate** and **Reset** buttons (a simulation in the browser, with no 
 | --- | --- | --- |
 | 1 Overview | `/` then `/overview` | Prototype dashboard with seeded demo data (labelled on the page) |
 | 2 Marketplace | `/market` | Seeded offers; the routing strategy re-selects the best offer in the browser |
-| 3 Agent purchase | `/credit` → **Simulate inference purchase** | A client-side simulation: four checks, facility drawn +10.46 tRLUSD, labelled "Credence accounting — not an on-chain payment". No provider is called and nothing is paid |
+| 3 Agent purchase | `/credit` → **Simulate inference purchase** | A client-side simulation: four displayed checks, facility drawn +10.46 tRLUSD, labelled "in-browser accounting simulation — no payment, nothing settled on XRPL". No signatures are verified, no provider is called and nothing is paid |
 | 4 Credit & payments | `/credit` | Facility panel 362.40 → 351.94 available, utilization 27.5% → 29.6%; **Simulate attack** (the site picks one of six cases at random) is rejected with no draw. The terminal prints the line for the case shown |
-| 5 Evidence, activity | `/receipts`, `/overview` | Seeded receipts with evidence tiers; seeded request history with PASS/REJECT |
+| 5 Evidence, activity | `/receipts`, `/overview` | Seeded example receipts with simulated evidence tiers; no cryptographic verification here; seeded request history with PASS/REJECT |
 | 6 XRPL Testnet | testnet.xrpl.org | A **real**, validated Testnet Payment of 1 drop (ledger 21807427), memo "XRPL connectivity proof transaction. Not governed by Credence procurement authorization." It is not a Credence-governed marketplace settlement |
 | 7 Close | `/` | The animated Claw Street logo |
 

@@ -13,7 +13,7 @@ release reaches the service.
 | **QuickNode** | Listed as not connected | No QuickNode endpoint is configured or called |
 | **Ledger hardware signer** | The Credit page shows the intended authority split, labelled "planned" | No device, Speculos or owner approval flow is connected |
 | **Verifiable Intent** | Listed as not connected | No credential is issued or checked |
-| **Lovable** | The web UI was built with Lovable; the release UI is the `creds-for-ai` branch `release/claw-street-ui` (`4a9a812`) | The public Lovable site (`creds-for-ai.lovable.app`) serves an **older** UI from `main` that is not this release (see `SUBMISSION-CHECKLIST.md`) |
+| **Lovable** | The local web UI was built with Lovable; its source is the `creds-for-ai` branch `release/claw-street-ui`, pinned by the parent Git submodule | The public Lovable site (`creds-for-ai.lovable.app`) is a separate browser simulation with seeded data. It does not run this local backend or its signature verification |
 | **Kessai serializer** | Canonical bytes and digests use the Kessai serializer: JCS (RFC 8785) + NFC, pinned at custody `5dc15ff` | It is not reimplemented here |
 
 ## Claims made by this release
@@ -23,8 +23,8 @@ release reaches the service.
 - Offline merchant compatibility assessment and payment-proposal preparation.
 - Verifiable signed agent requests and delivery receipts, within the implemented evidence tiers (Tier 0–2).
 - One qualifying provider per class today; the mechanism handles many.
-- Providers are paid after verification, and Credence is a trusted settlement party. In this build, "paid" means an
-  accounting settlement; no provider receives a payment.
+- Credence verifies delivery evidence before recording internal accounting settlement. No provider receives a
+  payment in this build. Any future payout requires separate authority and implementation.
 
 ## Claims this release does not make
 

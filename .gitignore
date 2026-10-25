@@ -34,6 +34,7 @@ __pycache__/
 .mypy_cache/
 .ruff_cache/
 .hypothesis/
+release/claw-street/live-demo/output/
 dist/
 build/
 

@@ -28,9 +28,8 @@ not an XRPL payment. No XRPL transaction is built, signed or submitted. See [`DI
 ## Start the demo (two terminals, all on loopback)
 
 ```bash
-# The Credence parent repository is not published yet (see SUBMISSION-CHECKLIST.md).
-git clone <credence repository> credence && cd credence
-git checkout maurathat/claw-street-release
+git clone --branch maurathat/claw-street-release https://github.com/maurathat/credence-xrpl.git credence
+cd credence
 git submodule update --init          # custody serializer and the web app (release/claw-street-ui)
 uv sync --locked
 
@@ -66,3 +65,30 @@ uv run python -m credence.agent.cli --demo-dir ~/claw-street-demo purchase \
 make test && make typecheck && make lint      # Python: unit, conformance, offline integration
 (cd web && bun run typecheck && bun run build && bun test)
 ```
+
+## Presenter and recording
+
+With the API and website running, the runner completes the real local signed purchase flow and
+keeps the agent key outside the browser. It only permits the configured loopback website and
+API; external requests are blocked. Generated datasets and recordings stay outside Git.
+
+```bash
+cd release/claw-street/live-demo
+npm ci
+npx playwright install chromium
+npm run local:check -- --demo-dir ~/claw-street-demo
+npm run local:visible -- --demo-dir ~/claw-street-demo
+npm run local:present -- --demo-dir ~/claw-street-demo
+npm run local:record -- --demo-dir ~/claw-street-demo
+```
+
+Use a fresh dataset for the recording. `local:check` and `local:visible` each execute both
+scenarios, adding 2 and 8 micro-tRLUSD to their respective facilities. `local:present` and
+`local:record` execute Scenario A only. Presenter mode pauses after each stage. The recording
+targets three minutes and includes captions but no audio. Add your own narration from
+[`DEMO-SCRIPT.md`](DEMO-SCRIPT.md). Artifacts are written to `live-demo/output/` (ignored).
+Override addresses with `--site http://127.0.0.1:PORT --api http://127.0.0.1:PORT`.
+
+The older `present`, `record` and `check` commands drive the separate public browser simulation.
+They do not exercise this backend. See [`SUBMISSION.md`](SUBMISSION.md) and
+[`FOUNDER-PITCH.md`](FOUNDER-PITCH.md) for submission text and the portrait founder recording.
