@@ -57,9 +57,9 @@ class XrplTestKey:
         return f"XrplTestKey({self.account})"
 
 
-def xrpl_test_key(label: str) -> XrplTestKey:
+def xrpl_test_key(label: str, algorithm: CryptoAlgorithm = CryptoAlgorithm.ED25519) -> XrplTestKey:
     entropy = hashlib.sha256(TEST_KEY_PREFIX + label.encode("ascii")).digest()[:16]
-    public_key, private_key = derive_keypair(encode_seed(entropy, CryptoAlgorithm.ED25519))
+    public_key, private_key = derive_keypair(encode_seed(entropy, algorithm))
     return XrplTestKey(public_key, private_key, derive_classic_address(public_key))
 
 
@@ -303,11 +303,26 @@ def signed_authorization(
     return sign_payment_authorization(authorization(transaction, **changes), key)
 
 
+class StaticLedgerSource:
+    """Stands in for the policy signer's own trusted transport; counts its reads."""
+
+    def __init__(self, context: LedgerContext | Exception | None = None) -> None:
+        self.context = ledger_context() if context is None else context
+        self.reads = 0
+
+    def ledger_context(self, policy: MultisignPolicy) -> LedgerContext:
+        self.reads += 1
+        if isinstance(self.context, Exception):
+            raise self.context
+        return self.context
+
+
 def policy_signer(
     directory: Path,
     *,
     source: FakeSettlementSource | None = None,
     keys: SettlementAuthorityKeys | None = None,
+    ledger_source: Any = None,
     config: PolicySignerConfig = SIGNER_CONFIG,
     log_name: str = "policy-signer.sqlite3",
 ) -> PolicySigner:
@@ -315,6 +330,7 @@ def policy_signer(
         config=config,
         authority_keys=keys or authority_keys(),
         settlement_source=source or FakeSettlementSource(),
+        ledger_source=ledger_source or StaticLedgerSource(),
         signing_log=PolicySigningLog(directory / log_name),
         public_key=POLICY.public_key,
         private_key=POLICY.private_key,

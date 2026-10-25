@@ -22,9 +22,13 @@ produces its one XRPL multisignature, the policy signer independently checks, in
 5. the unsigned transaction: it hashes to the authorized digest, and rebuilding the canonical
    Payment from the statement and the transaction's fee, sequence and LastLedgerSequence gives
    the same digest, so no field outside the statement (Memos, Paths, SendMax, flags) can ride along;
-6. validated ledger state: the policy signer is in the SignerList, the SignerList, RegularKey and
-   master-key state are as configured, the multisign fee is covered, and Sequence or
-   TicketSequence and LastLedgerSequence are usable.
+6. validated ledger state, read by the signer itself through its own configured trusted ledger
+   source (X1c, B3), never taken from the caller: the policy signer is in the SignerList, the
+   SignerList, RegularKey and master-key state are as configured, neither signer account holds a
+   RegularKey, the multisign fee is covered, and Sequence or TicketSequence and LastLedgerSequence
+   are usable. A caller may still pass the ledger context it used; if it differs in any way from
+   the signer's own read, the signer refuses (``LEDGER_CONTEXT_MISMATCH``). A failed read is
+   ``LEDGER_UNAVAILABLE``. Nothing is recorded or signed on any refusal.
 
 It then durably records, before signing, that this receipt and this operation are authorized for
 exactly this unsigned transaction. A second, different transaction for the same receipt or
@@ -33,7 +37,8 @@ This includes a replacement after the first transaction is proven expired and no
 has no replacement procedure, so such a receipt stays unpaid until one is reviewed and approved.
 
 The private key is held in memory for the life of the object and is never logged, stored or
-returned. Tests use deterministic TEST keys derived at runtime.
+returned. No API, frontend or procurement module imports this module; a test enforces that.
+Tests use deterministic TEST keys derived at runtime.
 
 Owner: Credence Core (kept separate from the engine to isolate keys).
 """
@@ -46,7 +51,7 @@ from collections.abc import Iterator, Mapping
 from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, Protocol
 
 from xrpl.core.keypairs import derive_classic_address
 
@@ -74,6 +79,13 @@ from credence.xrpl_adapter.multisign import (
 from credence.xrpl_adapter.types import Asset
 
 ACCOUNTING_SETTLED = "accounting_settled"
+
+
+class TrustedLedgerSource(Protocol):
+    """The signer's own read of validated ledger state (``RippledTransport`` implements it)."""
+
+    def ledger_context(self, policy: MultisignPolicy) -> LedgerContext: ...
+
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS policy_signatures (
@@ -165,6 +177,7 @@ class PolicySigner:
         config: PolicySignerConfig,
         authority_keys: SettlementAuthorityKeys,
         settlement_source: AccountingSettlementSource,
+        ledger_source: TrustedLedgerSource,
         signing_log: PolicySigningLog,
         public_key: str,
         private_key: str,
@@ -174,6 +187,7 @@ class PolicySigner:
         self._config = config
         self._authority_keys = authority_keys
         self._settlement_source = settlement_source
+        self._ledger_source = ledger_source
         self._signing_log = signing_log
         self._public_key = public_key
         self.__private_key = private_key
@@ -189,11 +203,14 @@ class PolicySigner:
         self,
         signed_authorization: SignedPaymentAuthorization,
         unsigned_transaction: Mapping[str, Any],
-        ledger: LedgerContext,
+        claimed_ledger: LedgerContext | None = None,
         *,
         now: Timestamp,
     ) -> MultisignSignature:
-        """Return this signer's multisignature, or raise ``PolicySignerRefused``."""
+        """Return this signer's multisignature, or raise ``PolicySignerRefused``.
+
+        ``claimed_ledger`` is only compared with the signer's own trusted read; it is never used
+        as ledger evidence."""
         try:
             authorization = verify_payment_authorization(
                 signed_authorization, self._authority_keys, now=now
@@ -206,6 +223,7 @@ class PolicySigner:
         self._check_core_settlement(authorization)
         self._check_parties(authorization)
         self._check_transaction(authorization, unsigned_transaction)
+        ledger = self._trusted_ledger(claimed_ledger)
         self._check_ledger(unsigned_transaction, ledger)
         self._signing_log.record(authorization, now)
         try:
@@ -285,6 +303,19 @@ class PolicySigner:
             raise PolicySignerRefused(
                 "TRANSACTION_FIELDS_MISMATCH", "transaction differs from the authorized payment"
             )
+
+    def _trusted_ledger(self, claimed: LedgerContext | None) -> LedgerContext:
+        try:
+            trusted = self._ledger_source.ledger_context(self._config.policy)
+        except Exception as exc:  # any failed read fails closed; the cause is kept
+            raise PolicySignerRefused("LEDGER_UNAVAILABLE", type(exc).__name__) from exc
+        if not isinstance(trusted, LedgerContext):
+            raise PolicySignerRefused("LEDGER_UNAVAILABLE", "trusted source returned no context")
+        if claimed is not None and claimed != trusted:
+            raise PolicySignerRefused(
+                "LEDGER_CONTEXT_MISMATCH", "caller ledger state differs from the trusted read"
+            )
+        return trusted
 
     def _check_ledger(self, transaction: Mapping[str, Any], ledger: LedgerContext) -> None:
         policy = self._config.policy

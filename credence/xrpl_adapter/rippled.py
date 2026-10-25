@@ -14,14 +14,26 @@ Implemented seams (all JSON-RPC, ``api_version`` 2):
 - ``trust_line``: one holder's tRLUSD trust line to the issuer;
 - ``validated_ledger``: the X0t ``ValidatedLedgerObserver`` (anchor, history ranges, sender state);
 - ``lookup``: the X0t ``HashLookup``, producing the X0s evidence envelope
-  ``credence.xrpl.validated-payment-evidence.v1`` from the exact transaction blob and metadata,
-  cross-checked across the binary and JSON forms and against the validated ledger hash;
+  ``credence.xrpl.validated-payment-evidence.v1`` from the exact transaction blob and metadata.
+  Each lookup first re-reads and re-verifies the node's validated-ledger identity (network, build,
+  optional node key). The transaction's ledger must be validated, at or below the current validated
+  ledger, inside the node's complete history, and its hash must match the fetched ledger. The
+  result, and the delivered amount, must agree between the binary and JSON forms (X1c, B1/B2);
 - ``submit``: the X0t ``SubmissionTransport``. It refuses unless submission was explicitly enabled
   in its configuration. X1a never enables it, and ``offline_only`` is false, so the X0t
   ``PaymentService`` refuses this transport outright.
 
-The client accepts only loopback endpoints, bypasses any HTTP proxy, and refuses any request that
-carries a secret, seed or key parameter, so the node is never asked to sign.
+The client accepts only loopback endpoints, bypasses any HTTP proxy, never follows an HTTP
+redirect (X1c, C3), and refuses any request that carries a secret, seed or key parameter, so the
+node is never asked to sign.
+
+Delivered amount (X1c, B1). The binary metadata is authoritative for what moved. When it carries
+``DeliveredAmount`` that is the delivered amount; otherwise XRPL's rule for a successful Payment
+without ``tfPartialPayment`` applies and the delivered amount is the signed ``Amount`` (the X0
+inspector refuses any Payment flags, so a partial payment never reaches this point). The JSON
+``delivered_amount`` must equal it in currency, issuer and exact decimal value, or the lookup is
+refused ``EVIDENCE_INCONSISTENT`` and nothing settles. Both observations are kept in the evidence
+envelope. An unsuccessful result must carry neither.
 
 The response shapes are rippled's documented API v2 shapes. They were exercised only against the
 deterministic fake client in ``tests/unit/test_xrpl_x1a_transport.py``, not against the pinned
@@ -121,7 +133,9 @@ class LoopbackJsonRpcClient:
             raise ValueError("timeout must be positive")
         self._url = url
         self._timeout = timeout_seconds
-        self._opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
+        self._opener = urllib.request.build_opener(
+            urllib.request.ProxyHandler({}), _RefuseRedirects()
+        )
 
     def call(self, method: str, params: Mapping[str, Any]) -> bytes:
         refuse_secret_parameters(params)
@@ -142,6 +156,21 @@ class LoopbackJsonRpcClient:
             raise RpcUnavailable(method) from exc
 
 
+class _RefuseRedirects(urllib.request.HTTPRedirectHandler):
+    """A pinned endpoint never follows a redirect to another host or URL."""
+
+    def redirect_request(
+        self,
+        req: urllib.request.Request,
+        fp: Any,
+        code: int,
+        msg: str,
+        headers: Any,
+        newurl: str,
+    ) -> urllib.request.Request | None:
+        raise urllib.error.HTTPError(req.full_url, code, "redirect refused", headers, fp)
+
+
 def refuse_secret_parameters(params: Mapping[str, Any]) -> None:
     if _FORBIDDEN_PARAMETERS & set(params):
         raise ValueError("Credence never sends signing secrets to a ledger node")
@@ -149,9 +178,13 @@ def refuse_secret_parameters(params: Mapping[str, Any]) -> None:
 
 @dataclass(frozen=True)
 class RippledTransportConfig:
+    """The trusted node's pinned identity. Every identity read checks the network ID and build
+    version, and the node public key when it is pinned."""
+
     source_id: str
     expected_network_id: int
-    expected_build_version: str | None = None
+    expected_build_version: str
+    expected_node_public_key: str | None = None
     submission_enabled: bool = False
 
 
@@ -169,6 +202,7 @@ class ValidatedLedgerIdentity:
     source_id: str
     network_id: int
     build_version: str
+    node_public_key: str | None
     ledger_index: int
     ledger_hash: str
     base_fee_drops: int
@@ -248,6 +282,54 @@ def _ledger_hash(value: object) -> str:
     return value.upper()
 
 
+def _issued(amount: object) -> tuple[str, str, Decimal]:
+    if not isinstance(amount, dict):
+        raise TransportRefused("EVIDENCE_INCONSISTENT", "delivered amount is not an issued amount")
+    currency, issuer, value = amount.get("currency"), amount.get("issuer"), amount.get("value")
+    if not isinstance(currency, str) or not isinstance(issuer, str) or not isinstance(value, str):
+        raise TransportRefused("EVIDENCE_INCONSISTENT", "delivered amount is incomplete")
+    try:
+        number = Decimal(value)
+    except InvalidOperation as exc:
+        raise TransportRefused("EVIDENCE_INCONSISTENT", "delivered value is not decimal") from exc
+    if not number.is_finite():
+        raise TransportRefused("EVIDENCE_INCONSISTENT", "delivered value is not finite")
+    return currency.upper(), issuer, number
+
+
+def _binary_delivered_amount(
+    binary_meta: Mapping[str, Any], blob: bytes, result_code: object
+) -> dict[str, str] | None:
+    """What moved, from the binary metadata, with XRPL's Payment fallback to the signed Amount."""
+    if result_code != "tesSUCCESS":
+        if "DeliveredAmount" in binary_meta:
+            raise TransportRefused("EVIDENCE_INCONSISTENT", "failed Payment reports a delivery")
+        return None
+    if "DeliveredAmount" in binary_meta:
+        source, amount = "DeliveredAmount", binary_meta["DeliveredAmount"]
+    else:
+        # Only valid without tfPartialPayment; the X0 inspector has refused any Payment flags.
+        source, amount = "Amount", decode(blob.hex().upper()).get("Amount")
+    currency, issuer, value = _issued(amount)
+    return {"currency": currency, "issuer": issuer, "value": str(value), "source": source}
+
+
+def _require_delivered_agreement(binary: dict[str, str] | None, observed: object) -> None:
+    if binary is None:
+        if observed is not None:
+            raise TransportRefused("EVIDENCE_INCONSISTENT", "failed Payment reports a delivery")
+        return
+    currency, issuer, value = _issued(observed)
+    if (currency, issuer, value) != (
+        binary["currency"],
+        binary["issuer"],
+        Decimal(binary["value"]),
+    ):
+        raise TransportRefused(
+            "EVIDENCE_INCONSISTENT", "binary and JSON delivered amounts disagree"
+        )
+
+
 class RippledTransport:
     """Trusted local rippled seams for X1. Not accepted by the X0t offline PaymentService."""
 
@@ -256,6 +338,8 @@ class RippledTransport:
     def __init__(self, client: JsonRpcClient, config: RippledTransportConfig) -> None:
         if not config.source_id.strip():
             raise ValueError("source_id is required")
+        if not config.expected_build_version.strip():
+            raise ValueError("expected_build_version is required")
         self._client = client
         self._config = config
 
@@ -288,9 +372,12 @@ class RippledTransport:
         if network_id != self._config.expected_network_id:
             raise TransportRefused("NETWORK_MISMATCH", f"network_id is {network_id!r}")
         build_version = str(state.get("build_version", ""))
-        expected_build = self._config.expected_build_version
-        if expected_build is not None and build_version != expected_build:
+        if build_version != self._config.expected_build_version:
             raise TransportRefused("BUILD_VERSION_MISMATCH", build_version)
+        node_public_key = state.get("pubkey_node")
+        expected_node = self._config.expected_node_public_key
+        if expected_node is not None and node_public_key != expected_node:
+            raise TransportRefused("NODE_IDENTITY_MISMATCH", str(node_public_key))
         validated = state.get("validated_ledger")
         if not isinstance(validated, dict):
             raise TransportRefused("NO_VALIDATED_LEDGER")
@@ -316,6 +403,7 @@ class RippledTransport:
             source_id=self._config.source_id,
             network_id=cast(int, network_id),
             build_version=build_version,
+            node_public_key=None if node_public_key is None else str(node_public_key),
             ledger_index=ledger_index,
             ledger_hash=ledger_hash,
             base_fee_drops=_int(validated.get("base_fee"), "base_fee"),
@@ -523,6 +611,8 @@ class RippledTransport:
             return LookupResult(LookupDisposition.UNAVAILABLE, detail=exc.code)
 
     def _lookup(self, expected_hash: str) -> LookupResult:
+        # B2: the node's identity is re-read and re-verified for every lookup.
+        identity = self.validated_ledger_identity()
         binary, binary_raw = self._call("tx", {"transaction": expected_hash, "binary": True})
         blob_hex = binary.get("tx_blob")
         if not isinstance(blob_hex, str) or not blob_hex:
@@ -565,6 +655,12 @@ class RippledTransport:
             )
 
         ledger_index = _int(binary.get("ledger_index"), "ledger_index")
+        if ledger_index > identity.ledger_index:
+            raise TransportRefused("LEDGER_BEYOND_VALIDATED", str(ledger_index))
+        if not any(
+            item.first <= ledger_index <= item.last for item in identity.complete_history_ranges
+        ):
+            raise TransportRefused("LEDGER_OUTSIDE_COMPLETE_HISTORY", str(ledger_index))
         meta_hex = binary.get("meta_blob", binary.get("meta"))
         if not isinstance(meta_hex, str):
             raise TransportRefused("MALFORMED_RESPONSE", "meta_blob")
@@ -589,22 +685,26 @@ class RippledTransport:
         )
         if ledger_result.get("validated") is not True:
             raise TransportRefused("LEDGER_NOT_VALIDATED")
+        if _int(ledger_result.get("ledger_index"), "ledger_index") != ledger_index:
+            raise TransportRefused("LEDGER_HASH_MISMATCH", "ledger index differs")
         header = ledger_result.get("ledger")
         ledger_hash_value = ledger_result.get("ledger_hash")
         if ledger_hash_value is None and isinstance(header, dict):
             ledger_hash_value = header.get("ledger_hash")
         ledger_hash = _ledger_hash(ledger_hash_value)
+        if ledger_index == identity.ledger_index and ledger_hash != identity.ledger_hash:
+            raise TransportRefused("LEDGER_HASH_MISMATCH", "differs from the validated identity")
         for stated in (binary.get("ledger_hash"), detail.get("ledger_hash")):
             if stated is not None and _ledger_hash(stated) != ledger_hash:
                 raise TransportRefused("LEDGER_HASH_MISMATCH")
 
+        result_code = meta.get("TransactionResult")
         delivered = meta.get("delivered_amount")
+        binary_delivered = _binary_delivered_amount(binary_meta, blob, result_code)
+        _require_delivered_agreement(binary_delivered, delivered)
         delivered_micro: int | None = None
         if isinstance(delivered, dict):
-            try:
-                delivered_micro = issued_micro_units(delivered.get("value"))
-            except TransportRefused:
-                delivered_micro = None
+            delivered_micro = issued_micro_units(delivered.get("value"))
         envelope = json.dumps(
             {
                 "schema": EVIDENCE_SCHEMA,
@@ -614,8 +714,20 @@ class RippledTransport:
                 "transaction_hash": expected_hash,
                 "signed_transaction": blob.hex().upper(),
                 "meta": {
-                    "TransactionResult": meta.get("TransactionResult"),
+                    "TransactionResult": result_code,
                     "delivered_amount": delivered,
+                },
+                "delivered_amount_observations": {
+                    "binary": binary_delivered,
+                    "json": delivered,
+                },
+                "validated_identity": {
+                    "build_version": identity.build_version,
+                    "complete_ledgers": identity.complete_ledgers,
+                    "ledger_hash": identity.ledger_hash,
+                    "ledger_index": identity.ledger_index,
+                    "network_id": identity.network_id,
+                    "node_public_key": identity.node_public_key,
                 },
                 "source_id": self._config.source_id,
                 "raw": [
@@ -624,7 +736,7 @@ class RippledTransport:
                         "params": item.params,
                         "response": item.response.decode("utf-8", errors="replace"),
                     }
-                    for item in (binary_raw, detail_raw, ledger_raw)
+                    for item in (*identity.raw, binary_raw, detail_raw, ledger_raw)
                 ],
             },
             separators=(",", ":"),
@@ -635,7 +747,7 @@ class RippledTransport:
             LedgerPayment(
                 transaction_hash=expected_hash,
                 validated=True,
-                result=cast(str | None, meta.get("TransactionResult")),
+                result=cast(str | None, result_code),
                 transaction_type=TransactionType.PAYMENT,
                 account=parsed.account,
                 destination=parsed.destination,

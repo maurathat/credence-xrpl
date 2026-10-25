@@ -11,19 +11,21 @@ path or settlement-effect channel.
 | ``SUBMISSION_PENDING`` | ``SUBMITTED`` or ``PENDING_CONFIRMATION`` |
 | ``VALIDATED_SUCCESS`` | ``VALIDATED_SUCCESS`` with ``XRPL_SETTLED`` |
 | ``VALIDATED_FAILURE`` | ``VALIDATED_FAILURE`` whose evidence result is not ``tesSUCCESS`` |
-| ``VALIDATED_UNEXPECTED_DELIVERY`` | ``VALIDATED_FAILURE`` whose evidence result is ``tesSUCCESS``: funds may have moved, but not as authorized. A transferred-funds exception, not an unsuccessful transaction |
+| ``VALIDATED_UNEXPECTED_DELIVERY`` | ``VALIDATED_UNEXPECTED_DELIVERY`` (journal schema version 3, X1c C1) whose evidence result is ``tesSUCCESS``: funds moved, but not as authorized. A transferred-funds exception requiring operator reconciliation, not an unsuccessful transaction |
 | ``EXPIRED_NOT_INCLUDED`` | ``EXPIRED_NOT_INCLUDED``, proven by anchored complete history |
 | ``UNKNOWN_RECONCILIATION_REQUIRED`` | ``UNKNOWN``, or any record whose stored evidence does not support its state |
 
-The unexpected-delivery split is decided from the stored evidence envelope's
-``meta.TransactionResult``, not from the result-code string, and the two must agree.
+The journal state and the stored evidence envelope's ``meta.TransactionResult`` must agree: an
+unexpected delivery must show ``tesSUCCESS`` and a ledger failure must not. Any disagreement is
+``UNKNOWN_RECONCILIATION_REQUIRED``.
 
 ``SqliteSettlementEventConsumer`` is the single settlement-effect authority path for live use. It
 applies an X0t outbox event in its own ``BEGIN IMMEDIATE`` transaction, keyed by the outbox's
 deterministic ``event_id``, and runs the caller's effect inside that same transaction. A replay of
 the same event is a no-op; a different event for the same event ID, operation, payment
-authorization or transaction hash is refused. The X0t ``claim_xrpl_settlement`` bit is not a live
-authority and must not be used alongside it.
+authorization or transaction hash is refused. The X0t ``claim_xrpl_settlement`` is not an
+authority: since X1c it is refused (``LEGACY_SETTLEMENT_CLAIM_RETIRED``) whenever an outbox event
+exists.
 
 Owner: XRPL Integration (X1a, authorized by Maura).
 """
@@ -81,11 +83,13 @@ def classify_payment(record: PaymentRecord) -> PaymentOutcome:
         ):
             return PaymentOutcome.VALIDATED_SUCCESS
         return PaymentOutcome.UNKNOWN_RECONCILIATION_REQUIRED
-    if state is TransactionState.VALIDATED_FAILURE:
-        ledger_result = _evidence_result(record.final_evidence)
-        unexpected = record.final_result in UNEXPECTED_DELIVERY_RESULTS
+    ledger_result = _evidence_result(record.final_evidence)
+    unexpected = record.final_result in UNEXPECTED_DELIVERY_RESULTS
+    if state is TransactionState.VALIDATED_UNEXPECTED_DELIVERY:
         if ledger_result == "tesSUCCESS" and unexpected:
             return PaymentOutcome.VALIDATED_UNEXPECTED_DELIVERY
+        return PaymentOutcome.UNKNOWN_RECONCILIATION_REQUIRED
+    if state is TransactionState.VALIDATED_FAILURE:
         if ledger_result is not None and ledger_result != "tesSUCCESS" and not unexpected:
             return PaymentOutcome.VALIDATED_FAILURE
         return PaymentOutcome.UNKNOWN_RECONCILIATION_REQUIRED

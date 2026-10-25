@@ -45,6 +45,7 @@ class StoredTransaction:
 class FakeRippled:
     network_id: int = NETWORK_ID
     build_version: str = "3.4.0"
+    node_public_key: str = "n9TestLocalStandaloneNode"
     ledger_index: int = VALIDATED_LEDGER
     complete_ledgers: str = f"1-{VALIDATED_LEDGER}"
     base_fee: int = BASE_FEE
@@ -117,6 +118,7 @@ class FakeRippled:
                 "build_version": self.build_version,
                 "complete_ledgers": self.complete_ledgers,
                 "network_id": self.network_id,
+                "pubkey_node": self.node_public_key,
                 "server_state": "full",
                 "validated_ledger": {
                     "base_fee": self.base_fee,

@@ -156,7 +156,7 @@ class PaymentResultVerifier:
             or evidence.delivered_issuer != expected.asset.issuer
         ):
             return VerificationResult(
-                VerificationDisposition.VALIDATED_FAILURE,
+                VerificationDisposition.VALIDATED_UNEXPECTED_DELIVERY,
                 "DELIVERED_ASSET_MISMATCH",
                 "validated Payment delivered an unexpected asset",
                 evidence.ledger_index,
@@ -165,7 +165,7 @@ class PaymentResultVerifier:
             )
         if evidence.delivered_amount_micro_units != expected.amount_micro_units:
             return VerificationResult(
-                VerificationDisposition.VALIDATED_FAILURE,
+                VerificationDisposition.VALIDATED_UNEXPECTED_DELIVERY,
                 "DELIVERED_AMOUNT_MISMATCH",
                 "validated Payment delivered an unexpected amount",
                 evidence.ledger_index,
@@ -279,6 +279,17 @@ class ReadOnlyPaymentStatus(PaymentStatusReporter):
 
     def attempts(self, operation_id: str) -> tuple[SubmissionAttempt, ...]:
         return self.__journal.attempts(operation_id)
+
+    def requires_operator_reconciliation(self, operation_id: str) -> bool:
+        """True for a validated payment that moved funds but not as authorized (X1c C1).
+
+        Such a payment is terminal: it is never retried or replaced automatically and never
+        produces a settlement event."""
+        state = self.__journal.get(operation_id).state
+        return state is TransactionState.VALIDATED_UNEXPECTED_DELIVERY
+
+    def operator_reconciliation_queue(self) -> tuple[PaymentRecord, ...]:
+        return self.__journal.list_requiring_operator_reconciliation()
 
 
 class PaymentService:
@@ -432,11 +443,13 @@ class PaymentService:
                 TransactionState.UNKNOWN,
                 verification.result_code,
             )
-        state = (
-            TransactionState.VALIDATED_SUCCESS
-            if verification.disposition is VerificationDisposition.VALIDATED_SUCCESS
-            else TransactionState.VALIDATED_FAILURE
-        )
+        state = {
+            VerificationDisposition.VALIDATED_SUCCESS: TransactionState.VALIDATED_SUCCESS,
+            VerificationDisposition.VALIDATED_FAILURE: TransactionState.VALIDATED_FAILURE,
+            VerificationDisposition.VALIDATED_UNEXPECTED_DELIVERY: (
+                TransactionState.VALIDATED_UNEXPECTED_DELIVERY
+            ),
+        }[verification.disposition]
         return self._journal.finalize(
             record.operation_id,
             state=state,
@@ -541,7 +554,10 @@ class PaymentService:
         )
 
     def claim_xrpl_settlement(self, operation_id: str) -> bool:
-        """Return true exactly once, and only after verified validated success."""
+        """Retired (X1c, B5): raises ``LegacySettlementClaimRetired`` when an outbox event exists.
+
+        Settlement effects are applied only through ``deliver_settlement_events`` to an idempotent
+        consumer keyed by the outbox ``event_id``."""
         return self._journal.claim_settlement_effect(operation_id)
 
     def deliver_settlement_events(

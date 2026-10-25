@@ -27,6 +27,9 @@ class TransactionState(Enum):
     PENDING_CONFIRMATION = "PENDING_CONFIRMATION"
     VALIDATED_SUCCESS = "VALIDATED_SUCCESS"
     VALIDATED_FAILURE = "VALIDATED_FAILURE"
+    # X1c C1: validated tesSUCCESS that delivered the wrong asset or amount. The ledger
+    # transaction succeeded; the commercial obligation was not met. Not a ledger failure.
+    VALIDATED_UNEXPECTED_DELIVERY = "VALIDATED_UNEXPECTED_DELIVERY"
     EXPIRED_NOT_INCLUDED = "EXPIRED_NOT_INCLUDED"
     UNKNOWN = "UNKNOWN"
 
@@ -35,6 +38,7 @@ TERMINAL_STATES = frozenset(
     {
         TransactionState.VALIDATED_SUCCESS,
         TransactionState.VALIDATED_FAILURE,
+        TransactionState.VALIDATED_UNEXPECTED_DELIVERY,
         TransactionState.EXPIRED_NOT_INCLUDED,
     }
 )
@@ -60,6 +64,7 @@ class VerificationDisposition(Enum):
     UNRESOLVED = "UNRESOLVED"
     VALIDATED_SUCCESS = "VALIDATED_SUCCESS"
     VALIDATED_FAILURE = "VALIDATED_FAILURE"
+    VALIDATED_UNEXPECTED_DELIVERY = "VALIDATED_UNEXPECTED_DELIVERY"
 
 
 @dataclass(frozen=True)
@@ -394,6 +399,16 @@ class LegacyJournalUnsupported(JournalOpenRefused):
     code = "LEGACY_JOURNAL_UNSUPPORTED"
 
 
+class SupersededJournalSchema(JournalOpenRefused):
+    """A complete version-2 (X0s/X0t/X1a) journal: preserved unchanged and refused (X1c C1).
+
+    Version 3 adds the ``VALIDATED_UNEXPECTED_DELIVERY`` state, which a version-2 state
+    constraint cannot store. No automatic migration exists; recovery needs separate approval.
+    """
+
+    code = "JOURNAL_VERSION_2_UNSUPPORTED"
+
+
 class UnsupportedJournalSchema(JournalOpenRefused):
     """The journal schema is unknown, inconsistent, or only partly initialized."""
 
@@ -402,3 +417,17 @@ class UnsupportedJournalSchema(JournalOpenRefused):
 
 class DuplicateFinancialOperation(RuntimeError):
     pass
+
+
+class LegacySettlementClaimRetired(RuntimeError):
+    """The one-time local claim is not a settlement authority once an outbox event exists.
+
+    The durable outbox event, applied by an idempotent consumer keyed by ``event_id``, is the only
+    supported settlement-effect path (X1c, B5). Stored claim history is preserved, not rewritten.
+    """
+
+    code = "LEGACY_SETTLEMENT_CLAIM_RETIRED"
+
+    def __init__(self, operation_id: str) -> None:
+        super().__init__(f"{self.code}: {operation_id}: use the settlement outbox event")
+        self.operation_id = operation_id

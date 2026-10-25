@@ -2,7 +2,8 @@
 
 Owner: XRPL Integration (Codex)
 
-Status: X0t offline legacy-journal boundary. Only the owner edits this file;
+Status: X0t offline legacy-journal boundary, amended by X1a (offline preflight) and X1c
+(payment-assurance remediation; journal schema version 3). Only the owner edits this file;
 other workstreams file a request in `contracts/requests/`.
 
 ## Boundary
@@ -18,9 +19,11 @@ journal. None implies another:
 X0s does not change Core accounting semantics. Its downstream seam is a durable
 transactional outbox event created in the same SQLite transaction that records a
 Payment as validated with `tesSUCCESS` and verifies trusted-source evidence
-against the recorded intent. The legacy one-time local claim remains available,
-but is not a delivery guarantee. A provisional submit response, including
-`tesSUCCESS`, never creates `XRPL_SETTLED` or an outbox event.
+against the recorded intent. Since X1c that outbox event, applied by an idempotent
+consumer keyed by `event_id`, is the only supported settlement-effect path; the
+legacy one-time local claim is refused (`LEGACY_SETTLEMENT_CLAIM_RETIRED`) whenever
+an outbox event exists. A provisional submit response, including `tesSUCCESS`,
+never creates `XRPL_SETTLED` or an outbox event.
 
 `operation_id` and `payment_authorization_id` are journal identifiers. They are
 not proof that Core authorized a payment. X1 must bind an immutable Core
@@ -62,23 +65,28 @@ The outbox contains a deterministic event ID bound to operation ID and
 transaction hash, canonical payload, attempt count and delivery timestamp. The
 event is inserted atomically with verified success. Exactly-once economic effect
 across a second database requires the destination to apply `event_id`
-idempotently; the local claim bit alone is insufficient.
+idempotently. The local claim bit is not a settlement authority (X1c); its
+stored value is kept as history and never rewritten.
 
-Schema version 2 includes anchor, verified-evidence and outbox storage. X0t does
-not automatically migrate original X0 payment journals. Before any schema write,
-`PaymentJournal` distinguishes a genuinely empty database, the complete X0
-table/column/index/foreign-key signature, and the complete version-2 signature.
-An X0 journal, including one with no payment rows, is preserved and refused with
-`LEGACY_JOURNAL_UNSUPPORTED`. Unknown versions and ambiguous, corrupt or partly
-migrated schemas are preserved and refused with `UNSUPPORTED_JOURNAL_SCHEMA`.
-Only a missing or genuinely empty database is initialized directly at version 2.
+Schema version 3 (X1c) is version 2 (anchor, verified-evidence and outbox
+storage) with a state constraint that also admits `VALIDATED_UNEXPECTED_DELIVERY`.
+No journal is migrated automatically. Before any schema write, `PaymentJournal`
+distinguishes a genuinely empty database, the complete X0 signature, the complete
+version-2 signature, and the complete version-3 signature whose state constraint
+admits every state. An X0 journal, including one with no payment rows, is
+preserved and refused with `LEGACY_JOURNAL_UNSUPPORTED`. A version-2 journal,
+including one with no payment rows, is preserved byte for byte and refused with
+`JOURNAL_VERSION_2_UNSUPPORTED`. Unknown versions and ambiguous, corrupt, partly
+migrated or relabelled schemas are preserved and refused with
+`UNSUPPORTED_JOURNAL_SCHEMA`. Only a missing or genuinely empty database is
+initialized, directly at version 3.
 
-Legacy recovery or migration requires separate authorization and is not part of
-X0t. Initialization never clears a legacy settlement claim, reopens a terminal
+Legacy recovery or migration (X0 or version 2) requires separate authorization
+and is not part of X0t or X1c. Initialization never clears a legacy settlement claim, reopens a terminal
 payment, synthesizes an outbox event, submits a transaction or imports rows into
 another database. Until an approved recovery procedure exists, the legacy
 journal and its evidence remain the historical record. The payment-reliability
-guarantees in this contract apply only to correctly initialized version-2
+guarantees in this contract apply only to correctly initialized version-3
 journals.
 
 Uniqueness is enforced for operation ID, payment-authorization ID, transaction
@@ -93,7 +101,7 @@ not private signing material.
 
 The normal lifecycle is:
 
-`PREPARED -> SUBMITTED -> PENDING_CONFIRMATION -> VALIDATED_SUCCESS | VALIDATED_FAILURE | EXPIRED_NOT_INCLUDED`
+`PREPARED -> SUBMITTED -> PENDING_CONFIRMATION -> VALIDATED_SUCCESS | VALIDATED_FAILURE | VALIDATED_UNEXPECTED_DELIVERY | EXPIRED_NOT_INCLUDED`
 
 `UNKNOWN` means reconciliation is required. It is used when a response is
 lost, submission is rejected without final ledger evidence, lookup is
@@ -105,11 +113,14 @@ unavailable, or ledger history cannot prove non-inclusion.
 - A found but unvalidated transaction remains `PENDING_CONFIRMATION`.
 - A validated non-`tesSUCCESS` result is `VALIDATED_FAILURE`.
 - Valid evidence for `tesSUCCESS` with the wrong delivered asset or amount is
-  `VALIDATED_FAILURE` and never `XRPL_SETTLED`. This classification blocks the
-  expected settlement effect; it does not prove that no funds moved. X1 must
-  route an unexpected-delivery `tesSUCCESS` as a transferred-funds exception,
-  distinct from an unsuccessful ledger result. A contradiction between the
-  evidence transaction and normalized or recorded fields remains `UNKNOWN`.
+  `VALIDATED_UNEXPECTED_DELIVERY` (X1c): the ledger transaction succeeded and
+  funds may have moved, but the authorized obligation was not met. It is never a
+  ledger failure and never `XRPL_SETTLED`, creates no outbox event, keeps the raw
+  evidence and the verified delivered amount, is terminal (never retried or
+  replaced automatically), and is reported by
+  `ReadOnlyPaymentStatus.requires_operator_reconciliation` and
+  `operator_reconciliation_queue`. A contradiction between the evidence
+  transaction and normalized or recorded fields remains `UNKNOWN`.
 - Expiry requires validated-ledger progress beyond LastLedgerSequence and a
   trusted pre-broadcast anchor plus continuous history ranges covering the full
   possible inclusion window. Missing provenance, gaps, source disagreement or
@@ -138,8 +149,8 @@ fixtures using `TxnSignature="AA"` are deliberately noncryptographic mock data
 and are not evidence of valid XRPL authorization.
 
 X1 must also replace the self-declared `offline_only` marker with an enforceable
-transport boundary, remove direct journal methods from live settlement
-authority, and define one settlement-effect authority path. Outbox delivery is
+transport boundary. X1c retired the direct journal claim as a settlement authority
+and defined one settlement-effect path (the outbox). Outbox delivery is
 at-least-once: a non-idempotent consumer can apply an event twice, so the live
 consumer must enforce `event_id` idempotency in its own durable transaction.
 
@@ -162,3 +173,20 @@ decision is `docs/decisions/0010-xrpl-x1a-multisign-preflight.md`.
 
 The X1a transport response shapes were exercised only against a deterministic fake node, not the
 pinned server.
+
+## X1c remediation
+
+X1c closes reviewer findings B1-B5 and C1-C3 against `607cc2a`. Details and
+before/after exploit results are in `spike/xrpl/X1C-REMEDIATION.md`; the decision
+is `docs/decisions/0011-xrpl-x1c-payment-assurance.md`.
+
+| Finding | Contract now |
+| --- | --- |
+| B1 | Lookup takes the delivered amount from binary metadata (`DeliveredAmount`, or the signed `Amount` for a successful Payment without `tfPartialPayment`) and requires the JSON `delivered_amount` to match in currency, issuer and exact value; otherwise `EVIDENCE_INCONSISTENT`, nothing settles. Both observations are kept in the evidence envelope. |
+| B2 | Every lookup re-reads and re-verifies the node's validated-ledger identity (network ID, pinned build, optional pinned node key). The transaction's ledger must be validated, at or below the validated ledger, inside complete history, and hash-consistent. `expected_build_version` is required. |
+| B3 | The policy signer reads ledger state through its own configured trusted source; a caller's context is only compared (`LEDGER_CONTEXT_MISMATCH`) and never used as evidence. |
+| B4 | A funded signer account holding a RegularKey is refused (`SIGNER_REGULAR_KEY_PRESENT`) and is a setup-readiness finding. |
+| B5 | `claim_xrpl_settlement` is refused (`LEGACY_SETTLEMENT_CLAIM_RETIRED`) whenever an outbox event exists. The outbox and idempotent consumer are the one authoritative payment-event path. |
+| C1 | `VALIDATED_UNEXPECTED_DELIVERY` state; journal schema version 3; version-2 journals refused unchanged. |
+| C2 | Signatures must be canonical as rippled requires: strict DER with low S (secp256k1), `S < L` (Ed25519). `SIGNATURE_NOT_CANONICAL`. |
+| C3 | The loopback client never follows an HTTP redirect. |

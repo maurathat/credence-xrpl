@@ -35,6 +35,7 @@ from credence.xrpl_adapter.types import (
     LedgerPayment,
     LedgerRange,
     LegacyJournalUnsupported,
+    LegacySettlementClaimRetired,
     LookupDisposition,
     LookupResult,
     LookupUnavailable,
@@ -218,6 +219,16 @@ def acknowledge() -> SubmissionResponse:
     return SubmissionResponse(True, "tesSUCCESS", "provisional only")
 
 
+def journal_events(database: Path) -> list[tuple[str, str]]:
+    with sqlite3.connect(database) as connection:
+        return [
+            (str(row[0]), str(row[1]))
+            for row in connection.execute(
+                "SELECT event_id, operation_id FROM xrpl_settlement_outbox"
+            )
+        ]
+
+
 def found(payment: LedgerPayment) -> LookupResult:
     return LookupResult(LookupDisposition.FOUND, payment=payment)
 
@@ -236,8 +247,12 @@ def test_success_requires_validated_payment_and_effect_is_exactly_once(tmp_path:
     settled = service.reconcile(record.operation_id)
     assert settled.state is TransactionState.VALIDATED_SUCCESS
     assert settled.settlement_status == "XRPL_SETTLED"
-    assert service.claim_xrpl_settlement(record.operation_id)
-    assert not service.claim_xrpl_settlement(record.operation_id)
+    # X1c B5: the effect is the single outbox event; the legacy claim is retired and refused.
+    assert len(journal_events(tmp_path / "payments.db")) == 1
+    for _ in range(2):
+        with pytest.raises(LegacySettlementClaimRetired):
+            service.claim_xrpl_settlement(record.operation_id)
+    assert not service.status.status(record.operation_id).settlement_effect_claimed
 
 
 def test_submission_timeout_then_validated_success(tmp_path: Path) -> None:
@@ -363,7 +378,7 @@ def test_missing_ledger_history_cannot_prove_expiry(tmp_path: Path) -> None:
         ),
         (
             {"delivered_amount_micro_units": 1_499_999},
-            TransactionState.VALIDATED_FAILURE,
+            TransactionState.VALIDATED_UNEXPECTED_DELIVERY,  # X1c C1: not a ledger failure
             "DELIVERED_AMOUNT_MISMATCH",
         ),
     ],
@@ -398,13 +413,16 @@ def test_repeated_reconciliation_after_restart_is_idempotent(tmp_path: Path) -> 
     payment = final_payment(record)
     transport.set_lookup(record.transaction_hash, found(payment))
     assert service.reconcile(record.operation_id).state is TransactionState.VALIDATED_SUCCESS
-    assert service.claim_xrpl_settlement(record.operation_id)
+    with pytest.raises(LegacySettlementClaimRetired):
+        service.claim_xrpl_settlement(record.operation_id)
 
     restarted_transport = DeterministicMockTransport(ledger=ledger_before_expiry())
     restarted_transport.set_lookup(record.transaction_hash, found(payment))
     restarted, _ = service_for(database, restarted_transport)
     assert restarted.reconcile(record.operation_id).state is TransactionState.VALIDATED_SUCCESS
-    assert not restarted.claim_xrpl_settlement(record.operation_id)
+    with pytest.raises(LegacySettlementClaimRetired):
+        restarted.claim_xrpl_settlement(record.operation_id)
+    assert len(journal_events(database)) == 1
 
 
 def test_competing_reconciliation_workers_commit_one_outcome(tmp_path: Path) -> None:
@@ -422,10 +440,10 @@ def test_competing_reconciliation_workers_commit_one_outcome(tmp_path: Path) -> 
             pool.map(lambda worker: worker.reconcile(record.operation_id), (worker_a, worker_b))
         )
     assert {result.state for result in results} == {TransactionState.VALIDATED_SUCCESS}
-    assert (
-        sum(service.claim_xrpl_settlement(record.operation_id) for service in (worker_a, worker_b))
-        == 1
-    )
+    assert len(journal_events(database)) == 1
+    for worker in (worker_a, worker_b):
+        with pytest.raises(LegacySettlementClaimRetired):
+            worker.claim_xrpl_settlement(record.operation_id)
 
 
 def test_recorded_hash_inconsistent_with_signed_bytes_fails_closed(tmp_path: Path) -> None:
@@ -959,7 +977,7 @@ def test_x0_schema_explicitly_marked_version_one_is_refused(tmp_path: Path) -> N
 
 
 @pytest.mark.parametrize("precreate_empty_file", [False, True])
-def test_genuinely_empty_database_initializes_directly_at_version_two(
+def test_genuinely_empty_database_initializes_directly_at_version_three(
     tmp_path: Path, precreate_empty_file: bool
 ) -> None:
     database = tmp_path / "new.db"
@@ -969,7 +987,7 @@ def test_genuinely_empty_database_initializes_directly_at_version_two(
     journal = PaymentJournal(database)
 
     with sqlite3.connect(database) as connection:
-        assert connection.execute("PRAGMA user_version").fetchone()[0] == 2
+        assert connection.execute("PRAGMA user_version").fetchone()[0] == 3
         assert {
             row[0]
             for row in connection.execute("SELECT name FROM sqlite_master WHERE type = 'table'")
@@ -981,7 +999,7 @@ def test_genuinely_empty_database_initializes_directly_at_version_two(
     assert journal.list_nonterminal() == ()
 
 
-def test_valid_version_two_journal_reopens_normally(tmp_path: Path) -> None:
+def test_valid_version_three_journal_reopens_normally(tmp_path: Path) -> None:
     database = tmp_path / "current.db"
     first = PaymentJournal(database)
     request = payment_request()

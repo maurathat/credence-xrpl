@@ -18,15 +18,24 @@ What verification establishes, in order:
    signing with its own master key (not disabled on ledger), each signature valid over the XRPL
    multisigning message for that account, and their weights meet the quorum;
 6. the fee covers the multisign fee ``base_fee * (1 + signer_count)`` and is within the ceiling;
+   Every signature must also be canonical as rippled requires (``RequireFullyCanonicalSig``):
+   strict DER with low S for secp256k1, ``S < L`` for Ed25519 (``SIGNATURE_NOT_CANONICAL``, X1c C2);
 7. Sequence (or TicketSequence with Sequence 0) is the next usable value on the validated ledger;
 8. LastLedgerSequence is beyond the validated ledger and within the configured window.
 
 Limitations, stated explicitly:
 
-- Signer regular keys are not accepted: each signer must sign with the master key whose address
-  is the signer account. A signer account whose master key is disabled is refused.
+- XRPL distinguishes two layers. The agent payment account's SignerList names which *accounts*
+  may sign for it and their weights. Each signer account's own signing authority is decided
+  separately by that account: rippled accepts a multisignature for a funded signer account from
+  its master key (unless disabled) or from its RegularKey. So a RegularKey on a signer account is
+  an additional key able to act as that signer. Credence requires each signer to sign with the
+  master key whose address is the signer account, refuses a funded signer account that holds a
+  RegularKey (``SIGNER_REGULAR_KEY_PRESENT``, X1c B4), and refuses one whose master key is
+  disabled. The two-signature quorum is unchanged.
 - A RegularKey on the agent payment account is always refused.
-- The agent payment account's master key is not something multisigning can restrict. With
+- The agent payment account's master key is not something multisigning can restrict, and
+  nothing here makes a master key incapable of acting outside the routine two-signature flow. With
   ``MasterKeyPolicy.OWNER_RETAINED`` (the build plan's setup: the owner's Ledger holds it for
   revocation and the emergency sweep) the owner can authorize any transaction alone. With
   ``MasterKeyPolicy.DISABLED`` only the SignerList can authorize transactions.
@@ -339,6 +348,14 @@ def _verify_signature(transaction: Mapping[str, Any], signature: MultisignSignat
             "SIGNER_KEY_NOT_MASTER", "signer key is not the signer account's master key"
         )
     try:
+        signature_bytes = bytes.fromhex(signature.signature)
+    except ValueError as exc:
+        raise MultisignRejected("SIGNATURE_INVALID", "signature is not hex") from exc
+    if not is_canonical_signature(signature.signing_public_key, signature_bytes):
+        raise MultisignRejected(
+            "SIGNATURE_NOT_CANONICAL", f"signature by {signature.account} is not canonical"
+        )
+    try:
         valid = is_valid_message(
             multisign_message(transaction, signature.account),
             bytes.fromhex(signature.signature),
@@ -348,6 +365,49 @@ def _verify_signature(transaction: Mapping[str, Any], signature: MultisignSignat
         valid = False
     if not valid:
         raise MultisignRejected("SIGNATURE_INVALID", f"signature by {signature.account} fails")
+
+
+# Group orders: secp256k1 n and the Ed25519 subgroup order L.
+_SECP256K1_ORDER = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141
+_ED25519_ORDER = 2**252 + 27742317777372353535851937790883648493
+
+
+def _der_integer(data: bytes, offset: int) -> tuple[int, int] | None:
+    """One strictly minimal, positive DER INTEGER at ``offset``: (value, next offset)."""
+    if offset + 2 > len(data) or data[offset] != 0x02:
+        return None
+    length = data[offset + 1]
+    start, end = offset + 2, offset + 2 + length
+    if length == 0 or length > 33 or end > len(data):
+        return None
+    body = data[start:end]
+    if body[0] & 0x80:
+        return None  # negative
+    if length > 1 and body[0] == 0x00 and not body[1] & 0x80:
+        return None  # non-minimal leading zero
+    return int.from_bytes(body, "big"), end
+
+
+def is_canonical_signature(public_key: str, signature: bytes) -> bool:
+    """rippled's fully-canonical rule: Ed25519 ``S < L``; secp256k1 strict DER, ``0 < r, s < n``
+    and low ``s`` (``s <= n / 2``)."""
+    if public_key.upper().startswith("ED"):
+        return len(signature) == 64 and int.from_bytes(signature[32:], "little") < _ED25519_ORDER
+    if len(signature) < 8 or len(signature) > 72 or signature[0] != 0x30:
+        return False
+    if signature[1] != len(signature) - 2:
+        return False
+    first = _der_integer(signature, 2)
+    if first is None:
+        return False
+    r, offset = first
+    second = _der_integer(signature, offset)
+    if second is None:
+        return False
+    s, offset = second
+    if offset != len(signature):
+        return False
+    return 0 < r < _SECP256K1_ORDER and 0 < s <= _SECP256K1_ORDER // 2
 
 
 # --- ledger-state checks ---------------------------------------------------------------------
@@ -407,6 +467,10 @@ def verify_ledger_context(policy: MultisignPolicy, ledger: LedgerContext) -> Non
         signer_state = ledger.signers.get(signer)
         if signer_state is None or signer_state.account != signer:
             raise MultisignRejected("SIGNER_STATE_MISSING", f"no ledger state for {signer}")
+        if signer_state.exists and signer_state.regular_key is not None:
+            raise MultisignRejected(
+                "SIGNER_REGULAR_KEY_PRESENT", f"{signer} has a RegularKey that could sign for it"
+            )
         if signer_state.exists and signer_state.master_key_disabled:
             raise MultisignRejected(
                 "SIGNER_MASTER_DISABLED", f"{signer} has disabled its master key"

@@ -17,7 +17,7 @@ Topology:
 | Issuer | Issues tRLUSD; DefaultRipple set; no TransferRate, RequireAuth or GlobalFreeze | none |
 | Agent payment account | tRLUSD trust line; SignerList of ResearchBot + policy signer, quorum 2 | 2 |
 | Provider settlement account (one per provider) | tRLUSD trust line | 1 |
-| ResearchBot and policy signer | Signer accounts; may be unfunded; sign with their master keys | none |
+| ResearchBot and policy signer | Signer accounts; may be unfunded; sign with their master keys; a funded signer account must hold no RegularKey | none |
 
 Owner: XRPL Integration (X1a, authorized by Maura).
 """
@@ -314,6 +314,8 @@ def setup_findings(
 
     for signer in (topology.researchbot_signer, topology.policy_signer):
         snapshot = observation.accounts.get(signer)
+        if snapshot is not None and snapshot.exists and snapshot.regular_key is not None:
+            findings.append(f"SIGNER_REGULAR_KEY_PRESENT:{signer}")
         if snapshot is not None and snapshot.exists and snapshot.master_key_disabled:
             findings.append(f"SIGNER_MASTER_DISABLED:{signer}")
     return tuple(findings)

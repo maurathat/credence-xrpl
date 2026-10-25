@@ -25,11 +25,13 @@ from credence.xrpl_adapter.types import (
     DuplicateFinancialOperation,
     JournalConflict,
     LegacyJournalUnsupported,
+    LegacySettlementClaimRetired,
     PaymentRecord,
     PreparedPayment,
     SettlementEvent,
     SubmissionAttempt,
     SubmissionDisposition,
+    SupersededJournalSchema,
     TransactionHashMismatch,
     TransactionState,
     TransactionType,
@@ -194,6 +196,7 @@ _OPERATION_FOREIGN_KEY = (
 class _SchemaKind(Enum):
     EMPTY = "EMPTY"
     LEGACY_X0 = "LEGACY_X0"
+    SUPERSEDED_V2 = "SUPERSEDED_V2"
     CURRENT = "CURRENT"
     UNSUPPORTED = "UNSUPPORTED"
 
@@ -244,9 +247,14 @@ class PaymentJournal:
                 "original X0 journals are read-only pending a separately authorized "
                 "recovery procedure"
             )
+        if kind is _SchemaKind.SUPERSEDED_V2:
+            raise SupersededJournalSchema(
+                "version-2 journals are preserved unchanged; version 3 is required and no "
+                "automatic migration is authorized"
+            )
         if kind is _SchemaKind.UNSUPPORTED:
             raise UnsupportedJournalSchema(
-                "expected an empty database or the complete X0s schema at version 2"
+                "expected an empty database or the complete schema at version 3"
             )
         if kind is _SchemaKind.EMPTY:
             self._initialize()
@@ -283,6 +291,12 @@ class PaymentJournal:
                     if objects.get(table) == "table"
                 }
                 indexes = {table: _index_signatures(connection, table) for table in columns}
+                table_sql = {
+                    cast(str, row[0]): cast(str, row[1] or "")
+                    for row in connection.execute(
+                        "SELECT name, sql FROM sqlite_master WHERE type = 'table'"
+                    )
+                }
                 foreign_keys = {
                     table: tuple(
                         tuple(cast(str, value) for value in row[2:])
@@ -316,7 +330,7 @@ class PaymentJournal:
         ):
             return _SchemaKind.LEGACY_X0
         if (
-            version == 2
+            version in {2, 3}
             and table_names
             == {
                 "xrpl_payment_transactions",
@@ -334,15 +348,20 @@ class PaymentJournal:
             and foreign_keys.get("xrpl_submission_attempts") == _OPERATION_FOREIGN_KEY
             and foreign_keys.get("xrpl_settlement_outbox") == _OPERATION_FOREIGN_KEY
         ):
-            return _SchemaKind.CURRENT
+            if version == 2:
+                return _SchemaKind.SUPERSEDED_V2
+            # Version 3 must actually admit every state, including VALIDATED_UNEXPECTED_DELIVERY.
+            state_constraint = table_sql.get("xrpl_payment_transactions", "")
+            if all(f"'{state.value}'" in state_constraint for state in TransactionState):
+                return _SchemaKind.CURRENT
         return _SchemaKind.UNSUPPORTED
 
     def _initialize(self) -> None:
-        """Create only a genuinely empty journal directly at schema version 2."""
+        """Create only a genuinely empty journal directly at schema version 3."""
         self._database.parent.mkdir(parents=True, exist_ok=True)
         with self._connect() as connection:
             connection.executescript(
-                f"BEGIN IMMEDIATE;\n{SCHEMA}\nPRAGMA user_version = 2;\nCOMMIT;"
+                f"BEGIN IMMEDIATE;\n{SCHEMA}\nPRAGMA user_version = 3;\nCOMMIT;"
             )
         if self._classify_existing_schema() is not _SchemaKind.CURRENT:
             raise UnsupportedJournalSchema("new journal initialization did not validate")
@@ -480,6 +499,16 @@ class PaymentJournal:
                 ),
             )
         return self.get(operation_id)
+
+    def list_requiring_operator_reconciliation(self) -> tuple[PaymentRecord, ...]:
+        """Validated payments whose delivery did not meet the authorized obligation (C1)."""
+        with self._connect() as connection:
+            rows = connection.execute(
+                """SELECT * FROM xrpl_payment_transactions
+                   WHERE state = ? ORDER BY created_at, operation_id""",
+                (TransactionState.VALIDATED_UNEXPECTED_DELIVERY.value,),
+            ).fetchall()
+        return tuple(_record(row) for row in rows)
 
     def list_nonterminal(self) -> tuple[PaymentRecord, ...]:
         placeholders = ", ".join("?" for _ in TERMINAL_STATES)
@@ -713,9 +742,19 @@ class PaymentJournal:
         return self.get(operation_id)
 
     def claim_settlement_effect(self, operation_id: str) -> bool:
-        """Claim the single downstream effect allowed by validated success."""
+        """Retired as a settlement authority (X1c, B5).
+
+        Refused with ``LegacySettlementClaimRetired`` whenever the operation has a settlement
+        outbox event, which every verified success in a current (version-3) journal has. Otherwise it
+        returns false exactly as before for a payment that is not a verified success. The stored
+        ``settlement_effect_claimed`` history is never changed by a refusal.
+        """
         timestamp = _now()
         with self._write() as connection:
+            if connection.execute(
+                "SELECT 1 FROM xrpl_settlement_outbox WHERE operation_id = ?", (operation_id,)
+            ).fetchone():
+                raise LegacySettlementClaimRetired(operation_id)
             cursor = connection.execute(
                 """UPDATE xrpl_payment_transactions
                    SET settlement_effect_claimed = 1, updated_at = ?

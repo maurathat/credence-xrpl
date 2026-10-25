@@ -61,7 +61,9 @@ from credence.xrpl_adapter.types import (
     TransactionState,
 )
 
-CONFIG = RippledTransportConfig(source_id="local-rippled", expected_network_id=NETWORK_ID)
+CONFIG = RippledTransportConfig(
+    source_id="local-rippled", expected_network_id=NETWORK_ID, expected_build_version="3.4.0"
+)
 
 
 @dataclass
@@ -83,7 +85,10 @@ def build_flow(tmp_path: Path, *, name: str = "journal.sqlite3") -> Flow:
     # Credence's settlement authority binds the payment to Core's accounting settlement.
     statement = signed_authorization(transaction)
     ledger = trusted.ledger_context(RULES)
-    policy_part = policy_signer(tmp_path).sign_payment(statement, transaction, ledger, now=NOW)
+    # The policy signer reads the ledger itself through its own trusted transport (X1c, B3).
+    policy_part = policy_signer(tmp_path, ledger_source=trusted).sign_payment(
+        statement, transaction, ledger, now=NOW
+    )
     signed = assemble_multisigned(transaction, [researchbot_signature(transaction), policy_part])
     verify_multisigned_payment(
         signed, policy=RULES, expected=expected_payment(transaction), ledger=ledger
@@ -229,7 +234,7 @@ def test_validated_success_with_unexpected_delivery_is_a_funds_exception(tmp_pat
     flow.rippled.include(flow.signed, ledger_index=VALIDATED_LEDGER + 2, delivered=delivered("1.4"))
     flow.rippled.advance(VALIDATED_LEDGER + 2)
     record = flow.service.reconcile(OPERATION)
-    assert record.state is TransactionState.VALIDATED_FAILURE
+    assert record.state is TransactionState.VALIDATED_UNEXPECTED_DELIVERY
     assert record.final_result == "DELIVERED_AMOUNT_MISMATCH"
     assert classify_payment(record) is PaymentOutcome.VALIDATED_UNEXPECTED_DELIVERY
     assert flow.journal.pending_settlement_events() == ()
@@ -261,14 +266,16 @@ def test_incorrect_validated_evidence_stays_unknown(tmp_path: Path) -> None:
     flow = build_flow(tmp_path)
     submit_accepted(flow)
     flow.rippled.include(flow.signed, ledger_index=VALIDATED_LEDGER + 2, delivered=delivered())
-    flow.rippled.advance(VALIDATED_LEDGER + 2)
-    flow.rippled.faults["ledger"] = lambda request: {
-        "ledger_hash": "B2" * 32,
-        "ledger_index": request["ledger_index"],
-        "validated": True,
-    }
+    flow.rippled.advance(VALIDATED_LEDGER + 3)
+    included = VALIDATED_LEDGER + 2
+    flow.rippled.faults["ledger"] = lambda request: (
+        {"ledger_hash": "B2" * 32, "ledger_index": included, "validated": True}
+        if request["ledger_index"] == included
+        else None
+    )
     record = flow.service.reconcile(OPERATION)
     assert record.state is TransactionState.UNKNOWN
+    assert record.last_provisional_status == "LEDGER_HASH_MISMATCH"
     assert classify_payment(record) is PaymentOutcome.UNKNOWN_RECONCILIATION_REQUIRED
 
 
@@ -394,5 +401,6 @@ def test_success_without_usable_delivered_amount_stays_unknown(tmp_path: Path) -
     flow.rippled.advance(VALIDATED_LEDGER + 2)
     record = flow.service.reconcile(OPERATION)
     assert record.state is TransactionState.UNKNOWN
-    assert record.last_provisional_status == "FINAL_EVIDENCE_INVALID"
+    # X1c B1: binary metadata falls back to the signed Amount, which JSON does not confirm.
+    assert record.last_provisional_status == "EVIDENCE_INCONSISTENT"
     assert flow.journal.pending_settlement_events() == ()

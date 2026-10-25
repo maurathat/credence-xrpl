@@ -138,7 +138,12 @@ def ready_ledger(**changes: Any) -> FakeRippled:
 
 def findings(rippled: FakeRippled, topology: TrlusdTopology = TOPOLOGY) -> tuple[str, ...]:
     transport = RippledTransport(
-        rippled, RippledTransportConfig(source_id="local-rippled", expected_network_id=NETWORK_ID)
+        rippled,
+        RippledTransportConfig(
+            source_id="local-rippled",
+            expected_network_id=NETWORK_ID,
+            expected_build_version="3.4.0",
+        ),
     )
     observation = observe_setup(transport, topology)
     return setup_findings(
@@ -223,3 +228,16 @@ def test_observation_is_read_only_and_pinned() -> None:
     findings(rippled)
     methods = {method for method, _ in rippled.calls}
     assert methods <= {"server_state", "ledger", "account_info", "account_objects", "account_lines"}
+
+
+@pytest.mark.parametrize("signer", [RESEARCHBOT, POLICY], ids=["researchbot", "policy-signer"])
+def test_signer_regular_key_is_a_readiness_finding(signer: Any) -> None:
+    rippled = ready_ledger()
+    rippled.accounts[signer.account] = {
+        "Balance": "1000000",
+        "Flags": 0,
+        "OwnerCount": 0,
+        "RegularKey": PROVIDER_B.account,
+        "Sequence": 1,
+    }
+    assert findings(rippled) == ("SIGNER_REGULAR_KEY_PRESENT:" + signer.account,)

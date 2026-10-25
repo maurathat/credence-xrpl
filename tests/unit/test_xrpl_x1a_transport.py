@@ -305,7 +305,16 @@ def test_lookup_validated_payment_builds_x0s_evidence() -> None:
     assert envelope["schema"] == EVIDENCE_SCHEMA
     assert envelope["signed_transaction"] == blob.hex().upper()
     assert envelope["transaction_hash"] == tx_hash == transaction_hash(blob)
-    assert [item["method"] for item in envelope["raw"]] == ["tx", "tx", "ledger"]
+    assert [item["method"] for item in envelope["raw"]] == [
+        "server_state",
+        "ledger",
+        "tx",
+        "tx",
+        "ledger",
+    ]
+    assert envelope["validated_identity"]["network_id"] == NETWORK_ID
+    assert envelope["delivered_amount_observations"]["binary"]["source"] == "DeliveredAmount"
+    assert envelope["delivered_amount_observations"]["json"] == delivered()
     assert payment.asset == ASSET
 
 
@@ -319,20 +328,20 @@ def test_lookup_validated_payment_builds_x0s_evidence() -> None:
         ),
         (
             "ledger",
-            lambda r: {
-                "ledger_hash": "B2" * 32,
-                "ledger_index": r["ledger_index"],
-                "validated": True,
-            },
+            lambda r: (
+                {"ledger_hash": "B2" * 32, "ledger_index": 99, "validated": True}
+                if r["ledger_index"] == 99
+                else None
+            ),
             "LEDGER_HASH_MISMATCH",
         ),
         (
             "ledger",
-            lambda r: {
-                "ledger_hash": ledger_hash_for(r["ledger_index"]),
-                "ledger_index": r["ledger_index"],
-                "validated": False,
-            },
+            lambda r: (
+                {"ledger_hash": ledger_hash_for(99), "ledger_index": 99, "validated": False}
+                if r["ledger_index"] == 99
+                else None
+            ),
             "LEDGER_NOT_VALIDATED",
         ),
     ],
@@ -501,5 +510,8 @@ def test_client_and_transport_refuse_secret_parameters() -> None:
 def test_transport_requires_a_source_identity() -> None:
     with pytest.raises(ValueError):
         RippledTransport(
-            standard_ledger(), RippledTransportConfig(source_id=" ", expected_network_id=NETWORK_ID)
+            standard_ledger(),
+            RippledTransportConfig(
+                source_id=" ", expected_network_id=NETWORK_ID, expected_build_version="3.4.0"
+            ),
         )

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import sqlite3
 import threading
 from dataclasses import replace
 from pathlib import Path
@@ -28,6 +29,7 @@ from x1a_world import (
     SIGNER_CONFIG,
     UNREGISTERED_AUTHORITY,
     FakeSettlementSource,
+    StaticLedgerSource,
     account_snapshot,
     authority_keys,
     authorization,
@@ -65,7 +67,7 @@ def refused(code: str, signer: PolicySigner, signed: Any, transaction: Any, **kw
         signer.sign_payment(
             signed,
             transaction,
-            kwargs.pop("ledger", ledger_context()),
+            kwargs.pop("ledger", None),
             now=kwargs.pop("now", NOW),
         )
     assert raised.value.code == code
@@ -358,18 +360,16 @@ def test_revoked_policy_signer_does_not_sign(tmp_path: Path) -> None:
     )
     refused(
         "POLICY_SIGNER_NOT_AUTHORIZED",
-        policy_signer(tmp_path),
+        policy_signer(tmp_path, ledger_source=StaticLedgerSource(ledger_context(account=revoked))),
         signed_authorization(transaction),
         transaction,
-        ledger=ledger_context(account=revoked),
     )
     no_list = account_snapshot(signer_list=None)
     refused(
         "POLICY_SIGNER_NOT_AUTHORIZED",
-        policy_signer(tmp_path),
+        policy_signer(tmp_path, ledger_source=StaticLedgerSource(ledger_context(account=no_list))),
         signed_authorization(transaction),
         transaction,
-        ledger=ledger_context(account=no_list),
     )
 
 
@@ -379,6 +379,7 @@ def test_policy_signer_refuses_a_key_that_is_not_its_account(tmp_path: Path) -> 
             config=SIGNER_CONFIG,
             authority_keys=authority_keys(),
             settlement_source=FakeSettlementSource(),
+            ledger_source=StaticLedgerSource(),
             signing_log=PolicySigningLog(tmp_path / "log.sqlite3"),
             public_key=ATTACKER.public_key,
             private_key=ATTACKER.private_key,
@@ -412,12 +413,26 @@ def ledger_at(index: int) -> Any:
         (ledger_at(110), "LAST_LEDGER_SEQUENCE_EXPIRED"),
         (ledger_context(base_fee_drops=11), "FEE_TOO_LOW"),
         (ledger_context(network_id=1), "NETWORK_MISMATCH"),
+        (
+            ledger_context(
+                signers={
+                    RESEARCHBOT.account: signer_snapshot(RESEARCHBOT),
+                    POLICY.account: signer_snapshot(
+                        POLICY, exists=True, sequence=1, regular_key=ATTACKER.account
+                    ),
+                }
+            ),
+            "SIGNER_REGULAR_KEY_PRESENT",
+        ),
     ],
 )
 def test_ledger_state_is_checked_before_signing(tmp_path: Path, ledger: Any, code: str) -> None:
     transaction = unsigned_payment()
     refused(
-        code, policy_signer(tmp_path), signed_authorization(transaction), transaction, ledger=ledger
+        code,
+        policy_signer(tmp_path, ledger_source=StaticLedgerSource(ledger)),
+        signed_authorization(transaction),
+        transaction,
     )
 
 
@@ -474,3 +489,93 @@ def test_signing_log_holds_no_key_material(tmp_path: Path) -> None:
     assert POLICY.private_key.encode() not in content
     assert POLICY.private_key[2:].lower().encode() not in content
     assert RECEIPT.encode() in content and OPERATION.encode() in content
+
+
+# --- X1c B3: the signer reads ledger state itself ---------------------------------------------
+
+
+def forged_ffff_ledger() -> Any:
+    """Salvador's exploit: a caller-fabricated context on an invented ledger hash FFFF..."""
+    forged_hash = "F" * 64
+    return ledger_context(
+        validated_ledger_hash=forged_hash,
+        account=account_snapshot(ledger_hash=forged_hash),
+        signers={
+            RESEARCHBOT.account: signer_snapshot(RESEARCHBOT, ledger_hash=forged_hash),
+            POLICY.account: signer_snapshot(POLICY, ledger_hash=forged_hash),
+        },
+    )
+
+
+def signatures_recorded(directory: Path) -> int:
+    with sqlite3.connect(directory / "policy-signer.sqlite3") as connection:
+        return int(connection.execute("SELECT COUNT(*) FROM policy_signatures").fetchone()[0])
+
+
+def test_fabricated_ffff_ledger_context_is_refused_with_no_signature(tmp_path: Path) -> None:
+    transaction = unsigned_payment()
+    trusted = StaticLedgerSource()
+    signer = policy_signer(tmp_path, ledger_source=trusted)
+    refused(
+        "LEDGER_CONTEXT_MISMATCH",
+        signer,
+        signed_authorization(transaction),
+        transaction,
+        ledger=forged_ffff_ledger(),
+    )
+    assert trusted.reads == 1
+    assert signatures_recorded(tmp_path) == 0
+
+
+def test_fabricated_context_cannot_stand_in_for_an_unreachable_ledger(tmp_path: Path) -> None:
+    transaction = unsigned_payment()
+    unreachable = StaticLedgerSource(ConnectionError("node down"))
+    refused(
+        "LEDGER_UNAVAILABLE",
+        policy_signer(tmp_path, ledger_source=unreachable),
+        signed_authorization(transaction),
+        transaction,
+        ledger=forged_ffff_ledger(),
+    )
+    assert signatures_recorded(tmp_path) == 0
+
+
+def test_claimed_good_context_cannot_hide_a_revoked_signer(tmp_path: Path) -> None:
+    """The caller claims the old SignerList; the ledger says the policy signer was removed."""
+    transaction = unsigned_payment()
+    revoked = ledger_context(
+        account=account_snapshot(
+            signer_list=signer_list(
+                entries=(SignerEntry(RESEARCHBOT.account, 1), SignerEntry(ATTACKER.account, 1))
+            )
+        )
+    )
+    refused(
+        "LEDGER_CONTEXT_MISMATCH",
+        policy_signer(tmp_path, ledger_source=StaticLedgerSource(revoked)),
+        signed_authorization(transaction),
+        transaction,
+        ledger=ledger_context(),
+    )
+    assert signatures_recorded(tmp_path) == 0
+
+
+def test_signer_without_a_claimed_context_uses_its_own_read(tmp_path: Path) -> None:
+    transaction = unsigned_payment()
+    trusted = StaticLedgerSource()
+    signature = policy_signer(tmp_path, ledger_source=trusted).sign_payment(
+        signed_authorization(transaction), transaction, now=NOW
+    )
+    assert signature.account == POLICY.account and trusted.reads == 1
+
+
+def test_signing_keys_are_not_reachable_from_api_or_procurement_code() -> None:
+    root = Path(__file__).parents[2] / "credence"
+    exposed = ("api", "agent", "inference", "integration", "core")
+    importers = [
+        path.relative_to(root.parent).as_posix()
+        for area in exposed
+        for path in (root / area).rglob("*.py")
+        if "credence.signers" in path.read_text(encoding="utf-8")
+    ]
+    assert importers == []

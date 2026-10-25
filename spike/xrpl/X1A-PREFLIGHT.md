@@ -1,5 +1,7 @@
 # Checkpoint X1a — XRPL multisignature and live-ledger preflight
 
+> Superseded in part by X1c (`X1C-REMEDIATION.md`), which closes reviewer findings B1-B5 and C1-C3 against this checkpoint.
+
 ## Outcome
 
 X1a prepares one independently authorized tRLUSD provider Payment linked to a verified Credence inference purchase. tRLUSD is a test token on a local standalone XRPL ledger.
@@ -165,7 +167,7 @@ Built on the accepted X0t journal, with no second transaction identity, retry pa
 | `SUBMISSION_PENDING` | Submitted or awaiting validation |
 | `VALIDATED_SUCCESS` | Validated success with `XRPL_SETTLED` |
 | `VALIDATED_FAILURE` | Validated, and the ledger result is not `tesSUCCESS` |
-| `VALIDATED_UNEXPECTED_DELIVERY` | Validated `tesSUCCESS`, but the delivered asset or amount was wrong. A transferred-funds exception, decided from the stored evidence's ledger result |
+| `VALIDATED_UNEXPECTED_DELIVERY` | Validated `tesSUCCESS`, but the delivered asset or amount was wrong. A transferred-funds exception, decided from the stored evidence's ledger result. (X1c: now its own journal state, schema version 3.) |
 | `EXPIRED_NOT_INCLUDED` | Anchored complete history proves non-inclusion |
 | `UNKNOWN_RECONCILIATION_REQUIRED` | X0t `UNKNOWN`, or any record whose evidence does not support its state |
 
@@ -176,7 +178,7 @@ Built on the accepted X0t journal, with no second transaction identity, retry pa
 - a contradictory event, or a second event for the same operation, authorization or hash, is refused;
 - an effect failure rolls back, so the event is retried.
 
-It is the single live settlement-effect authority path. The X0t `claim_xrpl_settlement` bit is not a live authority and must not be used alongside it. The X0t code still exposes that method; X1a did not remove it.
+It is the single live settlement-effect authority path. The X0t `claim_xrpl_settlement` bit is not a live authority. (X1c: it is now refused whenever an outbox event exists; see `X1C-REMEDIATION.md`.)
 
 ## 6. Test evidence
 
