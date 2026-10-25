@@ -1,11 +1,14 @@
 # QUICKNODE-ADAPTER-CONTRACT
 
-Owner: XRPL Integration. For checkpoint X1q only, Maura delegated this file and
+Owner: XRPL Integration. For checkpoints X1q and X1s, Maura delegated this file and
 `credence/xrpl_adapter/quicknode.py` / `quicknode_probe.py` to Da Nang (Claude Code).
 
-Status: X1q, read-only, offline-tested. Real-endpoint verification is **PENDING**, because no
-QuickNode endpoint was configured. Decision: `docs/decisions/0012-xrpl-x1q-quicknode-read-only.md`.
-Readiness report: `spike/xrpl/X1Q-QUICKNODE.md`.
+Status: X1q, hardened by X1s; read-only, offline-tested. Real-endpoint verification is
+**PENDING**, because no QuickNode endpoint was configured.
+
+- Decisions: `docs/decisions/0012-xrpl-x1q-quicknode-read-only.md`,
+  `docs/decisions/0013-xrpl-x1s-quicknode-hardening.md`.
+- Reports: `spike/xrpl/X1Q-QUICKNODE.md`, `spike/xrpl/X1S-HARDENING.md`.
 
 ## Scope
 
@@ -29,7 +32,7 @@ Credence settlement still runs on a local XRPL ledger with the lending amendment
 | --- | --- |
 | `QuickNodeConfig.from_environment()` | Returns `None` unless `CREDENCE_QUICKNODE_XRPL_URL` is set. If the URL is set, `CREDENCE_QUICKNODE_XRPL_NETWORK=testnet` is also required. `mainnet`/`0` is refused with `MAINNET_NOT_AUTHORIZED`. `21337`/`local`/`standalone` is refused with `LOCAL_NETWORK_NOT_HOSTED`. Any other value is refused with `UNSUPPORTED_NETWORK`. `CREDENCE_QUICKNODE_XRPL_LABEL` is optional. |
 | `QuickNodeEndpoint` | Requires one HTTPS URL on `*.quiknode.pro`: no user info, port 443, no query or fragment. A host naming `mainnet` or `devnet` is refused. The endpoint is immutable and cannot be pickled. Its repr shows only a 16-hex fingerprint. |
-| `QuickNodeJsonRpcClient` | POSTs JSON-RPC to the pinned URL only. TLS is verified (default trust store, hostname check, TLS 1.2 or later). Environment proxies are ignored and redirects are never followed. Each request has a strict timeout (default 10 s, max 30 s). Timeouts, HTTP 429 (honoring `Retry-After`) and 5xx get bounded retries: default 3 attempts, exponential backoff, capped at 5 s. 3xx, 401/403, TLS failures and other statuses are not retried. Errors carry no URL and have no chained cause or context. |
+| `QuickNodeJsonRpcClient` | POSTs JSON-RPC to the pinned URL only, over `http.client`. TLS is verified (default trust store, hostname check, TLS 1.2 or later). Proxies are never used and redirects are never followed. Each attempt has one absolute deadline (`timeout_seconds`, default 10 s, max 30 s) covering DNS, connect, the TLS handshake, the request, the headers and the whole body. A retry sequence is bounded by `total_budget_seconds` (default 30 s, max 120 s). Timeouts, HTTP 429 (honoring `Retry-After`) and 5xx get bounded retries: default 3 attempts, exponential backoff, capped at 5 s, never sleeping past the budget. 3xx, 401/403, TLS failures, malformed HTTP and other statuses are not retried. Errors carry no URL and have no chained cause or context (see "Response limits, deadlines and credentials"). |
 | `QuickNodeXRPLTransport.validated_ledger_identity()` | `server_info` supplies the network ID, Clio version, validated ledger and `complete_ledgers`; `ledger` then confirms the index and hash. |
 | `QuickNodeXRPLTransport.sample_node_identity()` | One forwarded `server_state`: `pubkey_node`, build, network ID and the `forwarded` flag. Samples are recorded, never pinned. |
 | `account_state` / `account_objects` / `account_lines` | `account_info` with SignerList, `account_objects` and `account_lines`, all pinned to the identity's `ledger_hash` and paged up to a bound. Account state is the X1a `AccountSnapshot` type. |
@@ -37,7 +40,7 @@ Credence settlement still runs on a local XRPL ledger with the lending amendment
 | `validated_ledger_observation(account)` | History coverage and sender state in the X0t `ValidatedLedgerObservation` type, **for reporting only**. |
 | `QuickNodeReconciliationView` | The only binding to the X0t `HashLookup` and `ValidatedLedgerObserver` seams (see "Payment reconciliation"). |
 | `assess_hosted_payment(observation, expectation)` | Advisory classification in the X0t verifier's terms. `settlement_authority` is always false. |
-| `python -m credence.xrpl_adapter.quicknode_probe` | Operator-run, read-only compatibility probe that writes a sanitized report. It exits 2 with "PENDING" when no endpoint is configured. |
+| `python -m credence.xrpl_adapter.quicknode_probe` | Operator-run, read-only compatibility probe that writes a sanitized report, including partial results and typed `FAIL` codes. It never ends in a traceback. Exit codes: `0` every check passed; `1` a check failed, a contradiction latched or the probe itself failed (`PROBE_INTERNAL_ERROR`); `2` not configured ("PENDING") or configuration refused; `3` incomplete (a check `NOT_RUN`, nothing failed). |
 
 The transport has no `submit`, `lookup`, `validated_ledger` or `ledger_context` method. It
 therefore cannot be used as:
@@ -108,6 +111,67 @@ A single QuickNode endpoint is a trusted source. It is not independent consensus
 The pinned local rippled rules (network, required build pin, optional node-key pin on every
 lookup) are unchanged.
 
+## Response limits, deadlines and credentials (X1s)
+
+**Hostile responses.** Every public read raises only `QuickNodeError`, and `observe_payment`
+never raises. Limits are checked before any expensive work:
+
+| Limit | Value | Refusal |
+| --- | --- | --- |
+| Response body | 8 MiB (declared `Content-Length` checked first, then the streamed size) | `RESPONSE_TOO_LARGE` |
+| JSON nesting | 32 levels, checked on a bracket skeleton before the recursive parser runs | `RESPONSE_TOO_DEEP` |
+| JSON numbers | integers up to 24 digits; floats up to 32 characters and finite; no `NaN`/`Infinity` | `NUMBER_OUT_OF_RANGE` |
+| XRP amounts | digit strings of at most 18 digits, at most 10^17 drops | `MALFORMED_AMOUNT` |
+| Issued amounts and trust-line values | at most 48 characters, 16 significant digits, adjusted exponent -81 to 95 (XRPL's range), checked before normalization | `MALFORMED_AMOUNT` / `MALFORMED_RESPONSE` |
+| Integers in strings | at most 20 digits | `MALFORMED_RESPONSE` |
+| `tx_blob`, `meta_blob` | 1 Mi hex characters | `MALFORMED_RESPONSE` |
+| `complete_ledgers` | 4096 characters | `MALFORMED_COMPLETE_LEDGERS` |
+| Node error tokens | `[A-Za-z][A-Za-z0-9_]{0,47}`, otherwise `malformedError` | `RPC_<token>` |
+| Malformed HTTP (bad status line, oversized or too many headers) | `http.client` limits | `MALFORMED_HTTP_RESPONSE` |
+| Body shorter than its `Content-Length` | | `CONNECTION_CLOSED` (retryable) |
+
+Anything else that hostile input still reaches becomes `RESPONSE_PROCESSING_FAILED`, with no cause
+or context. A refused observation has no evidence and no settlement authority. Through
+`QuickNodeReconciliationView` it leaves only its own journal entry `UNKNOWN`; other entries still
+reconcile.
+
+**Deadlines.**
+
+- A timer thread shuts the request's socket down at the absolute deadline. This wakes `connect`,
+  the TLS handshake and `recv`.
+- The body is read with `read1`, and the remaining time is re-applied before every read.
+- A peer that drips bytes, in the headers or in the body, gets `TIMEOUT` at the deadline, and the
+  connection is closed.
+
+Limitations:
+
+- **DNS.** `getaddrinfo` cannot be cancelled. It runs in a daemon thread and the caller returns
+  `TIMEOUT` at the deadline, but the lookup itself may continue in the background until the system
+  resolver gives up.
+- **Socket shutdown.** Waking a blocked call by shutting its socket down is the documented
+  behavior on Linux and macOS, and it is what the tests exercise. Other platforms are not
+  verified.
+- **Scheduling.** Enforcement is as precise as thread scheduling: within tens of milliseconds in
+  the tests, not a real-time guarantee.
+- **Parsing.** JSON parsing and evidence checks run after the body is received and are not counted
+  against the HTTP deadline. They are bounded by the limits above instead.
+
+**Credentials.**
+
+- The credential-bearing request target exists only inside `QuickNodeJsonRpcClient._exchange`.
+  That method returns failures instead of raising them, so its frame, and any `http.client`
+  exception that saw the target, never appears in a traceback, exception chain or frame-locals
+  crash report.
+- Errors are raised from `call`, whose locals hold only the method, parameters, body and redacted
+  objects.
+- The client never logs, and it sets `http.client`'s debug level to 0.
+
+Limitation: the endpoint object must hold the URL to use it. It is kept in a `__slots__`
+attribute (not reachable through `vars()`), and the endpoint refuses copying and pickling. Its
+repr is redacted. Code that deliberately reads `endpoint._url` (for example, a crash reporter
+configured to walk private attributes several levels deep) can still reach it, so the token must
+still be treated as a secret in crash-reporting configuration.
+
 ## Payment reconciliation
 
 The X0t journal finalizes a payment only on evidence from the pinned trusted node, re-verified on
@@ -141,7 +205,7 @@ The hosted evidence schema is not the X0t schema, so `PaymentResultVerifier` rej
 XRPL settlement in the journal and Core accounting settlement stay separate facts. A hosted
 observation is neither.
 
-## Unsupported in X1q
+## Unsupported in X1q and X1s
 
 - Submission, signing and any ledger write.
 - WebSocket subscriptions.

@@ -34,29 +34,42 @@ unavailable result for everything, because the X0t journal's finality and non-in
 the pinned-node evidence that a hosted source cannot supply. No QuickNode observation finalizes a
 journal entry, emits a settlement outbox event or touches Core.
 
+X1s hardening:
+
+- Every remote response is parsed within size, nesting and number limits. Public reads raise only
+  ``QuickNodeError``, and ``observe_payment`` never raises.
+- Each HTTP attempt runs under one absolute deadline, enforced by a watchdog that shuts the socket
+  down, and retries share a total budget.
+- The credential-bearing request target lives only in ``QuickNodeJsonRpcClient._exchange``, which
+  returns its failures instead of raising them.
+
+Limitations are documented in the contract.
+
 WebSocket transport is a documented extension (``contracts/QUICKNODE-ADAPTER-CONTRACT.md``), not
 implemented. Response shapes follow QuickNode's and rippled's documented API v2 shapes; they were
 exercised only against the deterministic fake in ``tests/unit/x1q_quicknode.py``.
 
-Owner: XRPL Integration. X1q delegated to Da Nang (Claude Code) by Maura for this checkpoint.
+Owner: XRPL Integration. X1q and X1s delegated to Da Nang (Claude Code) by Maura.
 """
 
 from __future__ import annotations
 
+import functools
 import hashlib
+import http.client
 import json
 import os
 import re
+import socket
 import ssl
+import threading
 import time
-import urllib.error
 import urllib.parse
-import urllib.request
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from decimal import Decimal, InvalidOperation
 from enum import Enum
-from typing import Any, cast
+from typing import Any
 
 from xrpl.core.binarycodec import decode
 
@@ -88,6 +101,15 @@ ENV_LABEL = "CREDENCE_QUICKNODE_XRPL_LABEL"
 RIPPLE_EPOCH_OFFSET = 946_684_800
 TF_PARTIAL_PAYMENT = 0x00020000
 MAX_RESPONSE_BYTES = 8 * 1024 * 1024
+MAX_JSON_DEPTH = 32
+MAX_JSON_INTEGER_DIGITS = 24
+MAX_JSON_FLOAT_CHARS = 32
+MAX_BLOB_HEX_CHARS = 1024 * 1024
+MAX_DROPS = 100_000_000_000_000_000
+# XRPL issued amounts: at most 16 significant digits, mantissa exponent -96..80.
+MAX_ISSUED_SIGNIFICANT_DIGITS = 16
+ISSUED_ADJUSTED_EXPONENT_RANGE = (-81, 95)
+_READ_CHUNK = 64 * 1024
 _SYNCED_SERVER_STATES = frozenset({"full", "proposing", "validating"})
 _RETRYABLE_RPC_ERRORS = frozenset(
     {"tooBusy", "slowDown", "noNetwork", "noCurrent", "noClosed", "lgrNotFound"}
@@ -148,6 +170,35 @@ class _RpcError(RuntimeError):
     def __init__(self, error: str) -> None:
         super().__init__(error)
         self.error = error
+
+
+def _rpc_error_code(value: object) -> str:
+    """A node-reported error token, bounded so it is safe to embed in a typed code."""
+    if isinstance(value, str) and _RPC_ERROR_CODE.match(value):
+        return value
+    return "malformedError"
+
+
+def _typed_errors[**P, R](method: Callable[P, R]) -> Callable[P, R]:
+    """Public transport reads raise only ``QuickNodeError``.
+
+    Any other exception that hostile input still reaches (a parser, codec or arithmetic edge this
+    module did not anticipate) becomes ``RESPONSE_PROCESSING_FAILED``, raised outside the
+    ``except`` so it carries no cause or context.
+    """
+
+    @functools.wraps(method)
+    def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
+        failure: QuickNodeError | None = None
+        try:
+            return method(*args, **kwargs)
+        except QuickNodeError:
+            raise
+        except Exception:
+            failure = QuickNodeRefused("RESPONSE_PROCESSING_FAILED")
+        raise failure
+
+    return wrapper
 
 
 # --- configuration -------------------------------------------------------------------------------
@@ -229,6 +280,11 @@ class QuickNodeEndpoint:
     def __setattr__(self, name: str, value: object) -> None:
         raise AttributeError("a QuickNode endpoint is immutable")
 
+    def _request_target(self) -> tuple[str, str]:
+        """Host and credential-bearing path. Call only from the frame that sends the request."""
+        parts = urllib.parse.urlsplit(self._url)
+        return parts.hostname or "", parts.path or "/"
+
     def __repr__(self) -> str:
         return (
             f"QuickNodeEndpoint(<redacted>{QUICKNODE_HOST_SUFFIX}, fingerprint={self.fingerprint})"
@@ -251,6 +307,7 @@ class QuickNodeConfig:
     max_attempts: int = 3
     backoff_seconds: float = 0.5
     max_backoff_seconds: float = 5.0
+    total_budget_seconds: float = 30.0
     max_validated_ledger_age_seconds: int = 120
     max_clock_skew_seconds: int = 30
 
@@ -269,6 +326,8 @@ class QuickNodeConfig:
             raise QuickNodeConfigError("ATTEMPTS_OUT_OF_RANGE")
         if not 0 <= self.backoff_seconds <= self.max_backoff_seconds <= 30:
             raise QuickNodeConfigError("BACKOFF_OUT_OF_RANGE")
+        if not self.timeout_seconds <= self.total_budget_seconds <= 120:
+            raise QuickNodeConfigError("BUDGET_OUT_OF_RANGE", "timeout <= budget <= 120 s")
         if not 0 < self.max_validated_ledger_age_seconds <= 3600:
             raise QuickNodeConfigError("LEDGER_AGE_OUT_OF_RANGE")
         if not 0 <= self.max_clock_skew_seconds <= 300:
@@ -299,21 +358,6 @@ class QuickNodeConfig:
 # --- HTTPS JSON-RPC client -----------------------------------------------------------------------
 
 
-class _RefuseRedirects(urllib.request.HTTPRedirectHandler):
-    """A pinned hosted endpoint never follows a redirect, to its own host or any other."""
-
-    def redirect_request(
-        self,
-        req: urllib.request.Request,
-        fp: Any,
-        code: int,
-        msg: str,
-        headers: Any,
-        newurl: str,
-    ) -> urllib.request.Request | None:
-        raise urllib.error.HTTPError(req.full_url, code, "redirect refused", headers, fp)
-
-
 def verified_tls_context() -> ssl.SSLContext:
     context = ssl.create_default_context()
     context.minimum_version = ssl.TLSVersion.TLSv1_2
@@ -322,10 +366,83 @@ def verified_tls_context() -> ssl.SSLContext:
     return context
 
 
-class QuickNodeJsonRpcClient:
-    """HTTPS JSON-RPC to the one configured endpoint, with strict timeouts and bounded retries.
+class RequestWatchdog:
+    """Shuts a request's socket down at its absolute deadline, from a timer thread.
 
-    Every call is a read; retries apply only to timeouts, rate limits and server errors.
+    Shutting a socket down wakes a thread blocked in ``connect``, the TLS handshake or ``recv``
+    (Linux and macOS), so a slow or dripping peer cannot extend a request past its deadline.
+    """
+
+    def __init__(self) -> None:
+        self._lock = threading.Lock()
+        self._socket: socket.socket | None = None
+        self.fired = False
+
+    def attach(self, sock: socket.socket) -> None:
+        with self._lock:
+            self._socket = sock
+            fired = self.fired
+        if fired:
+            _shutdown(sock)
+
+    def fire(self) -> None:
+        with self._lock:
+            self.fired = True
+            sock = self._socket
+        if sock is not None:
+            _shutdown(sock)
+
+
+def _shutdown(sock: socket.socket) -> None:
+    try:
+        # The base-class call skips SSLSocket.shutdown, which would also discard its TLS state
+        # underneath a reader in another thread.
+        socket.socket.shutdown(sock, socket.SHUT_RDWR)
+    except OSError:
+        pass
+
+
+Address = tuple[int, Any]
+Resolver = Callable[[str, int, float], Address]
+Connector = Callable[[Address, str, float, RequestWatchdog], socket.socket]
+
+
+def resolve_with_deadline(host: str, port: int, timeout: float) -> Address:
+    """``getaddrinfo`` bounded for the caller.
+
+    The lookup itself cannot be cancelled. On timeout it finishes in a daemon thread and its
+    result is discarded; the caller has already returned ``TIMEOUT``.
+    """
+    box: list[object] = []
+
+    def lookup() -> None:
+        try:
+            box.append(socket.getaddrinfo(host, port, type=socket.SOCK_STREAM))
+        except OSError:
+            box.append(None)
+
+    worker = threading.Thread(target=lookup, name="quicknode-dns", daemon=True)
+    worker.start()
+    worker.join(timeout)
+    if worker.is_alive() or not box:
+        raise TimeoutError("dns")
+    found = box[0]
+    if not isinstance(found, list) or not found:
+        raise OSError("dns")
+    family, _, _, _, sockaddr = found[0]
+    return family, sockaddr
+
+
+class QuickNodeJsonRpcClient:
+    """HTTPS JSON-RPC to the one configured endpoint under absolute deadlines.
+
+    Each attempt has one deadline (``timeout_seconds``) covering DNS, connect, the TLS handshake,
+    the request, the response headers and the whole body; a retry sequence is bounded by
+    ``total_budget_seconds``. Retries apply only to timeouts, rate limits and server errors.
+    Redirects are never followed and proxies are never used (``http.client`` does neither).
+
+    ``resolver`` and ``connector`` are test seams. The default connector always negotiates verified
+    TLS; there is no configuration that disables it.
     """
 
     def __init__(
@@ -333,15 +450,16 @@ class QuickNodeJsonRpcClient:
         config: QuickNodeConfig,
         *,
         sleep: Callable[[float], None] = time.sleep,
-        https_handler: urllib.request.HTTPSHandler | None = None,
+        clock: Callable[[], float] = time.monotonic,
+        resolver: Resolver | None = None,
+        connector: Connector | None = None,
     ) -> None:
         self._config = config
         self._sleep = sleep
+        self._clock = clock
         self.tls_context = verified_tls_context()
-        handler = https_handler or urllib.request.HTTPSHandler(context=self.tls_context)
-        self._opener = urllib.request.build_opener(
-            urllib.request.ProxyHandler({}), _RefuseRedirects(), handler
-        )
+        self._resolver = resolver or resolve_with_deadline
+        self._connector = connector or self._tls_connect
 
     def __repr__(self) -> str:
         return f"QuickNodeJsonRpcClient({self._config.endpoint!r})"
@@ -349,15 +467,25 @@ class QuickNodeJsonRpcClient:
     def call(self, method: str, params: Mapping[str, Any]) -> bytes:
         refuse_secret_parameters(params)
         body = json.dumps({"method": method, "params": [dict(params)]}, sort_keys=True).encode()
+        budget_end = self._clock() + self._config.total_budget_seconds
         attempt = 0
         while True:
             attempt += 1
-            try:
-                return self._once(method, body)
-            except QuickNodeError as exc:
-                if not exc.retryable or attempt >= self._config.max_attempts:
-                    raise
-                self._sleep(self._delay(attempt, exc))
+            now = self._clock()
+            if now >= budget_end:
+                raise QuickNodeTimeout("TIMEOUT", f"{method}: retry budget exhausted")
+            outcome = self._exchange(
+                method, body, min(now + self._config.timeout_seconds, budget_end)
+            )
+            if isinstance(outcome, bytes):
+                return outcome
+            # Raised here, outside any ``except``: no cause, no context, no transport frames.
+            if not outcome.retryable or attempt >= self._config.max_attempts:
+                raise outcome
+            delay = self._delay(attempt, outcome)
+            if self._clock() + delay >= budget_end:
+                raise outcome
+            self._sleep(delay)
 
     def _delay(self, attempt: int, error: QuickNodeError) -> float:
         cap = self._config.max_backoff_seconds
@@ -365,55 +493,131 @@ class QuickNodeJsonRpcClient:
             return min(max(error.retry_after, 0.0), cap)
         return float(min(self._config.backoff_seconds * 2 ** (attempt - 1), cap))
 
-    def _once(self, method: str, body: bytes) -> bytes:
-        request = urllib.request.Request(
-            self._config.endpoint._url,
-            data=body,
-            headers={"Content-Type": "application/json", "Accept": "application/json"},
-            method="POST",
-        )
-        # Failures are raised after the ``try`` so no urllib exception, which carries the URL,
-        # is chained onto a QuickNode error as its cause or context.
-        failure: QuickNodeError
+    def _remaining(self, deadline: float) -> float:
+        remaining = deadline - self._clock()
+        if remaining <= 0:
+            raise TimeoutError("deadline")
+        return remaining
+
+    def _tls_connect(
+        self, address: Address, server_hostname: str, deadline: float, watchdog: RequestWatchdog
+    ) -> socket.socket:
+        family, sockaddr = address
+        raw = socket.socket(family, socket.SOCK_STREAM)
+        watchdog.attach(raw)
         try:
-            with self._opener.open(request, timeout=self._config.timeout_seconds) as response:
-                status = int(getattr(response, "status", 200))
-                data = cast(bytes, response.read(MAX_RESPONSE_BYTES + 1))
-        except urllib.error.HTTPError as exc:
-            failure = _http_failure(method, exc.code, exc.headers)
-            exc.close()
-        except TimeoutError:
-            failure = QuickNodeTimeout("TIMEOUT", method)
-        except urllib.error.URLError as exc:
-            if isinstance(exc.reason, TimeoutError):
-                failure = QuickNodeTimeout("TIMEOUT", method)
-            elif isinstance(exc.reason, ssl.SSLError):
-                failure = QuickNodeRefused("TLS_VERIFICATION_FAILED", method)
-            else:
-                failure = QuickNodeUnavailable("CONNECTION_FAILED", method)
-        except ssl.SSLError:
-            failure = QuickNodeRefused("TLS_VERIFICATION_FAILED", method)
-        except OSError:
-            failure = QuickNodeUnavailable("CONNECTION_FAILED", method)
-        else:
-            if status != 200:
-                raise QuickNodeRefused("HTTP_STATUS", f"{method}: HTTP {status}")
-            if len(data) > MAX_RESPONSE_BYTES:
-                raise QuickNodeRefused("RESPONSE_TOO_LARGE", method)
-            return data
-        raise failure
+            raw.settimeout(self._remaining(deadline))
+            raw.connect(sockaddr)
+            tls = self.tls_context.wrap_socket(
+                raw, server_hostname=server_hostname, do_handshake_on_connect=False
+            )
+        except BaseException:
+            raw.close()
+            raise
+        watchdog.attach(tls)
+        try:
+            tls.settimeout(self._remaining(deadline))
+            tls.do_handshake()
+        except BaseException:
+            tls.close()
+            raise
+        return tls
+
+    def _exchange(self, method: str, body: bytes, deadline: float) -> bytes | QuickNodeError:
+        """One request under one absolute deadline.
+
+        The credential-bearing request target exists only in this frame. Every failure is
+        returned, never raised, so no exception that saw the target (or a frame holding it)
+        outlives this call.
+        """
+        watchdog = RequestWatchdog()
+        timer = threading.Timer(max(deadline - self._clock(), 0.0), watchdog.fire)
+        timer.daemon = True
+        timer.start()
+        connection: http.client.HTTPSConnection | None = None
+        sock: socket.socket | None = None
+        try:
+            host, target = self._config.endpoint._request_target()
+            address = self._resolver(host, 443, self._remaining(deadline))
+            sock = self._connector(address, host, deadline, watchdog)
+            connection = http.client.HTTPSConnection(host, 443, context=self.tls_context)
+            connection.set_debuglevel(0)
+            connection.sock = sock
+            sock.settimeout(self._remaining(deadline))
+            connection.request(
+                "POST",
+                target,
+                body=body,
+                headers={
+                    "Content-Type": "application/json",
+                    "Accept": "application/json",
+                    "Connection": "close",
+                },
+            )
+            del target
+            response = connection.getresponse()
+            if response.status != 200:
+                return _http_failure(method, response.status, response.getheader("Retry-After"))
+            declared = response.getheader("Content-Length")
+            if declared is not None and (
+                not declared.strip().isdigit()
+                or len(declared.strip()) > 12
+                or int(declared) > MAX_RESPONSE_BYTES
+            ):
+                return QuickNodeRefused("RESPONSE_TOO_LARGE", method)
+            chunks: list[bytes] = []
+            size = 0
+            while True:
+                sock.settimeout(self._remaining(deadline))
+                chunk = response.read1(_READ_CHUNK)
+                if not chunk:
+                    break
+                size += len(chunk)
+                if size > MAX_RESPONSE_BYTES:
+                    return QuickNodeRefused("RESPONSE_TOO_LARGE", method)
+                chunks.append(chunk)
+            if watchdog.fired:
+                return QuickNodeTimeout("TIMEOUT", method)
+            if response.length not in (None, 0):
+                return QuickNodeUnavailable("CONNECTION_CLOSED", f"{method}: body incomplete")
+            return b"".join(chunks)
+        except Exception as exc:  # classified, then dropped: nothing here is chained or re-raised
+            return self._failure(method, exc, watchdog, deadline)
+        finally:
+            timer.cancel()
+            for closable in (connection, sock):
+                if closable is not None:
+                    try:
+                        closable.close()
+                    except OSError:
+                        pass
+
+    def _failure(
+        self, method: str, exc: Exception, watchdog: RequestWatchdog, deadline: float
+    ) -> QuickNodeError:
+        if watchdog.fired or self._clock() >= deadline or isinstance(exc, TimeoutError):
+            return QuickNodeTimeout("TIMEOUT", method)
+        if isinstance(exc, ssl.SSLError):
+            return QuickNodeRefused("TLS_VERIFICATION_FAILED", method)
+        if isinstance(exc, (http.client.RemoteDisconnected, http.client.IncompleteRead)):
+            return QuickNodeUnavailable("CONNECTION_CLOSED", method)
+        if isinstance(exc, http.client.HTTPException):
+            return QuickNodeRefused("MALFORMED_HTTP_RESPONSE", method)
+        if isinstance(exc, OSError):
+            return QuickNodeUnavailable("CONNECTION_FAILED", method)
+        return QuickNodeRefused("HTTP_PROTOCOL_ERROR", method)
 
 
-def _http_failure(method: str, status: int, headers: Any) -> QuickNodeError:
+def _http_failure(method: str, status: int, retry_after_header: str | None) -> QuickNodeError:
     if 300 <= status < 400:
         return QuickNodeRefused("REDIRECT_REFUSED", f"{method}: HTTP {status}")
     if status in (401, 403):
         return QuickNodeRefused("ENDPOINT_AUTH_REJECTED", f"{method}: HTTP {status}")
     if status == 429:
         retry_after: float | None = None
-        raw = headers.get("Retry-After") if headers is not None else None
-        if isinstance(raw, str) and raw.strip().isdigit():
-            retry_after = float(raw.strip())
+        raw = (retry_after_header or "").strip()
+        if raw.isdigit() and len(raw) <= 6:
+            retry_after = float(raw)
         return QuickNodeRateLimited("RATE_LIMITED", method, retry_after)
     if 500 <= status < 600:
         return QuickNodeUnavailable("SERVER_ERROR", f"{method}: HTTP {status}")
@@ -533,13 +737,122 @@ class HostedPaymentObservation:
 # --- parsing helpers -----------------------------------------------------------------------------
 
 
+_JSON_STRING = re.compile(rb'"(?:[^"\\]|\\.)*"', re.DOTALL)
+_NOT_BRACKETS = bytes(byte for byte in range(256) if byte not in b"[]{}")
+_INNERMOST_PAIR = re.compile(rb"\[\]|\{\}")
+_INTEGER_TEXT = re.compile(r"^-?[0-9]{1,20}$")
+_RPC_ERROR_CODE = re.compile(r"^[A-Za-z][A-Za-z0-9_]{0,47}$")
+
+
+class _JsonLimit(ValueError):
+    def __init__(self, code: str) -> None:
+        super().__init__(code)
+        self.code = code
+
+
+def _bounded_integer(text: str) -> int:
+    if len(text.lstrip("-")) > MAX_JSON_INTEGER_DIGITS:
+        raise _JsonLimit("NUMBER_OUT_OF_RANGE")
+    return int(text)
+
+
+def _bounded_float(text: str) -> float:
+    if len(text) > MAX_JSON_FLOAT_CHARS:
+        raise _JsonLimit("NUMBER_OUT_OF_RANGE")
+    number = float(text)
+    if number in (float("inf"), float("-inf")):
+        raise _JsonLimit("NUMBER_OUT_OF_RANGE")
+    return number
+
+
+def _refuse_constant(text: str) -> object:
+    raise _JsonLimit("NUMBER_OUT_OF_RANGE")
+
+
+def _nesting_code(raw: bytes) -> str | None:
+    """Refuse nesting deeper than ``MAX_JSON_DEPTH`` before the recursive JSON parser runs.
+
+    Strings are removed and only brackets kept (both at C speed); each pass then deletes the
+    innermost ``[]``/``{}`` pairs, so a well-formed document is empty after at most its depth in
+    passes.
+    """
+    skeleton = _JSON_STRING.sub(b"", raw).translate(None, _NOT_BRACKETS)
+    for _ in range(MAX_JSON_DEPTH):
+        if not skeleton:
+            return None
+        reduced = _INNERMOST_PAIR.sub(b"", skeleton)
+        if reduced == skeleton:  # unbalanced; still report runaway opening brackets as depth
+            opening = skeleton[: MAX_JSON_DEPTH + 1]
+            deep = len(opening) > MAX_JSON_DEPTH and not opening.strip(b"[{")
+            return "RESPONSE_TOO_DEEP" if deep else "MALFORMED_RESPONSE"
+        skeleton = reduced
+    return "RESPONSE_TOO_DEEP" if skeleton else None
+
+
+def parse_json_bounded(raw: bytes, context: str = "response") -> object:
+    """Parse one remote JSON document within size, depth and number limits.
+
+    Raises only ``QuickNodeRefused`` (``RESPONSE_TOO_LARGE``, ``RESPONSE_TOO_DEEP``,
+    ``NUMBER_OUT_OF_RANGE`` or ``MALFORMED_RESPONSE``), never chained to the parser's exception.
+    """
+    if not isinstance(raw, (bytes, bytearray)):
+        raise QuickNodeRefused("MALFORMED_RESPONSE", f"{context}: not bytes")
+    if len(raw) > MAX_RESPONSE_BYTES:
+        raise QuickNodeRefused("RESPONSE_TOO_LARGE", context)
+    nesting = _nesting_code(bytes(raw))
+    if nesting is not None:
+        raise QuickNodeRefused(nesting, context)
+    code = "MALFORMED_RESPONSE"
+    try:
+        return json.loads(
+            raw,
+            parse_int=_bounded_integer,
+            parse_float=_bounded_float,
+            parse_constant=_refuse_constant,
+        )
+    except _JsonLimit as exc:
+        code = exc.code
+    except (ValueError, RecursionError):
+        pass
+    raise QuickNodeRefused(code, context)
+
+
 def _int(value: object, name: str) -> int:
     if isinstance(value, bool):
         raise QuickNodeRefused("MALFORMED_RESPONSE", name)
+    if isinstance(value, int):
+        return value
+    if isinstance(value, str) and _INTEGER_TEXT.match(value):
+        return int(value)
+    if isinstance(value, float) and value.is_integer() and abs(value) < 2**63:
+        return int(value)
+    raise QuickNodeRefused("MALFORMED_RESPONSE", name)
+
+
+def _text(value: object, name: str, limit: int = 64) -> str:
+    if not isinstance(value, str) or len(value) > limit:
+        raise QuickNodeRefused("MALFORMED_RESPONSE", name)
+    return value
+
+
+def _bounded_decimal(text: object, code: str, name: str) -> Decimal:
+    """An XRPL decimal within issued-amount precision and exponent range, checked before any
+    arithmetic or normalization can run away."""
+    if not isinstance(text, str) or not 0 < len(text) <= 48:
+        raise QuickNodeRefused(code, name)
     try:
-        return int(cast(int | str, value))
-    except (TypeError, ValueError):
-        raise QuickNodeRefused("MALFORMED_RESPONSE", name) from None
+        number = Decimal(text)
+    except InvalidOperation:
+        raise QuickNodeRefused(code, name) from None
+    if not number.is_finite():
+        raise QuickNodeRefused(code, name)
+    significant = "".join(str(digit) for digit in number.as_tuple().digits).rstrip("0")
+    low, high = ISSUED_ADJUSTED_EXPONENT_RANGE
+    if number and (
+        len(significant) > MAX_ISSUED_SIGNIFICANT_DIGITS or not low <= number.adjusted() <= high
+    ):
+        raise QuickNodeRefused(code, name)
+    return number
 
 
 def _ledger_hash(value: object) -> str:
@@ -549,28 +862,32 @@ def _ledger_hash(value: object) -> str:
 
 
 def _ranges(text: object) -> tuple[LedgerRange, ...]:
+    if not isinstance(text, str) or len(text) > 4096:
+        raise QuickNodeRefused("MALFORMED_COMPLETE_LEDGERS")
     try:
-        return parse_complete_ledgers(cast(str, text))
-    except TransportRefused as exc:
-        raise QuickNodeRefused("MALFORMED_COMPLETE_LEDGERS") from exc
+        return parse_complete_ledgers(text)
+    except TransportRefused:
+        pass  # refused below, outside the handler, so the refusal carries no context
+    raise QuickNodeRefused("MALFORMED_COMPLETE_LEDGERS")
 
 
 def _amount(value: object, name: str) -> HostedAmount:
     if isinstance(value, str):
-        if not value.isdigit():
+        # XRP drops: at most 10^17, so at most 18 digits; checked before int() runs.
+        if not value.isdigit() or len(value) > 18 or int(value) > MAX_DROPS:
             raise QuickNodeRefused("MALFORMED_AMOUNT", name)
         return HostedAmount("XRP", None, str(int(value)))
     if not isinstance(value, dict):
         raise QuickNodeRefused("MALFORMED_AMOUNT", name)
     currency, issuer, text = value.get("currency"), value.get("issuer"), value.get("value")
-    if not isinstance(currency, str) or not isinstance(issuer, str) or not isinstance(text, str):
+    if (
+        not isinstance(currency, str)
+        or not 0 < len(currency) <= 40
+        or not isinstance(issuer, str)
+        or not 0 < len(issuer) <= 64
+    ):
         raise QuickNodeRefused("MALFORMED_AMOUNT", name)
-    try:
-        number = Decimal(text)
-    except InvalidOperation:
-        raise QuickNodeRefused("MALFORMED_AMOUNT", name) from None
-    if not number.is_finite():
-        raise QuickNodeRefused("MALFORMED_AMOUNT", name)
+    number = _bounded_decimal(text, "MALFORMED_AMOUNT", name)
     code = currency.upper() if len(currency) == 40 else currency
     return HostedAmount(code, issuer, format(number.normalize(), "f"))
 
@@ -644,21 +961,18 @@ class QuickNodeXRPLTransport:
         request = {**params, "api_version": API_VERSION}
         refuse_secret_parameters(request)
         raw = self._client.call(method, request)
-        read = RawRead(method, json.dumps(request, sort_keys=True), raw)
+        document = parse_json_bounded(raw, method)
+        read = RawRead(method, json.dumps(request, sort_keys=True), bytes(raw))
         self._recent = [*self._recent[-(_RECENT_READS - 1) :], read]
-        try:
-            document = json.loads(raw)
-        except (UnicodeDecodeError, json.JSONDecodeError):
-            raise QuickNodeRefused("MALFORMED_RESPONSE", f"{method}: not JSON") from None
         if not isinstance(document, dict):
             raise QuickNodeRefused("MALFORMED_RESPONSE", f"{method}: not an object")
         if "error" in document and "result" not in document:
-            raise _RpcError(str(document.get("error")))
+            raise _RpcError(_rpc_error_code(document.get("error")))
         result = document.get("result")
         if not isinstance(result, dict):
             raise QuickNodeRefused("MALFORMED_RESPONSE", f"{method}: no result")
         if result.get("status") == "error" or "error" in result:
-            raise _RpcError(str(result.get("error", "unknown")))
+            raise _RpcError(_rpc_error_code(result.get("error", "unknown")))
         if result.get("status", "success") != "success":
             raise QuickNodeRefused("MALFORMED_RESPONSE", f"{method}: status")
         return result, read, document
@@ -697,6 +1011,7 @@ class QuickNodeXRPLTransport:
 
     # --- validated ledger identity ---------------------------------------------------------------
 
+    @_typed_errors
     def validated_ledger_identity(self) -> HostedLedgerIdentity:
         info_result, info_raw, _ = self._call_checked("server_info", {})
         info = info_result.get("info")
@@ -762,6 +1077,7 @@ class QuickNodeXRPLTransport:
             raw=(info_raw, ledger_raw),
         )
 
+    @_typed_errors
     def validated_ledger_observation(self, account: str) -> ValidatedLedgerObservation:
         """History coverage and sender state in the X0t type, for reporting only.
 
@@ -784,6 +1100,7 @@ class QuickNodeXRPLTransport:
             available_tickets=None,
         )
 
+    @_typed_errors
     def sample_node_identity(self) -> NodeIdentitySample:
         """Ask the rippled node behind Clio who it is. Recorded to study stability; never pinned."""
         result, raw, document = self._call_checked("server_state", {})
@@ -815,6 +1132,7 @@ class QuickNodeXRPLTransport:
         if _int(result.get("ledger_index"), "ledger_index") != identity.ledger_index:
             raise QuickNodeRefused("LEDGER_STATE_INCONSISTENT", "response is from another ledger")
 
+    @_typed_errors
     def account_state(self, account: str, identity: HostedLedgerIdentity) -> AccountSnapshot:
         """Account flags, RegularKey, Sequence, balance and SignerList on the identity's ledger."""
         try:
@@ -876,6 +1194,7 @@ class QuickNodeXRPLTransport:
                 return items
         raise QuickNodeRefused("TOO_MANY_PAGES", method)
 
+    @_typed_errors
     def account_objects(
         self, account: str, identity: HostedLedgerIdentity, object_type: str | None = None
     ) -> tuple[dict[str, Any], ...]:
@@ -888,6 +1207,7 @@ class QuickNodeXRPLTransport:
                 raise QuickNodeRefused("MALFORMED_RESPONSE", "account object")
         return tuple(objects)
 
+    @_typed_errors
     def account_lines(
         self, account: str, identity: HostedLedgerIdentity, peer: str | None = None
     ) -> tuple[HostedTrustLine, ...]:
@@ -950,6 +1270,10 @@ class QuickNodeXRPLTransport:
                 else HostedObservationStatus.REFUSED
             )
             return self._failed(expected, status, exc.code, exc.retryable)
+        except Exception:  # hostile input reached an edge this module did not bound: fail closed
+            return self._failed(
+                expected, HostedObservationStatus.REFUSED, "RESPONSE_PROCESSING_FAILED", False
+            )
 
     def _failed(
         self, expected: str, status: HostedObservationStatus, code: str, retryable: bool
@@ -977,7 +1301,7 @@ class QuickNodeXRPLTransport:
         identity = self.validated_ledger_identity()
         binary, binary_raw, _ = self._call("tx", {"transaction": expected, "binary": True})
         blob_hex = binary.get("tx_blob")
-        if not isinstance(blob_hex, str) or not blob_hex:
+        if not isinstance(blob_hex, str) or not 0 < len(blob_hex) <= MAX_BLOB_HEX_CHARS:
             raise QuickNodeRefused("MALFORMED_RESPONSE", "tx_blob")
         try:
             blob = bytes.fromhex(blob_hex)
@@ -1017,7 +1341,7 @@ class QuickNodeXRPLTransport:
         if not identity.covers(ledger_index):
             raise QuickNodeRefused("LEDGER_OUTSIDE_COMPLETE_HISTORY", str(ledger_index))
         meta_hex = binary.get("meta_blob", binary.get("meta"))
-        if not isinstance(meta_hex, str):
+        if not isinstance(meta_hex, str) or len(meta_hex) > MAX_BLOB_HEX_CHARS:
             raise QuickNodeRefused("MALFORMED_RESPONSE", "meta_blob")
         try:
             binary_meta = decode(meta_hex)
@@ -1131,13 +1455,7 @@ class QuickNodeXRPLTransport:
 
 
 def _decimal_text(value: object, name: str) -> None:
-    if not isinstance(value, str):
-        raise QuickNodeRefused("MALFORMED_RESPONSE", name)
-    try:
-        if not Decimal(value).is_finite():
-            raise QuickNodeRefused("MALFORMED_RESPONSE", name)
-    except InvalidOperation:
-        raise QuickNodeRefused("MALFORMED_RESPONSE", name) from None
+    _bounded_decimal(value, "MALFORMED_RESPONSE", name)
 
 
 def _signer_list(

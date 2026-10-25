@@ -1,5 +1,7 @@
 # Checkpoint X1q — QuickNode XRPL read-only integration
 
+Hardened by X1s; see `spike/xrpl/X1S-HARDENING.md`.
+
 ## Outcome
 
 X1q adds QuickNode as an optional, read-only connectivity provider for the public XRPL Testnet

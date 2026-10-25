@@ -10,8 +10,7 @@ import json
 import pickle
 import re
 import ssl
-import urllib.error
-import urllib.request
+import time
 from pathlib import Path
 from typing import Any
 
@@ -35,8 +34,11 @@ from x1q_quicknode import (
     URL,
     VALIDATED,
     FakeQuickNode,
+    LoopbackQuickNode,
+    Raw,
     Reply,
-    ScriptedHTTPS,
+    Stall,
+    Wiring,
     config,
     endpoint,
     funded_sender,
@@ -112,11 +114,21 @@ def expectation(tx_hash: str, **changes: Any) -> HostedPaymentExpectation:
     return HostedPaymentExpectation(**fields)
 
 
-def client(replies: list[Reply | BaseException], **changes: Any) -> tuple[Any, ScriptedHTTPS, list]:
+def client(
+    script: list[Any], *, failures: list[BaseException] | None = None, **changes: Any
+) -> tuple[QuickNodeJsonRpcClient, LoopbackQuickNode, list[float]]:
+    """A real client over loopback sockets; ``failures`` are raised at connect time instead."""
     sleeps: list[float] = []
-    handler = ScriptedHTTPS(replies)
-    rpc = QuickNodeJsonRpcClient(config(**changes), sleep=sleeps.append, https_handler=handler)
-    return rpc, handler, sleeps
+    server = LoopbackQuickNode(script)
+    wiring = Wiring(server, list(failures or []))
+    server.wiring = wiring  # type: ignore[attr-defined]
+    rpc = QuickNodeJsonRpcClient(
+        config(**changes),
+        sleep=sleeps.append,
+        resolver=wiring.resolver,
+        connector=wiring.connector,
+    )
+    return rpc, server, sleeps
 
 
 def ok(result: dict[str, Any] | None = None) -> Reply:
@@ -634,32 +646,31 @@ def test_a08_malformed_metadata_blob_and_ledger_hash() -> None:
 
 @pytest.mark.parametrize("status", [301, 302, 303, 307, 308])
 def test_a09_redirects_are_never_followed(status: int) -> None:
-    rpc, handler, sleeps = client(
+    rpc, server, sleeps = client(
         [Reply(status=status, headers={"Location": "https://attacker.example/steal"}), ok()]
     )
     error = raised(lambda: rpc.call("server_info", {}))
     assert (error.code, type(error)) == ("REDIRECT_REFUSED", QuickNodeRefused)
-    assert len(handler.requests) == 1  # the redirect target was never requested
+    assert len(server.requests) == 1  # the redirect target was never requested
     assert sleeps == []  # and the refusal is not retried
 
 
 def test_a09_same_host_redirect_is_also_refused() -> None:
-    rpc, handler, _ = client([Reply(status=302, headers={"Location": URL + "other"}), ok()])
+    rpc, server, _ = client([Reply(status=302, headers={"Location": URL + "other"}), ok()])
     assert raised(lambda: rpc.call("server_info", {})).code == "REDIRECT_REFUSED"
-    assert len(handler.requests) == 1
+    assert len(server.requests) == 1
 
 
 def test_a10_endpoint_substitution_is_impossible(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("HTTPS_PROXY", "http://proxy.attacker.example:3128")
     monkeypatch.setenv("https_proxy", "http://proxy.attacker.example:3128")
-    rpc, handler, _ = client([ok(), ok()])
+    rpc, server, _ = client([ok(), ok()])
     rpc.call("server_info", {"url": "https://attacker.example/"})
     rpc.call("ledger", {"ledger_index": 1})
-    assert [request.full_url for request in handler.requests] == [URL, URL]
-    assert all(request.get_method() == "POST" for request in handler.requests)
-    # Environment proxies are ignored: no proxy handler is installed and no request used one.
-    assert not [h for h in rpc._opener.handlers if isinstance(h, urllib.request.ProxyHandler)]
-    assert not any(request.has_proxy() for request in handler.requests)
+    # Every request goes to the pinned host and path; environment proxies are never consulted.
+    assert [(seen.method, seen.target) for seen in server.requests] == [("POST", f"/{TOKEN}/")] * 2
+    assert {seen.headers["host"] for seen in server.requests} == {HOST}
+    assert server.wiring.resolved == [(HOST, 443), (HOST, 443)]  # type: ignore[attr-defined]
     pinned = endpoint()
     with pytest.raises(AttributeError):
         pinned._url = "https://attacker.example/"  # type: ignore[misc]
@@ -675,20 +686,22 @@ def test_a10_tls_is_verified() -> None:
     assert context.verify_mode is ssl.CERT_REQUIRED
     assert context.check_hostname is True
     assert context.minimum_version >= ssl.TLSVersion.TLSv1_2
-    failing, _, sleeps = client([urllib.error.URLError(ssl.SSLCertVerificationError("bad cert"))])
+    failing, _, sleeps = client([], failures=[ssl.SSLCertVerificationError("bad cert")])
     assert raised(lambda: failing.call("server_info", {})).code == "TLS_VERIFICATION_FAILED"
     assert sleeps == []
 
 
 def test_a11_request_timeout_is_strict_bounded_and_typed() -> None:
-    rpc, handler, sleeps = client(
-        [TimeoutError(), urllib.error.URLError(TimeoutError()), TimeoutError()],
-        timeout_seconds=2.5,
-    )
+    rpc, server, sleeps = client([Stall(), Stall(), Stall()], timeout_seconds=0.3)
+    started = time.monotonic()
     error = raised(lambda: rpc.call("server_info", {}))
+    elapsed = time.monotonic() - started
     assert isinstance(error, QuickNodeTimeout) and error.code == "TIMEOUT"
-    assert handler.timeouts == [2.5, 2.5, 2.5]
-    assert sleeps == [0.5, 1.0]
+    assert len(server.requests) == 3
+    deadlines = [deadline for _, deadline in server.wiring.connected]  # type: ignore[attr-defined]
+    assert len(deadlines) == 3
+    assert sleeps == [0.5, 1.0]  # injected: recorded, not slept
+    assert 0.85 <= elapsed < 2.0  # three absolute 0.3 s deadlines
     node = FakeQuickNode()
     tx_hash = node.include(signed_testnet_payment())
     node.faults["tx"] = lambda request: QuickNodeTimeout("TIMEOUT", "tx")
@@ -716,10 +729,10 @@ def test_a12_server_errors_retry_and_auth_errors_do_not() -> None:
     rpc, _, sleeps = client([Reply(status=503), Reply(status=502), ok()])
     rpc.call("server_info", {})
     assert sleeps == [0.5, 1.0]
-    denied, handler, denied_sleeps = client([Reply(status=401), ok()])
+    denied, server, denied_sleeps = client([Reply(status=401), ok()])
     error = raised(lambda: denied.call("server_info", {}))
     assert error.code == "ENDPOINT_AUTH_REJECTED" and not error.retryable
-    assert (len(handler.requests), denied_sleeps) == (1, [])
+    assert (len(server.requests), denied_sleeps) == (1, [])
     exhausted, _, _ = client([Reply(status=500)] * 3)
     assert isinstance(raised(lambda: exhausted.call("x", {})), QuickNodeUnavailable)
 
@@ -923,16 +936,18 @@ def test_a15_transport_cannot_serve_any_x0t_or_signer_seam() -> None:
 
 def _errors_for_redaction() -> list[QuickNodeError]:
     errors = []
-    for reply in (
-        Reply(status=302, headers={"Location": "https://attacker.example/"}),
-        Reply(status=401),
-        Reply(status=500),
-        Reply(status=429),
-        TimeoutError(),
-        urllib.error.URLError(ssl.SSLCertVerificationError("bad cert")),
-        urllib.error.URLError(OSError("nodename nor servname provided")),
-    ):
-        rpc, _, _ = client([reply], max_attempts=1)
+    cases: list[tuple[list[Any], list[BaseException]]] = [
+        ([Reply(status=302, headers={"Location": "https://attacker.example/"})], []),
+        ([Reply(status=401)], []),
+        ([Reply(status=500)], []),
+        ([Reply(status=429)], []),
+        ([Stall()], []),
+        ([Raw(b"HTTP/1.1 OK-but-not-a-status\r\n\r\n")], []),
+        ([], [ssl.SSLCertVerificationError("bad cert")]),
+        ([], [OSError("nodename nor servname provided")]),
+    ]
+    for script, failures in cases:
+        rpc, _, _ = client(script, failures=failures, max_attempts=1, timeout_seconds=0.3)
         errors.append(raised(lambda rpc=rpc: rpc.call("server_info", {})))
     return errors
 
@@ -969,9 +984,12 @@ def test_a16_probe_report_is_sanitized_and_pending_without_an_endpoint(
     assert {name: check["status"] for name, check in report["checks"].items()} == {
         "validated_ledger_identity": "PASS",
         "node_identity_stability": "PASS",
-        "account_reads": "PASS",
+        "account_info": "PASS",
+        "account_objects": "PASS",
+        "account_lines": "PASS",
         "transaction_lookup": "PASS",
     }
+    assert report["outcome"] == "PASS"
     assert report["checks"]["node_identity_stability"]["distinct_node_public_keys"] == [
         "n9BackendA",
         "n9BackendB",

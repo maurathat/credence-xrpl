@@ -12,13 +12,12 @@ The endpoint token is derived at runtime and is not a real credential.
 from __future__ import annotations
 
 import hashlib
-import io
 import json
-import urllib.request
-import urllib.response
+import socket
+import threading
+import time
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
-from email.message import Message
 from typing import Any
 
 from x1a_world import xrpl_test_key
@@ -332,7 +331,7 @@ def funded_sender(node: FakeQuickNode) -> None:
     ]
 
 
-# --- scripted HTTPS (urllib handler; no sockets) ---------------------------------------------
+# --- scripted loopback HTTP endpoint (real sockets on 127.0.0.1; no TLS, no network) ----------
 
 
 @dataclass
@@ -342,26 +341,148 @@ class Reply:
     headers: dict[str, str] = field(default_factory=dict)
 
 
-class ScriptedHTTPS(urllib.request.HTTPSHandler):
-    """Replaces the real HTTPS handler; urllib's own redirect and error processing still run."""
+@dataclass
+class Raw:
+    """Bytes sent verbatim as the whole response (for malformed status lines and headers)."""
 
-    def __init__(self, replies: list[Reply | BaseException]) -> None:
-        super().__init__()
-        self.replies = list(replies)
-        self.requests: list[urllib.request.Request] = []
-        self.timeouts: list[float | None] = []
+    data: bytes
 
-    def https_open(self, req: urllib.request.Request) -> urllib.response.addinfourl:
-        self.requests.append(req)
-        self.timeouts.append(req.timeout)  # type: ignore[attr-defined]
-        reply = self.replies.pop(0)
-        if isinstance(reply, BaseException):
-            raise reply
-        headers = Message()
-        for name, value in reply.headers.items():
-            headers[name] = value
-        response = urllib.response.addinfourl(
-            io.BytesIO(reply.body), headers, req.full_url, reply.status
-        )
-        response.msg = "scripted"  # type: ignore[attr-defined]
-        return response
+
+@dataclass
+class Drip:
+    """A 200 response sent one byte at a time; ``body`` defaults to an endless stream."""
+
+    body: bytes | None = None
+    interval: float = 0.05
+    drip_headers: bool = False
+
+
+@dataclass
+class Stall:
+    """Read the request, then send nothing until the client goes away."""
+
+    seconds: float = 30.0
+
+
+@dataclass
+class Seen:
+    method: str
+    target: str
+    headers: dict[str, str]
+    body: bytes
+
+
+Action = Reply | Raw | Drip | Stall
+
+
+class LoopbackQuickNode:
+    """One scripted action per accepted connection. Records each request and when each response
+    ended (``closed``: seconds since the server started, when the client hung up or we finished)."""
+
+    def __init__(self, script: list[Action]) -> None:
+        self.script = list(script)
+        self.requests: list[Seen] = []
+        self.closed: list[float] = []
+        self.started = time.monotonic()
+        self._listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self._listener.bind(("127.0.0.1", 0))
+        self._listener.listen(16)
+        self.address = self._listener.getsockname()
+        threading.Thread(target=self._accept, daemon=True).start()
+
+    def close(self) -> None:
+        self._listener.close()
+
+    def _accept(self) -> None:
+        while True:
+            try:
+                connection, _ = self._listener.accept()
+            except OSError:
+                return
+            action = self.script.pop(0) if self.script else None
+            threading.Thread(target=self._serve, args=(connection, action), daemon=True).start()
+
+    def _serve(self, connection: socket.socket, action: Action | None) -> None:
+        try:
+            self._read_request(connection)
+            if isinstance(action, Reply):
+                head = (
+                    f"HTTP/1.1 {action.status} Scripted\r\nContent-Length: {len(action.body)}\r\n"
+                )
+                head += "".join(f"{name}: {value}\r\n" for name, value in action.headers.items())
+                connection.sendall(head.encode() + b"\r\n" + action.body)
+            elif isinstance(action, Raw):
+                connection.sendall(action.data)
+            elif isinstance(action, Drip):
+                body = action.body
+                length = len(body) if body is not None else 1_000_000
+                head = f"HTTP/1.1 200 OK\r\nContent-Length: {length}\r\n\r\n".encode()
+                for piece in head if action.drip_headers else [head]:
+                    connection.sendall(bytes([piece]) if isinstance(piece, int) else piece)
+                    if action.drip_headers:
+                        time.sleep(action.interval)
+                stream = body if body is not None else b" " * length
+                for byte in stream:
+                    connection.sendall(bytes([byte]))
+                    time.sleep(action.interval)
+            elif isinstance(action, Stall):
+                connection.settimeout(action.seconds)
+                while connection.recv(1024):
+                    pass
+        except OSError:
+            pass
+        finally:
+            self.closed.append(time.monotonic() - self.started)
+            connection.close()
+
+    def _read_request(self, connection: socket.socket) -> None:
+        data = b""
+        while b"\r\n\r\n" not in data:
+            chunk = connection.recv(65536)
+            if not chunk:
+                break
+            data += chunk
+            if not data[:1].isalpha():  # a TLS ClientHello or other non-HTTP bytes
+                self.requests.append(Seen("<not http>", "", {}, b""))
+                return
+        head, _, body = data.partition(b"\r\n\r\n")
+        lines = head.decode("latin-1").split("\r\n")
+        parts = lines[0].split(" ")
+        if len(parts) != 3 or not parts[2].startswith("HTTP/"):
+            self.requests.append(Seen("<not http>", "", {}, b""))
+            return
+        headers = {}
+        for line in lines[1:]:
+            name, _, value = line.partition(":")
+            headers[name.strip().lower()] = value.strip()
+        length = int(headers.get("content-length", "0"))
+        while len(body) < length:
+            chunk = connection.recv(65536)
+            if not chunk:
+                break
+            body += chunk
+        self.requests.append(Seen(parts[0], parts[1], headers, body))
+
+
+@dataclass
+class Wiring:
+    """Test seams for ``QuickNodeJsonRpcClient``: resolve to and connect to the loopback server."""
+
+    server: LoopbackQuickNode
+    failures: list[BaseException] = field(default_factory=list)
+    resolved: list[tuple[str, int]] = field(default_factory=list, repr=False)
+    connected: list[tuple[str, float]] = field(default_factory=list, repr=False)
+
+    def resolver(self, host: str, port: int, timeout: float) -> tuple[int, Any]:
+        self.resolved.append((host, port))
+        return socket.AF_INET, self.server.address
+
+    def connector(
+        self, address: tuple[int, Any], server_hostname: str, deadline: float, watchdog: Any
+    ) -> socket.socket:
+        self.connected.append((server_hostname, deadline))
+        if self.failures:
+            raise self.failures.pop(0)
+        sock = socket.create_connection(address[1], timeout=max(deadline - time.monotonic(), 0.01))
+        watchdog.attach(sock)
+        return sock
