@@ -12,6 +12,9 @@ not an XRPL payment. No XRPL transaction is built, signed or submitted. See [`DI
 | Document | Contents |
 | --- | --- |
 | [`DEMO-SCRIPT.md`](DEMO-SCRIPT.md) | Three-minute demonstration and judge walkthrough |
+| [`PITCH-TALK-TRACK.txt`](PITCH-TALK-TRACK.txt) | Narration matched to the six-slide pitch deck |
+| [`assets/claw-street-pitch.pdf`](assets/claw-street-pitch.pdf) | Original supplied six-slide pitch deck |
+| [`SUBMISSION-ASSETS.md`](SUBMISSION-ASSETS.md) | GitHub downloads for video, complete kit and portrait cards |
 | [`ARCHITECTURE.md`](ARCHITECTURE.md) | Components, data flow and integration status |
 | [`TEST-SUMMARY.md`](TEST-SUMMARY.md) | Reproducible test and browser results for this release candidate |
 | [`DISCLOSURES.md`](DISCLOSURES.md) | Sponsor and third-party integration disclosures |

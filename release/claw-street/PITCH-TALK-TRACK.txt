@@ -1,0 +1,62 @@
+CLAW STREET: SIX-SLIDE PITCH TALK TRACK
+Matched to CLAW-STREET (2).pdf. Target: approximately three minutes.
+
+SLIDE 1 - CLAW STREET | 0:00-0:15
+
+I'm Maura, building Claw Street at Kessai Labs, powered by Credence.
+
+We're starting with a practical question: how can an AI agent buy inference under rules its owner can inspect and enforce?
+
+SLIDE 2 - THE PROBLEM | 0:15-0:45
+
+AI agents can perform work and request services. Giving them purchasing power creates a new responsibility for their owners.
+
+Who controls the budget? Which providers qualify? And what evidence tells us the requested work was delivered?
+
+Every purchase needs clear terms, a limit on authority, and a record connecting the charge to the delivery.
+
+SLIDE 3 - THE DIFFERENTIATOR | 0:45-1:10
+
+The distinction on this slide is between making a payment and governing a purchase.
+
+Claw Street asks what the agent should buy, under whose authority, on what terms, and with what evidence of delivery.
+
+Credence makes those conditions part of the purchase flow, so the agent's owner can inspect why a purchase qualified.
+
+SLIDE 4 - HOW IT WORKS | 1:10-2:05
+
+These six steps are the flow: agent intent, provider eligibility, bounded authorization, execution, delivery evidence, and financial accounting.
+
+The agent states what it needs. Credence evaluates the provider and quote against facility headroom and the required evidence tier.
+
+The backend prepares the request. The agent checks and signs it outside the browser, keeping its private key out of the interface.
+
+Scenario A uses an offline Nebius mock with Tier 1 gateway-witnessed evidence. Scenario B uses an offline local Qwen mock with Tier 2 provider-signed evidence.
+
+Credence checks the receipt and records the charge in micro-tRLUSD, a synthetic test unit. These are internal accounting entries. No provider receives a payment in this demo.
+
+SLIDE 5 - XRPL TESTNET PROOF | 2:05-2:45
+
+Separately, the transaction hash shown here identifies a validated public XRPL Testnet transaction in ledger twenty-one million, eight hundred seven thousand, four hundred twenty-seven.
+
+Its memo explicitly identifies it as a connectivity proof, independent of Credence procurement authorization.
+
+The working purchase demo settles its internal accounting. Connecting an authorized purchase to an on-chain payment is a future step.
+
+The journal, multisignature and reconciliation work belongs to a separate integration track. The x402 work is non-paying. QuickNode is not connected to this purchase flow, and Ledger hardware signing remains on the roadmap.
+
+SLIDE 6 - CLAW STREET | 2:45-3:00
+
+Our goal is for owners to trust an agent's economic actions because they can inspect its authority and delivery evidence.
+
+That's the foundation we're building toward agents whose work can eventually be financed.
+
+Claw Street. Powered by Credence.
+
+PRESENTER ACCURACY NOTES - NOT SPOKEN
+
+- On slide 4, "local Qwen" means an offline mock in this submission. No model runs during the demo.
+- The price check concerns the configured quote and facility limits. The buyer-entered price-cap field remains preview-only.
+- On slide 5, Credence's "own ledger" means internal accounting. The separate Testnet transaction is not marketplace settlement.
+- Do not claim that the public website runs Core or verifies signatures. It is a separate browser simulation.
+- Do not claim exact-model-weight proof, live provider payment, connected hardware signing or live marketplace XRPL settlement.
