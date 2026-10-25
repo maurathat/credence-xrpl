@@ -16,16 +16,19 @@ Implemented seams (all JSON-RPC, ``api_version`` 2):
 - ``lookup``: the X0t ``HashLookup``, producing the X0s evidence envelope
   ``credence.xrpl.validated-payment-evidence.v1`` from the exact transaction blob and metadata.
   Each lookup first re-reads and re-verifies the node's validated-ledger identity (network, build,
-  optional node key). The transaction's ledger must be validated, at or below the current validated
+  required node key). The transaction's ledger must be validated, at or below the current validated
   ledger, inside the node's complete history, and its hash must match the fetched ledger. The
   result, and the delivered amount, must agree between the binary and JSON forms (X1c, B1/B2).
   After the evidence is read, the node identity is re-read and must be unchanged, not regressed,
   and still cover the transaction's ledger (X1e, N2);
-- a not-found result is permanent only for a bounded anchor+1 through ``LastLedgerSequence``
-  query with explicit ``searched_all=true``. Both identity reads must cover the full range; an
-  ordinary ``txnNotFound``, gap, backfill or truncation is unavailable evidence (X1g, F1);
-- ``diagnostic_lookup``: the same reads without a node pin, returning only a non-authoritative
-  summary that cannot be used as settlement evidence (X1e, N1);
+- positive lookup is performed without the proof range, so a valid inclusion is not blocked by a
+  long expiry window. Only after an ordinary ``txnNotFound`` does the transport attempt the
+  bounded anchor+1 through ``LastLedgerSequence`` query supported by rippled 3.4.0 (X1i, H1);
+- a not-found result is permanent only when that bounded query returns explicit
+  ``searched_all=true``. Both identity reads must cover the full range. An ordinary
+  ``txnNotFound`` or ``searched_all=false`` is a non-final ``NOT_FOUND`` observation; a node,
+  history or network contradiction is ``UNAVAILABLE`` (X1g/X1i);
+- ``diagnostic_lookup``: a non-authoritative summary that cannot be used as settlement evidence;
 - ``submit``: the X0t ``SubmissionTransport``. It refuses unless submission was explicitly enabled
   in its configuration. X1a never enables it, and ``offline_only`` is false, so the X0t
   ``PaymentService`` refuses this transport outright.
@@ -42,9 +45,10 @@ inspector refuses any Payment flags, so a partial payment never reaches this poi
 refused ``EVIDENCE_INCONSISTENT`` and nothing settles. Both observations are kept in the evidence
 envelope. An unsuccessful result must carry neither.
 
-N1 (X1e): ``lookup``, ``validated_ledger`` and ``ledger_context`` can authorize signing, anchor
-expiry or establish settlement, so they refuse with ``NODE_IDENTITY_NOT_PINNED`` unless
-``expected_node_public_key`` is configured; a changed key is ``NODE_IDENTITY_MISMATCH``.
+N1/H3 (X1e/X1i): every transport configuration requires a syntactically valid XRPL node public
+key. A changed key is ``NODE_IDENTITY_MISMATCH``. On an unauthenticated loopback HTTP connection,
+the self-reported key pin detects accidental source changes and inconsistent responses; it is not
+cryptographic server authentication or independent ledger consensus.
 
 Response shapes were checked read-only against the pinned rippled 3.4.0 (network 21337) in X1e:
 ``server_state``, ``ledger``, ``account_info``, ``account_objects``, ``account_lines`` and ``tx``
@@ -69,6 +73,7 @@ from dataclasses import dataclass
 from decimal import Decimal, InvalidOperation
 from typing import Any, Protocol, cast
 
+from xrpl.core.addresscodec import decode_node_public_key
 from xrpl.core.binarycodec import decode
 
 from credence.xrpl_adapter.multisign import (
@@ -193,13 +198,26 @@ def refuse_secret_parameters(params: Mapping[str, Any]) -> None:
 @dataclass(frozen=True)
 class RippledTransportConfig:
     """The trusted node's pinned identity. Every identity read checks the network ID and build
-    version, and the node public key when it is pinned."""
+    version and node public key."""
 
     source_id: str
     expected_network_id: int
     expected_build_version: str
-    expected_node_public_key: str | None = None
+    expected_node_public_key: str
     submission_enabled: bool = False
+
+    def __post_init__(self) -> None:
+        key = self.expected_node_public_key
+        if not isinstance(key, str) or not key or key != key.strip():
+            raise ValueError("expected_node_public_key is required")
+        try:
+            decoded = decode_node_public_key(key)
+        except Exception as exc:  # xrpl-py exposes codec-specific subclasses across releases
+            raise ValueError(
+                "expected_node_public_key is not a valid XRPL node public key"
+            ) from exc
+        if len(decoded) != 33:
+            raise ValueError("expected_node_public_key is not a valid XRPL node public key")
 
 
 @dataclass(frozen=True)
@@ -607,10 +625,7 @@ class RippledTransport:
         raise TransportRefused("TOO_MANY_TICKETS")
 
     def _authoritative_identity(self) -> ValidatedLedgerIdentity:
-        """N1 (X1e): an operation whose result can authorize signing, anchor expiry or establish
-        settlement requires a pinned node public key. Unpinned reads are diagnostic only."""
-        if self._config.expected_node_public_key is None:
-            raise TransportRefused("NODE_IDENTITY_NOT_PINNED")
+        """Read and verify the required node-identity pin for an authoritative operation."""
         return self.validated_ledger_identity()
 
     def ledger_context(self, policy: MultisignPolicy) -> LedgerContext:
@@ -720,7 +735,7 @@ class RippledTransport:
             return LookupResult(LookupDisposition.UNAVAILABLE, detail=exc.code)
 
     def diagnostic_lookup(self, transaction_hash_value: str) -> DiagnosticLookup:
-        """Non-authoritative lookup that works without a node pin.
+        """Non-authoritative summary from the required pinned transport.
 
         It returns only a summary, never a ``LookupResult``, ``LedgerPayment`` or evidence
         envelope, so its output cannot be handed to the X0t journal as settlement evidence."""
@@ -762,79 +777,125 @@ class RippledTransport:
         identity = (
             self._authoritative_identity() if authoritative else self.validated_ledger_identity()
         )
-        tx_params: dict[str, Any] = {"transaction": expected_hash, "binary": True}
         if (min_ledger is None) != (max_ledger is None):
             raise TransportRefused("MALFORMED_LOOKUP_RANGE")
         if min_ledger is not None and max_ledger is not None:
-            if not 0 < min_ledger <= max_ledger or max_ledger - min_ledger >= 1_000:
+            if not 0 < min_ledger <= max_ledger:
                 raise TransportRefused("MALFORMED_LOOKUP_RANGE")
-            tx_params.update(min_ledger=min_ledger, max_ledger=max_ledger)
+        # A positive hash lookup is not constrained by the non-inclusion proof window. rippled
+        # returns a found transaction even when it lies outside a requested range, but doing the
+        # ordinary lookup first also avoids rejecting a valid inclusion merely because the
+        # requested non-inclusion window exceeds rippled's bounded-search limit.
+        tx_params: dict[str, Any] = {"transaction": expected_hash, "binary": True}
         try:
             binary, binary_raw = self._call("tx", tx_params)
         except _RpcError as exc:
             if exc.error != "txnNotFound":
                 raise
-            after = (
-                self._authoritative_identity()
-                if authoritative
-                else self.validated_ledger_identity()
+            first_not_found = exc.evidence
+            bounded_not_found: _RpcError | None = None
+            # rippled 3.4.0 accepts max_ledger - min_ledger <= 1,000. Because its interval is
+            # closed, that implementation permits at most 1,001 ledger indexes.
+            # Longer windows can still find a transaction through the ordinary lookup, but they
+            # cannot produce permanent non-inclusion evidence through this mechanism.
+            bounded_supported = bool(
+                authoritative
+                and min_ledger is not None
+                and max_ledger is not None
+                and max_ledger - min_ledger <= 1_000
             )
-            _require_stable_node(identity, after)
-            if not authoritative:
-                return LookupResult(LookupDisposition.NOT_FOUND)
-            if min_ledger is None or max_ledger is None:
-                raise TransportRefused("BOUNDED_LOOKUP_REQUIRED") from exc
-            if exc.result.get("searched_all") is not True:
-                raise TransportRefused("TRANSACTION_RANGE_NOT_FULLY_SEARCHED") from exc
-            before_covers = identity.ledger_index >= max_ledger and _history_covers(
-                identity.complete_history_ranges, min_ledger, max_ledger
-            )
-            after_covers = after.ledger_index >= max_ledger and _history_covers(
-                after.complete_history_ranges, min_ledger, max_ledger
-            )
-            if before_covers != after_covers:
-                raise TransportRefused("HISTORY_CHANGED_DURING_LOOKUP") from exc
-            if not before_covers:
-                raise TransportRefused("LEDGER_OUTSIDE_COMPLETE_HISTORY") from exc
-            evidence = json.dumps(
-                {
-                    "schema": "credence.xrpl.non-inclusion-evidence.v1",
-                    "transaction_hash": expected_hash,
-                    "searched_all": True,
+            if bounded_supported:
+                tx_params = {
+                    "transaction": expected_hash,
+                    "binary": True,
                     "min_ledger": min_ledger,
                     "max_ledger": max_ledger,
-                    "source_id": self._config.source_id,
-                    "validated_identity": _identity_evidence(identity),
-                    "validated_identity_after": _identity_evidence(after),
-                    "raw": [
-                        {
-                            "method": item.method,
-                            "params": item.params,
-                            "response": item.response.decode("utf-8", errors="replace"),
-                        }
-                        for item in (*identity.raw, exc.evidence, *after.raw)
-                    ],
-                },
-                separators=(",", ":"),
-                sort_keys=True,
-            ).encode("utf-8")
-            return LookupResult(
-                LookupDisposition.NOT_FOUND,
-                non_inclusion_proof=NonInclusionProof(
-                    transaction_hash=expected_hash,
-                    first_ledger_sequence=min_ledger,
-                    last_ledger_sequence=max_ledger,
-                    searched_all=True,
-                    source_id=after.source_id,
-                    network_id=after.network_id,
-                    build_version=after.build_version,
-                    node_public_key=after.node_public_key or "",
-                    validated_ledger_index=after.ledger_index,
-                    validated_ledger_hash=after.ledger_hash,
-                    complete_history_ranges=after.complete_history_ranges,
-                    evidence=evidence,
-                ),
-            )
+                }
+                try:
+                    binary, binary_raw = self._call("tx", tx_params)
+                except _RpcError as bounded_error:
+                    if bounded_error.error != "txnNotFound":
+                        raise
+                    bounded_not_found = bounded_error
+
+            if bounded_not_found is None and bounded_supported:
+                # The transaction appeared between the ordinary and bounded reads. Continue down
+                # the positive-inclusion path with the returned bytes.
+                pass
+            else:
+                after = (
+                    self._authoritative_identity()
+                    if authoritative
+                    else self.validated_ledger_identity()
+                )
+                _require_stable_node(identity, after)
+                if identity.complete_history_ranges != after.complete_history_ranges:
+                    raise TransportRefused("HISTORY_CHANGED_DURING_LOOKUP") from exc
+                if not authoritative:
+                    return LookupResult(LookupDisposition.NOT_FOUND)
+                if bounded_not_found is None:
+                    return LookupResult(
+                        LookupDisposition.NOT_FOUND,
+                        detail="BOUNDED_NON_INCLUSION_PROOF_UNAVAILABLE",
+                    )
+                if bounded_not_found.result.get("searched_all") is not True:
+                    return LookupResult(
+                        LookupDisposition.NOT_FOUND,
+                        detail="TRANSACTION_RANGE_NOT_FULLY_SEARCHED",
+                    )
+                assert min_ledger is not None and max_ledger is not None
+                before_covers = identity.ledger_index >= max_ledger and _history_covers(
+                    identity.complete_history_ranges, min_ledger, max_ledger
+                )
+                after_covers = after.ledger_index >= max_ledger and _history_covers(
+                    after.complete_history_ranges, min_ledger, max_ledger
+                )
+                if not before_covers or not after_covers:
+                    raise TransportRefused("LEDGER_OUTSIDE_COMPLETE_HISTORY") from exc
+                evidence = json.dumps(
+                    {
+                        "schema": "credence.xrpl.non-inclusion-evidence.v1",
+                        "transaction_hash": expected_hash,
+                        "searched_all": True,
+                        "min_ledger": min_ledger,
+                        "max_ledger": max_ledger,
+                        "source_id": self._config.source_id,
+                        "validated_identity": _identity_evidence(identity),
+                        "validated_identity_after": _identity_evidence(after),
+                        "raw": [
+                            {
+                                "method": item.method,
+                                "params": item.params,
+                                "response": item.response.decode("utf-8", errors="replace"),
+                            }
+                            for item in (
+                                *identity.raw,
+                                first_not_found,
+                                bounded_not_found.evidence,
+                                *after.raw,
+                            )
+                        ],
+                    },
+                    separators=(",", ":"),
+                    sort_keys=True,
+                ).encode("utf-8")
+                return LookupResult(
+                    LookupDisposition.NOT_FOUND,
+                    non_inclusion_proof=NonInclusionProof(
+                        transaction_hash=expected_hash,
+                        first_ledger_sequence=min_ledger,
+                        last_ledger_sequence=max_ledger,
+                        searched_all=True,
+                        source_id=after.source_id,
+                        network_id=after.network_id,
+                        build_version=after.build_version,
+                        node_public_key=after.node_public_key or "",
+                        validated_ledger_index=after.ledger_index,
+                        validated_ledger_hash=after.ledger_hash,
+                        complete_history_ranges=after.complete_history_ranges,
+                        evidence=evidence,
+                    ),
+                )
         blob_hex = binary.get("tx_blob")
         if not isinstance(blob_hex, str) or not blob_hex:
             raise TransportRefused("MALFORMED_RESPONSE", "tx_blob")

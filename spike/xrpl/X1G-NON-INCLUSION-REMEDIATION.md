@@ -19,7 +19,9 @@ The original request contained only `transaction`, `binary` and `api_version`; i
 - The pinned network, node key, build, validated-ledger identity and history coverage are read before and after the bounded query. Both sides must cover the whole range.
 - A `NonInclusionProof` and `credence.xrpl.non-inclusion-evidence.v1` envelope bind the hash, range, source identity and raw responses.
 - Final expiry additionally requires the later sender-state observation to match the proof's source, network, node key and build, retain continuous range coverage, and show the original Sequence or TicketSequence still usable.
-- Ordinary unbounded not-found evidence captured in X1e now maps to `UNAVAILABLE: BOUNDED_LOOKUP_REQUIRED`.
+- X1i supersedes the original ordinary-miss classification: an identity-stable unbounded
+  `txnNotFound` is `NOT_FOUND` without proof. It may preserve pre-expiry liveness but can never
+  establish permanent non-inclusion.
 
 ## Adversarial coverage
 
@@ -37,5 +39,7 @@ Existing successful-payment evidence, exact signed-byte/hash verification, deliv
 ## Remaining limitations
 
 - The pinned rippled 3.4.0 node was not called in X1g. Its unbounded X1e captures prove that ordinary `txnNotFound` omits `searched_all`; the bounded response shape remains documented rather than directly observed.
-- rippled documents a maximum bounded `tx` range of 1,000 ledgers. A wider window is refused `MALFORMED_LOOKUP_RANGE` and cannot expire automatically.
+- rippled 3.4.0 accepts `max_ledger - min_ledger <= 1000`. X1i performs the positive lookup before
+  applying that limit; a longer not-found window remains unresolved and cannot expire
+  automatically.
 - N3, N4 and N5 remain ledger-write blockers. X1g does not authorize live submission, signing, custody, account setup or Core changes.

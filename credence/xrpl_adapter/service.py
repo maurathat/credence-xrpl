@@ -597,7 +597,7 @@ class PaymentService:
             elif not sender_state_matches:
                 detail = "SENDER_SEQUENCE_OR_TICKET_CONSUMPTION_UNRESOLVED"
             elif not proof_matches:
-                detail = "BOUNDED_NON_INCLUSION_PROOF_MISSING_OR_INCONSISTENT"
+                detail = lookup.detail or "BOUNDED_NON_INCLUSION_PROOF_MISSING_OR_INCONSISTENT"
             else:
                 detail = "HISTORY_INCOMPLETE_NON_INCLUSION_UNPROVEN"
             return self._journal.record_reconciliation_state(

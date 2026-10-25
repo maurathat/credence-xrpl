@@ -15,7 +15,9 @@
 
 ## rippled 3.4.0 assumptions
 
-- API v2 `tx` accepts `min_ledger` and `max_ledger` together for an inclusive range of at most 1,000 ledgers.
+- X1i's direct source inspection supersedes the earlier range wording: API v2 `tx` accepts
+  `min_ledger` and `max_ledger` together when `max_ledger - min_ledger <= 1000`, a closed interval
+  of at most 1,001 ledger indexes in rippled 3.4.0.
 - A not-found response reports `searched_all` only for a bounded request. `true` means every ledger in that requested range was searched; false or omission is inconclusive.
 - A found transaction can be returned even outside the requested range, so found-result verification continues to enforce the persisted submission anchor and `LastLedgerSequence` independently.
 - X1e's real-node captures contain only unbounded `txnNotFound` responses and therefore do not validate the bounded `searched_all` shape. The X1g bounded path is tested against the deterministic rippled model and must be confirmed read-only on the pinned 3.4.0 node before a ledger-writing checkpoint.

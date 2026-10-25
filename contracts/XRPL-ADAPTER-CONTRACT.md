@@ -188,7 +188,7 @@ is `docs/decisions/0011-xrpl-x1c-payment-assurance.md`.
 | Finding | Contract now |
 | --- | --- |
 | B1 | Lookup takes the delivered amount from binary metadata (`DeliveredAmount`, or the signed `Amount` for a successful Payment without `tfPartialPayment`) and requires the JSON `delivered_amount` to match in currency, issuer and exact value; otherwise `EVIDENCE_INCONSISTENT`, nothing settles. Both observations are kept in the evidence envelope. |
-| B2 | Every lookup re-reads and re-verifies the node's validated-ledger identity (network ID, pinned build, optional pinned node key). The transaction's ledger must be validated, at or below the validated ledger, inside complete history, and hash-consistent. `expected_build_version` is required. |
+| B2 | Every lookup re-reads and re-verifies the node's validated-ledger identity (network ID, pinned build, required pinned node key). The transaction's ledger must be validated, at or below the validated ledger, inside complete history, and hash-consistent. `expected_build_version` is required. |
 | B3 | The policy signer reads ledger state through its own configured trusted source; a caller's context is only compared (`LEDGER_CONTEXT_MISMATCH`) and never used as evidence. |
 | B4 | A funded signer account holding a RegularKey is refused (`SIGNER_REGULAR_KEY_PRESENT`) and is a setup-readiness finding. |
 | B5 | `claim_xrpl_settlement` is refused (`LEGACY_SETTLEMENT_CLAIM_RETIRED`) whenever an outbox event exists. The outbox and idempotent consumer are the one authoritative payment-event path. |
@@ -204,7 +204,7 @@ added two transport rules. Details: `spike/xrpl/X1E-REAL-NODE-PREFLIGHT.md`; dec
 
 | Rule | Contract |
 | --- | --- |
-| N1 | `lookup`, `validated_ledger` and `ledger_context` require `expected_node_public_key` (`NODE_IDENTITY_NOT_PINNED`); a different node key is `NODE_IDENTITY_MISMATCH`. `diagnostic_lookup` works unpinned and returns only a non-authoritative `DiagnosticLookup`, never settlement evidence. |
+| N1 | `RippledTransportConfig` requires a nonblank, address-codec-valid XRPL `expected_node_public_key`; missing or malformed pins fail at configuration time. A different reported key is `NODE_IDENTITY_MISMATCH`. `diagnostic_lookup` returns only a non-authoritative `DiagnosticLookup`, never settlement evidence. On unauthenticated loopback HTTP this self-reported pin is a consistency and misrouting check, not cryptographic server authentication. |
 | N2 | After the transaction and ledger evidence, every lookup re-reads the node identity and requires the same network, build and node key, no validated-ledger regression or same-index hash change, and continued coverage of the transaction's ledger (`IDENTITY_CHANGED_DURING_LOOKUP`, `VALIDATED_LEDGER_REGRESSED`, `LEDGER_OUTSIDE_COMPLETE_HISTORY`). Both reads are kept in the evidence. |
 
 ## X1g non-inclusion remediation
@@ -215,8 +215,9 @@ X1g corrects F1 from Salvador's X1f review. Details:
 
 - `PaymentService` supplies the persisted submission anchor + 1 and
   `LastLedgerSequence` to every reconciliation lookup.
-- On rippled 3.4.0, the bounded `tx` range is limited to 1,000 ledgers. An
-  unbounded `txnNotFound`, or a bounded response without literal boolean
+- On rippled 3.4.0, `tx` accepts a bounded range when
+  `max_ledger - min_ledger <= 1000` (a closed interval of at most 1,001 indexes).
+  An unbounded `txnNotFound`, or a bounded response without literal boolean
   `searched_all=true`, is never a non-inclusion proof.
 - `RippledTransport` reads identity before and after the bounded lookup and
   constructs `credence.xrpl.non-inclusion-evidence.v1` only if both observations
@@ -225,6 +226,23 @@ X1g corrects F1 from Salvador's X1f review. Details:
 - The service cross-checks that proof against the persisted hash, range, network,
   submission-anchor source and a later sender-state observation from the same
   pinned node identity before finalizing `EXPIRED_NOT_INCLUDED`.
+
+## X1i liveness correction
+
+- `RippledTransport.lookup` performs an ordinary hash lookup first. A found transaction is
+  validated regardless of whether the requested non-inclusion window is 999, 1,000, 1,500 or
+  more ledgers. The bounded range is used only after the ordinary lookup reports `txnNotFound`.
+- An unsupported long-window absence returns `NOT_FOUND` without a proof. Before expiry this may
+  trigger an explicitly requested rebroadcast of the exact persisted bytes and hash; after expiry
+  it remains `UNKNOWN`. It can never become `EXPIRED_NOT_INCLUDED`.
+- `NOT_FOUND` without proof, `UNAVAILABLE`, and proven permanent non-inclusion are distinct.
+  `UNAVAILABLE` never rebroadcasts; only pre-expiry `NOT_FOUND` may do so. No replacement
+  transaction is constructed.
+- The deterministic fake tracks transaction-database search coverage separately from
+  `complete_ledgers`; it never infers `searched_all=true` from ledger history.
+- The pin is mandatory and validated at configuration time. This does not turn a self-report over
+  unauthenticated loopback HTTP into server authentication; the configured rippled remains a
+  trusted source.
 
 Still open before any ledger write: N3 (public `PaymentJournal.finalize` accepts caller evidence),
 N4 (persistence uses structural inspection, not multisign verification), N5 (self-declared

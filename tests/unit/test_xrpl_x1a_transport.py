@@ -290,8 +290,8 @@ def test_lookup_not_found() -> None:
 def test_unbounded_lookup_not_found_is_not_non_inclusion_proof() -> None:
     result = transport(standard_ledger()).lookup("AB" * 32)
     assert (result.disposition, result.detail, result.non_inclusion_proof) == (
-        LookupDisposition.UNAVAILABLE,
-        "BOUNDED_LOOKUP_REQUIRED",
+        LookupDisposition.NOT_FOUND,
+        "BOUNDED_NON_INCLUSION_PROOF_UNAVAILABLE",
         None,
     )
 
@@ -529,6 +529,9 @@ def test_transport_requires_a_source_identity() -> None:
         RippledTransport(
             standard_ledger(),
             RippledTransportConfig(
-                source_id=" ", expected_network_id=NETWORK_ID, expected_build_version="3.4.0"
+                source_id=" ",
+                expected_network_id=NETWORK_ID,
+                expected_build_version="3.4.0",
+                expected_node_public_key=NODE_KEY,
             ),
         )

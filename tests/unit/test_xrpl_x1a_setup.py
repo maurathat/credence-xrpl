@@ -6,7 +6,7 @@ from dataclasses import replace
 from typing import Any
 
 import pytest
-from x1a_rippled import FakeRippled, standard_ledger
+from x1a_rippled import NODE_KEY, FakeRippled, standard_ledger
 from x1a_world import (
     AMOUNT,
     ISSUER,
@@ -143,6 +143,7 @@ def findings(rippled: FakeRippled, topology: TrlusdTopology = TOPOLOGY) -> tuple
             source_id="local-rippled",
             expected_network_id=NETWORK_ID,
             expected_build_version="3.4.0",
+            expected_node_public_key=NODE_KEY,
         ),
     )
     observation = observe_setup(transport, topology)

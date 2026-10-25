@@ -23,11 +23,14 @@ from x1a_world import (
     TICKET,
     VALIDATED_LEDGER,
 )
+from xrpl.core.addresscodec import encode_node_public_key
 from xrpl.core.binarycodec import encode
 
 from credence.xrpl_adapter.preparation import transaction_hash
 
-NODE_KEY = "n9TestLocalStandaloneNode"  # the fake node's public identity; tests pin it
+# A syntactically valid public node identity derived from fixed public bytes. It is not secret
+# material and is never used to sign anything.
+NODE_KEY = encode_node_public_key(bytes.fromhex("02" + "11" * 32))
 
 
 def ledger_hash_for(index: int) -> str:
@@ -58,6 +61,8 @@ class FakeRippled:
     tickets: dict[str, list[int]] = field(default_factory=dict)
     lines: dict[str, list[dict[str, Any]]] = field(default_factory=dict)
     transactions: dict[str, StoredTransaction] = field(default_factory=dict)
+    # Transaction-database search coverage is deliberately distinct from ledger history.
+    transaction_search_ranges: tuple[tuple[int, int], ...] = ((1, VALIDATED_LEDGER),)
     calls: list[tuple[str, dict[str, Any]]] = field(default_factory=list)
     faults: dict[str, Callable[[dict[str, Any]], dict[str, Any] | None]] = field(
         default_factory=dict
@@ -184,13 +189,8 @@ class FakeRippled:
             result = self._error("txnNotFound")
             if "min_ledger" in request and "max_ledger" in request:
                 first, last = int(request["min_ledger"]), int(request["max_ledger"])
-                ranges: list[tuple[int, int]] = []
-                if self.complete_ledgers not in ("", "empty"):
-                    for part in self.complete_ledgers.split(","):
-                        bounds = [int(value) for value in part.strip().split("-")]
-                        ranges.append((bounds[0], bounds[-1]))
                 covered = first - 1
-                for range_first, range_last in sorted(ranges):
+                for range_first, range_last in sorted(self.transaction_search_ranges):
                     if range_last < first or range_first > last:
                         continue
                     if range_first > covered + 1:

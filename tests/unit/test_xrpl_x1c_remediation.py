@@ -299,9 +299,8 @@ def test_b2_transaction_ledger_beyond_the_validated_ledger_is_refused(tmp_path: 
 
 
 def test_b2_pinned_node_key_is_checked_on_lookup(tmp_path: Path) -> None:
-    pinned = replace(CONFIG, expected_node_public_key="n9TestPinnedNodeKey")
+    pinned = CONFIG
     rippled = standard_ledger()
-    rippled.node_public_key = "n9TestPinnedNodeKey"
     blob = assemble_multisigned(
         unsigned_payment(),
         [researchbot_signature(unsigned_payment()), direct_policy_signature(unsigned_payment())],

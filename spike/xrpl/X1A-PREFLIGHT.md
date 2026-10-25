@@ -147,7 +147,7 @@ Prepared by `setup_transactions` as unsigned transactions. None was signed or su
    - Enable the eight amendments listed in `X0-READINESS.md`.
 2. Run `make ledger-up` (`infra/rippled/` is owned by XRPL Integration).
 3. Read-only preflight:
-   - `RippledTransport(LoopbackJsonRpcClient("http://127.0.0.1:5005"), RippledTransportConfig(source_id=..., expected_network_id=21337, expected_build_version=...))`;
+   - `RippledTransport(LoopbackJsonRpcClient("http://127.0.0.1:5005"), RippledTransportConfig(source_id=..., expected_network_id=21337, expected_build_version=..., expected_node_public_key=...))`;
    - `validated_ledger_identity()`;
    - compare each response shape with the fake node and record any difference.
 4. Fund and configure the accounts using steps 1 to 6, with keys generated outside Git and outside the browser.

@@ -1,5 +1,9 @@
 # Checkpoint X1e — real-node read-only compatibility preflight
 
+> Historical X1e report. X1i later made the node pin mandatory at configuration time and changed
+> an identity-stable ordinary `txnNotFound` from `UNAVAILABLE` to `NOT_FOUND` without proof. The
+> captured responses and the X1e observations below remain unchanged.
+
 ## Outcome
 
 X1c's transport was run read-only against a real pinned rippled 3.4.0 on API v2. Two transport corrections were made:

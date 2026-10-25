@@ -247,6 +247,7 @@ def test_expiry_with_proven_non_inclusion(tmp_path: Path) -> None:
     flow = build_flow(tmp_path)
     submit_accepted(flow)
     flow.rippled.advance(LAST_LEDGER + 1)
+    flow.rippled.transaction_search_ranges = ((1, LAST_LEDGER),)
     record = flow.service.reconcile(OPERATION)
     assert record.state is TransactionState.EXPIRED_NOT_INCLUDED
     assert classify_payment(record) is PaymentOutcome.EXPIRED_NOT_INCLUDED

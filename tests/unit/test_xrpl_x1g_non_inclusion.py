@@ -33,7 +33,7 @@ def test_history_gap_then_backfill_cannot_create_false_expiry(tmp_path: Path) ->
     unresolved = flow.service.reconcile(OPERATION)
     assert (unresolved.state, unresolved.last_provisional_status) == (
         TransactionState.UNKNOWN,
-        "TRANSACTION_RANGE_NOT_FULLY_SEARCHED",
+        "HISTORY_CHANGED_DURING_LOOKUP",
     )
     assert unresolved.final_evidence is None
     assert flow.journal.pending_settlement_events() == ()
@@ -114,6 +114,7 @@ def test_complete_bounded_search_proves_non_inclusion(tmp_path: Path) -> None:
     flow = build_flow(tmp_path)
     submit_accepted(flow)
     flow.rippled.advance(LAST_LEDGER + 1)
+    flow.rippled.transaction_search_ranges = ((1, LAST_LEDGER),)
     record = flow.service.reconcile(OPERATION)
     assert record.state is TransactionState.EXPIRED_NOT_INCLUDED
     assert record.final_evidence is not None
@@ -131,8 +132,13 @@ def test_complete_bounded_search_proves_non_inclusion(tmp_path: Path) -> None:
         {
             "transaction": record.transaction_hash,
             "binary": True,
+            "api_version": 2,
+        },
+        {
+            "transaction": record.transaction_hash,
+            "binary": True,
             "min_ledger": VALIDATED_LEDGER + 1,
             "max_ledger": LAST_LEDGER,
             "api_version": 2,
-        }
+        },
     ]
