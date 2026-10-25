@@ -60,6 +60,19 @@ Caller-supplied or externally asserted, with no authoritative verification here 
   family, context size): re-projection rebuilds them from the purchase's own service class and
   profile, so the check is self-consistency, not a check against operator configuration.
 
+Facilitator compatibility and payment authority are separate from proposal preparation:
+
+- This flow does not establish facilitator compatibility, and does not make multisignature support
+  a prerequisite for constructing an offline proposal. `assess` must find the requirement
+  policy-evaluable (approved network and asset, not Mainnet, not cross-currency). An UNKNOWN or
+  UNSUPPORTED multisignature result appears only as a reason code (`MULTISIGNATURE_UNKNOWN`,
+  `MULTISIGNATURE_UNSUPPORTED`), and a proposal is still prepared. The facilitator profile is not
+  bound into the proposal: the same inputs give the same proposal ID whatever multisig it asserts.
+- So a consistent offline proposal is not necessarily executable. It does not show that any
+  facilitator (t54's in particular, whose support is UNKNOWN) can accept, verify or settle a
+  Credence 2-of-2 multisigned XRPL Payment. Compatibility needs separate verification, and payment
+  needs separate authorization, before any execution (contracts/requests/0010 X10, X12).
+
 No Core reservation is held and the proposal is never submittable (`submission_authorized` is
 always False). This module never signs, submits or contacts anyone.
 
@@ -156,9 +169,12 @@ def offer_from(
     now: Timestamp,
 ) -> X402Offer:
     """An offer for Core from a probed candidate. Compatibility is recomputed, not read from the
-    candidate. The merchant identity is the reserved x402 identity of the endpoint; the model
-    identifier is the merchant's advertised model if its challenge names one, else the resource
-    URL; the model family is the operator's mapping. Evidence is capped at Tier 1 (witnessed)."""
+    candidate. The merchant identity is the adapter-derived x402 identity of the endpoint
+    (`x402_provider_id`). The `x402.` namespace is not yet reserved by Core (request 0009 C10), so
+    the prefix is a convention this adapter checks, not a Core-enforced reservation, and the digest
+    is 48 bits, below C10's 128-bit floor. The model identifier is the merchant's advertised model
+    if its challenge names one, else the resource URL; the model family is the operator's mapping.
+    Evidence is capped at Tier 1 (witnessed)."""
     requirement = _recomputed_requirement(candidate, approved, facilitator)
     challenge = candidate.challenge
     assert challenge is not None

@@ -177,8 +177,8 @@ A proposal is internally consistent with the inputs it was prepared from. It is 
 | Time | The evaluation time (the supplied record's `decided_at`) and `now`, and with them every expiry and validity boundary: quote, purchase request, facility maturity and challenge window. |
 | Spending headroom and nonce use | A fact that would make Core reject is caught. A false fact that turns a rejection into an acceptance is not: the decision record does not bind these facts. |
 | Key registry and revocation | Which keys are registered and current. |
-| Approved execution and facilitator profile | The approved network and asset, the facilitator's supported kinds, and its multisignature claim. For t54 multisig is UNKNOWN; no supported 2-of-2 multisignature is assumed. |
-| Ledger context | Sequence, fee, `LastLedgerSequence` and account state are not checked. The network ID and source account are checked only against the supplied approved execution and facility. |
+| Approved execution and facilitator profile | The approved network and asset, the facilitator's supported kinds, and its multisignature claim. For t54 multisig is UNKNOWN; no supported 2-of-2 multisignature is assumed. **Offline multisignature limitations:** the multisig field is an assertion, never observed. The test `LOCAL_FACILITATOR` declares SUPPORTED only as configuration. The adapter assembles and verifies no multisignature (no signers, `SignerList`, weights, quorum or key state); it builds only the unsigned, multisign-ready Payment. A decision without a multisignature reason is not evidence that a 2-of-2 payment would be accepted (request 0010 X10). |
+| Ledger context | Sequence, fee, `LastLedgerSequence` and account state are not checked; there is no fee ceiling. The network ID and source account are checked only against the supplied approved execution and facility. X1 must read all of these itself, with an independently authorized maximum fee (request 0010 X12). |
 | Pinned endpoint and merchant challenge | Both are caller objects. The challenge's terms are merchant claims; the x402 identity is derived from the pin. |
 | Location, model and service-class claims | Jurisdiction, residency, model identifier, model family and context size are rebuilt from the purchase's own service class and profile: a self-consistency check, not a check against operator configuration. |
 
@@ -188,6 +188,30 @@ A proposal is internally consistent with the inputs it was prepared from. It is 
 - a second proposal for one invoice, by any agent (`DUPLICATE_INVOICE`);
 - re-admission of one idempotency key (`PROPOSAL_REPLAYED`);
 - a second transaction hash for one proposal, or one hash for two proposals or two confirmations (`TRANSACTION_ALREADY_BOUND`).
+
+### Offline preparation is not facilitator compatibility or payment authority
+
+- **Multisig does not block preparation.** A proposal can be prepared even when the facilitator's multisignature support is UNKNOWN (as for t54) or UNSUPPORTED. `prepare_proposal` requires only that the recomputed compatibility decision be policy-evaluable. A multisignature problem appears only as a reason code (`MULTISIGNATURE_UNKNOWN`, `MULTISIGNATURE_UNSUPPORTED`).
+- **The facilitator profile is not bound into the proposal.** The same inputs give the same proposal ID whatever multisig support the profile asserts.
+- **Preparation proves nothing about the facilitator.** It does not show that any facilitator can accept, verify or settle a Credence 2-of-2 multisigned XRPL Payment. t54's acceptance is UNKNOWN, and UNKNOWN does not mean supported.
+- **No proposal is authorized for signing or submission.** `submission_authorized` is always false, every compatibility decision carries `SUBMISSION_NOT_AUTHORIZED`, and the adapter has no signer or submitter.
+- **Execution needs separate steps.** Actual facilitator compatibility must be separately verified, and the payment separately authorized, before any execution (request 0010 X10 and X12, and the X1 requirements above).
+
+### Terminology debt (runtime-visible names, not changed)
+
+Some runtime names and messages read as stronger than what the code establishes. They stay unchanged because renaming them changes executable behavior, API names, refusal output or protocol identifiers, which needs a separately authorized code change. Read them as follows.
+
+**Known terminology defect, to be corrected in the next separately authorized executable-code change:** the `verify_binding` refusal detail `"<field> differs from verified terms"` in `credence/x402/proposal.py`. The adapter checks consistency against supplied terms; it does not independently authenticate those terms. The message should say "expected terms". The other entries below should be reviewed in the same change.
+
+| Runtime name or text | Means |
+| --- | --- |
+| Refusal detail `"<field> differs from verified terms"` (`verify_binding`) | The field differs from the *expected*, consistency-checked terms. Nothing was authenticated. |
+| `verify_binding` | Reconstruction and comparison (consistency), not authentication. |
+| `PaymentAuthorityBook` | An in-memory, non-restart-safe guard against duplicate proposals and transaction hashes. It grants no payment authority. |
+| Refusal code `PURCHASE_ALREADY_AUTHORIZED` | The purchase request already backs a proposal. No authorization was ever granted. |
+| `PaymentAuthorizationProposal`, protocol `credence.x402.payment_authorization_proposal` | A proposal to request X1 authorization. It is not an authorization (`submission_authorized` is always false). |
+| State `PAYMENT_AUTHORIZATION_PENDING`, event `authorization_requested` | The proposal was admitted for a later X1 decision. Nothing was requested from X1, which does not exist in this branch. |
+| `x402.` provider prefix | Adapter-derived and adapter-checked. The namespace is not reserved by Core (request 0009 C10), and the digest is 48 bits. |
 
 ## Payment-before-delivery lifecycle
 

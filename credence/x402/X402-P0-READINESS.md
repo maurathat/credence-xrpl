@@ -124,6 +124,14 @@ All eight findings were reproduced against `c56a5e0` (32 exploitable cases). Eac
 
 The adapter remains non-paying.
 
+## X402-P3D/P3E documentation closure
+
+- Authority claims are corrected. The adapter's checks are consistency checks on caller-supplied inputs, not authentication of Core state (contract, *Authority and trust boundary*).
+- Request 0009 C13/C14 and D1–D12 describe what Core must source authoritatively.
+- Request 0010 forbids X1 from signing on a proposal, `Qualification`, `DecisionRecord`, authority-book admission or reservation alone, and adds X12, authoritative ledger reads with an independently authorized maximum fee.
+- **Offline multisignature boundary.** A proposal can be prepared when the facilitator's multisignature support is UNKNOWN or UNSUPPORTED. Preparation does not establish facilitator compatibility. t54's acceptance of a Credence 2-of-2 multisigned XRPL Payment remains **UNKNOWN**; UNKNOWN does not mean supported, and no working multisigned t54 payment exists. No proposal is authorized for signing or submission. Compatibility and payment authority each need separate verification and authorization (contract, *Offline preparation is not facilitator compatibility or payment authority*; 0010 X10).
+- Runtime names that overstate authority are recorded as terminology debt in the contract. The refusal detail `"… differs from verified terms"` is a known terminology defect, to be corrected in the next separately authorized executable-code change. They are unchanged, because renaming them is a code change.
+
 ## Remaining change requests
 
 - `contracts/requests/0009-core-x402-flat-price-offers.md` (Core), revised in X402-P2 as items C1–C12: prepaid procurement contract, exact flat-price accounting, durable reservation identity, one payment per reservation, exposure at validated payment, outstanding delivery obligation, receipt chain, facility concurrency, network fees, merchant namespace, Tier-1 receipt, signed or recomputable decisions.
