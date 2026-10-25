@@ -1,19 +1,28 @@
-"""XRPL adapter.
+"""Public X0 XRPL payment adapter surface.
 
-Tech: Python, `xrpl-py`
-
-Responsibility (System architecture table, build plan):
-Vault, loan, payment and key transactions; ledger stream watcher
-
-Owner: XRPL Integration. Checkpoint 0 stub: no product logic.
+The adapter is deliberately transport-injected and offline at this checkpoint.
+It does not construct LoanSet or LoanPay transactions and performs no live
+ledger writes.
 """
 
-from typing import NoReturn
+from credence.xrpl_adapter.journal import PaymentJournal
+from credence.xrpl_adapter.preparation import (
+    OfflinePaymentPreparer,
+    XrplSignedPaymentInspector,
+    transaction_hash,
+)
+from credence.xrpl_adapter.service import (
+    PaymentResultVerifier,
+    PaymentService,
+    ReadOnlyPaymentStatus,
+)
 
-
-def submit(*args: object, **kwargs: object) -> NoReturn:
-    raise NotImplementedError("XRPL adapter.submit: not implemented (Checkpoint 0 stub)")
-
-
-def watch_ledger(*args: object, **kwargs: object) -> NoReturn:
-    raise NotImplementedError("XRPL adapter.watch_ledger: not implemented (Checkpoint 0 stub)")
+__all__ = [
+    "OfflinePaymentPreparer",
+    "PaymentJournal",
+    "PaymentResultVerifier",
+    "PaymentService",
+    "ReadOnlyPaymentStatus",
+    "XrplSignedPaymentInspector",
+    "transaction_hash",
+]
