@@ -1,0 +1,34 @@
+{
+  "category": "FACILITATOR-DOC (live)",
+  "source": "https://xrpl-facilitator-testnet.t54.ai/supported",
+  "accessed_at": "2026-10-25T02:33:10Z",
+  "body": {
+    "kinds": [
+      {
+        "x402Version": 2,
+        "scheme": "exact",
+        "network": "xrpl:1"
+      },
+      {
+        "x402Version": 2,
+        "scheme": "upto",
+        "network": "xrpl:1"
+      },
+      {
+        "x402Version": 2,
+        "scheme": "batch-settlement",
+        "network": "xrpl:1",
+        "extra": {
+          "binding": "xrpl-check-session",
+          "version": "1"
+        }
+      }
+    ],
+    "extensions": [
+      "x402Secure"
+    ],
+    "signers": {
+      "xrpl:*": []
+    }
+  }
+}

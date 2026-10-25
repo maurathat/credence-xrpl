@@ -1,0 +1,52 @@
+{
+  "category": "OBSERVED-MERCHANT (ledger)",
+  "source": "XRPL Mainnet JSON-RPC tx (read only), https://s1.ripple.com:51234/",
+  "accessed_at": "2026-10-25T02:33:35Z",
+  "note": "Invoice-binding fields of two validated Mainnet Payments settled through t54's facilitator. Third-party data, recorded to check Credence's derivation (InvoiceID = SHA256(UTF-8(invoiceId)), MemoData = HEX(UTF-8(invoiceId))). Signatures are not recorded.",
+  "transactions": [
+    {
+      "transaction_hash": "7302FA4D8504D34C33642D7832531E93A39FA711BB837613DD02D9BEAD07E961",
+      "validated": true,
+      "engine_result": "tesSUCCESS",
+      "invoice_id": "222C906893334601820A5D11E3E9A966",
+      "memo_0_memo_data": "3232324339303638393333333436303138323041354431314533453941393636",
+      "invoice_id_field": "DD91DAC510D3F10E8EB3694CCE8F503CB57C7862CD1B25DE1BA72C10A70CD718",
+      "source_tag": 804681468,
+      "destination": "rGYbaZwYqA5XwFcmxWVdyyut4vUeTD7KcQ",
+      "amount": {
+        "currency": "524C555344000000000000000000000000000000",
+        "issuer": "rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De",
+        "value": "0.001"
+      },
+      "send_max": {
+        "currency": "524C555344000000000000000000000000000000",
+        "issuer": "rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De",
+        "value": "0.001"
+      },
+      "has_network_id": false,
+      "flags": null
+    },
+    {
+      "transaction_hash": "70BA1281BF132FF4B2A3619C9C34067CDF727CAA49CA47457BD0C73396EE1CEA",
+      "validated": true,
+      "engine_result": "tesSUCCESS",
+      "invoice_id": "BBB41610DCDF497381233832B1F042FA",
+      "memo_0_memo_data": "4242423431363130444344463439373338313233333833324231463034324641",
+      "invoice_id_field": "5169FFA8B126A0A7FEFF4C2352A01CFACE275D70EFD56C8D98F2A043BC3D61B6",
+      "source_tag": 804681468,
+      "destination": "rMPwy3Ntx56Nyc2fKGNm7VRWdmpHSB92Z7",
+      "amount": {
+        "currency": "524C555344000000000000000000000000000000",
+        "issuer": "rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De",
+        "value": "0.002"
+      },
+      "send_max": {
+        "currency": "524C555344000000000000000000000000000000",
+        "issuer": "rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De",
+        "value": "0.002"
+      },
+      "has_network_id": false,
+      "flags": null
+    }
+  ]
+}

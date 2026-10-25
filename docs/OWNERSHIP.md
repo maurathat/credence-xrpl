@@ -13,6 +13,7 @@ Changes to Core or Inference canonical contracts made on the integration branch 
 | `credence/agent/` (ResearchBot) | Inference | Claude Code |
 | `credence/api/` | API/UI | Claude Code |
 | `credence/integration/` | Integration (San Antonio) | Claude Code |
+| `credence/x402/` | x402 (X402-P0) | Claude Code |
 | `web/` (submodule: Lovable frontend) | API/UI | Claude Code |
 | `ledger-bridge/` | API/UI | Claude Code |
 | `contracts/XRPL-ADAPTER-CONTRACT.md` | XRPL Integration | Codex |
@@ -20,6 +21,7 @@ Changes to Core or Inference canonical contracts made on the integration branch 
 | `contracts/INFERENCE-GATEWAY-CONTRACT.md` | Inference | Claude Code |
 | `contracts/API-CONTRACT.md` | API/UI | Claude Code |
 | `contracts/INTEGRATION-FLOW.md` | Integration (San Antonio) | Claude Code |
+| `contracts/X402-ADAPTER-CONTRACT.md` | x402 (X402-P0) | Claude Code |
 | `contracts/fixtures/` | Owner of the contract each fixture belongs to | — |
 | `contracts/requests/` | Any workstream may add a request; the contract's owner answers | — |
 | `spike/xrpl/` | XRPL spike | Codex |
@@ -27,6 +29,7 @@ Changes to Core or Inference canonical contracts made on the integration branch 
 | `vectors/` | Credence Core | Claude Code |
 | `tests/unit/`, `tests/conformance/`, `tests/integration/`, `tests/e2e/` | Each workstream for tests of its own area | — |
 | `tests/integration/test_i1_*`, `tests/integration/i1_world.py`, `tests/integration/i1_child.py` | Integration (San Antonio) | Claude Code |
+| `tests/unit/test_x402_*`, `tests/unit/x402_world.py`, `tests/conformance/test_x402_p0_fixtures.py` | x402 (X402-P0) | Claude Code |
 | `tests/attack/` | Red Team (read-only on all other code) | Codex |
 | `infra/rippled/` | XRPL Integration | Codex |
 | `infra/speculos/` | Ledger Integration | **TBD** |
@@ -43,6 +46,7 @@ Changes to Core or Inference canonical contracts made on the integration branch 
 | Ledger Integration | **TBD** |
 | API/UI | Claude Code |
 | Integration (San Antonio): orchestration, serialization, journal, response recovery, API boundary between Inference and Core | Claude Code |
+| x402 (X402-P0): t54 buyer adapter, non-paying discovery and offline payment preparation; no payments | Claude Code |
 | Red Team | Codex, read-only |
 | XRPL spike | Codex |
 | XRPL review | Claude Code |
