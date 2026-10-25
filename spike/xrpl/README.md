@@ -37,3 +37,9 @@ Amendments ledger object agreed on all eight required amendments before and
 after two reproducible closes. E1 is now frozen; E2-E9 remain
 `NOT_ATTEMPTED`. Reproduce the environment with `scripts/start_ledger.sh` and
 see `evidence/checkpoint-1b-r/` for raw evidence.
+
+T1 is a separate public native XRPL Testnet connectivity proof. Its offline,
+fail-closed plan and isolated scripts are documented in
+`T1-PUBLIC-TESTNET-PLAN.md`. T1 is not governed by Credence procurement
+authorization, does not change the product's local-ledger claim, and remains
+unexecuted pending explicit T1 execution authorization.
