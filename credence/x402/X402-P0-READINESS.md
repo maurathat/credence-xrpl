@@ -116,9 +116,9 @@ All eight findings were reproduced against `c56a5e0` (32 exploitable cases). Eac
 
 - **F1:** body challenges are recognized whatever the content type; header and body must be strictly equal JSON; ambiguous representations are refused.
 - **F2:** only an authenticated, validated `tec…` result is a terminal failure; `ter`/`tel`/`tef`/`tem` are provisional (unknown) or invalid evidence.
-- **F3/E3:** `verify_binding` rebuilds the whole proposal from its stated terms and from verified terms.
+- **F3/E3:** `verify_binding` rebuilds the whole proposal from its stated terms and from the expected (consistency-checked) terms.
 - **F4:** outbound headers are an allow-list.
-- **E1:** a proposal needs the Core-evaluated purchase, a recomputed matching decision, the exact flat-price projection, one micro-tRLUSD amount throughout, and the endpoint's reserved `x402.` identity.
+- **E1:** a proposal needs a Core-evaluated purchase, a decision that Core's pure engine reproduces on the supplied inputs, the exact flat-price projection, one micro-tRLUSD amount throughout, and the endpoint-derived `x402.` identity. These are consistency checks on caller-supplied inputs, not authentication of Core state. The full trust boundary (X402-P3D) is in the contract's *Authority and trust boundary* section and request 0009 D1–D12.
 - **E2:** compatibility is recomputed, Mainnet is never evaluable, and no public network can be approved.
 - **E4:** one proposal per purchase request ever, one transaction hash per proposal, and confirmation only for the expected transaction and invoice binding. All in memory only; not restart-safe.
 

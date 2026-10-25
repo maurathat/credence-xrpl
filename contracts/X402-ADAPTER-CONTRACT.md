@@ -124,11 +124,20 @@ The unsigned Payment follows t54's SDK shape:
 `verify_binding(proposal, terms)` fails closed unless the proposal is exactly what `terms` produce (X402-P2):
 
 1. It rebuilds the unsigned Payment, its digest, the idempotency key and the proposal ID from the proposal's own stated terms. A destination changed with the transaction bytes left alone, a mutated transaction with a recomputed digest, or a replaced ID are all refused.
-2. It rebuilds the whole proposal from the trusted `terms` and requires every field to be equal.
+2. It rebuilds the whole proposal from the expected `terms` and requires every field to be equal.
 
-The first differing field is named in `BINDING_ALTERED`. Trusted terms come only from `prepare.proposal_terms`. The X1 mapping and its gaps are in request 0010.
+The first differing field is named in `BINDING_ALTERED`. Expected terms come from `prepare.proposal_terms`. Passing proves the proposal is exactly what those terms produce, not that the terms are authentic (see *Authority and trust boundary*). The X1 mapping and its gaps are in request 0010.
 
-`prepare_proposal` consumes the Core-evaluated purchase (`inference.market.Qualification`: the signed `PurchaseRequest`, its Core objects, the `PolicyDecision` and the headroom and nonce facts it was decided with), the trusted key registry, the approved execution, the facilitator profile and the ledger context. It accepts no caller-supplied intent, merchant identity, evidence tier or compatibility decision. It refuses when any of the following holds:
+`prepare_proposal` consumes, all from the caller:
+
+- the Core-evaluated purchase (`inference.market.Qualification`: the signed `PurchaseRequest`, its Core objects, the `PolicyDecision`, and the headroom and nonce facts it was decided with);
+- the key registry;
+- the approved execution and the facilitator profile;
+- the ledger context;
+- the challenge and the pinned endpoint;
+- `now`.
+
+Intent, merchant identity, evidence tier and compatibility are not separate parameters; they are derived from those inputs. Every check below is a consistency check between caller-supplied inputs, except the request-signature check, which is authenticated relative to the caller-supplied registry. It refuses when any of the following holds:
 
 - the request is not the one challenged, or its body is not the prompt the signed request commits to (`RESOURCE_MISMATCH`);
 - the challenge is not the pinned endpoint (`ENDPOINT_CHANGED`);
@@ -136,13 +145,42 @@ The first differing field is named in `BINDING_ALTERED`. Trusted terms come only
 - recomputed compatibility makes the requirement not policy-evaluable (its first reason, e.g. `MAINNET_READ_ONLY`);
 - the ledger context or the requirement is not on the approved network (`NETWORK_NOT_APPROVED`);
 - the challenge has expired (`CHALLENGE_EXPIRED`);
-- the purchase's provider is not the endpoint's reserved x402 identity `x402.<host>.<12 hex of sha256(url, method, network, payTo)>` (`PROVIDER_NAMESPACE`), so a Nebius, local Qwen or other merchant's decision cannot be reused;
+- the purchase's provider is not the supplied endpoint's x402 identity `x402.<host>.<12 hex of sha256(url, method, network, payTo)>` (`PROVIDER_NAMESPACE`), so a Nebius, local Qwen or other merchant's decision cannot be reused for this endpoint. **Known gap:** 12 hex digits are 48 bits, below the at-least-128-bit collision resistance required by request 0009 C10. Correcting it changes provider identities and needs a separately authorized code change;
 - the decision is not a policy-stage acceptance (`POLICY_REJECTED`);
-- re-running Core's pure `evaluate` with the re-verified request signature does not reproduce the supplied decision record exactly (`CORE_DECISION_MISMATCH`). The record's input digests are those of this request, facility, quote, service class, profile and procurement classes;
+- re-running Core's pure `evaluate` on the supplied objects, headroom, nonce fact and evaluation time (the record's own `decided_at`), with the request signature re-verified against the supplied registry, does not reproduce the supplied decision record exactly (`CORE_DECISION_MISMATCH`). A match means the record's input digests are those of the supplied request, facility, quote, service class, profile and procurement classes. It does not prove that Core holds those objects or that Core made this decision;
 - the quote, service class and profile are not exactly this requirement's flat-price projection, or Core's approved maximum, its reservation amount, the projected price and the merchant amount are not the same micro-tRLUSD integer (`CORE_DECISION_MISMATCH`);
 - the paying account is not the facility's borrower account (`AGENT_MISMATCH`).
 
-The agent identity is the request's signing key. The facility, purchase request and prompt come from the signed request. The required tier is the strictest of the facility's and its procurement classes'.
+The agent identity is the request's signing key. The facility ID, purchase request and prompt come from the signed request. The required tier is the strictest of the supplied facility's and its procurement classes'.
+
+### Authority and trust boundary
+
+A proposal is internally consistent with the inputs it was prepared from. It is not proof of authentic Core state, a Core reservation, or payment authority. A reconstructed or recomputed decision shows only what Core's pure policy engine returns for the supplied inputs.
+
+**Authenticated, relative to a caller-supplied trust anchor:** the purchase request's Ed25519 signature, against the supplied key registry. This binds the facility ID, provider, quote ID, cap, prompt digest, nonce and expiry the agent signed. It says nothing about the facility's contents or whether the registry is current.
+
+**Checked for consistency only:**
+- the Core decision against the supplied purchase objects, headroom, nonce fact and time;
+- the quote, service class and profile against the requirement's flat-price projection;
+- the four amounts (approved maximum, reservation, projected price, merchant amount);
+- the provider ID against the supplied pin;
+- the HTTP request and body against the challenge and the signed prompt digest;
+- the paying account against the supplied facility's borrower account;
+- the ledger network ID against the approved execution;
+- compatibility, recomputed from the requirement, approved execution and facilitator profile.
+
+**Caller-supplied or externally asserted, with no authoritative verification** (request 0009):
+
+| Dependency | What is unverified |
+| --- | --- |
+| Facility and procurement-class terms | Limit, drawn balance, status, provider allow-list, borrower account, minimum evidence tier, maturity and allowed procurement classes. The signature binds only the facility ID. |
+| Time | The evaluation time (the supplied record's `decided_at`) and `now`, and with them every expiry and validity boundary: quote, purchase request, facility maturity and challenge window. |
+| Spending headroom and nonce use | A fact that would make Core reject is caught. A false fact that turns a rejection into an acceptance is not: the decision record does not bind these facts. |
+| Key registry and revocation | Which keys are registered and current. |
+| Approved execution and facilitator profile | The approved network and asset, the facilitator's supported kinds, and its multisignature claim. For t54 multisig is UNKNOWN; no supported 2-of-2 multisignature is assumed. |
+| Ledger context | Sequence, fee, `LastLedgerSequence` and account state are not checked. The network ID and source account are checked only against the supplied approved execution and facility. |
+| Pinned endpoint and merchant challenge | Both are caller objects. The challenge's terms are merchant claims; the x402 identity is derived from the pin. |
+| Location, model and service-class claims | Jurisdiction, residency, model identifier, model family and context size are rebuilt from the purchase's own service class and profile: a self-consistency check, not a check against operator configuration. |
 
 `PaymentAuthorityBook` is in memory only and not restart-safe. It refuses:
 

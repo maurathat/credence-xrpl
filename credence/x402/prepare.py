@@ -3,34 +3,65 @@
     candidate --offer_from--> X402Offer --procurement.project--> Core objects
     signed PurchaseRequest, Core policy evaluation --prepare_proposal--> unsigned proposal
 
-Nothing a caller asserts is taken as authority. `prepare_proposal` re-derives every fact it relies
-on from the inputs themselves:
+What this module establishes, and what it does not. `prepare_proposal` refuses inputs that are
+inconsistent with each other. It does not authenticate Core state, and a proposal it returns is not
+evidence that Core holds a reservation, that a facility has the stated terms, or that any payment
+is authorized. A reconstructed or recomputed decision proves only that Core's pure policy engine
+returns that decision for the inputs supplied; it is not proof of authentic Core state.
 
-- Compatibility is recomputed with `assess` from the actual requirement, the approved execution and
-  the facilitator profile; no caller-supplied decision is accepted (E2). The ledger context must be
-  on the approved execution network.
-- The Core decision is checked against the purchase it claims to decide (E1): the request signature
-  is re-verified against the trusted key registry, and Core's pure `policy_engine.evaluate` is run
-  again on the same inputs. The recomputed decision record must equal the supplied one exactly, so
-  its input digests are those of this request, facility, quote, service class, execution profile and
-  procurement classes, and it is a policy-stage acceptance.
-- The quote, service class and execution profile must be exactly the flat-price projection of this
-  requirement (re-projected here). Core's approved maximum cost, its reservation amount, the
-  projected price and the merchant's amount must be one and the same number of micro-tRLUSD.
-- The provider must be the reserved x402 identity of the pinned endpoint (`x402_provider_id`), so an
-  x402 purchase can never reuse a Nebius, local Qwen or other provider's decision, and a merchant
-  cannot take another merchant's identity.
-- The HTTP request sent to the merchant must be the one the challenge answered, and its body must be
-  exactly the bytes the signed purchase request commits to (prompt digest).
-- The agent identity is the purchase request's signing key; the facility, purchase request and
-  prompt come from the signed request; the paying account must be the facility's borrower account;
-  the required evidence tier is the strictest of the facility's and its procurement classes'.
+Authenticated (relative to a caller-supplied trust anchor):
 
-Remaining trust (see contracts/requests/0009): the key registry, the facility's reservation
-headroom and nonce use, and the evaluation time come from the caller's Core context. The decision
-record itself is unsigned, so it is authoritative only because it is recomputed here; no Core
-reservation is held, and the proposal remains non-submittable. It never signs, submits or contacts
-anyone.
+- The purchase request's Ed25519 signature, verified with Core's `policy_signature_facts` against
+  the caller-supplied key registry. That proves the registered agent key signed this request (which
+  names the facility, provider, quote, cap, prompt digest, nonce and expiry). It does not prove the
+  registry is current, nor anything about the facility's contents.
+
+Recomputed or cross-checked for consistency only (not authenticated):
+
+- Compatibility is recomputed with `assess` from the requirement, the approved execution and the
+  facilitator profile; no separate compatibility decision is accepted (E2). The ledger context and
+  the requirement must be on the approved execution network.
+- Core's pure `policy_engine.evaluate` is re-run on the supplied purchase objects, headroom, nonce
+  fact and evaluation time, and must reproduce the supplied decision record exactly (E1): its input
+  digests are then those of the supplied request, facility, quote, service class, execution profile
+  and procurement classes, and it is a policy-stage acceptance.
+- The quote, service class and execution profile must be exactly the flat-price projection of the
+  requirement (re-projected here). Core's approved maximum, its reservation amount, the projected
+  price and the merchant's amount must be the same micro-tRLUSD integer.
+- The provider must be the endpoint-derived x402 identity of the supplied pinned endpoint
+  (`x402_provider_id`), so a Nebius, local Qwen or other provider's decision cannot be reused for
+  this endpoint.
+- The HTTP request must be the one the supplied challenge answered, and its body must be exactly
+  the bytes the signed request's prompt digest commits to.
+- The agent identity is the request's signing key; facility, purchase request and prompt come from
+  the signed request; the paying account must equal the supplied facility's borrower account; the
+  required evidence tier is the strictest of the supplied facility's and procurement classes'.
+
+Caller-supplied or externally asserted, with no authoritative verification here (request 0009):
+
+- Facility and procurement-class terms: limit, drawn balance, status, provider allow-list, borrower
+  account, minimum evidence tier, maturity and allowed procurement classes. The signature binds
+  only the facility ID; the facility object itself is whatever the caller passes.
+- Time: the evaluation time (taken from the supplied decision record's `decided_at`), the current
+  time `now`, and therefore the quote, request, facility and challenge expiry and validity checks.
+- Spending headroom (`currently_reserved`) and nonce-use status. A supplied fact that would make
+  Core reject is caught (the recomputed record differs); one that turns a rejection into an
+  acceptance is not, because the decision record does not bind these facts.
+- The key registry and its revocation state.
+- The approved execution and the facilitator profile, including its multisignature claim (for
+  t54 it is UNKNOWN, and no supported 2-of-2 multisignature is assumed).
+- The ledger context: source account state, sequence, fee, network ID and LastLedgerSequence. Only
+  the network ID (against the approved execution) and the source account (against the supplied
+  facility) are checked; sequence, fee and LastLedgerSequence are not checked at all.
+- The pinned merchant endpoint and the merchant-advertised challenge: both are caller objects; the
+  merchant's x402 identity is derived from the pin, and the challenge's terms are the merchant's
+  claims.
+- Location, model and service-class claims (jurisdiction, data residency, model identifier, model
+  family, context size): re-projection rebuilds them from the purchase's own service class and
+  profile, so the check is self-consistency, not a check against operator configuration.
+
+No Core reservation is held and the proposal is never submittable (`submission_authorized` is
+always False). This module never signs, submits or contacts anyone.
 
 Owner: x402 (X402-P0, P2).
 """
@@ -83,10 +114,14 @@ X402_PROVIDER_PREFIX = "x402."
 
 
 def x402_provider_id(pinned: PinnedEndpoint) -> ProviderId:
-    """The reserved Credence provider identity of one pinned x402 endpoint:
+    """The Credence provider identity of one pinned x402 endpoint:
     `x402.<host>.<12 hex of sha256(url, method, network, payTo)>`. Bound to the exact endpoint and
-    destination, and in a namespace no non-x402 provider in this repository uses. (Core does not yet
-    reserve the namespace; contracts/requests/0009.)"""
+    destination, and in a namespace no non-x402 provider in this repository uses. Core does not yet
+    reserve the namespace (contracts/requests/0009 C10).
+
+    KNOWN GAP: 12 hex digits are 48 bits, below the at-least-128-bit collision resistance request
+    0009 C10 requires. Raising it changes provider identities and is a code change outside the
+    X402-P3D documentation-only authorization."""
     host = pinned.origin.split("://", 1)[-1].rsplit(":", 1)[0]
     binding = canonicalize(
         {
@@ -193,7 +228,9 @@ def _check_core(
     qualification: Qualification,
     registry: KeyRegistry,
 ) -> None:
-    """The supplied decision is exactly Core's policy acceptance of this purchase."""
+    """The supplied decision is exactly what Core's pure policy engine returns for the supplied
+    purchase, headroom, nonce fact and evaluation time, and is a policy-stage acceptance. A
+    consistency check, not proof of authentic Core state."""
     purchase, decision = qualification.purchase, qualification.decision
     record = decision.record
     if record.decision_stage is not DecisionStage.POLICY:
@@ -321,7 +358,8 @@ def proposal_terms(
     ledger: LedgerContext,
     now: Timestamp,
 ) -> ProposalTerms:
-    """The verified terms of the one proposal these inputs allow. Use with `verify_binding` to
+    """The checked terms of the one proposal these inputs allow (consistency-checked, not
+    authenticated; see the module docstring). Use with `verify_binding` to
     re-check a stored proposal against the same inputs."""
     _check_endpoint(challenge, requirement, request, pinned)
 

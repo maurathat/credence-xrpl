@@ -10,10 +10,30 @@
 `credence.x402.proposal.PaymentAuthorizationProposal` (schema in `contracts/X402-ADAPTER-CONTRACT.md`):
 
 - It is unsigned and has `submission_authorized = False`.
-- Since P2 it is built only from `prepare.proposal_terms`, which are verified against the Core-evaluated purchase, the parsed challenge, the pinned endpoint and the approved execution.
+- Since P2 it is built only from `prepare.proposal_terms`. Those terms are *consistency-checked* against the caller-supplied Core-evaluated purchase, parsed challenge, pinned endpoint, approved execution and ledger context. None of these is authenticated Core state (request 0009 D1–D12).
 - It carries its ledger context, the unsigned Payment and its `xrpl-stx-sha512half-v1` digest (X1a's scheme).
 - `verify_binding(proposal, terms)` rebuilds it completely.
 - `x1_template_gaps` lists every way the Payment departs from X1's template.
+
+## What X1 must not treat as payment authority (X402-P3D)
+
+X1 cannot treat any of these, alone or together, as authority to sign or pay:
+
+- a `PaymentAuthorizationProposal`;
+- an `inference.market.Qualification`;
+- a Core `DecisionRecord` or `PolicyDecision`;
+- a `PaymentAuthorityBook` admission.
+
+They show internal consistency with caller-supplied inputs, nothing more.
+
+Before signing, X1 (the settlement authority and the policy signer) must verify, from its own trusted sources:
+- a **durable Core reservation** for this purchase (request 0009 C3/C4);
+- the **authenticated facility terms** or their binding digest (0009 C13);
+- the **nonce** and **spending headroom** as Core holds them (0009 C14);
+- the **exact amount** in the reservation;
+- the relevant **authorization state**: agent key current and not revoked, facility active and unexpired, and no other payment for the reservation.
+
+It must then recompute the proposal from those facts (X2).
 
 ## Requested X1 changes (X402-P2 revision)
 

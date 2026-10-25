@@ -149,9 +149,11 @@ class PurchaseIntent:
 
 @dataclass(frozen=True)
 class ProposalTerms:
-    """Everything a proposal is derived from. `credence.x402.prepare` builds these only from
-    verified inputs (the Core-evaluated purchase, the parsed challenge, the pinned endpoint, the
-    approved execution); a proposal is valid only if it is exactly what these terms produce."""
+    """Everything a proposal is derived from. `credence.x402.prepare.proposal_terms` builds these
+    from consistency-checked inputs (the Core-evaluated purchase, the parsed challenge, the pinned
+    endpoint, the approved execution and the ledger context). Those inputs are caller-supplied and
+    not authenticated (see the `credence.x402.prepare` module docstring); a proposal matching its
+    terms is internally consistent, not authorized."""
 
     intent: PurchaseIntent
     merchant_id: str
@@ -291,13 +293,14 @@ def verify_binding(proposal: PaymentAuthorizationProposal, terms: ProposalTerms)
        idempotency key and the proposal ID. Any stored transaction, digest or identity that does not
        follow from the stated terms (a destination changed with the transaction bytes left alone, a
        mutated transaction with a recomputed digest, a replaced proposal ID) is refused.
-    2. From the trusted `terms` (built from verified inputs), rebuild the whole proposal and require
+    2. From the expected `terms` (from `prepare.proposal_terms`), rebuild the whole proposal and require
        every field to be equal: agent, facility, purchase request, prompt, merchant, resource,
        method, request digest, requirement digest, invoice binding (ID, InvoiceID, memo, source and
        destination tags), amount, currency, issuer, destination, network, ledger context, expiry,
        evidence tier, transaction and digest, idempotency key and proposal ID.
 
-    The first differing field is named in BINDING_ALTERED.
+    The first differing field is named in BINDING_ALTERED. Passing proves the proposal is exactly
+    what `terms` produce; it does not authenticate the terms themselves.
     """
     stated = _build(proposal.terms())
     field_name = _first_difference(proposal, stated)
@@ -346,7 +349,8 @@ def build_proposal(
     required_evidence_tier: EvidenceTier,
 ) -> PaymentAuthorizationProposal:
     """Build the proposal from its terms (see ProposalTerms). Callers outside tests should go through
-    `credence.x402.prepare.prepare_proposal`, which derives the terms from verified inputs."""
+    `credence.x402.prepare.prepare_proposal`, which derives the terms from consistency-checked
+    inputs."""
     return _build(
         ProposalTerms(
             intent=intent,
@@ -445,7 +449,9 @@ def _build(t: ProposalTerms) -> PaymentAuthorizationProposal:
 
 
 class PaymentAuthorityBook:
-    """One purchase, one payment authority, across all agents: offline and IN MEMORY ONLY.
+    """One purchase, one proposal, across all agents: an offline, IN MEMORY ONLY guard. Despite the
+    name it grants no payment authority; X1 must not treat it, a proposal, a Qualification or a
+    DecisionRecord as one (contracts/requests/0010).
 
     - A purchase request (its digest) may back at most one proposal, ever. A merchant re-challenge
       with a new invoice, a timeout, an unknown outcome or a rejection never reopens it:
