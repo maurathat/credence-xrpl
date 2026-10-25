@@ -190,3 +190,12 @@ is `docs/decisions/0011-xrpl-x1c-payment-assurance.md`.
 | C1 | `VALIDATED_UNEXPECTED_DELIVERY` state; journal schema version 3; version-2 journals refused unchanged. |
 | C2 | Signatures must be canonical as rippled requires: strict DER with low S (secp256k1), `S < L` (Ed25519). `SIGNATURE_NOT_CANONICAL`. |
 | C3 | The loopback client never follows an HTTP redirect. |
+
+## X1q addition (QuickNode, read-only)
+
+X1q adds an optional, read-only QuickNode XRPL Testnet transport beside the unchanged modules
+above. Its contract is `contracts/QUICKNODE-ADAPTER-CONTRACT.md` (delegated to Da Nang for X1q).
+It does not change any interface in this file. Its only binding to the X0t seams answers every
+lookup `UNAVAILABLE` with a `QUICKNODE_*` detail, so hosted evidence never finalizes a journal
+entry. Public-network reconciliation is requested in
+`contracts/requests/0010-xrpl-public-network-reconciliation.md`.
