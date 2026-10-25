@@ -13,6 +13,7 @@ from credence.xrpl_adapter.preparation import (
     assert_signed_payment_matches,
     transaction_hash,
 )
+from credence.xrpl_adapter.settlement import PaymentOutcome, classify_payment
 from credence.xrpl_adapter.types import (
     TERMINAL_STATES,
     HashLookup,
@@ -266,6 +267,71 @@ def _evidence_micro_units(value: object) -> int:
     if not scaled.is_finite() or scaled != scaled.to_integral_value() or scaled <= 0:
         raise ValueError("validated ledger evidence amount is not positive integer micro-units")
     return int(scaled)
+
+
+def persisted_terminal_evidence_is_consistent(record: PaymentRecord) -> bool:
+    """Re-run the authoritative verifier over one stored validated terminal result.
+
+    The journal uses this only to decide whether a live submission owner's completion after
+    finalization is a benign no-op.  Reconstructing the normalized observation from the evidence
+    makes the same verifier that admitted the terminal transition check the signed bytes, hash,
+    Payment fields, delivered amount and ledger facts again.  The resulting classification must
+    also agree exactly with every persisted terminal field; the verification-version marker alone
+    grants no trust.
+    """
+    expected = {
+        TransactionState.VALIDATED_SUCCESS: (
+            VerificationDisposition.VALIDATED_SUCCESS,
+            PaymentOutcome.VALIDATED_SUCCESS,
+        ),
+        TransactionState.VALIDATED_FAILURE: (
+            VerificationDisposition.VALIDATED_FAILURE,
+            PaymentOutcome.VALIDATED_FAILURE,
+        ),
+        TransactionState.VALIDATED_UNEXPECTED_DELIVERY: (
+            VerificationDisposition.VALIDATED_UNEXPECTED_DELIVERY,
+            PaymentOutcome.VALIDATED_UNEXPECTED_DELIVERY,
+        ),
+    }.get(record.state)
+    if expected is None or record.evidence_verification_version != 1 or not record.final_evidence:
+        return False
+    try:
+        evidence = _parse_validated_evidence(record.final_evidence)
+        parsed = XrplSignedPaymentInspector().inspect_payment(evidence.signed_transaction)
+    except (TypeError, ValueError):
+        return False
+    observed = LedgerPayment(
+        transaction_hash=evidence.transaction_hash,
+        validated=True,
+        result=evidence.result,
+        transaction_type=TransactionType.PAYMENT,
+        account=parsed.account,
+        destination=parsed.destination,
+        asset=parsed.asset,
+        amount_micro_units=parsed.amount_micro_units,
+        delivered_amount_micro_units=evidence.delivered_amount_micro_units,
+        fee_drops=parsed.fee_drops,
+        network_id=parsed.network_id,
+        last_ledger_sequence=parsed.last_ledger_sequence,
+        sequence=parsed.sequence,
+        ticket_sequence=parsed.ticket_sequence,
+        ledger_index=evidence.ledger_index,
+        ledger_hash=evidence.ledger_hash,
+        evidence=record.final_evidence,
+    )
+    verification = PaymentResultVerifier().verify(record, observed)
+    expected_disposition, expected_outcome = expected
+    if (
+        verification.disposition is not expected_disposition
+        or verification.result_code != record.final_result
+        or verification.detail != record.final_detail
+        or verification.ledger_index != record.validated_ledger_index
+        or verification.ledger_hash != record.validated_ledger_hash
+        or verification.delivered_amount_micro_units != record.verified_delivered_amount_micro_units
+    ):
+        return False
+
+    return classify_payment(record) is expected_outcome
 
 
 class ReadOnlyPaymentStatus(PaymentStatusReporter):

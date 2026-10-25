@@ -11,6 +11,7 @@ remains ``JournalConflict``, and an attempt closed only after its lease expired 
 
 from __future__ import annotations
 
+import json
 import os
 import sqlite3
 import threading
@@ -351,6 +352,88 @@ def test_r1_inconsistent_terminal_history_is_fenced(
     assert snapshot(flow.database) == before
 
 
+@pytest.mark.parametrize(
+    "tamper",
+    [
+        "empty-object",
+        "malformed-json",
+        "not-validated",
+        "different-ledger-hash",
+        "success-record-with-failure-result",
+    ],
+)
+def test_x1o_e1_forged_final_evidence_fences_late_owner_without_writes(
+    tmp_path: Path, clock: Clock, tamper: str
+) -> None:
+    flow, lease = leased_flow(tmp_path)
+    clock.at(LEASE_SECONDS - 2)
+    finalize_from_ledger(flow)
+    record = flow.journal.get(OPERATION)
+    if tamper == "empty-object":
+        forged = b"{}"
+    elif tamper == "malformed-json":
+        forged = b"{"
+    else:
+        document = json.loads(record.final_evidence)
+        if tamper == "not-validated":
+            document["validated"] = False
+        elif tamper == "different-ledger-hash":
+            document["ledger_hash"] = "AB" * 32
+        else:
+            document["meta"]["TransactionResult"] = "tecPATH_DRY"
+        forged = json.dumps(document, separators=(",", ":"), sort_keys=True).encode()
+    with sqlite3.connect(flow.database) as connection:
+        connection.execute(
+            "UPDATE xrpl_payment_transactions SET final_evidence = ? WHERE operation_id = ?",
+            (forged, OPERATION),
+        )
+
+    before_rows = snapshot(flow.database)
+    before_file = flow.database.read_bytes()
+    before_events = PaymentJournal(flow.database).pending_settlement_events()
+    before_record = PaymentJournal(flow.database).get(OPERATION)
+
+    with pytest.raises(JournalConflict, match="not owned"):
+        late_completion(flow, lease)
+
+    assert flow.database.read_bytes() == before_file
+    assert snapshot(flow.database) == before_rows
+    assert PaymentJournal(flow.database).get(OPERATION) == before_record
+    assert PaymentJournal(flow.database).pending_settlement_events() == before_events
+    assert len(before_events) == 1
+    assert flow.offline.submitted == []
+
+
+def test_x1o_e1_structurally_valid_evidence_for_other_transaction_is_fenced(
+    tmp_path: Path, clock: Clock
+) -> None:
+    flow, lease = leased_flow(tmp_path)
+    request = payment_request("operation-other", sequence=500)
+    other_signed = signed_blob(request)
+    clock.at(LEASE_SECONDS - 2)
+    finalize_from_ledger(flow)
+    record = flow.journal.get(OPERATION)
+    document = json.loads(record.final_evidence)
+    document["signed_transaction"] = other_signed.hex().upper()
+    document["transaction_hash"] = journal_module.transaction_hash(other_signed)
+    forged = json.dumps(document, separators=(",", ":"), sort_keys=True).encode()
+    with sqlite3.connect(flow.database) as connection:
+        connection.execute(
+            "UPDATE xrpl_payment_transactions SET final_evidence = ? WHERE operation_id = ?",
+            (forged, OPERATION),
+        )
+    before_rows = snapshot(flow.database)
+    before_file = flow.database.read_bytes()
+
+    with pytest.raises(JournalConflict, match="not owned"):
+        late_completion(flow, lease)
+
+    assert flow.database.read_bytes() == before_file
+    assert snapshot(flow.database) == before_rows
+    assert len(PaymentJournal(flow.database).pending_settlement_events()) == 1
+    assert flow.offline.submitted == []
+
+
 def test_r1_validated_failure_is_benign_without_an_event(tmp_path: Path, clock: Clock) -> None:
     flow, lease = leased_flow(tmp_path)
     clock.at(LEASE_SECONDS - 2)
@@ -365,6 +448,27 @@ def test_r1_validated_failure_is_benign_without_an_event(tmp_path: Path, clock: 
 
     assert snapshot(flow.database) == before
     assert PaymentJournal(flow.database).pending_settlement_events() == ()
+
+
+def test_x1o_e1_valid_unexpected_delivery_is_benign_without_an_event(
+    tmp_path: Path, clock: Clock
+) -> None:
+    flow, lease = leased_flow(tmp_path)
+    clock.at(LEASE_SECONDS - 2)
+    flow.rippled.include(flow.signed, ledger_index=VALIDATED_LEDGER + 3, delivered=delivered("1.4"))
+    flow.rippled.advance(VALIDATED_LEDGER + 3)
+    assert worker(flow).reconcile(OPERATION).state is (
+        TransactionState.VALIDATED_UNEXPECTED_DELIVERY
+    )
+    before_rows = snapshot(flow.database)
+    before_file = flow.database.read_bytes()
+
+    late_completion(flow, lease)
+
+    assert flow.database.read_bytes() == before_file
+    assert snapshot(flow.database) == before_rows
+    assert PaymentJournal(flow.database).pending_settlement_events() == ()
+    assert flow.offline.submitted == []
 
 
 def test_r1_nonfinalized_live_attempt_still_requires_its_owner(tmp_path: Path) -> None:

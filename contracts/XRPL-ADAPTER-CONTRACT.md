@@ -130,7 +130,11 @@ unavailable, or ledger history cannot prove non-inclusion.
   - the caller's `transaction_hash` is the persisted, self-consistent signed transaction hash;
   - the payment is `VALIDATED_SUCCESS` (settled, exactly one matching outbox event),
     `VALIDATED_FAILURE` or `VALIDATED_UNEXPECTED_DELIVERY` (no event), with version-1 verified
-    evidence.
+    evidence; and
+  - re-running the authoritative `PaymentResultVerifier` over the persisted evidence produces the
+    exact recorded terminal disposition, result, detail, ledger identity and delivered amount,
+    and `classify_payment` agrees with that terminal state. The version marker alone is never
+    sufficient.
 
   No event, lease, resubmission or state change follows; the caller reads the existing terminal
   record. Liveness is judged when finalization closed the attempt, not when the late call
@@ -139,7 +143,8 @@ unavailable, or ledger history cannot prove non-inclusion.
   - a different owner, attempt, payment or signed hash, or no hash;
   - an attempt closed by lease expiry, or closed by finalization only after its lease expired;
   - an expiry (`EXPIRED_NOT_INCLUDED`) finalization;
-  - a nonterminal payment, or inconsistent terminal history.
+  - a nonterminal payment, empty, malformed, mismatched or contradictory evidence, or any other
+    inconsistent terminal history.
 
   Completion of any attempt not closed by finalization still requires the live owner's lease.
 - A found but unvalidated transaction remains `PENDING_CONFIRMATION`.

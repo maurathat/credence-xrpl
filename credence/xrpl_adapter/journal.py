@@ -831,6 +831,13 @@ class PaymentJournal:
             or not record.validated_ledger_hash
         ):
             return False
+        # A version marker says which verifier was used; it does not prove that the currently
+        # persisted evidence still supports the terminal record. Re-run that verifier before
+        # allowing this otherwise fenced late completion to become a benign no-op.
+        from credence.xrpl_adapter.service import persisted_terminal_evidence_is_consistent
+
+        if not persisted_terminal_evidence_is_consistent(record):
+            return False
         events = connection.execute(
             "SELECT transaction_hash FROM xrpl_settlement_outbox WHERE operation_id = ?",
             (operation_id,),

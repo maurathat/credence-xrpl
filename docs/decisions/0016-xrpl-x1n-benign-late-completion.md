@@ -1,6 +1,6 @@
 # 0016. XRPL X1n: benign late completion after finalization
 
-- Status: Proposed. Awaiting Salvador's independent X1n review.
+- Status: X1n blocked by Salvador finding X1o-E1; X1o remediation awaits independent review.
 - Date: 2026-10-25
 - Scope: XRPL X1n, R1 only. Base `4fa226a` (X1m). Amends decision 0015.
 - Source: Maura's X1n brief; Salvador's X1m ACCEPT with non-blocking R1.
@@ -12,6 +12,7 @@
 3. **Lease liveness.** Liveness is judged at the moment finalization closed the attempt. An attempt closed by finalization only after its lease expired, or abandoned by lease expiry, stays fenced. Once the closure happened under a live lease, a late call after expiry is still benign, because nothing is written.
 4. **Scope of terminal states.** The benign path covers only terminal states that rest on validated inclusion evidence: `VALIDATED_SUCCESS`, `VALIDATED_FAILURE` and `VALIDATED_UNEXPECTED_DELIVERY`. `EXPIRED_NOT_INCLUDED` keeps the conflict. That is the conservative choice for R1.
 5. **Transaction identity is explicit.** `finish_submission` takes the caller's `transaction_hash`. `PaymentService` always passes the persisted hash. Callers that omit it keep the previous conflict behaviour.
+6. **The verification marker is not evidence.** X1o re-runs the authoritative `PaymentResultVerifier` over the persisted evidence and requires its exact disposition, result, detail, ledger facts and delivered amount, plus `classify_payment`, to agree with the terminal record. Empty, malformed, differently bound or contradictory evidence keeps the late owner fenced.
 
 ## Consequences
 
