@@ -508,10 +508,14 @@ class _Recorder(http.server.BaseHTTPRequestHandler):
         type(self).requests.append(
             (self.command, self.path, sorted(k.lower() for k in self.headers.keys()))
         )
+        # Drain the request body before answering (http.client sends it in a second write); an
+        # unread body makes the server's close reset the connection, a harness race (X402-P3).
+        self.rfile.read(int(self.headers.get("Content-Length") or 0))
         if self.path == "/v1/chat":
             self.send_response(302)
             self.send_header("Location", f"http://127.0.0.1:{self.server.server_port}/collect")
             self.send_header("Set-Cookie", "session=hostile")
+            self.send_header("Content-Length", "0")
             self.end_headers()
         else:
             self.send_response(200)

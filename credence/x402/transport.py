@@ -139,9 +139,61 @@ def check_request_header(name: object, value: object) -> None:
         raise X402Refused(X402Refusal.HEADER_NOT_ALLOWED, "content-type must be application/json")
 
 
+def _frozen_headers(headers: object) -> tuple[tuple[str, str], ...]:
+    if isinstance(headers, (str, bytes, bytearray)) or not isinstance(headers, (tuple, list)):
+        raise X402Refused(X402Refusal.HEADER_NOT_ALLOWED, "headers must be a sequence of pairs")
+    frozen: list[tuple[str, str]] = []
+    for item in headers:
+        if not isinstance(item, (tuple, list)) or len(item) != 2:
+            raise X402Refused(X402Refusal.HEADER_NOT_ALLOWED, "header must be a (name, value) pair")
+        name, value = item[0], item[1]
+        if type(name) is not str or type(value) is not str:
+            raise X402Refused(X402Refusal.HEADER_NOT_ALLOWED, "header must be text")
+        frozen.append((name, value))
+    return tuple(frozen)
+
+
+def _frozen_body(body: object) -> bytes:
+    if type(body) is bytes:
+        return body
+    if isinstance(body, (bytearray, memoryview)):
+        return bytes(body)
+    raise X402Refused(X402Refusal.MALFORMED_REQUEST, "request body must be bytes")
+
+
+def validate_request(request: HttpRequest) -> None:
+    """Re-check a request as it is about to be sent: method, URL type, headers (exactly a tuple of
+    `(str, str)` tuples, every one allow-listed, no repeats) and body (exactly `bytes`). Called at
+    construction, by GuardedClient.send and by StdlibTransport.send."""
+    if type(request.method) is not str or request.method not in ("GET", "POST", "HEAD"):
+        raise X402Refused(X402Refusal.UNSUPPORTED_METHOD, str(request.method))
+    if type(request.url) is not str:
+        raise X402Refused(X402Refusal.ORIGIN_NOT_ALLOWED, "URL must be text")
+    if type(request.headers) is not tuple:
+        raise X402Refused(X402Refusal.HEADER_NOT_ALLOWED, "headers are not frozen")
+    seen: set[str] = set()
+    for item in request.headers:
+        if type(item) is not tuple or len(item) != 2:
+            raise X402Refused(X402Refusal.HEADER_NOT_ALLOWED, "headers are not frozen")
+        name, value = item
+        check_request_header(name, value)
+        if name.lower() in seen:
+            raise X402Refused(X402Refusal.HEADER_NOT_ALLOWED, f"repeated {name.lower()}")
+        seen.add(name.lower())
+    if type(request.body) is not bytes:
+        raise X402Refused(X402Refusal.MALFORMED_REQUEST, "request body is not frozen bytes")
+
+
 @dataclass(frozen=True)
 class HttpRequest:
-    """One outgoing request. `body` is transient; only its digest is ever recorded."""
+    """One outgoing request. `body` is transient; only its digest is ever recorded.
+
+    Immutable once built (X402-P3, G1): whatever the caller passes (a list, a list of lists, a
+    bytearray), `headers` is copied into a tuple of exact `(str, str)` pairs and `body` into
+    `bytes`, so mutating the caller's objects afterwards changes nothing. Senders still re-check
+    with `validate_request` before forwarding, because a frozen dataclass can be bypassed with
+    `object.__setattr__`.
+    """
 
     method: str
     url: str
@@ -149,14 +201,9 @@ class HttpRequest:
     body: bytes = b""
 
     def __post_init__(self) -> None:
-        if self.method not in ("GET", "POST", "HEAD"):
-            raise X402Refused(X402Refusal.UNSUPPORTED_METHOD, self.method)
-        seen: set[str] = set()
-        for name, value in self.headers:
-            check_request_header(name, value)
-            if name.lower() in seen:
-                raise X402Refused(X402Refusal.HEADER_NOT_ALLOWED, f"repeated {name.lower()}")
-            seen.add(name.lower())
+        object.__setattr__(self, "headers", _frozen_headers(self.headers))
+        object.__setattr__(self, "body", _frozen_body(self.body))
+        validate_request(self)
 
     @property
     def body_digest(self) -> str:
@@ -208,8 +255,12 @@ class GuardedClient:
         self._allow_list = allow_list
 
     def send(self, request: HttpRequest) -> tuple[Origin, HttpResponse]:
-        origin = self._allow_list.check(request.url)
-        response = self._transport.send(request)
+        """Validate the request as it stands now, then forward a fresh copy built from the
+        validated values, so nothing changed on the caller's object afterwards can be sent."""
+        validate_request(request)
+        outgoing = HttpRequest(request.method, request.url, request.headers, request.body)
+        origin = self._allow_list.check(outgoing.url)
+        response = self._transport.send(outgoing)
         if response.status not in range(100, 600):
             raise X402Refused(X402Refusal.MALFORMED_RESPONSE, f"status {response.status}")
         return origin, response
@@ -226,8 +277,12 @@ class StdlibTransport:
         self._timeout = timeout_seconds
 
     def send(self, request: HttpRequest) -> HttpResponse:
-        parts = urllib.parse.urlsplit(request.url)
-        origin = Origin.of(request.url)
+        """Refuses an invalid request even when called directly, bypassing GuardedClient. The
+        method, URL, headers and body are read once, after validation, into locals."""
+        validate_request(request)
+        method, url, headers, body = request.method, request.url, request.headers, request.body
+        parts = urllib.parse.urlsplit(url)
+        origin = Origin.of(url)
         connection: http.client.HTTPConnection
         if origin.scheme == "https":
             connection = http.client.HTTPSConnection(
@@ -239,9 +294,7 @@ class StdlibTransport:
         if parts.query:
             path += "?" + parts.query
         try:
-            connection.request(
-                request.method, path, body=request.body or None, headers=dict(request.headers)
-            )
+            connection.request(method, path, body=body or None, headers=dict(headers))
             raw = connection.getresponse()
             body = raw.read(MAX_BODY_BYTES + 1)
             return filter_response(

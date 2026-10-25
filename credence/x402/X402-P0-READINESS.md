@@ -93,7 +93,8 @@ The recorded challenges, `/supported` bodies, a directory excerpt and the ledger
 | `tests/conformance/test_x402_p0_fixtures.py` | 6 |
 | **X402-P0 total** | **172** |
 | `tests/unit/test_x402_p2_remediation.py` (X402-P2) | 113 |
-| **Total** | **285** |
+| `tests/unit/test_x402_p3_g1.py` (X402-P3, G1) | 39 |
+| **Total** | **324** |
 
 Brief tests 1–20 map to these files as follows:
 
@@ -105,7 +106,9 @@ Brief tests 1–20 map to these files as follows:
 | 6–10, 12, 13, 19 | prepare (end to end) |
 | 12–17, 19 | lifecycle |
 
-Every x402 test disables sockets except the X402-P2 F4 redirect test, which runs a loopback-only HTTP server to prove the real transport sends one request and never follows a redirect. No test signs, transfers or makes a paid request.
+Every x402 test disables sockets except the X402-P2 F4 and X402-P3 G1 redirect tests, which run a loopback-only HTTP server to prove the real transport sends one request and never follows a redirect. No test signs, transfers or makes a paid request.
+
+X402-P3 (Skopje G1): outbound requests are immutable from construction and re-validated by every sender immediately before forwarding, so a mutated header list, a mutated inner pair, a mutated bytearray body or an `object.__setattr__` bypass cannot put a credential or payment header (or a different body) on the wire.
 
 ## X402-P2 remediation (Skopje F1–F4, Ulaanbaatar E1–E4)
 
