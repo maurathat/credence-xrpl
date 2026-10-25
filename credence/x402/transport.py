@@ -11,6 +11,8 @@ Merchant responses are untrusted input. This module enforces, before any byte le
   `application/json` (optionally `; charset=utf-8`). So an x402 payment header, a bearer token or a
   cookie can never be sent, to the merchant or to anyone else. The transport itself adds only the
   framing headers http.client always sends (Host, Accept-Encoding: identity, Content-Length);
+- `GuardedClient` alone enforces the origin allow-list; `StdlibTransport.send` enforces request
+  validity even when called directly, but not the allow-list;
 - redirects are never followed. A 3xx is returned to the caller as an observation; its Location is
   recorded only as text and never requested. A transport that follows redirects is a defect.
 
@@ -123,9 +125,13 @@ class OriginAllowList:
 
 
 def check_request_header(name: object, value: object) -> None:
-    """Refuse any outgoing header that is not exactly an allow-listed name with a clean value."""
-    if not isinstance(name, str) or not isinstance(value, str):
-        raise X402Refused(X402Refusal.HEADER_NOT_ALLOWED, "header must be text")
+    """Refuse any outgoing header that is not exactly an allow-listed name with a clean value.
+
+    Name and value must be exactly the built-in `str` (X402-P4a, G1): a subclass could override
+    `lower()`, `encode()` or other methods so that validation sees one header and http.client puts
+    another on the wire. Only built-in `str` methods run on the checked objects."""
+    if type(name) is not str or type(value) is not str:
+        raise X402Refused(X402Refusal.HEADER_NOT_ALLOWED, "header must be exactly str")
     if not _TOKEN.fullmatch(name):
         raise X402Refused(X402Refusal.HEADER_NOT_ALLOWED, f"malformed name {name!r}")
     lowered = name.lower()
@@ -176,6 +182,8 @@ def validate_request(request: HttpRequest) -> None:
         if type(item) is not tuple or len(item) != 2:
             raise X402Refused(X402Refusal.HEADER_NOT_ALLOWED, "headers are not frozen")
         name, value = item
+        if type(name) is not str or type(value) is not str:  # exact built-in str, never a subclass
+            raise X402Refused(X402Refusal.HEADER_NOT_ALLOWED, "header must be exactly str")
         check_request_header(name, value)
         if name.lower() in seen:
             raise X402Refused(X402Refusal.HEADER_NOT_ALLOWED, f"repeated {name.lower()}")
@@ -248,7 +256,8 @@ class HttpTransport(Protocol):
 
 
 class GuardedClient:
-    """The only path from the x402 adapter to the network: allow-list, then one transport call."""
+    """The only path from the x402 adapter to the network: request validation, the merchant-origin
+    allow-list, then one transport call. The origin allow-list is enforced here and only here."""
 
     def __init__(self, transport: HttpTransport, allow_list: OriginAllowList) -> None:
         self._transport = transport
@@ -271,6 +280,13 @@ class StdlibTransport:
 
     http.client never follows redirects by itself, which is why it is used instead of urllib's
     opener. TLS uses the platform's default verification.
+
+    Boundary: `send` enforces request validity on its own (`validate_request`: method, exact-`str`
+    allow-listed headers, exact-`bytes` body), so calling it directly cannot transmit a forbidden or
+    forged header. It does NOT enforce the merchant-origin allow-list: that belongs to
+    `GuardedClient`. Called directly, it will contact any http(s) URL that `Origin.of` accepts
+    (https, or plain http to loopback, no credentials in the URL). Adapter code must send through
+    `GuardedClient`.
     """
 
     def __init__(self, timeout_seconds: int = TIMEOUT_SECONDS) -> None:
