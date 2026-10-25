@@ -2,8 +2,8 @@
 
 Owner: XRPL Integration (Codex)
 
-Status: X0t offline legacy-journal boundary, amended by X1a (offline preflight) and X1c
-(payment-assurance remediation; journal schema version 3). Only the owner edits this file;
+Status: X0t offline legacy-journal boundary, amended through X1k (pre-expiry evidence and
+reconciliation concurrency; journal schema version 4). Only the owner edits this file;
 other workstreams file a request in `contracts/requests/`.
 
 ## Boundary
@@ -37,7 +37,7 @@ settlement and approved unsigned-transaction digest before live submission.
 | Signed persistence | `SignedTransactionInspector` / `PaymentJournal.persist_signed` | Decode the actual Payment bytes with xrpl-py, reject contradictory signing structures, match every recorded field, derive the transaction hash, then persist. This is structural inspection, not cryptographic signature, signer-identity or quorum verification. |
 | Submission transport | `SubmissionTransport` | X0s permits only explicitly offline transports. Submit the exact persisted bytes and hash. A timeout or rejected response is not a final outcome. |
 | Hash lookup | `HashLookup` | Query the original transaction hash. A permanent not-found result requires a bounded search from the trusted submission anchor + 1 through `LastLedgerSequence`, explicit `searched_all=true`, and stable pinned node identity and history around that search. |
-| Validated-ledger observation | `ValidatedLedgerObserver` | Before first broadcast, persist a trusted-source ledger index, hash, source identity and sender state. Later report explicit continuous history ranges and current sender state for non-inclusion proof. |
+| Validated-ledger observation | `ValidatedLedgerObserver` | Before first broadcast, persist a trusted-source ledger index, hash, source ID, network ID, build, node public key and sender state. Later observations must match that durable identity before either rebroadcast or non-inclusion proof. |
 | Result verification | `ResultVerifier` / `PaymentResultVerifier` | Parse the versioned evidence envelope, derive the hash and Payment fields from its exact transaction blob, verify metadata result and delivered amount, then strictly cross-check normalized fields. Missing, malformed or contradictory evidence remains unresolved. The trusted source is not independent cryptographic consensus proof. |
 | Restart reconciliation | `Reconciler` / `PaymentService.reconcile_after_restart` | Reconcile every nonterminal journal entry by the original hash; never recreate an intent or generate a new payment. |
 | Read-only reporting | `PaymentStatusReporter` / `ReadOnlyPaymentStatus` | Return state and submission attempts without exposing mutation methods. |
@@ -57,7 +57,7 @@ operation, an append-only submission-attempt list and a settlement outbox. The t
 contains the operation and payment-authorization IDs, requested type, account,
 destination, tRLUSD wire identity and issuer, integer micro-unit amount, fee,
 network, Sequence or TicketSequence, caller history hint, trusted submission
-anchor, LastLedgerSequence, exact signed bytes, derived hash, current state,
+anchor including its source/network/build/node identity, LastLedgerSequence, exact signed bytes, derived hash, current state,
 provisional status, raw final evidence, verified ledger identity and delivered
 amount, evidence version, and the legacy one-time settlement-effect flag.
 
@@ -68,26 +68,26 @@ across a second database requires the destination to apply `event_id`
 idempotently. The local claim bit is not a settlement authority (X1c); its
 stored value is kept as history and never rewritten.
 
-Schema version 3 (X1c) is version 2 (anchor, verified-evidence and outbox
-storage) with a state constraint that also admits `VALIDATED_UNEXPECTED_DELIVERY`.
+Schema version 4 (X1k) extends version 3 with the complete durable submission-anchor identity and
+an owner token plus expiry for every submission attempt. Version 3 introduced the state constraint
+that admits `VALIDATED_UNEXPECTED_DELIVERY`.
 No journal is migrated automatically. Before any schema write, `PaymentJournal`
 distinguishes a genuinely empty database, the complete X0 signature, the complete
-version-2 signature, and the complete version-3 signature whose state constraint
-admits every state. An X0 journal, including one with no payment rows, is
+version-2 and version-3 signatures, and the complete version-4 signature. An X0 journal, including one with no payment rows, is
 preserved and refused with `LEGACY_JOURNAL_UNSUPPORTED`. A version-2 journal,
 including one with no payment rows, is preserved byte for byte and refused with
-`JOURNAL_VERSION_2_UNSUPPORTED`. Unknown versions and ambiguous, corrupt, partly
+`JOURNAL_VERSION_2_UNSUPPORTED`. A version-3 journal is preserved and refused with
+`JOURNAL_VERSION_3_UNSUPPORTED`. Unknown versions and ambiguous, corrupt, partly
 migrated or relabelled schemas are preserved and refused with
 `UNSUPPORTED_JOURNAL_SCHEMA`. Only a missing or genuinely empty database is
-initialized, directly at version 3.
+initialized, directly at version 4.
 
-Legacy recovery or migration (X0 or version 2) requires separate authorization
-and is not part of X0t or X1c. Initialization never clears a legacy settlement claim, reopens a terminal
-payment, synthesizes an outbox event, submits a transaction or imports rows into
-another database. Until an approved recovery procedure exists, the legacy
-journal and its evidence remain the historical record. The payment-reliability
-guarantees in this contract apply only to correctly initialized version-3
-journals.
+Legacy recovery or migration (X0, version 2 or version 3) requires separate authorization and is
+not part of X0t, X1c or X1k. Initialization never clears a legacy settlement claim, reopens a
+terminal payment, synthesizes an outbox event, submits a transaction or imports rows into another
+database. Until an approved recovery procedure exists, the legacy journal and its evidence remain
+the historical record. The payment-reliability guarantees in this contract apply only to correctly
+initialized version-4 journals.
 
 Uniqueness is enforced for operation ID, payment-authorization ID, transaction
 hash, `(account, Sequence)`, and `(account, TicketSequence)`. Every write is a
@@ -108,8 +108,13 @@ lost, submission is rejected without final ledger evidence, lookup is
 unavailable, or ledger history cannot prove non-inclusion.
 
 - A timeout moves to `UNKNOWN`; reconciliation queries the original hash.
-- A safe resubmission may occur only after hash lookup finds no transaction
-  before expiry. It reuses the exact persisted signed bytes and hash.
+- A safe resubmission may occur only after hash lookup finds no transaction before expiry and a
+  fresh observation matches the durable anchor's source, network, build, node, ledger continuity
+  and sender Sequence or TicketSequence. It reuses the exact persisted signed bytes and hash.
+- A submission attempt has one durable 30-second owner lease. `BEGIN IMMEDIATE` serializes claims
+  across processes; non-owners cannot call the transport, complete the attempt or overwrite its
+  status. After expiry, one worker may durably abandon the attempt as outcome-unknown and claim a
+  new lease for the same persisted bytes and hash. No replacement transaction is constructed.
 - A found but unvalidated transaction remains `PENDING_CONFIRMATION`.
 - A validated non-`tesSUCCESS` result is `VALIDATED_FAILURE`.
 - Valid evidence for `tesSUCCESS` with the wrong delivered asset or amount is

@@ -36,6 +36,7 @@ for offset, operation_id in enumerate(OPERATIONS):
 
 for operation_id in OPERATIONS:
     attempt = journal.begin_submission(operation_id, resubmission=False)
+    assert attempt is not None
     journal.finish_submission(
         operation_id,
         attempt,

@@ -33,6 +33,7 @@ for offset, operation_id in enumerate(
 
 for operation_id in ("legacy-success", "legacy-failure", "legacy-expired"):
     attempt = journal.begin_submission(operation_id, resubmission=False)
+    assert attempt is not None
     journal.finish_submission(
         operation_id,
         attempt,
@@ -68,6 +69,7 @@ journal.finalize(
 )
 
 attempt = journal.begin_submission("legacy-pending", resubmission=False)
+assert attempt is not None
 journal.finish_submission(
     "legacy-pending",
     attempt,

@@ -13,10 +13,11 @@ import os
 import sqlite3
 from collections.abc import Iterator
 from contextlib import contextmanager
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from enum import Enum
 from pathlib import Path
 from typing import cast
+from uuid import uuid4
 
 from credence.xrpl_adapter.preparation import transaction_hash
 from credence.xrpl_adapter.types import (
@@ -31,7 +32,9 @@ from credence.xrpl_adapter.types import (
     SettlementEvent,
     SubmissionAttempt,
     SubmissionDisposition,
+    SubmissionLease,
     SupersededJournalSchema,
+    SupersededJournalSchemaV3,
     TransactionHashMismatch,
     TransactionState,
     TransactionType,
@@ -41,6 +44,7 @@ from credence.xrpl_adapter.types import (
 
 _STATE_VALUES = ", ".join(f"'{state.value}'" for state in TransactionState)
 _DISPOSITION_VALUES = ", ".join(f"'{disposition.value}'" for disposition in SubmissionDisposition)
+SUBMISSION_LEASE_SECONDS = 30
 
 SCHEMA = f"""
 CREATE TABLE IF NOT EXISTS xrpl_payment_transactions (
@@ -73,6 +77,9 @@ CREATE TABLE IF NOT EXISTS xrpl_payment_transactions (
     submission_anchor_ledger_index INTEGER,
     submission_anchor_ledger_hash TEXT,
     submission_anchor_source_id TEXT,
+    submission_anchor_network_id INTEGER,
+    submission_anchor_build_version TEXT,
+    submission_anchor_node_public_key TEXT,
     settlement_status TEXT CHECK (settlement_status IS NULL OR settlement_status = 'XRPL_SETTLED'),
     settlement_effect_claimed INTEGER NOT NULL DEFAULT 0
         CHECK (settlement_effect_claimed IN (0, 1)),
@@ -87,6 +94,8 @@ CREATE TABLE IF NOT EXISTS xrpl_submission_attempts (
     operation_id TEXT NOT NULL REFERENCES xrpl_payment_transactions(operation_id),
     attempt_number INTEGER NOT NULL,
     started_at TEXT NOT NULL,
+    lease_owner_token TEXT NOT NULL,
+    lease_expires_at TEXT NOT NULL,
     completed_at TEXT,
     disposition TEXT CHECK (disposition IN ({_DISPOSITION_VALUES})),
     provisional_status TEXT,
@@ -139,7 +148,7 @@ _LEGACY_TRANSACTION_COLUMNS: dict[str, _ColumnSignature] = {
     "created_at": ("TEXT", 1, None, 0),
     "updated_at": ("TEXT", 1, None, 0),
 }
-_CURRENT_TRANSACTION_COLUMNS = _LEGACY_TRANSACTION_COLUMNS | {
+_V3_TRANSACTION_COLUMNS = _LEGACY_TRANSACTION_COLUMNS | {
     "validated_ledger_hash": ("TEXT", 0, None, 0),
     "verified_delivered_amount_micro_units": ("INTEGER", 0, None, 0),
     "evidence_verification_version": ("INTEGER", 1, "0", 0),
@@ -147,13 +156,22 @@ _CURRENT_TRANSACTION_COLUMNS = _LEGACY_TRANSACTION_COLUMNS | {
     "submission_anchor_ledger_hash": ("TEXT", 0, None, 0),
     "submission_anchor_source_id": ("TEXT", 0, None, 0),
 }
-_ATTEMPT_COLUMNS: dict[str, _ColumnSignature] = {
+_CURRENT_TRANSACTION_COLUMNS = _V3_TRANSACTION_COLUMNS | {
+    "submission_anchor_network_id": ("INTEGER", 0, None, 0),
+    "submission_anchor_build_version": ("TEXT", 0, None, 0),
+    "submission_anchor_node_public_key": ("TEXT", 0, None, 0),
+}
+_V3_ATTEMPT_COLUMNS: dict[str, _ColumnSignature] = {
     "operation_id": ("TEXT", 1, None, 1),
     "attempt_number": ("INTEGER", 1, None, 2),
     "started_at": ("TEXT", 1, None, 0),
     "completed_at": ("TEXT", 0, None, 0),
     "disposition": ("TEXT", 0, None, 0),
     "provisional_status": ("TEXT", 0, None, 0),
+}
+_ATTEMPT_COLUMNS = _V3_ATTEMPT_COLUMNS | {
+    "lease_owner_token": ("TEXT", 1, None, 0),
+    "lease_expires_at": ("TEXT", 1, None, 0),
 }
 _OUTBOX_COLUMNS: dict[str, _ColumnSignature] = {
     "event_id": ("TEXT", 0, None, 1),
@@ -197,6 +215,7 @@ class _SchemaKind(Enum):
     EMPTY = "EMPTY"
     LEGACY_X0 = "LEGACY_X0"
     SUPERSEDED_V2 = "SUPERSEDED_V2"
+    SUPERSEDED_V3 = "SUPERSEDED_V3"
     CURRENT = "CURRENT"
     UNSUPPORTED = "UNSUPPORTED"
 
@@ -233,7 +252,18 @@ def _column_signatures(connection: sqlite3.Connection, table: str) -> dict[str, 
 
 
 def _now() -> str:
-    return datetime.now(UTC).isoformat().replace("+00:00", "Z")
+    return _format_timestamp(datetime.now(UTC))
+
+
+def _format_timestamp(value: datetime) -> str:
+    return value.astimezone(UTC).isoformat().replace("+00:00", "Z")
+
+
+def _parse_timestamp(value: str) -> datetime:
+    parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    if parsed.tzinfo is None:
+        raise ValueError("timestamp has no timezone")
+    return parsed.astimezone(UTC)
 
 
 class PaymentJournal:
@@ -249,12 +279,17 @@ class PaymentJournal:
             )
         if kind is _SchemaKind.SUPERSEDED_V2:
             raise SupersededJournalSchema(
-                "version-2 journals are preserved unchanged; version 3 is required and no "
+                "version-2 journals are preserved unchanged; version 4 is required and no "
                 "automatic migration is authorized"
+            )
+        if kind is _SchemaKind.SUPERSEDED_V3:
+            raise SupersededJournalSchemaV3(
+                "version-3 journals are preserved unchanged; version 4 is required for durable "
+                "submission-anchor identity and resubmission leases"
             )
         if kind is _SchemaKind.UNSUPPORTED:
             raise UnsupportedJournalSchema(
-                "expected an empty database or the complete schema at version 3"
+                "expected an empty database or the complete schema at version 4"
             )
         if kind is _SchemaKind.EMPTY:
             self._initialize()
@@ -322,7 +357,7 @@ class PaymentJournal:
             and table_names == {"xrpl_payment_transactions", "xrpl_submission_attempts"}
             and non_index_objects == table_names
             and columns.get("xrpl_payment_transactions") == _LEGACY_TRANSACTION_COLUMNS
-            and columns.get("xrpl_submission_attempts") == _ATTEMPT_COLUMNS
+            and columns.get("xrpl_submission_attempts") == _V3_ATTEMPT_COLUMNS
             and indexes.get("xrpl_payment_transactions") == _TRANSACTION_INDEXES
             and indexes.get("xrpl_submission_attempts") == _ATTEMPT_INDEXES
             and foreign_keys.get("xrpl_payment_transactions") == _NO_FOREIGN_KEYS
@@ -331,6 +366,30 @@ class PaymentJournal:
             return _SchemaKind.LEGACY_X0
         if (
             version in {2, 3}
+            and table_names
+            == {
+                "xrpl_payment_transactions",
+                "xrpl_submission_attempts",
+                "xrpl_settlement_outbox",
+            }
+            and non_index_objects == table_names
+            and columns.get("xrpl_payment_transactions") == _V3_TRANSACTION_COLUMNS
+            and columns.get("xrpl_submission_attempts") == _V3_ATTEMPT_COLUMNS
+            and columns.get("xrpl_settlement_outbox") == _OUTBOX_COLUMNS
+            and indexes.get("xrpl_payment_transactions") == _TRANSACTION_INDEXES
+            and indexes.get("xrpl_submission_attempts") == _ATTEMPT_INDEXES
+            and indexes.get("xrpl_settlement_outbox") == _OUTBOX_INDEXES
+            and foreign_keys.get("xrpl_payment_transactions") == _NO_FOREIGN_KEYS
+            and foreign_keys.get("xrpl_submission_attempts") == _OPERATION_FOREIGN_KEY
+            and foreign_keys.get("xrpl_settlement_outbox") == _OPERATION_FOREIGN_KEY
+        ):
+            if version == 2:
+                return _SchemaKind.SUPERSEDED_V2
+            state_constraint = table_sql.get("xrpl_payment_transactions", "")
+            if all(f"'{state.value}'" in state_constraint for state in TransactionState):
+                return _SchemaKind.SUPERSEDED_V3
+        if (
+            version == 4
             and table_names
             == {
                 "xrpl_payment_transactions",
@@ -348,20 +407,17 @@ class PaymentJournal:
             and foreign_keys.get("xrpl_submission_attempts") == _OPERATION_FOREIGN_KEY
             and foreign_keys.get("xrpl_settlement_outbox") == _OPERATION_FOREIGN_KEY
         ):
-            if version == 2:
-                return _SchemaKind.SUPERSEDED_V2
-            # Version 3 must actually admit every state, including VALIDATED_UNEXPECTED_DELIVERY.
             state_constraint = table_sql.get("xrpl_payment_transactions", "")
             if all(f"'{state.value}'" in state_constraint for state in TransactionState):
                 return _SchemaKind.CURRENT
         return _SchemaKind.UNSUPPORTED
 
     def _initialize(self) -> None:
-        """Create only a genuinely empty journal directly at schema version 3."""
+        """Create only a genuinely empty journal directly at schema version 4."""
         self._database.parent.mkdir(parents=True, exist_ok=True)
         with self._connect() as connection:
             connection.executescript(
-                f"BEGIN IMMEDIATE;\n{SCHEMA}\nPRAGMA user_version = 3;\nCOMMIT;"
+                f"BEGIN IMMEDIATE;\n{SCHEMA}\nPRAGMA user_version = 4;\nCOMMIT;"
             )
         if self._classify_existing_schema() is not _SchemaKind.CURRENT:
             raise UnsupportedJournalSchema("new journal initialization did not validate")
@@ -463,11 +519,18 @@ class PaymentJournal:
             if row is None:
                 raise KeyError(operation_id)
             current = _record(row)
+            source_identity = observation.source_identity()
+            if source_identity is None:
+                raise JournalConflict(
+                    f"{operation_id}: trusted ledger source identity is incomplete"
+                )
+            if source_identity.network_id != current.network_id:
+                raise JournalConflict(f"{operation_id}: trusted ledger network does not match")
             if current.submission_anchor_ledger_index is not None:
                 if (
                     current.submission_anchor_ledger_index == observation.ledger_index
                     and current.submission_anchor_ledger_hash == observation.ledger_hash
-                    and current.submission_anchor_source_id == observation.source_id
+                    and current.submission_anchor_identity() == source_identity
                 ):
                     return current
                 raise JournalConflict(f"{operation_id}: contradictory submission anchor")
@@ -488,12 +551,17 @@ class PaymentJournal:
             connection.execute(
                 """UPDATE xrpl_payment_transactions
                    SET submission_anchor_ledger_index = ?, submission_anchor_ledger_hash = ?,
-                       submission_anchor_source_id = ?, updated_at = ?
+                       submission_anchor_source_id = ?, submission_anchor_network_id = ?,
+                       submission_anchor_build_version = ?,
+                       submission_anchor_node_public_key = ?, updated_at = ?
                    WHERE operation_id = ?""",
                 (
                     observation.ledger_index,
                     observation.ledger_hash,
-                    observation.source_id,
+                    source_identity.source_id,
+                    source_identity.network_id,
+                    source_identity.build_version,
+                    source_identity.node_public_key,
                     timestamp,
                     operation_id,
                 ),
@@ -527,14 +595,74 @@ class PaymentJournal:
                 )
         return records
 
-    def begin_submission(self, operation_id: str, *, resubmission: bool) -> int:
+    @staticmethod
+    def _active_submission_lease(
+        connection: sqlite3.Connection,
+        operation_id: str,
+        *,
+        now: datetime,
+        timestamp: str,
+    ) -> bool:
+        """Return true for a live lease; durably abandon an expired lease."""
+        open_attempts = connection.execute(
+            """SELECT attempt_number, lease_expires_at
+               FROM xrpl_submission_attempts
+               WHERE operation_id = ? AND completed_at IS NULL""",
+            (operation_id,),
+        ).fetchall()
+        if not open_attempts:
+            return False
+        if len(open_attempts) != 1:
+            raise JournalConflict(f"{operation_id}: multiple active submission leases")
+        open_attempt = open_attempts[0]
+        try:
+            expires_at = _parse_timestamp(cast(str, open_attempt["lease_expires_at"]))
+        except (TypeError, ValueError) as exc:
+            raise JournalConflict(f"{operation_id}: malformed submission lease") from exc
+        if expires_at > now:
+            return True
+        cursor = connection.execute(
+            """UPDATE xrpl_submission_attempts
+               SET completed_at = ?, disposition = ?, provisional_status = ?
+               WHERE operation_id = ? AND attempt_number = ? AND completed_at IS NULL""",
+            (
+                timestamp,
+                SubmissionDisposition.TRANSPORT_ERROR.value,
+                "SUBMISSION_LEASE_EXPIRED_OUTCOME_UNKNOWN",
+                operation_id,
+                cast(int, open_attempt["attempt_number"]),
+            ),
+        )
+        if cursor.rowcount != 1:
+            raise JournalConflict(f"{operation_id}: submission lease changed concurrently")
+        connection.execute(
+            """UPDATE xrpl_payment_transactions
+               SET state = ?, last_provisional_status = ?, updated_at = ?
+               WHERE operation_id = ? AND state = ?""",
+            (
+                TransactionState.UNKNOWN.value,
+                "SUBMISSION_LEASE_EXPIRED_OUTCOME_UNKNOWN",
+                timestamp,
+                operation_id,
+                TransactionState.SUBMITTED.value,
+            ),
+        )
+        return False
+
+    def begin_submission(self, operation_id: str, *, resubmission: bool) -> SubmissionLease | None:
+        """Atomically acquire one durable submission lease for an operation."""
         permitted = (
             {TransactionState.PENDING_CONFIRMATION, TransactionState.UNKNOWN}
             if resubmission
             else {TransactionState.PREPARED}
         )
-        timestamp = _now()
+        now = datetime.now(UTC)
+        timestamp = _format_timestamp(now)
         with self._write() as connection:
+            if self._active_submission_lease(
+                connection, operation_id, now=now, timestamp=timestamp
+            ):
+                return None
             row = connection.execute(
                 "SELECT * FROM xrpl_payment_transactions WHERE operation_id = ?",
                 (operation_id,),
@@ -552,11 +680,13 @@ class PaymentJournal:
                     (operation_id,),
                 ).fetchone()[0],
             )
+            owner_token = uuid4().hex
+            expires_at = _format_timestamp(now + timedelta(seconds=SUBMISSION_LEASE_SECONDS))
             connection.execute(
                 """INSERT INTO xrpl_submission_attempts
-                   (operation_id, attempt_number, started_at)
-                   VALUES (?, ?, ?)""",
-                (operation_id, attempt_number, timestamp),
+                   (operation_id, attempt_number, started_at, lease_owner_token, lease_expires_at)
+                   VALUES (?, ?, ?, ?, ?)""",
+                (operation_id, attempt_number, timestamp, owner_token, expires_at),
             )
             connection.execute(
                 """UPDATE xrpl_payment_transactions
@@ -564,12 +694,12 @@ class PaymentJournal:
                    WHERE operation_id = ?""",
                 (TransactionState.SUBMITTED.value, timestamp, operation_id),
             )
-        return attempt_number
+        return SubmissionLease(attempt_number, owner_token, expires_at)
 
     def finish_submission(
         self,
         operation_id: str,
-        attempt_number: int,
+        lease: SubmissionLease,
         *,
         disposition: SubmissionDisposition,
         next_state: TransactionState,
@@ -582,17 +712,21 @@ class PaymentJournal:
             cursor = connection.execute(
                 """UPDATE xrpl_submission_attempts
                    SET completed_at = ?, disposition = ?, provisional_status = ?
-                   WHERE operation_id = ? AND attempt_number = ? AND completed_at IS NULL""",
+                   WHERE operation_id = ? AND attempt_number = ? AND lease_owner_token = ?
+                         AND completed_at IS NULL""",
                 (
                     timestamp,
                     disposition.value,
                     provisional_status,
                     operation_id,
-                    attempt_number,
+                    lease.attempt_number,
+                    lease.owner_token,
                 ),
             )
             if cursor.rowcount != 1:
-                raise JournalConflict(f"{operation_id}: submission attempt already completed")
+                raise JournalConflict(
+                    f"{operation_id}: submission lease is not owned by this worker"
+                )
             cursor = connection.execute(
                 """UPDATE xrpl_payment_transactions
                    SET state = ?, last_provisional_status = ?, updated_at = ?
@@ -606,7 +740,15 @@ class PaymentJournal:
                 ),
             )
             if cursor.rowcount != 1:
-                raise JournalConflict(f"{operation_id}: submission state changed concurrently")
+                current = connection.execute(
+                    "SELECT state FROM xrpl_payment_transactions WHERE operation_id = ?",
+                    (operation_id,),
+                ).fetchone()
+                if (
+                    current is None
+                    or TransactionState(cast(str, current["state"])) not in TERMINAL_STATES
+                ):
+                    raise JournalConflict(f"{operation_id}: submission state changed concurrently")
 
     def record_reconciliation_state(
         self,
@@ -616,7 +758,8 @@ class PaymentJournal:
     ) -> PaymentRecord:
         if state not in {TransactionState.PENDING_CONFIRMATION, TransactionState.UNKNOWN}:
             raise ValueError("reconciliation observation must be pending or unknown")
-        timestamp = _now()
+        now = datetime.now(UTC)
+        timestamp = _format_timestamp(now)
         with self._write() as connection:
             row = connection.execute(
                 "SELECT * FROM xrpl_payment_transactions WHERE operation_id = ?",
@@ -631,17 +774,10 @@ class PaymentJournal:
                         f"{operation_id}: recorded hash does not match persisted signed bytes"
                     )
                 return current
-            connection.execute(
-                """UPDATE xrpl_submission_attempts
-                   SET completed_at = ?, disposition = ?, provisional_status = ?
-                   WHERE operation_id = ? AND completed_at IS NULL""",
-                (
-                    timestamp,
-                    SubmissionDisposition.TRANSPORT_ERROR.value,
-                    "response unavailable; reconciled by transaction hash",
-                    operation_id,
-                ),
-            )
+            if self._active_submission_lease(
+                connection, operation_id, now=now, timestamp=timestamp
+            ):
+                return current
             connection.execute(
                 """UPDATE xrpl_payment_transactions
                    SET state = ?, last_provisional_status = ?, updated_at = ?
@@ -689,17 +825,6 @@ class PaymentJournal:
                     return current
                 raise JournalConflict(f"{operation_id}: contradictory terminal evidence")
             connection.execute(
-                """UPDATE xrpl_submission_attempts
-                   SET completed_at = ?, disposition = ?, provisional_status = ?
-                   WHERE operation_id = ? AND completed_at IS NULL""",
-                (
-                    timestamp,
-                    SubmissionDisposition.TRANSPORT_ERROR.value,
-                    "response unavailable; final outcome recovered by transaction hash",
-                    operation_id,
-                ),
-            )
-            connection.execute(
                 """UPDATE xrpl_payment_transactions
                    SET state = ?, final_result = ?, final_detail = ?, final_evidence = ?,
                        validated_ledger_index = ?, validated_ledger_hash = ?,
@@ -745,7 +870,7 @@ class PaymentJournal:
         """Retired as a settlement authority (X1c, B5).
 
         Refused with ``LegacySettlementClaimRetired`` whenever the operation has a settlement
-        outbox event, which every verified success in a current (version-3) journal has. Otherwise it
+        outbox event, which every verified success in a current (version-4) journal has. Otherwise it
         returns false exactly as before for a payment that is not a verified success. The stored
         ``settlement_effect_claimed`` history is never changed by a refusal.
         """
@@ -816,7 +941,7 @@ class PaymentJournal:
     def attempts(self, operation_id: str) -> tuple[SubmissionAttempt, ...]:
         with self._connect() as connection:
             rows = connection.execute(
-                """SELECT attempt_number, started_at, completed_at, disposition,
+                """SELECT attempt_number, started_at, lease_expires_at, completed_at, disposition,
                           provisional_status
                    FROM xrpl_submission_attempts
                    WHERE operation_id = ? ORDER BY attempt_number""",
@@ -826,6 +951,7 @@ class PaymentJournal:
             SubmissionAttempt(
                 attempt_number=cast(int, row["attempt_number"]),
                 started_at=cast(str, row["started_at"]),
+                lease_expires_at=cast(str, row["lease_expires_at"]),
                 completed_at=cast(str | None, row["completed_at"]),
                 disposition=(
                     None
@@ -873,6 +999,11 @@ def _record(row: sqlite3.Row) -> PaymentRecord:
         submission_anchor_ledger_index=cast(int | None, row["submission_anchor_ledger_index"]),
         submission_anchor_ledger_hash=cast(str | None, row["submission_anchor_ledger_hash"]),
         submission_anchor_source_id=cast(str | None, row["submission_anchor_source_id"]),
+        submission_anchor_network_id=cast(int | None, row["submission_anchor_network_id"]),
+        submission_anchor_build_version=cast(str | None, row["submission_anchor_build_version"]),
+        submission_anchor_node_public_key=cast(
+            str | None, row["submission_anchor_node_public_key"]
+        ),
         settlement_status=cast(str | None, row["settlement_status"]),
         settlement_effect_claimed=bool(row["settlement_effect_claimed"]),
         created_at=cast(str, row["created_at"]),

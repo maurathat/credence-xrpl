@@ -336,14 +336,18 @@ class PaymentService:
         return self._submit(record, resubmission=False)
 
     def _submit(self, record: PaymentRecord, *, resubmission: bool) -> PaymentRecord:
-        attempt = self._journal.begin_submission(record.operation_id, resubmission=resubmission)
+        lease = self._journal.begin_submission(record.operation_id, resubmission=resubmission)
+        if lease is None:
+            # Another process owns the durable in-flight attempt. It alone may use the transport
+            # and complete the lease; this worker observes without changing that attempt.
+            return self._journal.get(record.operation_id)
         # The database transaction is closed before this network boundary.
         try:
             response = self._transport.submit(record.signed_transaction, record.transaction_hash)
         except SubmissionTimeout:
             self._journal.finish_submission(
                 record.operation_id,
-                attempt,
+                lease,
                 disposition=SubmissionDisposition.TIMEOUT,
                 next_state=TransactionState.UNKNOWN,
                 provisional_status="SUBMISSION_TIMEOUT_OUTCOME_UNKNOWN",
@@ -352,7 +356,7 @@ class PaymentService:
         except SubmissionTransportError:
             self._journal.finish_submission(
                 record.operation_id,
-                attempt,
+                lease,
                 disposition=SubmissionDisposition.TRANSPORT_ERROR,
                 next_state=TransactionState.UNKNOWN,
                 provisional_status="SUBMISSION_TRANSPORT_ERROR_OUTCOME_UNKNOWN",
@@ -362,7 +366,7 @@ class PaymentService:
         if not response.engine_result:
             self._journal.finish_submission(
                 record.operation_id,
-                attempt,
+                lease,
                 disposition=SubmissionDisposition.TRANSPORT_ERROR,
                 next_state=TransactionState.UNKNOWN,
                 provisional_status="UNEXPECTED_SUBMISSION_RESPONSE",
@@ -371,7 +375,7 @@ class PaymentService:
 
         self._journal.finish_submission(
             record.operation_id,
-            attempt,
+            lease,
             disposition=(
                 SubmissionDisposition.ACKNOWLEDGED
                 if response.accepted
@@ -482,17 +486,60 @@ class PaymentService:
     ) -> PaymentRecord:
         anchor = record.submission_anchor_ledger_index
         history_start = None if anchor is None else anchor + 1
+        anchor_identity = record.submission_anchor_identity()
+        observation_identity = observation.source_identity()
         trusted_anchor = bool(
             anchor is not None
             and record.submission_anchor_ledger_hash
-            and record.submission_anchor_source_id
+            and anchor_identity is not None
         )
-        source_matches = observation.source_id == record.submission_anchor_source_id
+        source_matches = bool(
+            anchor_identity is not None and observation_identity == anchor_identity
+        )
+        ledger_identity_matches = bool(
+            anchor is not None
+            and observation.ledger_index >= anchor
+            and (
+                observation.ledger_index != anchor
+                or observation.ledger_hash == record.submission_anchor_ledger_hash
+            )
+        )
         sender_state_matches = observation.account_state_matches(
             account=record.account,
             sequence=record.sequence,
             ticket_sequence=record.ticket_sequence,
         )
+        if not trusted_anchor:
+            return self._journal.record_reconciliation_state(
+                record.operation_id,
+                TransactionState.UNKNOWN,
+                "TRUSTED_SUBMISSION_ANCHOR_IDENTITY_MISSING",
+            )
+        assert anchor_identity is not None
+        if anchor_identity.network_id != record.network_id:
+            return self._journal.record_reconciliation_state(
+                record.operation_id,
+                TransactionState.UNKNOWN,
+                "SUBMISSION_ANCHOR_NETWORK_CONTRADICTS_PAYMENT",
+            )
+        if observation_identity is None or not source_matches:
+            return self._journal.record_reconciliation_state(
+                record.operation_id,
+                TransactionState.UNKNOWN,
+                "LEDGER_SOURCE_IDENTITY_DISAGREES_WITH_SUBMISSION_ANCHOR",
+            )
+        if not ledger_identity_matches:
+            return self._journal.record_reconciliation_state(
+                record.operation_id,
+                TransactionState.UNKNOWN,
+                "VALIDATED_LEDGER_CONTRADICTS_SUBMISSION_ANCHOR",
+            )
+        if not sender_state_matches:
+            return self._journal.record_reconciliation_state(
+                record.operation_id,
+                TransactionState.UNKNOWN,
+                "SENDER_SEQUENCE_OR_TICKET_CONSUMPTION_UNRESOLVED",
+            )
         proof = lookup.non_inclusion_proof
         try:
             bounded_lookup = None if proof is None else json.loads(proof.evidence)
@@ -512,7 +559,7 @@ class PaymentService:
             and proof.transaction_hash == record.transaction_hash
             and proof.first_ledger_sequence == history_start
             and proof.last_ledger_sequence == record.last_ledger_sequence
-            and proof.source_id == record.submission_anchor_source_id
+            and proof.source_id == anchor_identity.source_id
             and proof.source_id == observation.source_id
             and proof.network_id == record.network_id
             and proof.network_id == observation.network_id
@@ -546,10 +593,7 @@ class PaymentService:
             and identity_after.get("ledger_hash") == proof.validated_ledger_hash
         )
         if (
-            trusted_anchor
-            and source_matches
-            and sender_state_matches
-            and history_start is not None
+            history_start is not None
             and proof_matches
             and observation.proves_non_inclusion(
                 earliest=history_start,
@@ -590,13 +634,7 @@ class PaymentService:
             )
 
         if observation.ledger_index > record.last_ledger_sequence:
-            if not trusted_anchor:
-                detail = "TRUSTED_SUBMISSION_ANCHOR_MISSING"
-            elif not source_matches:
-                detail = "LEDGER_SOURCE_DISAGREES_WITH_SUBMISSION_ANCHOR"
-            elif not sender_state_matches:
-                detail = "SENDER_SEQUENCE_OR_TICKET_CONSUMPTION_UNRESOLVED"
-            elif not proof_matches:
+            if not proof_matches:
                 detail = lookup.detail or "BOUNDED_NON_INCLUSION_PROOF_MISSING_OR_INCONSISTENT"
             else:
                 detail = "HISTORY_INCOMPLETE_NON_INCLUSION_UNPROVEN"
@@ -606,15 +644,14 @@ class PaymentService:
                 detail,
             )
 
-        pending = self._journal.record_reconciliation_state(
-            record.operation_id,
-            TransactionState.PENDING_CONFIRMATION,
-            "TRANSACTION_NOT_FOUND_BEFORE_EXPIRY",
-        )
         if not resubmit_if_pending:
-            return pending
+            return self._journal.record_reconciliation_state(
+                record.operation_id,
+                TransactionState.PENDING_CONFIRMATION,
+                "TRANSACTION_NOT_FOUND_BEFORE_EXPIRY",
+            )
         # Resubmission reuses the exact persisted bytes and therefore the same hash.
-        return self._submit(pending, resubmission=True)
+        return self._submit(record, resubmission=True)
 
     def reconcile_after_restart(self) -> tuple[PaymentRecord, ...]:
         return tuple(

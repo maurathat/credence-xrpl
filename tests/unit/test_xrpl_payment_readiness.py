@@ -48,6 +48,7 @@ from credence.xrpl_adapter.types import (
     SubmissionDisposition,
     SubmissionResponse,
     SubmissionTimeout,
+    SupersededJournalSchemaV3,
     TransactionHashMismatch,
     TransactionState,
     TransactionType,
@@ -402,6 +403,9 @@ def test_missing_ledger_history_cannot_prove_expiry(tmp_path: Path) -> None:
             ACCOUNT,
             10,
             (77,),
+            21_337,
+            "deterministic-mock",
+            "n9DeterministicMockNode",
         )
     )
 
@@ -723,7 +727,7 @@ def test_forged_caller_history_start_cannot_prove_expiry(tmp_path: Path) -> None
                 source_id="disagreeing-server",
                 account_sequence=10,
             ),
-            "LEDGER_SOURCE_DISAGREES_WITH_SUBMISSION_ANCHOR",
+            "LEDGER_SOURCE_IDENTITY_DISAGREES_WITH_SUBMISSION_ANCHOR",
         ),
         (
             trusted_ledger(
@@ -756,6 +760,7 @@ def test_missing_first_broadcast_anchor_never_manufactures_expiry(tmp_path: Path
     transport = DeterministicMockTransport(ledger=ledger_before_expiry())
     service, journal, record = prepared(database, transport)
     attempt = journal.begin_submission(record.operation_id, resubmission=False)
+    assert attempt is not None
     journal.finish_submission(
         record.operation_id,
         attempt,
@@ -769,7 +774,7 @@ def test_missing_first_broadcast_anchor_never_manufactures_expiry(tmp_path: Path
     )
     result = service.reconcile(record.operation_id)
     assert result.state is TransactionState.UNKNOWN
-    assert result.last_provisional_status == "TRUSTED_SUBMISSION_ANCHOR_MISSING"
+    assert result.last_provisional_status == "TRUSTED_SUBMISSION_ANCHOR_IDENTITY_MISSING"
 
 
 def test_missing_first_broadcast_provenance_prevents_submission(tmp_path: Path) -> None:
@@ -1024,7 +1029,7 @@ def test_x0_schema_explicitly_marked_version_one_is_refused(tmp_path: Path) -> N
 
 
 @pytest.mark.parametrize("precreate_empty_file", [False, True])
-def test_genuinely_empty_database_initializes_directly_at_version_three(
+def test_genuinely_empty_database_initializes_directly_at_version_four(
     tmp_path: Path, precreate_empty_file: bool
 ) -> None:
     database = tmp_path / "new.db"
@@ -1034,7 +1039,7 @@ def test_genuinely_empty_database_initializes_directly_at_version_three(
     journal = PaymentJournal(database)
 
     with sqlite3.connect(database) as connection:
-        assert connection.execute("PRAGMA user_version").fetchone()[0] == 3
+        assert connection.execute("PRAGMA user_version").fetchone()[0] == 4
         assert {
             row[0]
             for row in connection.execute("SELECT name FROM sqlite_master WHERE type = 'table'")
@@ -1046,7 +1051,7 @@ def test_genuinely_empty_database_initializes_directly_at_version_three(
     assert journal.list_nonterminal() == ()
 
 
-def test_valid_version_three_journal_reopens_normally(tmp_path: Path) -> None:
+def test_valid_version_four_journal_reopens_normally(tmp_path: Path) -> None:
     database = tmp_path / "current.db"
     first = PaymentJournal(database)
     request = payment_request()
@@ -1055,6 +1060,27 @@ def test_valid_version_three_journal_reopens_normally(tmp_path: Path) -> None:
     reopened = PaymentJournal(database)
 
     assert reopened.get(expected.operation_id) == expected
+
+
+def test_version_three_journal_is_preserved_and_refused(tmp_path: Path) -> None:
+    database = tmp_path / "version-three.db"
+    PaymentJournal(database)
+    with sqlite3.connect(database) as connection:
+        for column in (
+            "submission_anchor_network_id",
+            "submission_anchor_build_version",
+            "submission_anchor_node_public_key",
+        ):
+            connection.execute(f"ALTER TABLE xrpl_payment_transactions DROP COLUMN {column}")
+        for column in ("lease_owner_token", "lease_expires_at"):
+            connection.execute(f"ALTER TABLE xrpl_submission_attempts DROP COLUMN {column}")
+        connection.execute("PRAGMA user_version = 3")
+    before = journal_snapshot(database)
+
+    with pytest.raises(SupersededJournalSchemaV3, match=r"^JOURNAL_VERSION_3_UNSUPPORTED:"):
+        PaymentJournal(database)
+
+    assert journal_snapshot(database) == before
 
 
 def test_unknown_schema_version_fails_closed_without_changes(tmp_path: Path) -> None:

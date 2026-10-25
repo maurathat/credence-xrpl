@@ -11,7 +11,7 @@ path or settlement-effect channel.
 | ``SUBMISSION_PENDING`` | ``SUBMITTED`` or ``PENDING_CONFIRMATION`` |
 | ``VALIDATED_SUCCESS`` | ``VALIDATED_SUCCESS`` with ``XRPL_SETTLED`` |
 | ``VALIDATED_FAILURE`` | ``VALIDATED_FAILURE`` whose evidence result is not ``tesSUCCESS`` |
-| ``VALIDATED_UNEXPECTED_DELIVERY`` | ``VALIDATED_UNEXPECTED_DELIVERY`` (journal schema version 3, X1c C1) whose evidence result is ``tesSUCCESS``: funds moved, but not as authorized. A transferred-funds exception requiring operator reconciliation, not an unsuccessful transaction |
+| ``VALIDATED_UNEXPECTED_DELIVERY`` | ``VALIDATED_UNEXPECTED_DELIVERY`` (introduced in journal schema version 3 by X1c C1; retained in current version 4) whose evidence result is ``tesSUCCESS``: funds moved, but not as authorized. A transferred-funds exception requiring operator reconciliation, not an unsuccessful transaction |
 | ``EXPIRED_NOT_INCLUDED`` | ``EXPIRED_NOT_INCLUDED``, proven by anchored complete history |
 | ``UNKNOWN_RECONCILIATION_REQUIRED`` | ``UNKNOWN``, or any record whose stored evidence does not support its state |
 

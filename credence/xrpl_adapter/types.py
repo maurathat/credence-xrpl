@@ -141,6 +141,16 @@ class LedgerRange:
 
 
 @dataclass(frozen=True)
+class LedgerSourceIdentity:
+    """Durable identity assumptions for one configured trusted ledger source."""
+
+    source_id: str
+    network_id: int
+    build_version: str
+    node_public_key: str
+
+
+@dataclass(frozen=True)
 class ValidatedLedgerObservation:
     """Trusted-source ledger progress, identity, history, and sender state.
 
@@ -161,6 +171,27 @@ class ValidatedLedgerObservation:
     network_id: int | None = None
     build_version: str | None = None
     node_public_key: str | None = None
+
+    def source_identity(self) -> LedgerSourceIdentity | None:
+        """Return complete typed identity evidence, never a caller-supplied trust assertion."""
+        if not (
+            self.has_trusted_identity()
+            and isinstance(self.network_id, int)
+            and not isinstance(self.network_id, bool)
+            and self.network_id > 0
+            and isinstance(self.build_version, str)
+            and self.build_version.strip()
+            and isinstance(self.node_public_key, str)
+            and self.node_public_key.strip()
+        ):
+            return None
+        assert self.source_id is not None
+        return LedgerSourceIdentity(
+            source_id=self.source_id,
+            network_id=self.network_id,
+            build_version=self.build_version,
+            node_public_key=self.node_public_key,
+        )
 
     def has_trusted_identity(self) -> bool:
         return bool(
@@ -309,9 +340,19 @@ class VerificationResult:
 class SubmissionAttempt:
     attempt_number: int
     started_at: str
+    lease_expires_at: str
     completed_at: str | None
     disposition: SubmissionDisposition | None
     provisional_status: str | None
+
+
+@dataclass(frozen=True)
+class SubmissionLease:
+    """Durable ownership token for one in-flight submission attempt."""
+
+    attempt_number: int
+    owner_token: str
+    expires_at: str
 
 
 @dataclass(frozen=True)
@@ -343,10 +384,33 @@ class PaymentRecord:
     submission_anchor_ledger_index: int | None
     submission_anchor_ledger_hash: str | None
     submission_anchor_source_id: str | None
+    submission_anchor_network_id: int | None
+    submission_anchor_build_version: str | None
+    submission_anchor_node_public_key: str | None
     settlement_status: str | None
     settlement_effect_claimed: bool
     created_at: str
     updated_at: str
+
+    def submission_anchor_identity(self) -> LedgerSourceIdentity | None:
+        if not (
+            isinstance(self.submission_anchor_source_id, str)
+            and self.submission_anchor_source_id.strip()
+            and isinstance(self.submission_anchor_network_id, int)
+            and not isinstance(self.submission_anchor_network_id, bool)
+            and self.submission_anchor_network_id > 0
+            and isinstance(self.submission_anchor_build_version, str)
+            and self.submission_anchor_build_version.strip()
+            and isinstance(self.submission_anchor_node_public_key, str)
+            and self.submission_anchor_node_public_key.strip()
+        ):
+            return None
+        return LedgerSourceIdentity(
+            source_id=self.submission_anchor_source_id,
+            network_id=self.submission_anchor_network_id,
+            build_version=self.submission_anchor_build_version,
+            node_public_key=self.submission_anchor_node_public_key,
+        )
 
 
 @dataclass(frozen=True)
@@ -459,11 +523,17 @@ class LegacyJournalUnsupported(JournalOpenRefused):
 class SupersededJournalSchema(JournalOpenRefused):
     """A complete version-2 (X0s/X0t/X1a) journal: preserved unchanged and refused (X1c C1).
 
-    Version 3 adds the ``VALIDATED_UNEXPECTED_DELIVERY`` state, which a version-2 state
-    constraint cannot store. No automatic migration exists; recovery needs separate approval.
+    Version 3 added ``VALIDATED_UNEXPECTED_DELIVERY`` and version 4 adds durable anchor identity
+    and leases. A version-2 state constraint cannot store every current state.
     """
 
     code = "JOURNAL_VERSION_2_UNSUPPORTED"
+
+
+class SupersededJournalSchemaV3(JournalOpenRefused):
+    """A complete version-3 journal that predates durable anchor identity and leases."""
+
+    code = "JOURNAL_VERSION_3_UNSUPPORTED"
 
 
 class UnsupportedJournalSchema(JournalOpenRefused):

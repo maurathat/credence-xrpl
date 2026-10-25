@@ -168,6 +168,9 @@ def test_one_bound_multisigned_payment_settles_once(tmp_path: Path) -> None:
     record = flow.service.status.status(OPERATION)
     assert record.submission_anchor_ledger_hash == flow.rippled.ledger_hash
     assert record.submission_anchor_source_id == CONFIG.source_id
+    assert record.submission_anchor_network_id == CONFIG.expected_network_id
+    assert record.submission_anchor_build_version == CONFIG.expected_build_version
+    assert record.submission_anchor_node_public_key == CONFIG.expected_node_public_key
     assert classify_payment(record) is PaymentOutcome.SUBMISSION_PENDING
 
     flow.rippled.include(flow.signed, ledger_index=VALIDATED_LEDGER + 3, delivered=delivered())

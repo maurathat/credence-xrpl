@@ -778,11 +778,11 @@ def test_c1_version_label_alone_does_not_make_a_v2_journal_current(tmp_path: Pat
     assert snapshot(database) == before
 
 
-def test_c1_new_journal_is_version_three_and_admits_the_new_state(tmp_path: Path) -> None:
+def test_c1_new_journal_is_version_four_and_admits_the_new_state(tmp_path: Path) -> None:
     database = tmp_path / "new.db"
     PaymentJournal(database)
     with sqlite3.connect(database) as connection:
-        assert connection.execute("PRAGMA user_version").fetchone()[0] == 3
+        assert connection.execute("PRAGMA user_version").fetchone()[0] == 4
         sql = connection.execute(
             "SELECT sql FROM sqlite_master WHERE name = 'xrpl_payment_transactions'"
         ).fetchone()[0]
