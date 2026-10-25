@@ -48,7 +48,13 @@ class DeterministicMockTransport:
             raise outcome
         return outcome
 
-    def lookup(self, transaction_hash: str) -> LookupResult:
+    def lookup(
+        self,
+        transaction_hash: str,
+        *,
+        min_ledger: int | None = None,
+        max_ledger: int | None = None,
+    ) -> LookupResult:
         with self._lock:
             outcome = self._lookups.get(transaction_hash)
         if outcome is None:

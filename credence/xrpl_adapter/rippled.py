@@ -21,6 +21,9 @@ Implemented seams (all JSON-RPC, ``api_version`` 2):
   result, and the delivered amount, must agree between the binary and JSON forms (X1c, B1/B2).
   After the evidence is read, the node identity is re-read and must be unchanged, not regressed,
   and still cover the transaction's ledger (X1e, N2);
+- a not-found result is permanent only for a bounded anchor+1 through ``LastLedgerSequence``
+  query with explicit ``searched_all=true``. Both identity reads must cover the full range; an
+  ordinary ``txnNotFound``, gap, backfill or truncation is unavailable evidence (X1g, F1);
 - ``diagnostic_lookup``: the same reads without a node pin, returning only a non-authoritative
   summary that cannot be used as settlement evidence (X1e, N1);
 - ``submit``: the X0t ``SubmissionTransport``. It refuses unless submission was explicitly enabled
@@ -86,6 +89,7 @@ from credence.xrpl_adapter.types import (
     LookupDisposition,
     LookupResult,
     LookupUnavailable,
+    NonInclusionProof,
     SignedTransactionError,
     SubmissionResponse,
     SubmissionTimeout,
@@ -251,9 +255,11 @@ class TrustLineSnapshot:
 
 
 class _RpcError(RuntimeError):
-    def __init__(self, error: str) -> None:
+    def __init__(self, error: str, result: Mapping[str, Any], evidence: RawEvidence) -> None:
         super().__init__(error)
         self.error = error
+        self.result = result
+        self.evidence = evidence
 
 
 def parse_complete_ledgers(text: str) -> tuple[LedgerRange, ...]:
@@ -360,6 +366,17 @@ def _require_stable_identity(
     ledger_hash: str,
 ) -> None:
     """N2: the node did not change identity, regress, or lose the transaction's ledger."""
+    _require_stable_node(before, after)
+    if not _history_covers(after.complete_history_ranges, ledger_index, ledger_index):
+        raise TransportRefused("LEDGER_OUTSIDE_COMPLETE_HISTORY", str(ledger_index))
+    if ledger_index > after.ledger_index:
+        raise TransportRefused("LEDGER_BEYOND_VALIDATED", str(ledger_index))
+    if ledger_index == after.ledger_index and ledger_hash != after.ledger_hash:
+        raise TransportRefused("LEDGER_HASH_MISMATCH", "differs from the re-read identity")
+
+
+def _require_stable_node(before: ValidatedLedgerIdentity, after: ValidatedLedgerIdentity) -> None:
+    """The same pinned node and a non-regressing validated ledger bracket one lookup."""
     if (before.network_id, before.build_version, before.node_public_key) != (
         after.network_id,
         after.build_version,
@@ -370,12 +387,36 @@ def _require_stable_identity(
         raise TransportRefused("VALIDATED_LEDGER_REGRESSED")
     if after.ledger_index == before.ledger_index and after.ledger_hash != before.ledger_hash:
         raise TransportRefused("IDENTITY_CHANGED_DURING_LOOKUP", "validated ledger hash changed")
-    if ledger_index > after.ledger_index:
-        raise TransportRefused("LEDGER_BEYOND_VALIDATED", str(ledger_index))
-    if not any(item.first <= ledger_index <= item.last for item in after.complete_history_ranges):
-        raise TransportRefused("LEDGER_OUTSIDE_COMPLETE_HISTORY", str(ledger_index))
-    if ledger_index == after.ledger_index and ledger_hash != after.ledger_hash:
-        raise TransportRefused("LEDGER_HASH_MISMATCH", "differs from the re-read identity")
+
+
+def _history_covers(ranges: tuple[LedgerRange, ...], first: int, last: int) -> bool:
+    if not (0 < first <= last):
+        return False
+    covered_through = first - 1
+    for ledger_range in sorted(ranges, key=lambda item: (item.first, item.last)):
+        if ledger_range.last < first or ledger_range.first > last:
+            continue
+        if ledger_range.first > covered_through + 1:
+            return False
+        covered_through = max(covered_through, ledger_range.last)
+        if covered_through >= last:
+            return True
+    return False
+
+
+def _identity_evidence(identity: ValidatedLedgerIdentity) -> dict[str, object]:
+    return {
+        "build_version": identity.build_version,
+        "complete_ledgers": identity.complete_ledgers,
+        "complete_history_ranges": [
+            [ledger_range.first, ledger_range.last]
+            for ledger_range in identity.complete_history_ranges
+        ],
+        "ledger_hash": identity.ledger_hash,
+        "ledger_index": identity.ledger_index,
+        "network_id": identity.network_id,
+        "node_public_key": identity.node_public_key,
+    }
 
 
 class RippledTransport:
@@ -406,7 +447,7 @@ class RippledTransport:
         if not isinstance(result, dict):
             raise RpcUnavailable(f"{method}: response has no result")
         if result.get("status") == "error" or "error" in result:
-            raise _RpcError(str(result.get("error", "unknown")))
+            raise _RpcError(str(result.get("error", "unknown")), result, evidence)
         return result, evidence
 
     # --- validated ledger identity -----------------------------------------------------------
@@ -649,17 +690,29 @@ class RippledTransport:
             account=account if snapshot.exists else None,
             account_sequence=snapshot.sequence,
             available_tickets=snapshot.tickets,
+            network_id=identity.network_id,
+            build_version=identity.build_version,
+            node_public_key=identity.node_public_key,
         )
 
     # --- X0t HashLookup ----------------------------------------------------------------------
 
-    def lookup(self, transaction_hash_value: str) -> LookupResult:
-        """Authoritative X0t lookup. Requires a pinned node key (N1)."""
+    def lookup(
+        self,
+        transaction_hash_value: str,
+        *,
+        min_ledger: int | None = None,
+        max_ledger: int | None = None,
+    ) -> LookupResult:
+        """Authoritative lookup. Permanent non-inclusion requires a bounded full search."""
         try:
-            return self._lookup(transaction_hash_value.upper(), authoritative=True)
+            return self._lookup(
+                transaction_hash_value.upper(),
+                authoritative=True,
+                min_ledger=min_ledger,
+                max_ledger=max_ledger,
+            )
         except _RpcError as exc:
-            if exc.error == "txnNotFound":
-                return LookupResult(LookupDisposition.NOT_FOUND)
             return LookupResult(LookupDisposition.UNAVAILABLE, detail=f"RPC_ERROR:{exc.error}")
         except (RpcTimeout, RpcUnavailable) as exc:
             return LookupResult(LookupDisposition.UNAVAILABLE, detail=f"RPC_UNAVAILABLE:{exc}")
@@ -672,7 +725,12 @@ class RippledTransport:
         It returns only a summary, never a ``LookupResult``, ``LedgerPayment`` or evidence
         envelope, so its output cannot be handed to the X0t journal as settlement evidence."""
         try:
-            result = self._lookup(transaction_hash_value.upper(), authoritative=False)
+            result = self._lookup(
+                transaction_hash_value.upper(),
+                authoritative=False,
+                min_ledger=None,
+                max_ledger=None,
+            )
         except _RpcError as exc:
             if exc.error == "txnNotFound":
                 return DiagnosticLookup(LookupDisposition.NOT_FOUND)
@@ -692,12 +750,91 @@ class RippledTransport:
             ),
         )
 
-    def _lookup(self, expected_hash: str, *, authoritative: bool) -> LookupResult:
+    def _lookup(
+        self,
+        expected_hash: str,
+        *,
+        authoritative: bool,
+        min_ledger: int | None,
+        max_ledger: int | None,
+    ) -> LookupResult:
         # B2: the node's identity is re-read and re-verified for every lookup.
         identity = (
             self._authoritative_identity() if authoritative else self.validated_ledger_identity()
         )
-        binary, binary_raw = self._call("tx", {"transaction": expected_hash, "binary": True})
+        tx_params: dict[str, Any] = {"transaction": expected_hash, "binary": True}
+        if (min_ledger is None) != (max_ledger is None):
+            raise TransportRefused("MALFORMED_LOOKUP_RANGE")
+        if min_ledger is not None and max_ledger is not None:
+            if not 0 < min_ledger <= max_ledger or max_ledger - min_ledger >= 1_000:
+                raise TransportRefused("MALFORMED_LOOKUP_RANGE")
+            tx_params.update(min_ledger=min_ledger, max_ledger=max_ledger)
+        try:
+            binary, binary_raw = self._call("tx", tx_params)
+        except _RpcError as exc:
+            if exc.error != "txnNotFound":
+                raise
+            after = (
+                self._authoritative_identity()
+                if authoritative
+                else self.validated_ledger_identity()
+            )
+            _require_stable_node(identity, after)
+            if not authoritative:
+                return LookupResult(LookupDisposition.NOT_FOUND)
+            if min_ledger is None or max_ledger is None:
+                raise TransportRefused("BOUNDED_LOOKUP_REQUIRED") from exc
+            if exc.result.get("searched_all") is not True:
+                raise TransportRefused("TRANSACTION_RANGE_NOT_FULLY_SEARCHED") from exc
+            before_covers = identity.ledger_index >= max_ledger and _history_covers(
+                identity.complete_history_ranges, min_ledger, max_ledger
+            )
+            after_covers = after.ledger_index >= max_ledger and _history_covers(
+                after.complete_history_ranges, min_ledger, max_ledger
+            )
+            if before_covers != after_covers:
+                raise TransportRefused("HISTORY_CHANGED_DURING_LOOKUP") from exc
+            if not before_covers:
+                raise TransportRefused("LEDGER_OUTSIDE_COMPLETE_HISTORY") from exc
+            evidence = json.dumps(
+                {
+                    "schema": "credence.xrpl.non-inclusion-evidence.v1",
+                    "transaction_hash": expected_hash,
+                    "searched_all": True,
+                    "min_ledger": min_ledger,
+                    "max_ledger": max_ledger,
+                    "source_id": self._config.source_id,
+                    "validated_identity": _identity_evidence(identity),
+                    "validated_identity_after": _identity_evidence(after),
+                    "raw": [
+                        {
+                            "method": item.method,
+                            "params": item.params,
+                            "response": item.response.decode("utf-8", errors="replace"),
+                        }
+                        for item in (*identity.raw, exc.evidence, *after.raw)
+                    ],
+                },
+                separators=(",", ":"),
+                sort_keys=True,
+            ).encode("utf-8")
+            return LookupResult(
+                LookupDisposition.NOT_FOUND,
+                non_inclusion_proof=NonInclusionProof(
+                    transaction_hash=expected_hash,
+                    first_ledger_sequence=min_ledger,
+                    last_ledger_sequence=max_ledger,
+                    searched_all=True,
+                    source_id=after.source_id,
+                    network_id=after.network_id,
+                    build_version=after.build_version,
+                    node_public_key=after.node_public_key or "",
+                    validated_ledger_index=after.ledger_index,
+                    validated_ledger_hash=after.ledger_hash,
+                    complete_history_ranges=after.complete_history_ranges,
+                    evidence=evidence,
+                ),
+            )
         blob_hex = binary.get("tx_blob")
         if not isinstance(blob_hex, str) or not blob_hex:
             raise TransportRefused("MALFORMED_RESPONSE", "tx_blob")
@@ -753,7 +890,8 @@ class RippledTransport:
         except Exception as exc:  # xrpl-py raises several codec error types
             raise TransportRefused("MALFORMED_RESPONSE", "meta_blob") from exc
 
-        detail, detail_raw = self._call("tx", {"transaction": expected_hash, "binary": False})
+        detail_params = {**tx_params, "binary": False}
+        detail, detail_raw = self._call("tx", detail_params)
         meta = detail.get("meta")
         if (
             detail.get("validated") is not True

@@ -36,7 +36,7 @@ settlement and approved unsigned-transaction digest before live submission.
 | Transaction preparation | `TransactionPreparer` / `OfflinePaymentPreparer` | Validate operation and authorization identifiers, account, destination, tRLUSD wire identity, integer micro-unit amount, fee ceiling, network, Sequence or TicketSequence, and LastLedgerSequence. Identifier validation is not Core authorization verification. |
 | Signed persistence | `SignedTransactionInspector` / `PaymentJournal.persist_signed` | Decode the actual Payment bytes with xrpl-py, reject contradictory signing structures, match every recorded field, derive the transaction hash, then persist. This is structural inspection, not cryptographic signature, signer-identity or quorum verification. |
 | Submission transport | `SubmissionTransport` | X0s permits only explicitly offline transports. Submit the exact persisted bytes and hash. A timeout or rejected response is not a final outcome. |
-| Hash lookup | `HashLookup` | Query the original transaction hash and return found, not found, or unavailable. |
+| Hash lookup | `HashLookup` | Query the original transaction hash. A permanent not-found result requires a bounded search from the trusted submission anchor + 1 through `LastLedgerSequence`, explicit `searched_all=true`, and stable pinned node identity and history around that search. |
 | Validated-ledger observation | `ValidatedLedgerObserver` | Before first broadcast, persist a trusted-source ledger index, hash, source identity and sender state. Later report explicit continuous history ranges and current sender state for non-inclusion proof. |
 | Result verification | `ResultVerifier` / `PaymentResultVerifier` | Parse the versioned evidence envelope, derive the hash and Payment fields from its exact transaction blob, verify metadata result and delivered amount, then strictly cross-check normalized fields. Missing, malformed or contradictory evidence remains unresolved. The trusted source is not independent cryptographic consensus proof. |
 | Restart reconciliation | `Reconciler` / `PaymentService.reconcile_after_restart` | Reconcile every nonterminal journal entry by the original hash; never recreate an intent or generate a new payment. |
@@ -121,10 +121,15 @@ unavailable, or ledger history cannot prove non-inclusion.
   `ReadOnlyPaymentStatus.requires_operator_reconciliation` and
   `operator_reconciliation_queue`. A contradiction between the evidence
   transaction and normalized or recorded fields remains `UNKNOWN`.
-- Expiry requires validated-ledger progress beyond LastLedgerSequence and a
-  trusted pre-broadcast anchor plus continuous history ranges covering the full
-  possible inclusion window. Missing provenance, gaps, source disagreement or
-  sequence/ticket consumption produces `UNKNOWN`. The caller history hint is
+- Expiry requires validated-ledger progress beyond LastLedgerSequence, a
+  trusted pre-broadcast anchor, and a bounded `tx` query over the full possible
+  inclusion window that returns `txnNotFound` with explicit `searched_all=true`.
+  The pinned network, node key, build, validated-ledger identity and complete
+  history are checked before and after that query. A later sender-state read
+  must match the same source, network, node key and build. Missing provenance,
+  an ordinary unbounded `txnNotFound`, missing/false `searched_all`, gaps,
+  changing or contradictory history, source disagreement, or sequence/ticket
+  consumption produces `UNKNOWN` or `UNAVAILABLE`. The caller history hint is
   never authoritative.
 - Missing, malformed or contradictory final evidence produces `UNKNOWN` and can
   be resolved by a later adequate observation; verification failure alone is
@@ -201,6 +206,25 @@ added two transport rules. Details: `spike/xrpl/X1E-REAL-NODE-PREFLIGHT.md`; dec
 | --- | --- |
 | N1 | `lookup`, `validated_ledger` and `ledger_context` require `expected_node_public_key` (`NODE_IDENTITY_NOT_PINNED`); a different node key is `NODE_IDENTITY_MISMATCH`. `diagnostic_lookup` works unpinned and returns only a non-authoritative `DiagnosticLookup`, never settlement evidence. |
 | N2 | After the transaction and ledger evidence, every lookup re-reads the node identity and requires the same network, build and node key, no validated-ledger regression or same-index hash change, and continued coverage of the transaction's ledger (`IDENTITY_CHANGED_DURING_LOOKUP`, `VALIDATED_LEDGER_REGRESSED`, `LEDGER_OUTSIDE_COMPLETE_HISTORY`). Both reads are kept in the evidence. |
+
+## X1g non-inclusion remediation
+
+X1g corrects F1 from Salvador's X1f review. Details:
+`spike/xrpl/X1G-NON-INCLUSION-REMEDIATION.md`; decision:
+`docs/decisions/0013-xrpl-x1g-non-inclusion-proof.md`.
+
+- `PaymentService` supplies the persisted submission anchor + 1 and
+  `LastLedgerSequence` to every reconciliation lookup.
+- On rippled 3.4.0, the bounded `tx` range is limited to 1,000 ledgers. An
+  unbounded `txnNotFound`, or a bounded response without literal boolean
+  `searched_all=true`, is never a non-inclusion proof.
+- `RippledTransport` reads identity before and after the bounded lookup and
+  constructs `credence.xrpl.non-inclusion-evidence.v1` only if both observations
+  cover the whole range and the network, pinned node key, build and validated
+  ledger identity are stable.
+- The service cross-checks that proof against the persisted hash, range, network,
+  submission-anchor source and a later sender-state observation from the same
+  pinned node identity before finalizing `EXPIRED_NOT_INCLUDED`.
 
 Still open before any ledger write: N3 (public `PaymentJournal.finalize` accepts caller evidence),
 N4 (persistence uses structural inspection, not multisign verification), N5 (self-declared

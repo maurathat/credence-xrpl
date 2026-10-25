@@ -181,7 +181,23 @@ class FakeRippled:
     def _tx(self, request: Mapping[str, Any]) -> dict[str, Any]:
         stored = self.transactions.get(request["transaction"])
         if stored is None:
-            return self._error("txnNotFound")
+            result = self._error("txnNotFound")
+            if "min_ledger" in request and "max_ledger" in request:
+                first, last = int(request["min_ledger"]), int(request["max_ledger"])
+                ranges: list[tuple[int, int]] = []
+                if self.complete_ledgers not in ("", "empty"):
+                    for part in self.complete_ledgers.split(","):
+                        bounds = [int(value) for value in part.strip().split("-")]
+                        ranges.append((bounds[0], bounds[-1]))
+                covered = first - 1
+                for range_first, range_last in sorted(ranges):
+                    if range_last < first or range_first > last:
+                        continue
+                    if range_first > covered + 1:
+                        break
+                    covered = max(covered, range_last)
+                result["searched_all"] = covered >= last
+            return result
         tx_hash = transaction_hash(stored.blob)
         result: dict[str, Any] = {
             "hash": tx_hash,

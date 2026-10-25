@@ -261,7 +261,7 @@ def test_missing_history_leaves_expiry_unknown(tmp_path: Path) -> None:
     )
     record = flow.service.reconcile(OPERATION)
     assert record.state is TransactionState.UNKNOWN
-    assert record.last_provisional_status == "HISTORY_INCOMPLETE_NON_INCLUSION_UNPROVEN"
+    assert record.last_provisional_status == "TRANSACTION_RANGE_NOT_FULLY_SEARCHED"
     assert classify_payment(record) is PaymentOutcome.UNKNOWN_RECONCILIATION_REQUIRED
 
 

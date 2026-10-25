@@ -158,6 +158,9 @@ class ValidatedLedgerObservation:
     account: str | None = None
     account_sequence: int | None = None
     available_tickets: tuple[int, ...] | None = None
+    network_id: int | None = None
+    build_version: str | None = None
+    node_public_key: str | None = None
 
     def has_trusted_identity(self) -> bool:
         return bool(
@@ -234,10 +237,58 @@ class LedgerPayment:
 
 
 @dataclass(frozen=True)
+class NonInclusionProof:
+    """One bounded ``tx`` search that the pinned source reports it searched completely.
+
+    The transport constructs this only after checking the same node, build, network, validated
+    ledger and complete-history ranges before and after the bounded lookup. The service still
+    cross-checks every field against the persisted Payment and the later sender-state observation
+    before treating non-inclusion as permanent.
+    """
+
+    transaction_hash: str
+    first_ledger_sequence: int
+    last_ledger_sequence: int
+    searched_all: bool
+    source_id: str
+    network_id: int
+    build_version: str
+    node_public_key: str
+    validated_ledger_index: int
+    validated_ledger_hash: str
+    complete_history_ranges: tuple[LedgerRange, ...]
+    evidence: bytes
+
+    def proves_non_inclusion(self, *, earliest: int, last: int) -> bool:
+        if not (
+            self.searched_all is True
+            and self.first_ledger_sequence == earliest
+            and self.last_ledger_sequence == last
+            and self.validated_ledger_index > last
+            and self.complete_history_ranges
+        ):
+            return False
+        ranges = sorted(self.complete_history_ranges, key=lambda item: (item.first, item.last))
+        covered_through = earliest - 1
+        for ledger_range in ranges:
+            if not (0 < ledger_range.first <= ledger_range.last <= self.validated_ledger_index):
+                return False
+            if ledger_range.last < earliest or ledger_range.first > last:
+                continue
+            if ledger_range.first > covered_through + 1:
+                return False
+            covered_through = max(covered_through, ledger_range.last)
+            if covered_through >= last:
+                return True
+        return False
+
+
+@dataclass(frozen=True)
 class LookupResult:
     disposition: LookupDisposition
     payment: LedgerPayment | None = None
     detail: str | None = None
+    non_inclusion_proof: NonInclusionProof | None = None
 
 
 @dataclass(frozen=True)
@@ -327,7 +378,13 @@ class SubmissionTransport(Protocol):
 
 
 class HashLookup(Protocol):
-    def lookup(self, transaction_hash: str) -> LookupResult: ...
+    def lookup(
+        self,
+        transaction_hash: str,
+        *,
+        min_ledger: int | None = None,
+        max_ledger: int | None = None,
+    ) -> LookupResult: ...
 
 
 class ValidatedLedgerObserver(Protocol):

@@ -390,8 +390,17 @@ class PaymentService:
         record = self._journal.get(operation_id)
         if record.state in TERMINAL_STATES or record.state is TransactionState.PREPARED:
             return record
+        first_ledger = (
+            None
+            if record.submission_anchor_ledger_index is None
+            else record.submission_anchor_ledger_index + 1
+        )
         try:
-            lookup = self._lookup.lookup(record.transaction_hash)
+            lookup = self._lookup.lookup(
+                record.transaction_hash,
+                min_ledger=first_ledger,
+                max_ledger=(record.last_ledger_sequence if first_ledger is not None else None),
+            )
         except LookupUnavailable:
             return self._journal.record_reconciliation_state(
                 operation_id, TransactionState.UNKNOWN, "TRANSACTION_LOOKUP_UNAVAILABLE"
@@ -418,6 +427,7 @@ class PaymentService:
             )
         return self._reconcile_not_found(
             record,
+            lookup,
             observation,
             resubmit_if_pending=resubmit_if_pending,
         )
@@ -465,6 +475,7 @@ class PaymentService:
     def _reconcile_not_found(
         self,
         record: PaymentRecord,
+        lookup: LookupResult,
         observation: ValidatedLedgerObservation,
         *,
         resubmit_if_pending: bool,
@@ -482,16 +493,70 @@ class PaymentService:
             sequence=record.sequence,
             ticket_sequence=record.ticket_sequence,
         )
+        proof = lookup.non_inclusion_proof
+        try:
+            bounded_lookup = None if proof is None else json.loads(proof.evidence)
+        except (UnicodeDecodeError, json.JSONDecodeError):
+            bounded_lookup = None
+        identity_before = (
+            bounded_lookup.get("validated_identity") if isinstance(bounded_lookup, dict) else None
+        )
+        identity_after = (
+            bounded_lookup.get("validated_identity_after")
+            if isinstance(bounded_lookup, dict)
+            else None
+        )
+        proof_matches = bool(
+            proof is not None
+            and proof.searched_all is True
+            and proof.transaction_hash == record.transaction_hash
+            and proof.first_ledger_sequence == history_start
+            and proof.last_ledger_sequence == record.last_ledger_sequence
+            and proof.source_id == record.submission_anchor_source_id
+            and proof.source_id == observation.source_id
+            and proof.network_id == record.network_id
+            and proof.network_id == observation.network_id
+            and proof.build_version == observation.build_version
+            and proof.node_public_key
+            and proof.node_public_key == observation.node_public_key
+            and proof.validated_ledger_index > record.last_ledger_sequence
+            and proof.validated_ledger_index <= observation.ledger_index
+            and (
+                proof.validated_ledger_index != observation.ledger_index
+                or proof.validated_ledger_hash == observation.ledger_hash
+            )
+            and history_start is not None
+            and proof.proves_non_inclusion(earliest=history_start, last=record.last_ledger_sequence)
+            and isinstance(bounded_lookup, dict)
+            and bounded_lookup.get("schema") == "credence.xrpl.non-inclusion-evidence.v1"
+            and bounded_lookup.get("transaction_hash") == record.transaction_hash
+            and bounded_lookup.get("searched_all") is True
+            and bounded_lookup.get("min_ledger") == history_start
+            and bounded_lookup.get("max_ledger") == record.last_ledger_sequence
+            and bounded_lookup.get("source_id") == proof.source_id
+            and isinstance(identity_before, dict)
+            and isinstance(identity_after, dict)
+            and identity_before.get("network_id") == proof.network_id
+            and identity_after.get("network_id") == proof.network_id
+            and identity_before.get("build_version") == proof.build_version
+            and identity_after.get("build_version") == proof.build_version
+            and identity_before.get("node_public_key") == proof.node_public_key
+            and identity_after.get("node_public_key") == proof.node_public_key
+            and identity_after.get("ledger_index") == proof.validated_ledger_index
+            and identity_after.get("ledger_hash") == proof.validated_ledger_hash
+        )
         if (
             trusted_anchor
             and source_matches
             and sender_state_matches
             and history_start is not None
+            and proof_matches
             and observation.proves_non_inclusion(
                 earliest=history_start,
                 last=record.last_ledger_sequence,
             )
         ):
+            assert proof is not None
             evidence = json.dumps(
                 {
                     "anchor_ledger_hash": record.submission_anchor_ledger_hash,
@@ -505,6 +570,7 @@ class PaymentService:
                     "history_complete": observation.history_complete,
                     "last_ledger_sequence": record.last_ledger_sequence,
                     "source_id": observation.source_id,
+                    "bounded_lookup": bounded_lookup,
                     "validated_ledger_hash": observation.ledger_hash,
                     "validated_ledger_index": observation.ledger_index,
                 },
@@ -530,6 +596,8 @@ class PaymentService:
                 detail = "LEDGER_SOURCE_DISAGREES_WITH_SUBMISSION_ANCHOR"
             elif not sender_state_matches:
                 detail = "SENDER_SEQUENCE_OR_TICKET_CONSUMPTION_UNRESOLVED"
+            elif not proof_matches:
+                detail = "BOUNDED_NON_INCLUSION_PROOF_MISSING_OR_INCONSISTENT"
             else:
                 detail = "HISTORY_INCOMPLETE_NON_INCLUSION_UNPROVEN"
             return self._journal.record_reconciliation_state(

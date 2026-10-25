@@ -39,6 +39,7 @@ from credence.xrpl_adapter.types import (
     LookupDisposition,
     LookupResult,
     LookupUnavailable,
+    NonInclusionProof,
     PaymentRecord,
     PaymentRequest,
     PreparationError,
@@ -129,6 +130,9 @@ def trusted_ledger(
         account=ACCOUNT,
         account_sequence=account_sequence,
         available_tickets=available_tickets,
+        network_id=21_337,
+        build_version="deterministic-mock",
+        node_public_key="n9DeterministicMockNode",
     )
 
 
@@ -233,6 +237,50 @@ def found(payment: LedgerPayment) -> LookupResult:
     return LookupResult(LookupDisposition.FOUND, payment=payment)
 
 
+def not_found_with_proof(
+    record: PaymentRecord, observation: ValidatedLedgerObservation
+) -> LookupResult:
+    first = 20
+    identity = {
+        "network_id": observation.network_id,
+        "build_version": observation.build_version,
+        "node_public_key": observation.node_public_key,
+        "ledger_index": observation.ledger_index,
+        "ledger_hash": observation.ledger_hash,
+    }
+    evidence = json.dumps(
+        {
+            "schema": "credence.xrpl.non-inclusion-evidence.v1",
+            "transaction_hash": record.transaction_hash,
+            "searched_all": True,
+            "min_ledger": first,
+            "max_ledger": record.last_ledger_sequence,
+            "source_id": observation.source_id,
+            "validated_identity": identity,
+            "validated_identity_after": identity,
+        },
+        separators=(",", ":"),
+        sort_keys=True,
+    ).encode()
+    return LookupResult(
+        LookupDisposition.NOT_FOUND,
+        non_inclusion_proof=NonInclusionProof(
+            transaction_hash=record.transaction_hash,
+            first_ledger_sequence=first,
+            last_ledger_sequence=record.last_ledger_sequence,
+            searched_all=True,
+            source_id=observation.source_id or "",
+            network_id=observation.network_id or 0,
+            build_version=observation.build_version or "",
+            node_public_key=observation.node_public_key or "",
+            validated_ledger_index=observation.ledger_index,
+            validated_ledger_hash=observation.ledger_hash or "",
+            complete_history_ranges=observation.complete_history_ranges,
+            evidence=evidence,
+        ),
+    )
+
+
 def test_success_requires_validated_payment_and_effect_is_exactly_once(tmp_path: Path) -> None:
     transport = DeterministicMockTransport(ledger=ledger_before_expiry())
     transport.queue_submission(acknowledge())
@@ -326,10 +374,9 @@ def test_expiry_requires_complete_validated_history(tmp_path: Path) -> None:
     transport.queue_submission(SubmissionTimeout("response lost"))
     service, _, record = prepared(database, transport)
     service.submit(record.operation_id)
-    transport.set_lookup(record.transaction_hash, LookupResult(LookupDisposition.NOT_FOUND))
-    transport.set_ledger(
-        trusted_ledger(30, history_ranges=(LedgerRange(1, 30),), account_sequence=10)
-    )
+    observation = trusted_ledger(30, history_ranges=(LedgerRange(1, 30),), account_sequence=10)
+    transport.set_lookup(record.transaction_hash, not_found_with_proof(record, observation))
+    transport.set_ledger(observation)
 
     restarted, _ = service_for(database, transport)
     result = restarted.reconcile(record.operation_id)
@@ -360,7 +407,7 @@ def test_missing_ledger_history_cannot_prove_expiry(tmp_path: Path) -> None:
 
     result = service.reconcile(record.operation_id)
     assert result.state is TransactionState.UNKNOWN
-    assert result.last_provisional_status == "HISTORY_INCOMPLETE_NON_INCLUSION_UNPROVEN"
+    assert result.last_provisional_status == "BOUNDED_NON_INCLUSION_PROOF_MISSING_OR_INCONSISTENT"
 
 
 @pytest.mark.parametrize(
@@ -655,7 +702,7 @@ def test_forged_caller_history_start_cannot_prove_expiry(tmp_path: Path) -> None
 
     result = service.reconcile(record.operation_id)
     assert result.state is TransactionState.UNKNOWN
-    assert result.last_provisional_status == "HISTORY_INCOMPLETE_NON_INCLUSION_UNPROVEN"
+    assert result.last_provisional_status == "BOUNDED_NON_INCLUSION_PROOF_MISSING_OR_INCONSISTENT"
 
 
 @pytest.mark.parametrize(
@@ -667,7 +714,7 @@ def test_forged_caller_history_start_cannot_prove_expiry(tmp_path: Path) -> None
                 history_ranges=(LedgerRange(20, 22), LedgerRange(22, 24)),
                 account_sequence=10,
             ),
-            "HISTORY_INCOMPLETE_NON_INCLUSION_UNPROVEN",
+            "BOUNDED_NON_INCLUSION_PROOF_MISSING_OR_INCONSISTENT",
         ),
         (
             trusted_ledger(

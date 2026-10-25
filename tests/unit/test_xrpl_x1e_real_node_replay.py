@@ -113,11 +113,15 @@ def test_real_account_info_objects_and_lines_parse() -> None:
     assert not line.exists
 
 
-def test_real_tx_not_found_responses_map_to_not_found() -> None:
+def test_real_unbounded_tx_not_found_responses_are_not_non_inclusion_proof() -> None:
     real, _ = transport()
     for tx_hash in ("AB" * 32, HISTORICAL_TX):
         result = real.lookup(tx_hash)
-        assert (result.disposition, result.payment) == (LookupDisposition.NOT_FOUND, None)
+        assert (result.disposition, result.payment, result.detail) == (
+            LookupDisposition.UNAVAILABLE,
+            None,
+            "BOUNDED_LOOKUP_REQUIRED",
+        )
 
 
 def test_real_validated_ledger_observation() -> None:

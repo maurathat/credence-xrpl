@@ -281,8 +281,19 @@ def test_observer_failures_are_unavailable() -> None:
 
 
 def test_lookup_not_found() -> None:
-    result = transport(standard_ledger()).lookup("AB" * 32)
+    result = transport(standard_ledger()).lookup("AB" * 32, min_ledger=90, max_ledger=99)
     assert result.disposition is LookupDisposition.NOT_FOUND
+    assert result.non_inclusion_proof is not None
+    assert result.non_inclusion_proof.searched_all
+
+
+def test_unbounded_lookup_not_found_is_not_non_inclusion_proof() -> None:
+    result = transport(standard_ledger()).lookup("AB" * 32)
+    assert (result.disposition, result.detail, result.non_inclusion_proof) == (
+        LookupDisposition.UNAVAILABLE,
+        "BOUNDED_LOOKUP_REQUIRED",
+        None,
+    )
 
 
 def test_lookup_unvalidated_transaction_is_provisional() -> None:
