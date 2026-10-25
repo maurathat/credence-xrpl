@@ -27,6 +27,8 @@ from xrpl.core.binarycodec import encode
 
 from credence.xrpl_adapter.preparation import transaction_hash
 
+NODE_KEY = "n9TestLocalStandaloneNode"  # the fake node's public identity; tests pin it
+
 
 def ledger_hash_for(index: int) -> str:
     return LEDGER_HASH if index == VALIDATED_LEDGER else f"{index:064X}"
@@ -45,7 +47,7 @@ class StoredTransaction:
 class FakeRippled:
     network_id: int = NETWORK_ID
     build_version: str = "3.4.0"
-    node_public_key: str = "n9TestLocalStandaloneNode"
+    node_public_key: str = NODE_KEY
     ledger_index: int = VALIDATED_LEDGER
     complete_ledgers: str = f"1-{VALIDATED_LEDGER}"
     base_fee: int = BASE_FEE

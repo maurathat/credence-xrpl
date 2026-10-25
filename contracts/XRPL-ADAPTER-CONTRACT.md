@@ -190,3 +190,19 @@ is `docs/decisions/0011-xrpl-x1c-payment-assurance.md`.
 | C1 | `VALIDATED_UNEXPECTED_DELIVERY` state; journal schema version 3; version-2 journals refused unchanged. |
 | C2 | Signatures must be canonical as rippled requires: strict DER with low S (secp256k1), `S < L` (Ed25519). `SIGNATURE_NOT_CANONICAL`. |
 | C3 | The loopback client never follows an HTTP redirect. |
+
+## X1e real-node preflight
+
+X1e checked the transport read-only against the pinned rippled 3.4.0 (network 21337, API v2) and
+added two transport rules. Details: `spike/xrpl/X1E-REAL-NODE-PREFLIGHT.md`; decision
+`docs/decisions/0012-xrpl-x1e-real-node-preflight.md`; captured responses `spike/xrpl/x1e/`.
+
+| Rule | Contract |
+| --- | --- |
+| N1 | `lookup`, `validated_ledger` and `ledger_context` require `expected_node_public_key` (`NODE_IDENTITY_NOT_PINNED`); a different node key is `NODE_IDENTITY_MISMATCH`. `diagnostic_lookup` works unpinned and returns only a non-authoritative `DiagnosticLookup`, never settlement evidence. |
+| N2 | After the transaction and ledger evidence, every lookup re-reads the node identity and requires the same network, build and node key, no validated-ledger regression or same-index hash change, and continued coverage of the transaction's ledger (`IDENTITY_CHANGED_DURING_LOOKUP`, `VALIDATED_LEDGER_REGRESSED`, `LEDGER_OUTSIDE_COMPLETE_HISTORY`). Both reads are kept in the evidence. |
+
+Still open before any ledger write: N3 (public `PaymentJournal.finalize` accepts caller evidence),
+N4 (persistence uses structural inspection, not multisign verification), N5 (self-declared
+`offline_only` and `submission_enabled` flags), and confirmation of found-`tx` shapes on a real
+validated Payment.

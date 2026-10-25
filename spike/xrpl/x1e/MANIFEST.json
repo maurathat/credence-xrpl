@@ -1,0 +1,46 @@
+{
+ "captured_by": ".context capture script (read-only RPC only: server_state, ledger, account_info, account_objects, account_lines, tx)",
+ "checkpoint": "X1e read-only real-node compatibility preflight",
+ "files": {
+  "responses/01-server_state.json": "0164ea4f5a3fdb6962b5eb84da9b4174c6b51e730dccbb11854af7cef75a0af1",
+  "responses/02-ledger.json": "3bd2e5a8cc21fc6248471104c938ddd1a864626c207cccc691e6cde18a229386",
+  "responses/03-ledger.json": "3bd2e5a8cc21fc6248471104c938ddd1a864626c207cccc691e6cde18a229386",
+  "responses/04-ledger.json": "32e9b91abec17a277ce5cd8b8e18150f859454f57f65cf7378a84240ee39700b",
+  "responses/05-account_info.json": "ec98b4ca2cf511d4b8779f81deeff60a30444f61396ecee47e7c5c584295cf43",
+  "responses/06-account_info.json": "80b9e08aaef605612d6f0d49ba8d26a2da3eb9ac0529c50a72a895b8bca77a72",
+  "responses/07-account_objects.json": "7e1955c87ad4e7afa9a595e7d9e5513dd88d1a2375cda263db866792fa75e87b",
+  "responses/08-account_objects.json": "6d851f36a3a4a3f5af2da4dd74cc384f431adaddb3ac41a78e1df946140bb64c",
+  "responses/09-account_lines.json": "d7ae6ae400b0899dbb1ae6e2900870f9e64106dac02a36243415cdeb5ac48e00",
+  "responses/10-account_lines.json": "d7ae6ae400b0899dbb1ae6e2900870f9e64106dac02a36243415cdeb5ac48e00",
+  "responses/11-tx.json": "d5c048e1088362d358478bd7a4e124da5ad45265bcb8e9345d63e636eb43e0f5",
+  "responses/12-tx.json": "cc5c73871d2626f40130a9680d3828947b6f566429844664a4b533bfec96e016",
+  "responses/13-tx.json": "ced4210fb3f189bfc2c6fa232751ab58d82937573ee8b98e6a1a530a9048d505",
+  "shapes.json": "d790e6d702538e7dd3275cbbca668473c02d7e0d9feb2ec08b3165f418478f6d",
+  "transport-results.json": "3b276e81ac35d53cbd0b99c92b0da9c73135add5226dab37f5838d8f8762e3e5"
+ },
+ "node": {
+  "api_version": 2,
+  "base_config_sha256": "37ffc6f93f7d8838aef681e4a3c7e39d7427e101cb6c62113dca208dc1e8e820",
+  "build_version": "3.4.0",
+  "complete_ledgers": "2",
+  "git_commit": "4a4fded2eba11427c48ce3f24d9c1aea5e7a9d17",
+  "image": "credence-xrpl-spike:3.4.0 (local build, image id sha256:ae83d611327ae6ee53cf24c4cd4abfffa3c4fd98f83bd31a92d780e3779a513d)",
+  "mode": "standalone --start (fresh genesis); no transactions submitted, no ledgers closed",
+  "network_id": 21337,
+  "package": "xrpld 3.4.0-1 amd64",
+  "pubkey_node": "REDACTED_PUBLIC_NODE_KEY",
+  "node_identity_sha256": "5b165d90a4cba7ef3b0fd7a6575f941c5e64b01679eacaa25a7711669afd9358",
+  "rpc_endpoint": "http://127.0.0.1:5015 (loopback only)",
+  "runtime_config": "base config plus a [node_seed] stanza held only in Docker volume credence-x1e-node-identity (never in Git or logs)",
+  "validated_ledger": {
+   "base_fee": 10,
+   "close_time": 846209510,
+   "hash": "479CA47E3AF09CCC6AEB48B0FF48414AB3606B40CD6ABE69440058CB3BF7F592",
+   "reserve_base": 10000000,
+   "reserve_inc": 2000000,
+   "seq": 2
+  },
+  "xrpld_binary_sha256": "9b4d3dd28b31a22419fd905682e238298eefb8941e2efcde5241a4b19fa0c417"
+ },
+ "sanitization": "The node public key is public, but secret scanning flags any high-entropy value next to a key-like field name, so every occurrence of it in these files was replaced with 'REDACTED_PUBLIC_NODE_KEY'. The real value is recorded in spike/xrpl/X1E-REAL-NODE-PREFLIGHT.md, and its SHA-256 is node_identity_sha256. No other byte of any response was changed."
+}

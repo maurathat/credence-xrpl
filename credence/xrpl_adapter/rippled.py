@@ -18,7 +18,11 @@ Implemented seams (all JSON-RPC, ``api_version`` 2):
   Each lookup first re-reads and re-verifies the node's validated-ledger identity (network, build,
   optional node key). The transaction's ledger must be validated, at or below the current validated
   ledger, inside the node's complete history, and its hash must match the fetched ledger. The
-  result, and the delivered amount, must agree between the binary and JSON forms (X1c, B1/B2);
+  result, and the delivered amount, must agree between the binary and JSON forms (X1c, B1/B2).
+  After the evidence is read, the node identity is re-read and must be unchanged, not regressed,
+  and still cover the transaction's ledger (X1e, N2);
+- ``diagnostic_lookup``: the same reads without a node pin, returning only a non-authoritative
+  summary that cannot be used as settlement evidence (X1e, N1);
 - ``submit``: the X0t ``SubmissionTransport``. It refuses unless submission was explicitly enabled
   in its configuration. X1a never enables it, and ``offline_only`` is false, so the X0t
   ``PaymentService`` refuses this transport outright.
@@ -35,9 +39,15 @@ inspector refuses any Payment flags, so a partial payment never reaches this poi
 refused ``EVIDENCE_INCONSISTENT`` and nothing settles. Both observations are kept in the evidence
 envelope. An unsuccessful result must carry neither.
 
-The response shapes are rippled's documented API v2 shapes. They were exercised only against the
-deterministic fake client in ``tests/unit/test_xrpl_x1a_transport.py``, not against the pinned
-server. Read-only verification against the pinned rippled is a listed X1 dependency.
+N1 (X1e): ``lookup``, ``validated_ledger`` and ``ledger_context`` can authorize signing, anchor
+expiry or establish settlement, so they refuse with ``NODE_IDENTITY_NOT_PINNED`` unless
+``expected_node_public_key`` is configured; a changed key is ``NODE_IDENTITY_MISMATCH``.
+
+Response shapes were checked read-only against the pinned rippled 3.4.0 (network 21337) in X1e:
+``server_state``, ``ledger``, ``account_info``, ``account_objects``, ``account_lines`` and ``tx``
+not-found responses (``spike/xrpl/x1e/``). A found ``tx`` (binary ``tx_blob``/``meta_blob`` and
+JSON ``meta``) has not been observed on the real node, because no transaction may be submitted;
+those paths remain verified only against the deterministic fake.
 
 The configured ledger source remains a trust boundary. It is not independent consensus proof.
 
@@ -214,6 +224,19 @@ class ValidatedLedgerIdentity:
 
 
 @dataclass(frozen=True)
+class DiagnosticLookup:
+    """Non-authoritative lookup summary (no pinned node identity). Never settlement evidence."""
+
+    disposition: LookupDisposition
+    validated: bool | None = None
+    result: str | None = None
+    ledger_index: int | None = None
+    delivered_amount_micro_units: int | None = None
+    detail: str | None = None
+    authoritative: bool = False
+
+
+@dataclass(frozen=True)
 class TrustLineSnapshot:
     account: str
     issuer: str
@@ -328,6 +351,31 @@ def _require_delivered_agreement(binary: dict[str, str] | None, observed: object
         raise TransportRefused(
             "EVIDENCE_INCONSISTENT", "binary and JSON delivered amounts disagree"
         )
+
+
+def _require_stable_identity(
+    before: ValidatedLedgerIdentity,
+    after: ValidatedLedgerIdentity,
+    ledger_index: int,
+    ledger_hash: str,
+) -> None:
+    """N2: the node did not change identity, regress, or lose the transaction's ledger."""
+    if (before.network_id, before.build_version, before.node_public_key) != (
+        after.network_id,
+        after.build_version,
+        after.node_public_key,
+    ):
+        raise TransportRefused("IDENTITY_CHANGED_DURING_LOOKUP")
+    if after.ledger_index < before.ledger_index:
+        raise TransportRefused("VALIDATED_LEDGER_REGRESSED")
+    if after.ledger_index == before.ledger_index and after.ledger_hash != before.ledger_hash:
+        raise TransportRefused("IDENTITY_CHANGED_DURING_LOOKUP", "validated ledger hash changed")
+    if ledger_index > after.ledger_index:
+        raise TransportRefused("LEDGER_BEYOND_VALIDATED", str(ledger_index))
+    if not any(item.first <= ledger_index <= item.last for item in after.complete_history_ranges):
+        raise TransportRefused("LEDGER_OUTSIDE_COMPLETE_HISTORY", str(ledger_index))
+    if ledger_index == after.ledger_index and ledger_hash != after.ledger_hash:
+        raise TransportRefused("LEDGER_HASH_MISMATCH", "differs from the re-read identity")
 
 
 class RippledTransport:
@@ -517,9 +565,16 @@ class RippledTransport:
                 return tuple(sorted(tickets))
         raise TransportRefused("TOO_MANY_TICKETS")
 
+    def _authoritative_identity(self) -> ValidatedLedgerIdentity:
+        """N1 (X1e): an operation whose result can authorize signing, anchor expiry or establish
+        settlement requires a pinned node public key. Unpinned reads are diagnostic only."""
+        if self._config.expected_node_public_key is None:
+            raise TransportRefused("NODE_IDENTITY_NOT_PINNED")
+        return self.validated_ledger_identity()
+
     def ledger_context(self, policy: MultisignPolicy) -> LedgerContext:
         """Agent account and both signer accounts, all from one validated ledger."""
-        identity = self.validated_ledger_identity()
+        identity = self._authoritative_identity()
         if identity.network_id != policy.network_id:
             raise TransportRefused("NETWORK_MISMATCH")
         return LedgerContext(
@@ -578,7 +633,7 @@ class RippledTransport:
 
     def validated_ledger(self, account: str) -> ValidatedLedgerObservation:
         try:
-            identity = self.validated_ledger_identity()
+            identity = self._authoritative_identity()
             snapshot = self.account_snapshot(account, identity)
         except (RpcTimeout, RpcUnavailable, TransportRefused, _RpcError) as exc:
             raise LookupUnavailable(f"validated ledger unavailable: {exc}") from exc
@@ -599,8 +654,9 @@ class RippledTransport:
     # --- X0t HashLookup ----------------------------------------------------------------------
 
     def lookup(self, transaction_hash_value: str) -> LookupResult:
+        """Authoritative X0t lookup. Requires a pinned node key (N1)."""
         try:
-            return self._lookup(transaction_hash_value.upper())
+            return self._lookup(transaction_hash_value.upper(), authoritative=True)
         except _RpcError as exc:
             if exc.error == "txnNotFound":
                 return LookupResult(LookupDisposition.NOT_FOUND)
@@ -610,9 +666,37 @@ class RippledTransport:
         except TransportRefused as exc:
             return LookupResult(LookupDisposition.UNAVAILABLE, detail=exc.code)
 
-    def _lookup(self, expected_hash: str) -> LookupResult:
+    def diagnostic_lookup(self, transaction_hash_value: str) -> DiagnosticLookup:
+        """Non-authoritative lookup that works without a node pin.
+
+        It returns only a summary, never a ``LookupResult``, ``LedgerPayment`` or evidence
+        envelope, so its output cannot be handed to the X0t journal as settlement evidence."""
+        try:
+            result = self._lookup(transaction_hash_value.upper(), authoritative=False)
+        except _RpcError as exc:
+            if exc.error == "txnNotFound":
+                return DiagnosticLookup(LookupDisposition.NOT_FOUND)
+            return DiagnosticLookup(LookupDisposition.UNAVAILABLE, detail=f"RPC_ERROR:{exc.error}")
+        except (RpcTimeout, RpcUnavailable) as exc:
+            return DiagnosticLookup(LookupDisposition.UNAVAILABLE, detail=f"RPC_UNAVAILABLE:{exc}")
+        except TransportRefused as exc:
+            return DiagnosticLookup(LookupDisposition.UNAVAILABLE, detail=exc.code)
+        payment = result.payment
+        return DiagnosticLookup(
+            disposition=result.disposition,
+            validated=None if payment is None else payment.validated,
+            result=None if payment is None else payment.result,
+            ledger_index=None if payment is None else payment.ledger_index,
+            delivered_amount_micro_units=(
+                None if payment is None else payment.delivered_amount_micro_units
+            ),
+        )
+
+    def _lookup(self, expected_hash: str, *, authoritative: bool) -> LookupResult:
         # B2: the node's identity is re-read and re-verified for every lookup.
-        identity = self.validated_ledger_identity()
+        identity = (
+            self._authoritative_identity() if authoritative else self.validated_ledger_identity()
+        )
         binary, binary_raw = self._call("tx", {"transaction": expected_hash, "binary": True})
         blob_hex = binary.get("tx_blob")
         if not isinstance(blob_hex, str) or not blob_hex:
@@ -698,6 +782,12 @@ class RippledTransport:
             if stated is not None and _ledger_hash(stated) != ledger_hash:
                 raise TransportRefused("LEDGER_HASH_MISMATCH")
 
+        # N2 (X1e): re-read the node's identity after the evidence and require it unchanged.
+        after = (
+            self._authoritative_identity() if authoritative else self.validated_ledger_identity()
+        )
+        _require_stable_identity(identity, after, ledger_index, ledger_hash)
+
         result_code = meta.get("TransactionResult")
         delivered = meta.get("delivered_amount")
         binary_delivered = _binary_delivered_amount(binary_meta, blob, result_code)
@@ -729,6 +819,14 @@ class RippledTransport:
                     "network_id": identity.network_id,
                     "node_public_key": identity.node_public_key,
                 },
+                "validated_identity_after": {
+                    "build_version": after.build_version,
+                    "complete_ledgers": after.complete_ledgers,
+                    "ledger_hash": after.ledger_hash,
+                    "ledger_index": after.ledger_index,
+                    "network_id": after.network_id,
+                    "node_public_key": after.node_public_key,
+                },
                 "source_id": self._config.source_id,
                 "raw": [
                     {
@@ -736,7 +834,7 @@ class RippledTransport:
                         "params": item.params,
                         "response": item.response.decode("utf-8", errors="replace"),
                     }
-                    for item in (*identity.raw, binary_raw, detail_raw, ledger_raw)
+                    for item in (*identity.raw, binary_raw, detail_raw, ledger_raw, *after.raw)
                 ],
             },
             separators=(",", ":"),

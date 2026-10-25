@@ -18,7 +18,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-from x1a_rippled import FakeRippled, standard_ledger
+from x1a_rippled import NODE_KEY, FakeRippled, standard_ledger
 from x1a_world import (
     ATTACKER,
     ISSUER,
@@ -85,7 +85,10 @@ from credence.xrpl_adapter.types import (
 OPERATION = "operation-x1c"
 REVIEW_AMOUNT = 2_500_000  # Salvador's reproduction pays 2.5 tRLUSD (a test token)
 CONFIG = RippledTransportConfig(
-    source_id="local-rippled", expected_network_id=NETWORK_ID, expected_build_version="3.4.0"
+    source_id="local-rippled",
+    expected_network_id=NETWORK_ID,
+    expected_build_version="3.4.0",
+    expected_node_public_key=NODE_KEY,
 )
 ASSET = Asset("tRLUSD", TRLUSD_WIRE_CODE, ISSUER.account)
 

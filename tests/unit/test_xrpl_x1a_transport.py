@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-from x1a_rippled import FakeRippled, ledger_hash_for, standard_ledger
+from x1a_rippled import NODE_KEY, FakeRippled, ledger_hash_for, standard_ledger
 from x1a_world import (
     AMOUNT,
     ASSET,
@@ -62,7 +62,10 @@ from credence.xrpl_adapter.types import (
 )
 
 CONFIG = RippledTransportConfig(
-    source_id="local-rippled-3.4.0", expected_network_id=NETWORK_ID, expected_build_version="3.4.0"
+    source_id="local-rippled-3.4.0",
+    expected_network_id=NETWORK_ID,
+    expected_build_version="3.4.0",
+    expected_node_public_key=NODE_KEY,
 )
 
 
@@ -135,7 +138,7 @@ def test_unconfirmed_ledger_identity_is_refused() -> None:
     refused("LEDGER_NOT_VALIDATED", transport(rippled).validated_ledger_identity)
     rippled.faults["ledger"] = lambda request: None
     rippled.faults["server_state"] = lambda request: {
-        "state": {"network_id": NETWORK_ID, "build_version": "3.4.0"}
+        "state": {"network_id": NETWORK_ID, "build_version": "3.4.0", "pubkey_node": NODE_KEY}
     }
     refused("NO_VALIDATED_LEDGER", transport(rippled).validated_ledger_identity)
 
@@ -311,7 +314,10 @@ def test_lookup_validated_payment_builds_x0s_evidence() -> None:
         "tx",
         "tx",
         "ledger",
+        "server_state",
+        "ledger",
     ]
+    assert envelope["validated_identity_after"]["node_public_key"] == NODE_KEY
     assert envelope["validated_identity"]["network_id"] == NETWORK_ID
     assert envelope["delivered_amount_observations"]["binary"]["source"] == "DeliveredAmount"
     assert envelope["delivered_amount_observations"]["json"] == delivered()
